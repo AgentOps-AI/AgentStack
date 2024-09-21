@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "agentstack"
+version = "0.1.0"
+description = "The fastest way to build robust AI agents"
+authors = ["Braelyn Boynton <bboynton97@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+typer = "^0.12.5"
+inquirer = "^3.4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
