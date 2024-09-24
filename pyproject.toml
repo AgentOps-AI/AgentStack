@@ -10,6 +10,8 @@ readme = "README.md"
 python = "^3.11"
 typer = "^0.12.5"
 inquirer = "^3.4.0"
+art = "^6.3"
+toml = "^0.10.2"
 
 
 [build-system]

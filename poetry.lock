@@ -12,6 +12,20 @@ files = [
 ]
 
 [[package]]
+name = "art"
+version = "6.3"
+description = "ASCII Art Library For Python"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "art-6.3-py3-none-any.whl", hash = "sha256:707ccb5d9c1da33225385e77fbc93a52bedf73a3cb288939979ed709226c4c27"},
+    {file = "art-6.3.tar.gz", hash = "sha256:0fbc28864583ba54bcdc17ec24ef6c51a1fc81729a5c68d9b38658bc0afbc598"},
+]
+
+[package.extras]
+dev = ["bandit (>=1.5.1)", "coverage (>=4.1)", "pydocstyle (>=3.0.0)", "vulture (>=1.0)"]
+
+[[package]]
 name = "blessed"
 version = "1.20.0"
 description = "Easy, practical library for making terminal apps, by providing an elegant, well-documented interface to Colors, Keyboard input, and screen Positioning capabilities."
@@ -212,6 +226,17 @@ files = [
 ]
 
 [[package]]
+name = "toml"
+version = "0.10.2"
+description = "Python Library for Tom's Obvious, Minimal Language"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+files = [
+    {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
+    {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
+]
+
+[[package]]
 name = "typer"
 version = "0.12.5"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
@@ -264,4 +289,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "3e8a24fe0dfb0df7ec1f53a979aeb4b10deabeb1b017d6161b2a7f0828bd4c12"
+content-hash = "b7922c544ca813797f163222944858723725af07dc840e43890afacf3a7d5c24"
