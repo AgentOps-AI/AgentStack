@@ -1,5 +1,6 @@
 import json
 import sys
+from datetime import datetime
 
 from art import text2art
 import inquirer
@@ -104,8 +105,15 @@ def ask_project_details():
         inquirer.Text("version", message="What's the initial version", default="0.1.0"),
         inquirer.Text("description", message="Enter a description for your project"),
         inquirer.Text("author", message="Who's the author (your name)?"),
-        inquirer.Text(
-            "license", message="License (e.g. MIT, Apache, GPL)", default="MIT"
+        inquirer.List(
+            "license",
+            message="License?",
+            choices=[
+                "MIT",
+                "Apache-2.0",
+                "GPL",
+                "other",
+            ],
         ),
     ]
 
@@ -113,36 +121,7 @@ def ask_project_details():
 
 
 def create_project(answers, directory: str):
-    # Create project folder structure
-    try:
-        if directory[-1] != ".":
-            os.makedirs(directory, exist_ok=False)
-    except FileExistsError:
-        print(
-            f"Another project exists at this directory. Maybe try: agentstack init <directory>"
-        )
-    except:
-        print(
-            f"Could not create project directory {directory}. Does the project already exist?"
-        )
-
-    with open(f"{directory}/pyproject.toml", "w") as f:
-        f.write(
-            f"""
-[tool.poetry]
-name = "{answers['name']}"
-version = "{answers['version']}"
-description = "{answers['description']}"
-authors = ["{answers['author']}"]
-license = "{answers['license']}"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-agentops = "^0.3.12"
-"""
-        )
-        # for dep in dependencies:
-        #     f.write(f"{dep} = \"*\"\n")
+    pass
 
 
 def init_git(directory: str):
@@ -164,6 +143,8 @@ def insert_template(project_details: dict, stack: dict):
         "author_name": project_details["author"],
         "version": project_details["version"],
         "license": project_details["license"],
+        "year": datetime.now().year,
+        "framework": framework,
     }
 
     with open(f"templates/{framework}/cookiecutter.json", "w") as json_file:

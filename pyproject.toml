@@ -1,11 +1,14 @@
-
 [tool.poetry]
-name = "ex"
+name = "agentstack"
 version = "0.1.0"
-description = "d"
-authors = ["d"]
-license = "MITd"
+description = "The fastest way to build robust AI agents"
+authors = ["Braelyn Boynton <bboynton97@gmail.com>"]
+license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-agentops = "^0.3.12"
+typer = "^0.12.5"
+inquirer = "^3.4.0"
+art = "^6.3"
+toml = "^0.10.2"

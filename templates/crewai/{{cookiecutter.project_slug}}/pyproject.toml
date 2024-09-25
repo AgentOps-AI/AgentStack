@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "{{cookiecutter.project_name}}"
+version = "{answers['version']}"
+description = "{answers['description']}"
+authors = ["{answers['author']}"]
+license = "{answers['license']}"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+agentops = "^0.3.12"
+{%- if cookiecutter.framework == "crewai" %}
+crewai = "^0.63.6"
+{%- endif %}
