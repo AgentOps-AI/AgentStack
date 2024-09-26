@@ -14,8 +14,6 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     init_parser = subparsers.add_parser('init', help='Initialize a directory for the project')
-    init_parser.add_argument('directory', nargs='?', default='.',
-                             help='Directory to initialize (default: ./)')
 
     # Parse arguments
     args = parser.parse_args()
@@ -26,7 +24,7 @@ def main():
 
     # Command logic
     if args.command == "init":
-        init_project_builder(args.directory)
+        init_project_builder()
     else:
         parser.print_help()
 

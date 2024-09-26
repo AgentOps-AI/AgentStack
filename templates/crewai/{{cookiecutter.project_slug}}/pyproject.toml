@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "{{cookiecutter.project_name}}"
-version = "{answers['version']}"
-description = "{answers['description']}"
-authors = ["{answers['author']}"]
-license = "{answers['license']}"
+version = "{{cookiecutter.version}}"
+description = "{{cookiecutter.description}}"
+authors = ["{{cookiecutter.author_name}}"]
+license = "{{cookiecutter.license}}"
 
 [tool.poetry.dependencies]
 python = "^3.11"

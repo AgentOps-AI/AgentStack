@@ -9,16 +9,15 @@ import webbrowser
 import subprocess
 
 
-def init_project_builder(directory: str):
+def init_project_builder():
     welcome_message()
     project_details = ask_project_details()
 
-    create_project(project_details, directory)
+    create_project(project_details)
 
     welcome_message()
     stack = ask_stack()
     insert_template(project_details, stack)
-    init_git(directory)
 
 
 def welcome_message():
@@ -120,17 +119,19 @@ def ask_project_details():
     return inquirer.prompt(questions)
 
 
-def create_project(answers, directory: str):
-    pass
-
-
-def init_git(directory: str):
-    # script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    # shutil.copy2(
-    #     os.path.join(script_dir, "template/gitignore"), f"{directory}/.gitignore"
-    # )
-    pass
-
+def create_project(directory: str):
+    # Create project folder structure
+    try:
+        if directory[-1] != ".":
+            os.makedirs(directory, exist_ok=False)
+    except FileExistsError:
+        print(
+            f"Another project exists at this directory. Maybe try: agentstack init <directory>"
+        )
+    except:
+        print(
+            f"Could not create project directory {directory}. Does the project already exist?"
+        )
 
 def insert_template(project_details: dict, stack: dict):
     framework = stack["framework"].lower()
@@ -153,6 +154,18 @@ def insert_template(project_details: dict, stack: dict):
     current_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
     relative_path = os.path.relpath(current_dir, os.getcwd())
     project_path = relative_path + "/" + slug
+
+    # try:
+    #     os.makedirs(project_path, exist_ok=False)
+    # except FileExistsError:
+    #     print(
+    #         f"Another project exists at this directory. Maybe try: agentstack init <directory>"
+    #     )
+    # except:
+    #     print(
+    #         f"Could not create project directory {project_path}. Does the project already exist?"
+    #     )
+
     os.system(f"cookiecutter {relative_path}/templates/{framework} --no-input")
 
     subprocess.check_output(["git", "init"], cwd=project_path)
