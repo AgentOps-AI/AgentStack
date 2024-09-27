@@ -1,5 +1,6 @@
 import json
 import sys
+import time
 from datetime import datetime
 
 from art import text2art
@@ -19,7 +20,8 @@ def init_project_builder():
 
     welcome_message()
     stack = ask_stack()
-    insert_template(project_details, stack)
+    design = ask_design()
+    insert_template(project_details, stack, design)
 
 
 def welcome_message():
@@ -100,6 +102,96 @@ def ask_stack():
     return {**framework, **browsing_tools, **rag_tools}
 
 
+def ask_design() -> dict:
+    use_wizard = inquirer.prompt(
+        [
+            inquirer.Confirm(
+                "use_wizard",
+                message="Would you like to use the CLI wizard to set up agents and tasks?",
+            )
+        ]
+    )
+
+    if use_wizard['use_wizard']:
+        os.system("cls" if os.name == "nt" else "clear")
+
+        title = text2art("AgentWizard", font="shimrod")
+
+        print(title)
+
+        print("""
+🪄 welcome to the agent builder wizard!! 🪄
+
+First we need to create the agents that will work together to accomplish tasks:
+        """)
+        make_agent = True
+        agents = []
+        while make_agent:
+            print('---')
+            print(f"Agent #{len(agents)+1}")
+            agent = inquirer.prompt([
+                inquirer.Text("name", message="What's the name of this agent?"),
+                inquirer.Text("role", message="What role does this agent have?"),
+                inquirer.Text("goal", message="What is the goal of the agent?"),
+                inquirer.Text("backstory", message="Give your agent a backstory"),
+                # TODO: make a list
+                inquirer.Text('model', message="What LLM should this agent use? (any LiteLLM provider)", default="openai/gpt-4"),
+                # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
+                #     'mixtral_llm',
+                #     'mixtral_llm',
+                # ]),
+                inquirer.Confirm(
+                    "another",
+                    message="Create another agent?"
+                ),
+            ])
+
+            make_agent = agent['another']
+            agents.append(agent)
+
+        print('')
+        for x in range(3):
+            time.sleep(0.3)
+            print('.')
+        print('Boom! We made some agents (ﾉ>ω<)ﾉ :｡･:*:･ﾟ’★,｡･:*:･ﾟ’☆')
+        time.sleep(0.5)
+        print('')
+        print('Now lets make some tasks for the agents to accomplish!')
+        print('')
+
+        make_task = True
+        tasks = []
+        while make_task:
+            print('---')
+            print(f"Task #{len(tasks) + 1}")
+            task = inquirer.prompt([
+                inquirer.Text("name", message="What's the name of this task?"),
+                inquirer.Text("description", message="Describe the task in more detail"),
+                inquirer.Text("expected_output",
+                              message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)"),
+                inquirer.List("agent", message="Which agent should be assigned this task?",
+                              choices=[a['name'] for a in agents], ),
+                inquirer.Confirm(
+                    "another",
+                    message="Create another task?"
+                ),
+            ])
+
+            make_task = task['another']
+            tasks.append(task)
+
+        print('')
+        for x in range(3):
+            time.sleep(0.3)
+            print('.')
+        print('Let there be tasks (ノ ˘_˘)ノ　ζ|||ζ　ζ|||ζ　ζ|||ζ')
+
+        print(tasks)
+        print(agents)
+
+        return {'tasks': tasks, 'agents': agents}
+
+
 def ask_project_details():
     questions = [
         inquirer.Text("name", message="What's the name of your project"),
@@ -136,7 +228,7 @@ def create_project(directory: str):
         )
 
 
-def insert_template(project_details: dict, stack: dict):
+def insert_template(project_details: dict, stack: dict, design: dict):
     framework = FrameworkData(stack["framework"].lower())
     project_metadata = ProjectMetadata(project_name=project_details["name"],
                                        description=project_details["description"],
@@ -146,6 +238,8 @@ def insert_template(project_details: dict, stack: dict):
                                        year=datetime.now().year)
 
     project_structure = ProjectStructure()
+    project_structure.agents = design["agents"]
+    project_structure.tasks = design["tasks"]
 
     cookiecutter_data = CookiecutterData(project_metadata=project_metadata,
                                          structure=project_structure,

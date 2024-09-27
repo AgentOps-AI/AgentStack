@@ -1,27 +1,24 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
-
+# TODO: capitalize the first letter of the proj name
 @CrewBase
 class {{cookiecutter.project_metadata.project_name}}Crew():
 	"""{{cookiecutter.project_metadata.project_name}} crew"""
 
 	# Agent definitions
-	{%- if cookiecutter.structure.agents and cookiecutter.structure.agents | length > 0 %}
 	{%- for agent in cookiecutter.structure.agents %}
-
 	@agent
 	def {{agent.name}}(self) -> Agent:
-	return Agent(
-		config=self.agents_config['{{ agent.name }}'],
-		# tools=[MyCustomTool()], # Example of custom tool, loaded on the beginning of file
-		verbose=True
-	)
+		return Agent(
+			config=self.agents_config['{{ agent.name }}'],
+			# tools=[MyCustomTool()], # Example of custom tool, loaded on the beginning of file
+			verbose=True
+		)
 	{%- endfor %}
-	{%- endif %}
 
 	# Task definitions
-	{%- for tasks in cookiecutter.structure.tasks %}
+	{%- for task in cookiecutter.structure.tasks %}
 	@task
 	def {{task.name}}(self) -> Task:
 		return Task(
