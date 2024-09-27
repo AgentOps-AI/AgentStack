@@ -1,7 +1,7 @@
-{%- if cookiecutter.license == "MIT" %}
+{%- if cookiecutter.project_metadata.license == "MIT" %}
 MIT License
 
-Copyright (c) {{ cookiecutter.year }} {{ cookiecutter.author_name }}
+Copyright (c) {{ cookiecutter.project_metadata.year }} {{ cookiecutter.project_metadata.author_name }}
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -11,7 +11,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 {%- endif %}
 
 
-{%- if cookiecutter.license == "Apache-2.0" %}
+{%- if cookiecutter.project_metadata.license == "Apache-2.0" %}
                                Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -200,7 +200,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright {{ cookiecutter.year }} {{ cookiecutter.author_name }}
+   Copyright {{ cookiecutter.project_metadata.year }} {{ cookiecutter.project_metadata.author_name }}
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -215,7 +215,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
    limitations under the License.
 {%- endif %}
 
-{%- if cookiecutter.license == "GNU" %}
+{%- if cookiecutter.project_metadata.license == "GNU" %}
 GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 

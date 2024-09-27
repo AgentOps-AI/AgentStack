@@ -8,6 +8,8 @@ import os
 import webbrowser
 import subprocess
 
+from cli.agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
+
 
 def init_project_builder():
     welcome_message()
@@ -133,40 +135,30 @@ def create_project(directory: str):
             f"Could not create project directory {directory}. Does the project already exist?"
         )
 
+
 def insert_template(project_details: dict, stack: dict):
-    framework = stack["framework"].lower()
-    slug = project_details["name"].lower().replace(" ", "_").replace("-", "_")
+    framework = FrameworkData(stack["framework"].lower())
+    project_metadata = ProjectMetadata(project_name=project_details["name"],
+                                       description=project_details["description"],
+                                       author_name=project_details["author"],
+                                       version=project_details["version"],
+                                       license=project_details["license"],
+                                       year=datetime.now().year)
 
-    variables = {
-        "project_name": project_details["name"],
-        "project_slug": slug,
-        "description": project_details["description"],
-        "author_name": project_details["author"],
-        "version": project_details["version"],
-        "license": project_details["license"],
-        "year": datetime.now().year,
-        "framework": framework,
-    }
+    project_structure = ProjectStructure()
 
-    with open(f"templates/{framework}/cookiecutter.json", "w") as json_file:
-        json.dump(variables, json_file)
+    cookiecutter_data = CookiecutterData(project_metadata=project_metadata,
+                                         structure=project_structure,
+                                         framework=stack["framework"].lower())
+
+    with open(f"templates/{framework.name}/cookiecutter.json", "w") as json_file:
+        json.dump(cookiecutter_data.to_dict(), json_file)
 
     current_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
     relative_path = os.path.relpath(current_dir, os.getcwd())
-    project_path = relative_path + "/" + slug
+    project_path = relative_path + "/" + cookiecutter_data.project_metadata.project_slug
 
-    # try:
-    #     os.makedirs(project_path, exist_ok=False)
-    # except FileExistsError:
-    #     print(
-    #         f"Another project exists at this directory. Maybe try: agentstack init <directory>"
-    #     )
-    # except:
-    #     print(
-    #         f"Could not create project directory {project_path}. Does the project already exist?"
-    #     )
-
-    os.system(f"cookiecutter {relative_path}/templates/{framework} --no-input")
+    os.system(f"cookiecutter {relative_path}/templates/{framework.name} --no-input")
 
     subprocess.check_output(["git", "init"], cwd=project_path)
     subprocess.check_output(["git", "add", "."], cwd=project_path)
