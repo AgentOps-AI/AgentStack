@@ -112,84 +112,89 @@ def ask_design() -> dict:
         ]
     )
 
-    if use_wizard['use_wizard']:
-        os.system("cls" if os.name == "nt" else "clear")
+    if not use_wizard['use_wizard']:
+        return {
+            'agents': [],
+            'tasks': []
+        }
 
-        title = text2art("AgentWizard", font="shimrod")
+    os.system("cls" if os.name == "nt" else "clear")
 
-        print(title)
+    title = text2art("AgentWizard", font="shimrod")
 
-        print("""
+    print(title)
+
+    print("""
 🪄 welcome to the agent builder wizard!! 🪄
 
 First we need to create the agents that will work together to accomplish tasks:
-        """)
-        make_agent = True
-        agents = []
-        while make_agent:
-            print('---')
-            print(f"Agent #{len(agents)+1}")
-            agent = inquirer.prompt([
-                inquirer.Text("name", message="What's the name of this agent?"),
-                inquirer.Text("role", message="What role does this agent have?"),
-                inquirer.Text("goal", message="What is the goal of the agent?"),
-                inquirer.Text("backstory", message="Give your agent a backstory"),
-                # TODO: make a list
-                inquirer.Text('model', message="What LLM should this agent use? (any LiteLLM provider)", default="openai/gpt-4"),
-                # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
-                #     'mixtral_llm',
-                #     'mixtral_llm',
-                # ]),
-                inquirer.Confirm(
-                    "another",
-                    message="Create another agent?"
-                ),
-            ])
+    """)
+    make_agent = True
+    agents = []
+    while make_agent:
+        print('---')
+        print(f"Agent #{len(agents)+1}")
+        agent = inquirer.prompt([
+            inquirer.Text("name", message="What's the name of this agent?"),
+            inquirer.Text("role", message="What role does this agent have?"),
+            inquirer.Text("goal", message="What is the goal of the agent?"),
+            inquirer.Text("backstory", message="Give your agent a backstory"),
+            # TODO: make a list
+            inquirer.Text('model', message="What LLM should this agent use? (any LiteLLM provider)", default="openai/gpt-4"),
+            # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
+            #     'mixtral_llm',
+            #     'mixtral_llm',
+            # ]),
+            inquirer.Confirm(
+                "another",
+                message="Create another agent?"
+            ),
+        ])
 
-            make_agent = agent['another']
-            agents.append(agent)
+        make_agent = agent['another']
+        agents.append(agent)
 
-        print('')
-        for x in range(3):
-            time.sleep(0.3)
-            print('.')
-        print('Boom! We made some agents (ﾉ>ω<)ﾉ :｡･:*:･ﾟ’★,｡･:*:･ﾟ’☆')
-        time.sleep(0.5)
-        print('')
-        print('Now lets make some tasks for the agents to accomplish!')
-        print('')
+    print('')
+    for x in range(3):
+        time.sleep(0.3)
+        print('.')
+    print('Boom! We made some agents (ﾉ>ω<)ﾉ :｡･:*:･ﾟ’★,｡･:*:･ﾟ’☆')
+    time.sleep(0.5)
+    print('')
+    print('Now lets make some tasks for the agents to accomplish!')
+    print('')
 
-        make_task = True
-        tasks = []
-        while make_task:
-            print('---')
-            print(f"Task #{len(tasks) + 1}")
-            task = inquirer.prompt([
-                inquirer.Text("name", message="What's the name of this task?"),
-                inquirer.Text("description", message="Describe the task in more detail"),
-                inquirer.Text("expected_output",
-                              message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)"),
-                inquirer.List("agent", message="Which agent should be assigned this task?",
-                              choices=[a['name'] for a in agents], ),
-                inquirer.Confirm(
-                    "another",
-                    message="Create another task?"
-                ),
-            ])
+    make_task = True
+    tasks = []
+    while make_task:
+        print('---')
+        print(f"Task #{len(tasks) + 1}")
+        task = inquirer.prompt([
+            inquirer.Text("name", message="What's the name of this task?"),
+            inquirer.Text("description", message="Describe the task in more detail"),
+            inquirer.Text("expected_output",
+                          message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)"),
+            inquirer.List("agent", message="Which agent should be assigned this task?",
+                          choices=[a['name'] for a in agents], ),
+            inquirer.Confirm(
+                "another",
+                message="Create another task?"
+            ),
+        ])
 
-            make_task = task['another']
-            tasks.append(task)
+        make_task = task['another']
+        tasks.append(task)
 
-        print('')
-        for x in range(3):
-            time.sleep(0.3)
-            print('.')
-        print('Let there be tasks (ノ ˘_˘)ノ　ζ|||ζ　ζ|||ζ　ζ|||ζ')
+    print('')
+    for x in range(3):
+        time.sleep(0.3)
+        print('.')
+    print('Let there be tasks (ノ ˘_˘)ノ　ζ|||ζ　ζ|||ζ　ζ|||ζ')
 
-        print(tasks)
-        print(agents)
+    print(tasks)
+    print(agents)
 
-        return {'tasks': tasks, 'agents': agents}
+    return {'tasks': tasks, 'agents': agents}
 
 
 def ask_project_details():
