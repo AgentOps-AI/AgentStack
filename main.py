@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from cli import init_project_builder
+from cli.cli import list_tools
 from utils import get_version
 
 def main():
@@ -85,10 +86,7 @@ def main():
             generate_parser.print_help()
     elif args.command in ['tools', 't']:
         if args.tools_command in ['list', 'l']:
-            # Implement the logic for listing tools
-            print("Listing tools...")
-            # Example function call:
-            # list_tools()
+            list_tools()
         elif args.tools_command in ['add', 'a']:
             # Implement the logic for adding a tool
             print(f"Adding tool: {args.name}")

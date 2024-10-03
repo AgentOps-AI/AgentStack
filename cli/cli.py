@@ -261,3 +261,30 @@ def insert_template(project_details: dict, stack: dict, design: dict):
 
     subprocess.check_output(["git", "init"], cwd=project_path)
     subprocess.check_output(["git", "add", "."], cwd=project_path)
+
+
+def list_tools():
+    try:
+        # Determine the path to the tools.json file
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        tools_json_path = os.path.join(script_dir, '..', 'tools', 'tools.json')
+
+        # Load the JSON data
+        with open(tools_json_path, 'r') as f:
+            tools_data = json.load(f)
+
+        # Display the tools
+        print("\n\nAvailable AgentStack Tools:")
+        for category, tools in tools_data.items():
+            print(f"\n{category.capitalize()}:")
+            for tool in tools:
+                print(f"  - {tool['name']}: {tool['url']}")
+
+        print("\n\n❇️ Add a tool with: agentstack tools add <tool_name>")
+
+    except FileNotFoundError:
+        print("Error: tools.json file not found at path:", tools_json_path)
+    except json.JSONDecodeError:
+        print("Error: tools.json contains invalid JSON.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
