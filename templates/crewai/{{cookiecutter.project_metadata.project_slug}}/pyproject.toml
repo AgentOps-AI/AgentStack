@@ -10,4 +10,5 @@ python = "^3.11"
 agentops = "^0.3.12"
 {%- if cookiecutter.framework == "crewai" %}
 crewai = "^0.63.6"
+'crewai[tools]' = "0.12.1"
 {%- endif %}
