@@ -4,6 +4,7 @@ import sys
 from cli import init_project_builder
 from cli.cli import list_tools
 from utils import get_version
+import generation
 
 def main():
     parser = argparse.ArgumentParser(
@@ -62,20 +63,12 @@ def main():
 
     # Handle commands
     if args.command in ['init', 'i']:
-        # Call the init_project_builder function from cli module
         init_project_builder()
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
-            # Implement the logic for generating an agent
-            print(f"Generating agent: {args.name}")
-            print(f"Role: {args.role}")
-            print(f"Goal: {args.goal}")
-            print(f"Backstory: {args.backstory}")
-            print(f"LLM: {args.llm}")
-            # Example function call:
-            # generate_agent(args)
+            generation.generate_agent(args.name, args.role, args.goal, args.backstory, args.llm)
         elif args.generate_command in ['task', 't']:
-            # Implement the logic for generating a task
+            # TODO: Implement the logic for generating a task
             print(f"Generating task: {args.name}")
             print(f"Description: {args.description}")
             print(f"Expected Output: {args.expected_output}")
@@ -88,7 +81,7 @@ def main():
         if args.tools_command in ['list', 'l']:
             list_tools()
         elif args.tools_command in ['add', 'a']:
-            # Implement the logic for adding a tool
+            # TODO: Implement the logic for adding a tool
             print(f"Adding tool: {args.name}")
             # Example function call:
             # add_tool(args.name)
