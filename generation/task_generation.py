@@ -1,4 +1,6 @@
 from typing import Optional
+
+from generation.gen_utils import insert_code_after_tag
 from utils import verify_agentstack_project, get_framework
 import os
 from ruamel.yaml import YAML
@@ -24,6 +26,7 @@ def generate_task(
 
     if framework == 'crewai':
         generate_crew_task(name, description, expected_output, agent)
+        print("    > Added to src/config/tasks.yaml")
     else:
         print(f"This function is not yet implemented for {framework}")
         return
@@ -71,3 +74,17 @@ def generate_crew_task(
     # Write back to the file without altering existing content
     with open(config_path, 'w') as file:
         yaml.dump(data, file)
+
+    # Add task to crew.py
+    file_path = 'src/crew.py'
+    tag = '# Task definitions'
+    code_to_insert = [
+        "@task",
+        f"def {name}(self) -> Task:",
+        "    return Task(",
+        f"        config=self.tasks_config['{name}'],",
+        "    )",
+        ""
+    ]
+
+    insert_code_after_tag(file_path, tag, code_to_insert)
