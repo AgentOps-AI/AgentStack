@@ -31,7 +31,10 @@ def generate_agent(
         print(f"This function is not yet implemented for {framework}")
         return
 
-    print(f"Added agent {name} to your AgentStack project successfully!")
+    print(f"Added agent \"{name}\" to your AgentStack project successfully!")
+
+
+
 
 
 def generate_crew_agent(

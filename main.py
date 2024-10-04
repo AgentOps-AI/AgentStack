@@ -68,13 +68,7 @@ def main():
         if args.generate_command in ['agent', 'a']:
             generation.generate_agent(args.name, args.role, args.goal, args.backstory, args.llm)
         elif args.generate_command in ['task', 't']:
-            # TODO: Implement the logic for generating a task
-            print(f"Generating task: {args.name}")
-            print(f"Description: {args.description}")
-            print(f"Expected Output: {args.expected_output}")
-            print(f"Agent: {args.agent}")
-            # Example function call:
-            # generate_task(args)
+            generation.generate_task(args.name, args.description, args.expected_output, args.agent)
         else:
             generate_parser.print_help()
     elif args.command in ['tools', 't']:
