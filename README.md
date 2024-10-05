@@ -35,6 +35,17 @@ To start your first AgentStack project, run
 agentstack init
 ```
 
+## CLI
+The power of AgentStack comes from its CLI ([view docs]())
+
+```text
+agentstack  i/nit
+            g/enerate  a/gent  <name>
+                       t/ask   <name>
+            t/ools     l/ist
+                       a/dd    <name>
+```
+
 ## Tools
 The power of AgentStack is the ability to quickly add tools to your agents. 
 
@@ -50,8 +61,6 @@ Add tools with the CLI:
 ```bash
 agentstack generate tool <tool_name>
 ```
-
-[CLI Docs]()
 
 ## Models
 Any model supported by [LiteLLM](https://docs.litellm.ai/docs/providers) is supported by AgentStack frameworks

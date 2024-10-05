@@ -75,14 +75,12 @@ def main():
         if args.tools_command in ['list', 'l']:
             list_tools()
         elif args.tools_command in ['add', 'a']:
-            # TODO: Implement the logic for adding a tool
-            print(f"Adding tool: {args.name}")
-            # Example function call:
-            # add_tool(args.name)
+            generation.add_tool(args.name)
         else:
             tools_parser.print_help()
     else:
         parser.print_help()
+
 
 if __name__ == '__main__':
     try:

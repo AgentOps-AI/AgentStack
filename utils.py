@@ -2,8 +2,7 @@ import toml
 import os
 import sys
 import json
-
-from ruamel.yaml.scalarstring import FoldedScalarString
+import re
 
 
 def get_version():
@@ -36,3 +35,19 @@ def get_framework() -> str:
     except FileNotFoundError:
         print("\033[31mFile agentstack.json does not exist.\033[0m")
         sys.exit(1)
+
+
+def camel_to_snake(name):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
+def snake_to_camel(s):
+    return ''.join(word.title() for word in s.split('_'))
+
+
+def open_json_file(path):
+    with open(path, 'r') as f:
+        data = json.load(f)
+    return data
+

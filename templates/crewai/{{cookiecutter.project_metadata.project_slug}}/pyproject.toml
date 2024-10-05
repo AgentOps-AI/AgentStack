@@ -6,7 +6,7 @@ authors = ["{{cookiecutter.project_metadata.author_name}}"]
 license = "{{cookiecutter.project_metadata.license}}"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.10,<=3.13"
 agentops = "^0.3.12"
 {%- if cookiecutter.framework == "crewai" %}
 crewai = "^0.63.6"

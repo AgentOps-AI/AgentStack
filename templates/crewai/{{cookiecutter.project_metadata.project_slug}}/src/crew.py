@@ -12,7 +12,7 @@ class {{cookiecutter.project_metadata.project_name}}Crew():
 	def {{agent.name}}(self) -> Agent:
 		return Agent(
 			config=self.agents_config['{{ agent.name }}'],
-			# tools=[MyCustomTool()], # Example of custom tool, loaded on the beginning of file
+			# tools=[MyCustomTool()], # Pass in what tools this agent should have
 			verbose=True
 		)
 	{%- endfor %}
