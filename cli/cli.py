@@ -59,6 +59,18 @@ def ask_stack():
             ]
         )
 
+    if framework["framework"] in ['Autogen', 'LiteLLM']:
+        print(f"{framework['framework']} support coming soon!!")
+        framework = inquirer.prompt(
+            [
+                inquirer.List(
+                    "framework",
+                    message="What agent framework do you want to use?",
+                    choices=["CrewAI", "Autogen", "LiteLLM"],
+                )
+            ]
+        )
+
     use_tools = inquirer.prompt(
         [
             inquirer.Confirm(

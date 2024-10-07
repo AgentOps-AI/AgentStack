@@ -6,6 +6,7 @@ from cli.cli import list_tools
 from utils import get_version
 import generation
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="AgentStack CLI - The easiest way to build an agent application"
