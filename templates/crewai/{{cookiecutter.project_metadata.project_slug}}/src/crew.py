@@ -1,9 +1,8 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
-# TODO: capitalize the first letter of the proj name
 @CrewBase
-class {{cookiecutter.project_metadata.project_name}}Crew():
+class {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew():
 	"""{{cookiecutter.project_metadata.project_name}} crew"""
 
 	# Agent definitions

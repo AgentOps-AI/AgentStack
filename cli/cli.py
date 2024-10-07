@@ -80,6 +80,7 @@ def ask_stack():
         ]
     )
 
+    # TODO: dynamically load tools #4
     browsing_tools = {}
     rag_tools = {}
     if use_tools["use_tools"]:
@@ -151,7 +152,7 @@ First we need to create the agents that will work together to accomplish tasks:
             inquirer.Text("role", message="What role does this agent have?"),
             inquirer.Text("goal", message="What is the goal of the agent?"),
             inquirer.Text("backstory", message="Give your agent a backstory"),
-            # TODO: make a list
+            # TODO: make a list #2
             inquirer.Text('model', message="What LLM should this agent use? (any LiteLLM provider)", default="openai/gpt-4"),
             # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
             #     'mixtral_llm',
