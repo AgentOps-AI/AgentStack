@@ -1,8 +1,8 @@
 # AgentStack [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-<img alt="Logo" align="right" src="assets/agentopslogo.png" width="20%" />
+<img alt="Logo" align="right" src="logo.svg" width="20%" />
 
-Create AI agent projects with no build configuration.
+Create AI agent projects from the command line.
 
 - [Creating an Agent Project](#creating-an-agent-project) – How to create a new agent project.
 - [User Guide](https://docs.agentops.ai) – How to develop agent projects bootstrapped with AgentStack.
@@ -10,6 +10,7 @@ Create AI agent projects with no build configuration.
 AgentStack works on macOS, Windows, and Linux.<br>
 If something doesn't work, please [file an issue](https://github.com/agentops-ai/agentops/issues/new).<br>
 If you have questions or need help, please ask in our [Discord community](https://discord.gg/a4VQ23Aps5).
+
 
 ## Quick Overview
 
@@ -20,11 +21,9 @@ cd my-agent-project
 python main.py
 ```
 
-Then open [http://localhost:3000/](http://localhost:3000/) to see your agent project.<br>
-When you're ready to deploy to production, create a production-ready version with `python build.py`.
 
 <p align='center'>
-<img src='assets/screenshot.png' width='600' alt='agentstack init'>
+<img src='stack.png' width='600' alt='agentstack init'>
 </p>
 
 ### Get Started Immediately
@@ -72,38 +71,14 @@ Inside the newly created project, you can run some built-in commands:
 ### `python main.py`
 
 Runs the agent project in development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will automatically reload if you make changes to the code.<br>
-You will see the build errors and lint warnings in the console.
-
-### `python test.py`
-
-Runs the test suite in an interactive mode.<br>
-By default, runs tests related to files changed since the last commit.
-
-### `python build.py`
-
-Builds the agent project for production to the `build` folder.<br>
-It correctly bundles the project in production mode and optimizes the build for the best performance.
-
-Your agent project is ready to be deployed.
-
-## User Guide
-
-You can find detailed instructions on using AgentStack and many tips in [its documentation](https://docs.agentops.ai).
-
-## How to Update to New Versions?
-
-Please refer to the [User Guide](https://docs.agentops.ai/updating-to-new-releases) for this and other information.
 
 ## Philosophy
 
-- **One Dependency:** There is only one build dependency. It uses popular agent frameworks and LLM providers, but provides a cohesive curated experience on top of them.
+- **Agents should be easy:** There are so many frameworks out there, but starting from scratch is a pain. Similar to Create React App, Agent Stack aims to simplify the "from scratch" process by giving you a simple boilerplate of an agent. It uses popular agent frameworks and LLM providers, but provides a cohesive curated experience on top of them.
 
 - **No Configuration Required:** You don't need to configure anything. A reasonably good configuration of both development and production builds is handled for you so you can focus on writing code.
 
-- **No Lock-In:** You can "eject" to a custom setup at any time. Run a single command, and all the configuration and build dependencies will be moved directly into your project, so you can pick up right where you left off.
+- **No Lock-In:** You can customize your setup at any time. Agent Stack is designed to make it easy to get the components you need running right off the bat; it's up to you what to do next.
 
 ## What's Included?
 
@@ -116,10 +91,6 @@ Your environment will have everything you need to build a modern AI agent projec
 - A build script to bundle your project for production.
 - Integration with [AgentOps](https://agentops.ai) for AI agent observability.
 - Hassle-free updates for the above tools with a single dependency.
-
-## Contributing
-
-We'd love to have your helping hand on AgentStack! See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on what we're looking for and how to get started.
 
 ## License
 
