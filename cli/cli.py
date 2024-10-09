@@ -1,4 +1,5 @@
 import json
+import shutil
 import sys
 import time
 from datetime import datetime
@@ -270,10 +271,18 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     relative_path = os.path.relpath(current_dir, os.getcwd())
     project_path = relative_path + "/" + cookiecutter_data.project_metadata.project_slug
 
+    # copy .env.example to .env
+    shutil.copy(
+        f'{relative_path}/templates/{framework.name}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
+        f'{relative_path}/templates/{framework.name}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
     os.system(f"cookiecutter {relative_path}/templates/{framework.name} --no-input")
 
     subprocess.check_output(["git", "init"], cwd=project_path)
     subprocess.check_output(["git", "add", "."], cwd=project_path)
+
+    os.system("poetry install")
+    os.system("cls" if os.name == "nt" else "clear")
+    print("🚀 AgentStack project generated successfully.\nRun `agentstack docs` to get started!")
 
 
 def list_tools():

@@ -1,12 +1,3 @@
-{%- if cookiecutter.structure.tasks|length == 0 %}
-default_task:
-  description: >
-    Add your task description
-  expected_output: >
-    Add an expected output
-  agent: default_agent
-{%- endif %}
-
 {%- for task in cookiecutter.structure.tasks %}
 {{task.name}}:
   description: >

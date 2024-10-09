@@ -1,4 +1,7 @@
-def insert_code_after_tag(file_path, tag, code_to_insert):
+def insert_code_after_tag(file_path, tag, code_to_insert, next_line=False):
+    if next_line:
+        code_to_insert = ['\n'] + code_to_insert
+
     with open(file_path, 'r') as file:
         lines = file.readlines()
 

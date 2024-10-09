@@ -1,14 +1,3 @@
-{%- if cookiecutter.structure.agents|length == 0 %}
-default_agent:
-    role: >
-      give her a role
-    goal: >
-      add your goals
-    backstory: >
-      edit this backstory
-    llm: openai/gpt-4
-{%- endif %}
-
 {%- for agent in cookiecutter.structure.agents %}
 {{agent.name}}:
     role: >

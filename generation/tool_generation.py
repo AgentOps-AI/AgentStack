@@ -19,8 +19,8 @@ def add_tool(tool_name: str):
     shutil.copy(tool_file_route, f'src/tools/{tool_name}.py')  # Move tool from package to project
     add_tool_to_tools_init(tool_name)  # Export tool from tools dir
     add_tool_to_agent_definition(framework, tool_name)
-    insert_code_after_tag('.env', '# Tools', [tool_data['env']])  # Add env var
-    insert_code_after_tag('.env.example', '# Tools', [tool_data['env']])  # Add env var
+    insert_code_after_tag('.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
+    insert_code_after_tag('.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
 
 
 def add_tool_to_tools_init(tool_name: str):
