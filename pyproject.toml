@@ -1,10 +1,20 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
 name = "agentstack"
-version = "0.1.0"
+version = "0.0.1"
 description = "The fastest way to build robust AI agents"
-authors = ["Braelyn Boynton <bboynton97@gmail.com>"]
-license = "MIT"
+authors = [
+    { name="Braelyn Boynton", email="bboynton97@gmail.com" }
+]
+license = { text = "MIT" }
 readme = "README.md"
+requires-python = ">=3.11"
+
+[project.urls]
+"Homepage" = "https://your-repo-url"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -13,3 +23,6 @@ inquirer = "^3.4.0"
 art = "^6.3"
 toml = "^0.10.2"
 ruamel-yaml-base = "^0.3.2"
+
+[project.scripts]
+agentstack = "agentstack.main:main"
