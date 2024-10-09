@@ -1,74 +1,97 @@
-```text
-    ___       ___       ___       ___       ___       ___       ___       ___       ___       ___   
-   /\  \     /\  \     /\  \     /\__\     /\  \     /\  \     /\  \     /\  \     /\  \     /\__\  
-  /::\  \   /::\  \   /::\  \   /:| _|_    \:\  \   /::\  \    \:\  \   /::\  \   /::\  \   /:/ _/_ 
- /::\:\__\ /:/\:\__\ /::\:\__\ /::|/\__\   /::\__\ /\:\:\__\   /::\__\ /::\:\__\ /:/\:\__\ /::-"\__\
- \/\::/  / \:\:\/__/ \:\:\/  / \/|::/  /  /:/\/__/ \:\:\/__/  /:/\/__/ \/\::/  / \:\ \/__/ \;:;-",-"
-   /:/  /   \::/  /   \:\/  /    |:/  /   \/__/     \::/  /   \/__/      /:/  /   \:\__\    |:|  |  
-   \/__/     \/__/     \/__/     \/__/               \/__/               \/__/     \/__/     \|__|  
-```
+# AgentStack [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The quickest way to build robust agent projects.
+<img alt="Logo" align="right" src="logo.svg" width="20%" />
 
----
+Create AI agent projects from the command line.
 
-AgentStack is a Python package designed to quickly scaffold AI agent projects, similar to how `create-react-app` scaffolds React applications. With AgentStack, you can easily set up, develop, and deploy AI agents using popular frameworks, tools, and LLM providers.
+- [Creating an Agent Project](#creating-an-agent-project) – How to create a new agent project.
+- [User Guide](https://docs.agentops.ai) – How to develop agent projects bootstrapped with AgentStack.
 
-## Features
+AgentStack works on macOS, Windows, and Linux.<br>
+If something doesn't work, please [file an issue](https://github.com/agentops-ai/agentops/issues/new).<br>
+If you have questions or need help, please ask in our [Discord community](https://discord.gg/a4VQ23Aps5).
 
-- **Quick Setup**: Scaffold AI agent-based applications in seconds.
-- **Framework Flexibility**: Supports a variety of agent and LLM frameworks.
-- **Extensible**: Add your own configurations, models, and workflows.
-- **Easy Integration**: Use our CLI to generate agents, tasks and tools with one command.
 
-## Installation
+## Quick Overview
 
-To install AgentStack, simply run the following:
-
-```bash
+```sh
 pip install agentstack
+agentstack init my-agent-project
+cd my-agent-project
+python main.py
 ```
 
-To start your first AgentStack project, run
 
-```bash
-agentstack init
+<p align='center'>
+<img src='stack.png' width='600' alt='agentstack init'>
+</p>
+
+### Get Started Immediately
+
+You **don't** need to install or configure tools like LangChain or LlamaIndex.<br>
+They are preconfigured and hidden so that you can focus on the code.
+
+Create a project, and you're good to go.
+
+## Creating an Agent Project
+
+**You'll need to have Python 3.10+ on your local development machine** (but it's not required on the server). We recommend using the latest version. You can use [pyenv](https://github.com/pyenv/pyenv) to switch Python versions between different projects.
+
+To create a new agent project, run:
+
+```sh
+pip install agentstack
+agentstack init my-agent-project
 ```
 
-## CLI
-The power of AgentStack comes from its CLI ([view docs]())
+It will create a directory called `my-agent-project` inside the current folder.<br>
+Inside that directory, it will generate the initial project structure and install the transitive dependencies:
 
-```text
-agentstack  i/nit
-            g/enerate  a/gent  <name>
-                       t/ask   <name>
-            t/ools     l/ist
-                       a/dd    <name>
+```
+my-agent-project/
+├── README.md
+├── requirements.txt
+├── .gitignore
+├── main.py
+├── agents/
+│   └── (agent files based on your setup)
+└── tasks/
+    └── (task files based on your setup)
 ```
 
-## Tools
-The power of AgentStack is the ability to quickly add tools to your agents. 
+No configuration or complicated folder structures, only the files you need to build your agent project.<br>
+Once the initialization is done, you can open your project folder:
 
-| **Memory / Storage** | **RAG**         | **Browsing**                             | **Sandboxing**  |
-|----------------------|-----------------|------------------------------------------|-----------------|
-|                      | 🔜 Mem0ai       | 🔜 browserbasehq                         | 🔜 E2b_dev      |
-|                      | 🔜 llama_index  | 🔜 firecrawl                             | 🔜 Browserbase  |
-|                      |                 | 🔜 MultiOn_AI                            |                 |
-|                      |                 | 🔜 Crawl4AI                              |                 |
-|                      |                 | 🔜 [Dendrite](https://dendrite.systems/) |                 |
-
-Add tools with the CLI:
-```bash
-agentstack generate tool <tool_name>
+```sh
+cd my-agent-project
 ```
 
-## Models
-Any model supported by [LiteLLM](https://docs.litellm.ai/docs/providers) is supported by AgentStack frameworks
+Inside the newly created project, you can run some built-in commands:
 
-## Observability
-AI Agent observability is provided by [AgentOps](https://agentops.ai)
+### `python main.py`
 
-AgentOps is baked into AgentStack agents by default. To enable usage, create an AgentOps account and add your API key to the .env file:
-```env
-AGENTOPS_API_KEY=<your_api_key>
-```
+Runs the agent project in development mode.<br>
+
+## Philosophy
+
+- **Agents should be easy:** There are so many frameworks out there, but starting from scratch is a pain. Similar to Create React App, Agent Stack aims to simplify the "from scratch" process by giving you a simple boilerplate of an agent. It uses popular agent frameworks and LLM providers, but provides a cohesive curated experience on top of them.
+
+- **No Configuration Required:** You don't need to configure anything. A reasonably good configuration of both development and production builds is handled for you so you can focus on writing code.
+
+- **No Lock-In:** You can customize your setup at any time. Agent Stack is designed to make it easy to get the components you need running right off the bat; it's up to you what to do next.
+
+## What's Included?
+
+Your environment will have everything you need to build a modern AI agent project:
+
+- Support for popular agent frameworks like CrewAI, Autogen, and LiteLLM.
+- Easy integration of tools for browsing, RAG, and more.
+- A fast interactive test runner with built-in support for coverage reporting.
+- A live development server that warns about common mistakes.
+- A build script to bundle your project for production.
+- Integration with [AgentOps](https://agentops.ai) for AI agent observability.
+- Hassle-free updates for the above tools with a single dependency.
+
+## License
+
+AgentStack is open source software [licensed as MIT](LICENSE).
