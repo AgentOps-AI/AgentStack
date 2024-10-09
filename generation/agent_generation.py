@@ -92,7 +92,7 @@ def generate_crew_agent(
         f"def {name}(self) -> Agent:",
         "    return Agent(",
         f"        config=self.agents_config['{name}'],",
-        "        # tools=[MyCustomTool()], # Example of custom tool, loaded at the beginning of the file",
+        "        tools=[], # add tools here or use `agentstack tools add <tool_name>",
         "        verbose=True",
         "    )",
         ""
