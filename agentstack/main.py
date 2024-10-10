@@ -1,10 +1,9 @@
 import argparse
 import sys
 
-from cli import init_project_builder
-from cli.cli import list_tools
-from utils import get_version
-import generation
+from agentstack.cli import init_project_builder, list_tools
+from .utils import get_version
+import agentstack.generation as generation
 
 
 def main():

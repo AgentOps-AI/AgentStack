@@ -1,6 +1,6 @@
 import sys
-from generation.gen_utils import insert_code_after_tag
-from utils import snake_to_camel, open_json_file, get_framework
+from .gen_utils import insert_code_after_tag
+from ..utils import snake_to_camel, open_json_file, get_framework
 import os
 import shutil
 import fileinput

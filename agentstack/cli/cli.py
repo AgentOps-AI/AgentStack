@@ -10,7 +10,7 @@ import os
 import webbrowser
 import subprocess
 
-from cli.agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
+from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 
 
 def init_project_builder():

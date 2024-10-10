@@ -1,7 +1,7 @@
 from typing import Optional
 
-from generation.gen_utils import insert_code_after_tag
-from utils import verify_agentstack_project, get_framework
+from .gen_utils import insert_code_after_tag
+from agentstack.utils import verify_agentstack_project, get_framework
 import os
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
