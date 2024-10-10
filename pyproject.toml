@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentstack"
-version = "0.0.2"
+version = "0.0.3"
 description = "The fastest way to build robust AI agents"
 authors = [
     { name="Braelyn Boynton", email="bboynton97@gmail.com" }
