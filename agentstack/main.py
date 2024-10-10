@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from agentstack.cli import init_project_builder, list_tools
-from .utils import get_version
+from agentstack.utils import get_version
 import agentstack.generation as generation
 
 
