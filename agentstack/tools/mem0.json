@@ -1,0 +1,5 @@
+{
+  "name": "mem0",
+  "package": "poetry add mem0ai",
+  "env": "NEO4J_URL=...\nNEO4J_USERNAME=...\nNEO4J_PASSWORD=..."
+}
