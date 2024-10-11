@@ -17,12 +17,13 @@ requires-python = ">=3.11"
 "Homepage" = "https://your-repo-url"
 
 [project.dependencies]
-python = "^3.11"
-typer = "^0.12.5"
-inquirer = "^3.4.0"
-art = "^6.3"
-toml = "^0.10.2"
-ruamel-yaml-base = "^0.3.2"
+dependencies = [
+    "typer>=0.12.5",
+    "inquirer>=3.4.0",
+    "art>=6.3",
+    "toml>=0.10.2",
+    "ruamel.yaml.base>=0.3.2"
+]
 
 [project.scripts]
 agentstack = "agentstack.main:main"
