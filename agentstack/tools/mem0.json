@@ -1,5 +1,6 @@
 {
   "name": "mem0",
   "package": "poetry add mem0ai",
-  "env": "NEO4J_URL=...\nNEO4J_USERNAME=...\nNEO4J_PASSWORD=..."
+  "env": "NEO4J_URL=...\nNEO4J_USERNAME=...\nNEO4J_PASSWORD=...",
+  "tools": ["write_to_memory", "read_from_memory"]
 }

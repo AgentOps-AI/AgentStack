@@ -34,7 +34,7 @@ def get_framework() -> str:
 
             return framework
     except FileNotFoundError:
-        print("\033[31mFile agentstack.json does not exist.\033[0m")
+        print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
         sys.exit(1)
 
 
