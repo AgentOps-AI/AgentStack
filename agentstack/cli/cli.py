@@ -9,6 +9,7 @@ import inquirer
 import os
 import webbrowser
 import subprocess
+import importlib.resources
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 
@@ -264,21 +265,18 @@ def insert_template(project_details: dict, stack: dict, design: dict):
                                          structure=project_structure,
                                          framework=stack["framework"].lower())
 
-    with open(f"templates/{framework.name}/cookiecutter.json", "w") as json_file:
-        json.dump(cookiecutter_data.to_dict(), json_file)
+    with importlib.resources.path(f'agentstack.templates', str(framework.name)) as template_path:
+        with open(f"{template_path}/cookiecutter.json", "w") as json_file:
+            json.dump(cookiecutter_data.to_dict(), json_file)
 
-    current_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    relative_path = os.path.relpath(current_dir, os.getcwd())
-    project_path = relative_path + "/" + cookiecutter_data.project_metadata.project_slug
+        # copy .env.example to .env
+        shutil.copy(
+            f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
+            f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
+        os.system(f"cookiecutter {template_path} --no-input")
 
-    # copy .env.example to .env
-    shutil.copy(
-        f'{relative_path}/templates/{framework.name}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
-        f'{relative_path}/templates/{framework.name}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
-    os.system(f"cookiecutter {relative_path}/templates/{framework.name} --no-input")
-
-    subprocess.check_output(["git", "init"], cwd=project_path)
-    subprocess.check_output(["git", "add", "."], cwd=project_path)
+    subprocess.check_output(["git", "init"])
+    subprocess.check_output(["git", "add", "."])
 
     os.system("poetry install")
     os.system("cls" if os.name == "nt" else "clear")
