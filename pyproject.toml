@@ -13,10 +13,6 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11"
 
-[project.urls]
-"Homepage" = "https://your-repo-url"
-
-[project.dependencies]
 dependencies = [
     "typer>=0.12.5",
     "inquirer>=3.4.0",
@@ -24,6 +20,10 @@ dependencies = [
     "toml>=0.10.2",
     "ruamel.yaml.base>=0.3.2"
 ]
+
+[project.urls]
+"Homepage" = "https://your-repo-url"
+
 
 [project.scripts]
 agentstack = "agentstack.main:main"
