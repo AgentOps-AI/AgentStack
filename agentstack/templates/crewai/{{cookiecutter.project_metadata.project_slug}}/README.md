@@ -13,11 +13,15 @@ Finally for creation in the CLI alone, use `agentstack g a <agent_name> --role/-
 
 This will automatically create a new agent in the `agents.yaml` config as well as in your code. Either placeholder strings will be used, or data included in the wizard.
 
+Similarly, tasks can be created with `agentstack g t <tool_name>`
+
+Add tools with `agentstack tools add <tool_name>` and view tools available with `agentstack tools list`
+
 ## How to use your Crew
 In this directory, run `poetry install`  
 
 To run your project, use the following command:  
-`crewai run`
+`crewai run` or `python src/main.py`
 
 This will initialize your crew of AI agents and begin task execution as defined in your configuration in the main.py file.
 

@@ -12,7 +12,7 @@ class {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_',
 	def {{agent.name}}(self) -> Agent:
 		return Agent(
 			config=self.agents_config['{{ agent.name }}'],
-			# tools=[MyCustomTool()],  # Pass in what tools this agent should have
+			tools=[],  # Pass in what tools this agent should have
 			verbose=True
 		)
 	{%- endfor %}

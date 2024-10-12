@@ -150,7 +150,7 @@ First we need to create the agents that will work together to accomplish tasks:
         print('---')
         print(f"Agent #{len(agents)+1}")
         agent = inquirer.prompt([
-            inquirer.Text("name", message="What's the name of this agent?"),
+            inquirer.Text("name", message="What's the name of this agent? (snake_case)"),
             inquirer.Text("role", message="What role does this agent have?"),
             inquirer.Text("goal", message="What is the goal of the agent?"),
             inquirer.Text("backstory", message="Give your agent a backstory"),
@@ -275,12 +275,13 @@ def insert_template(project_details: dict, stack: dict, design: dict):
             f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
         os.system(f"cookiecutter {template_path} --no-input")
 
+    # TODO: failing here on project init
     subprocess.check_output(["git", "init"])
     subprocess.check_output(["git", "add", "."])
 
     os.system("poetry install")
     os.system("cls" if os.name == "nt" else "clear")
-    print("🚀 AgentStack project generated successfully.\nRun `agentstack docs` to get started!")
+    print("🚀 AgentStack project generated successfully.\nRun `agentstack docs` for help getting started!")
 
 
 def list_tools():

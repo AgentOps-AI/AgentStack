@@ -11,14 +11,13 @@ AgentStack works on macOS, Windows, and Linux.<br>
 If something doesn't work, please [file an issue](https://github.com/agentops-ai/agentops/issues/new).<br>
 If you have questions or need help, please ask in our [Discord community](https://discord.gg/a4VQ23Aps5).
 
+> 🛠️🚨 AgentStack is in open preview. We're building in public, use at your own risk but have fun :)
 
 ## Quick Overview
 
 ```sh
 pip install agentstack
-agentstack init my-agent-project
-cd my-agent-project
-python main.py
+agentstack init
 ```
 
 
