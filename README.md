@@ -40,7 +40,7 @@ To create a new agent project, run:
 
 ```sh
 pip install agentstack
-agentstack init my-agent-project
+agentstack init
 ```
 
 It will create a directory called `my-agent-project` inside the current folder.<br>
@@ -73,11 +73,11 @@ Runs the agent project in development mode.<br>
 
 ## Philosophy
 
-- **Agents should be easy:** There are so many frameworks out there, but starting from scratch is a pain. Similar to Create React App, Agent Stack aims to simplify the "from scratch" process by giving you a simple boilerplate of an agent. It uses popular agent frameworks and LLM providers, but provides a cohesive curated experience on top of them.
+- **Agents should be easy:** There are so many frameworks out there, but starting from scratch is a pain. Similar to Create React App, AgentStack aims to simplify the "from scratch" process by giving you a simple boilerplate of an agent. It uses popular agent frameworks and LLM providers, but provides a cohesive curated experience on top of them.
 
 - **No Configuration Required:** You don't need to configure anything. A reasonably good configuration of both development and production builds is handled for you so you can focus on writing code.
 
-- **No Lock-In:** You can customize your setup at any time. Agent Stack is designed to make it easy to get the components you need running right off the bat; it's up to you what to do next.
+- **No Lock-In:** You can customize your setup at any time. AgentStack is designed to make it easy to get the components you need running right off the bat; it's up to you what to do next.
 
 ## What's Included?
 
@@ -91,6 +91,26 @@ Your environment will have everything you need to build a modern AI agent projec
 - Integration with [AgentOps](https://agentops.ai) for AI agent observability.
 - Hassle-free updates for the above tools with a single dependency.
 
+## Roadmap
+* Frameworks
+  * Autogen
+  * LiteLLM
+  * Swarms (OpenAI)
+* Tools
+  * MultiOn
+  * Firecrawl
+  * Anon
+  * E2B
+  * More
+* Generated testing
+* Integrated benchmarking
+
 ## License
 
 AgentStack is open source software [licensed as MIT](LICENSE).
+
+## How to Contribute
+
+AgentStack is a new project built by passionate AI agent developers! We'd love help making this tool better. Easy first issues are available, create new issues with feature ideas, or chat with us on our [Discord](https://discord.gg/ahqWRGquEV).
+
+If you are an Agent Tool developer, feel free to create an issue or even a PR to add your tool to AgentStack. 
