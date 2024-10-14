@@ -280,7 +280,7 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     subprocess.check_output(["git", "add", "."])
 
     os.system("poetry install")
-    os.system("cls" if os.name == "nt" else "clear")
+    # os.system("cls" if os.name == "nt" else "clear")
     print("🚀 AgentStack project generated successfully.\nRun `agentstack docs` for help getting started!")
 
 
