@@ -81,14 +81,16 @@ def ask_stack():
     print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
 
     # TODO: add wizard tool selection back in
-    use_tools = inquirer.prompt(
-        [
-            inquirer.Confirm(
-                "use_tools",
-                message="Do you want to add browsing and RAG tools now? (you can do this later with `agentstack tools add <tool_name>`)",
-            )
-        ]
-    )
+    # use_tools = inquirer.prompt(
+    #     [
+    #         inquirer.Confirm(
+    #             "use_tools",
+    #             message="Do you want to add browsing and RAG tools now? (you can do this later with `agentstack tools add <tool_name>`)",
+    #         )
+    #     ]
+    # )
+
+    use_tools = {'use_tools': False}
 
     # TODO: dynamically load tools #4
     browsing_tools = {}
@@ -214,9 +216,6 @@ First we need to create the agents that will work together to accomplish tasks:
         print('.')
     print('Let there be tasks (ノ ˘_˘)ノ　ζ|||ζ　ζ|||ζ　ζ|||ζ')
 
-    print(tasks)
-    print(agents)
-
     return {'tasks': tasks, 'agents': agents}
 
 
@@ -282,11 +281,12 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     # os.system("cls" if os.name == "nt" else "clear")
     # TODO: add `agentstack docs` command
     print(
-        "🚀 AgentStack project generated successfully.\n"
+        "\n\n"
+        "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
         "Next, run:\n"
-        f"cd {project_metadata.project_slug}\n"
-        "poetry install\n"
-        "poetry run python src/main.py\n"
+        f"  cd {project_metadata.project_slug}\n"
+        "  poetry install\n"
+        "  poetry run python src/main.py\n"
         "Run `agentstack --help` for help!\n"
     )
 
