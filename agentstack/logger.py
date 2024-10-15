@@ -2,7 +2,7 @@ import sys
 import logging
 
 
-def get_logger(name, debug=True):
+def get_logger(name, debug=False):
     """
     Configure and get a logger with the given name.
     """
