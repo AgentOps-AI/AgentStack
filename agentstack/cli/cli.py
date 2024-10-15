@@ -1,6 +1,5 @@
 import json
 import shutil
-import sys
 import time
 from datetime import datetime
 
@@ -10,6 +9,7 @@ import os
 import webbrowser
 import subprocess
 import importlib.resources
+from cookiecutter.main import cookiecutter
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 
@@ -275,11 +275,15 @@ def insert_template(project_details: dict, stack: dict, design: dict):
         shutil.copy(
             f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
             f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
-        os.system(f"cookiecutter {template_path} --no-input")
+        cookiecutter(str(template_path), no_input=True, extra_context=None)
 
-    # TODO: failing here on project init
-    subprocess.check_output(["git", "init"])
-    subprocess.check_output(["git", "add", "."])
+    # TODO: inits a git repo in the directory the command was run in
+    # TODO: not where the project is generated. Fix this
+    try:
+        subprocess.check_output(["git", "init"])
+        subprocess.check_output(["git", "add", "."])
+    except:
+        print("Failed to initialize git repository. Maybe you're already in one? Do this with: git init")
 
     os.system("poetry install")
     # os.system("cls" if os.name == "nt" else "clear")
