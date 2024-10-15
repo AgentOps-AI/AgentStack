@@ -285,6 +285,7 @@ def insert_template(project_details: dict, stack: dict, design: dict):
 
     # TODO: inits a git repo in the directory the command was run in
     # TODO: not where the project is generated. Fix this
+    # TODO: also check if git is installed or if there are any git repos above the current dir
     try:
         subprocess.check_output(["git", "init"])
         subprocess.check_output(["git", "add", "."])
