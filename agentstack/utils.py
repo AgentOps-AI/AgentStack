@@ -52,3 +52,7 @@ def open_json_file(path):
         data = json.load(f)
     return data
 
+
+def clean_input(input_string):
+    special_char_pattern = re.compile(r'[^a-zA-Z0-9\s]')
+    return re.sub(special_char_pattern, '', input_string).lower().replace(' ', '_').replace('-', '_')

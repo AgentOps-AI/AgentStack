@@ -12,7 +12,7 @@ import importlib.resources
 from cookiecutter.main import cookiecutter
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
-
+from agentstack.logger import log
 
 def init_project_builder():
     welcome_message()
@@ -23,6 +23,11 @@ def init_project_builder():
     welcome_message()
     stack = ask_stack()
     design = ask_design()
+    log.debug(
+        f"project_details: {project_details}"
+        f"stack: {stack}"
+        f"design: {design}"
+    )
     insert_template(project_details, stack, design)
 
 
@@ -76,15 +81,14 @@ def ask_stack():
     print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
 
     # TODO: add wizard tool selection back in
-    # use_tools = inquirer.prompt(
-    #     [
-    #         inquirer.Confirm(
-    #             "use_tools",
-    #             message="Do you want to add tools now?",
-    #         )
-    #     ]
-    # )
-    use_tools = {'use_tools': True}
+    use_tools = inquirer.prompt(
+        [
+            inquirer.Confirm(
+                "use_tools",
+                message="Do you want to add browsing and RAG tools now? (you can do this later with `agentstack tools add <tool_name>`)",
+            )
+        ]
+    )
 
     # TODO: dynamically load tools #4
     browsing_tools = {}
@@ -290,7 +294,15 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     # TODO: check if poetry is installed and if so, run poetry install in the new directory
     # os.system("poetry install")
     # os.system("cls" if os.name == "nt" else "clear")
-    print(f"🚀 AgentStack project generated successfully.\n\nNext, run:\ncd {project_details['name']}\npython main.py\n\nRun `agentstack docs` for help getting started!\n")
+    # TODO: add `agentstack docs` command
+    print(
+        "🚀 AgentStack project generated successfully.\n"
+        "Next, run:\n"
+        f"cd {project_metadata.project_slug}\n"
+        "poetry install\n"
+        "poetry run python src/main.py\n"
+        "Run `agentstack --help` for help!\n"
+    )
 
 
 def list_tools():
