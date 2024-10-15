@@ -1,11 +1,12 @@
 import json
 from datetime import datetime
-from typing import Optional, Union, Literal
+from typing import Optional, Literal
 
+from agentstack.utils import clean_input
 
 class ProjectMetadata:
     def __init__(self,
-                 project_name: str = "myagent",
+                 project_name: str = None,
                  project_slug: str = None,
                  description: str = "",
                  author_name: str = "",
@@ -13,8 +14,8 @@ class ProjectMetadata:
                  license: str = "",
                  year: int = datetime.now().year
                  ):
-        self.project_name = project_name
-        self.project_slug = project_slug or project_name.lower().replace('-', '_')
+        self.project_name = clean_input(project_name) if project_name else "myagent"
+        self.project_slug = clean_input(project_slug) or self.project_name
         self.description = description
         self.author_name = author_name
         self.version = version
@@ -91,7 +92,3 @@ class CookiecutterData:
 
     def to_json(self):
         return json.dumps(self.to_dict(), default=str)
-
-
-
-
