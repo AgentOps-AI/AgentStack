@@ -283,10 +283,10 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     print(
         "\n\n"
         "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
-        "Next, run:\n"
-        f"  cd {project_metadata.project_slug}\n"
-        "  poetry install\n"
-        "  poetry run python src/main.py\n"
+        "  Next, run:\n"
+        f"    cd {project_metadata.project_slug}\n"
+        "    poetry install\n"
+        "    poetry run python src/main.py\n"
         "Run `agentstack --help` for help!\n"
     )
 
