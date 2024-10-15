@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentstack"
-version = "0.1.1"
+version = "0.1.2-dev2"
 description = "The fastest way to build robust AI agents"
 authors = [
     { name="Braelyn Boynton", email="bboynton97@gmail.com" }
@@ -18,11 +18,12 @@ dependencies = [
     "inquirer>=3.4.0",
     "art>=6.3",
     "toml>=0.10.2",
-    "ruamel.yaml.base>=0.3.2"
+    "ruamel.yaml.base>=0.3.2",
+    "cookiecutter==2.6.0"
 ]
 
 [tool.setuptools.package-data]
-agentops = ["templates/**/*"]
+agentstack = ["templates/**/*"]
 
 [project.urls]
 "Homepage" = "https://your-repo-url"

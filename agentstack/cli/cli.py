@@ -73,11 +73,13 @@ def ask_stack():
             ]
         )
 
+    print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
+
     use_tools = inquirer.prompt(
         [
             inquirer.Confirm(
                 "use_tools",
-                message="Do you want to use any tools?",
+                message="Do you want to add tools now?",
             )
         ]
     )
@@ -280,8 +282,8 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     subprocess.check_output(["git", "add", "."])
 
     os.system("poetry install")
-    os.system("cls" if os.name == "nt" else "clear")
-    print("🚀 AgentStack project generated successfully.\nRun `agentstack docs` for help getting started!")
+    # os.system("cls" if os.name == "nt" else "clear")
+    print("🚀 AgentStack project generated successfully.\nRun `agentstack docs` for help getting started!\n")
 
 
 def list_tools():

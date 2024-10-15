@@ -1,0 +1,2 @@
+recursive-include agentstack/templates *
+include agentstack.json .env .env.example
