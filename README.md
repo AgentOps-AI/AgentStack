@@ -1,6 +1,6 @@
 # AgentStack [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-<img alt="Logo" align="right" src="logo.svg" width="20%" />
+<img alt="Logo" align="right" src="https://raw.githubusercontent.com/agentops-ai/agentstack/main/logo.svg" width="20%" />
 
 Create AI agent projects from the command line.
 
@@ -22,7 +22,7 @@ agentstack init
 
 
 <p align='center'>
-<img src='stack.png' width='600' alt='agentstack init'>
+<img src='https://raw.githubusercontent.com/agentops-ai/agentstack/main/stack.png' width='600' alt='agentstack init'>
 </p>
 
 ### Get Started Immediately
