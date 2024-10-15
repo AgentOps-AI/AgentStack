@@ -241,21 +241,6 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
     return inquirer.prompt(questions)
 
 
-def create_dir(directory: str):
-    # Create project folder structure
-    try:
-        if directory[-1] != ".":
-            os.makedirs(directory, exist_ok=False)
-    except FileExistsError:
-        print(
-            f"Another project exists at this directory. Maybe try: agentstack init <directory>"
-        )
-    except:
-        print(
-            f"Could not create project directory {directory}. Does the project already exist?"
-        )
-
-
 def insert_template(project_details: dict, stack: dict, design: dict):
     framework = FrameworkData(stack["framework"].lower())
     project_metadata = ProjectMetadata(project_name=project_details["name"],
