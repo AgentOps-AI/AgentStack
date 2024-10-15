@@ -2,6 +2,7 @@ import json
 import shutil
 import time
 from datetime import datetime
+from typing import Optional
 
 from art import text2art
 import inquirer
@@ -14,11 +15,10 @@ from cookiecutter.main import cookiecutter
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
 
-def init_project_builder():
-    welcome_message()
-    project_details = ask_project_details()
 
-    create_project(project_details)
+def init_project_builder(slug_name: Optional[str] = None):
+    welcome_message()
+    project_details = ask_project_details(slug_name)
 
     welcome_message()
     stack = ask_stack()
@@ -220,9 +220,9 @@ First we need to create the agents that will work together to accomplish tasks:
     return {'tasks': tasks, 'agents': agents}
 
 
-def ask_project_details():
+def ask_project_details(slug_name: Optional[str] = None) -> dict:
     questions = [
-        inquirer.Text("name", message="What's the name of your project (snake_case)"),
+        inquirer.Text("name", message="What's the name of your project (snake_case)", default=slug_name or ''),
         inquirer.Text("version", message="What's the initial version", default="0.1.0"),
         inquirer.Text("description", message="Enter a description for your project"),
         inquirer.Text("author", message="Who's the author (your name)?"),
@@ -241,7 +241,7 @@ def ask_project_details():
     return inquirer.prompt(questions)
 
 
-def create_project(directory: str):
+def create_dir(directory: str):
     # Create project folder structure
     try:
         if directory[-1] != ".":
