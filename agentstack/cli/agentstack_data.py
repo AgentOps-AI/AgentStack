@@ -3,6 +3,8 @@ from datetime import datetime
 from typing import Optional, Literal
 
 from agentstack.utils import clean_input
+from agentstack.logger import log
+
 
 class ProjectMetadata:
     def __init__(self,
@@ -15,12 +17,13 @@ class ProjectMetadata:
                  year: int = datetime.now().year
                  ):
         self.project_name = clean_input(project_name) if project_name else "myagent"
-        self.project_slug = clean_input(project_slug) or self.project_name
+        self.project_slug = clean_input(project_slug) if project_slug else self.project_name
         self.description = description
         self.author_name = author_name
         self.version = version
         self.license = license
         self.year = year
+        log.debug(f"ProjectMetadata: {self.to_dict()}")
 
     def to_dict(self):
         return {
