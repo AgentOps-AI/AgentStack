@@ -75,14 +75,16 @@ def ask_stack():
 
     print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
 
-    use_tools = inquirer.prompt(
-        [
-            inquirer.Confirm(
-                "use_tools",
-                message="Do you want to add tools now?",
-            )
-        ]
-    )
+    # TODO: add wizard tool selection back in
+    # use_tools = inquirer.prompt(
+    #     [
+    #         inquirer.Confirm(
+    #             "use_tools",
+    #             message="Do you want to add tools now?",
+    #         )
+    #     ]
+    # )
+    use_tools = {'use_tools': True}
 
     # TODO: dynamically load tools #4
     browsing_tools = {}
@@ -216,7 +218,7 @@ First we need to create the agents that will work together to accomplish tasks:
 
 def ask_project_details():
     questions = [
-        inquirer.Text("name", message="What's the name of your project"),
+        inquirer.Text("name", message="What's the name of your project (snake_case)"),
         inquirer.Text("version", message="What's the initial version", default="0.1.0"),
         inquirer.Text("description", message="Enter a description for your project"),
         inquirer.Text("author", message="Who's the author (your name)?"),
@@ -285,9 +287,10 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     except:
         print("Failed to initialize git repository. Maybe you're already in one? Do this with: git init")
 
-    os.system("poetry install")
+    # TODO: check if poetry is installed and if so, run poetry install in the new directory
+    # os.system("poetry install")
     # os.system("cls" if os.name == "nt" else "clear")
-    print("🚀 AgentStack project generated successfully.\nRun `agentstack docs` for help getting started!\n")
+    print(f"🚀 AgentStack project generated successfully.\n\nNext, run:\ncd {project_details['name']}\npython main.py\n\nRun `agentstack docs` for help getting started!\n")
 
 
 def list_tools():
