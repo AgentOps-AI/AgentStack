@@ -47,7 +47,7 @@ def snake_to_camel(s):
     return ''.join(word.title() for word in s.split('_'))
 
 
-def open_json_file(path):
+def open_json_file(path) -> dict:
     with open(path, 'r') as f:
         data = json.load(f)
     return data

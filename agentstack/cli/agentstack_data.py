@@ -63,7 +63,8 @@ class ProjectStructure:
 
 class FrameworkData:
     def __init__(self,
-                 name: Optional[Literal["crewai"]] = None
+                 # name: Optional[Literal["crewai"]] = None
+                 name: str = None  # TODO: better framework handling, Literal or Enum
                  ):
         self.name = name
 
@@ -80,7 +81,8 @@ class CookiecutterData:
     def __init__(self,
                  project_metadata: ProjectMetadata,
                  structure: ProjectStructure,
-                 framework: Literal["crewai"],
+                 # framework: Literal["crewai"],
+                 framework: str,
                  ):
         self.project_metadata = project_metadata
         self.framework = framework

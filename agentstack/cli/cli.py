@@ -8,12 +8,12 @@ from art import text2art
 import inquirer
 import os
 import webbrowser
-import subprocess
 import importlib.resources
 from cookiecutter.main import cookiecutter
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
+from ..utils import open_json_file
 
 
 def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = False):
@@ -26,9 +26,7 @@ def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = Fa
             "license": "MIT"
         }
 
-        stack = {
-            "framework": "CrewAI"  # TODO: if --no-wizard, require a framework flag
-        }
+        framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
 
         design = {
             'agents': [],
@@ -38,15 +36,16 @@ def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = Fa
         welcome_message()
         project_details = ask_project_details(slug_name)
         welcome_message()
-        stack = ask_stack()
+        framework = ask_framework()
         design = ask_design()
+        tools = ask_tools()
 
     log.debug(
         f"project_details: {project_details}"
-        f"stack: {stack}"
+        f"framework: {framework}"
         f"design: {design}"
     )
-    insert_template(project_details, stack, design)
+    insert_template(project_details, framework, design)
 
 
 def welcome_message():
@@ -62,100 +61,37 @@ def welcome_message():
     print(border)
 
 
-def ask_stack():
-    framework = inquirer.prompt(
-        [
-            inquirer.List(
-                "framework",
-                message="What agent framework do you want to use?",
-                choices=["CrewAI", "Autogen", "LiteLLM", "Learn what these are (link)"],
-            )
-        ]
+def ask_framework() -> str:
+    framework = inquirer.list_input(
+        message="What agent framework do you want to use?",
+        choices=["CrewAI", "Autogen", "LiteLLM", "Learn what these are (link)"],
     )
-    if framework["framework"] == "Learn what these are (link)":
+
+    if framework == "Learn what these are (link)":
         webbrowser.open("https://youtu.be/xvFZjo5PgG0")
-        framework = inquirer.prompt(
-            [
-                inquirer.List(
-                    "framework",
-                    message="What agent framework do you want to use?",
-                    choices=["CrewAI", "Autogen", "LiteLLM"],
-                )
-            ]
+        framework = inquirer.list_input(
+            message="What agent framework do you want to use?",
+            choices=["CrewAI", "Autogen", "LiteLLM"],
         )
 
-    while framework["framework"] in ['Autogen', 'LiteLLM']:
-        print(f"{framework['framework']} support coming soon!!")
-        framework = inquirer.prompt(
-            [
-                inquirer.List(
-                    "framework",
-                    message="What agent framework do you want to use?",
-                    choices=["CrewAI", "Autogen", "LiteLLM"],
-                )
-            ]
+    while framework in ['Autogen', 'LiteLLM']:
+        print(f"{framework} support coming soon!!")
+        framework = inquirer.list_input(
+            message="What agent framework do you want to use?",
+            choices=["CrewAI", "Autogen", "LiteLLM"],
         )
 
     print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
 
-    # TODO: add wizard tool selection back in
-    # use_tools = inquirer.prompt(
-    #     [
-    #         inquirer.Confirm(
-    #             "use_tools",
-    #             message="Do you want to add browsing and RAG tools now? (you can do this later with `agentstack tools add <tool_name>`)",
-    #         )
-    #     ]
-    # )
-
-    use_tools = {'use_tools': False}
-
-    # TODO: dynamically load tools #4
-    browsing_tools = {}
-    rag_tools = {}
-    if use_tools["use_tools"]:
-        browsing_tools = inquirer.prompt(
-            [
-                inquirer.Checkbox(
-                    "browsing_tools",
-                    message="Select browsing tools",
-                    choices=[
-                        "browserbasehq",
-                        "firecrawl",
-                        "MultiOn_AI",
-                        "Crawl4AI",
-                    ],
-                )
-            ]
-        )
-
-        rag_tools = inquirer.prompt(
-            [
-                inquirer.Checkbox(
-                    "rag",
-                    message="RAG/document loading",
-                    choices=[
-                        "Mem0ai",
-                        "llama_index",
-                    ],
-                )
-            ]
-        )
-
-    return {**framework, **browsing_tools, **rag_tools}
+    return framework
 
 
 def ask_design() -> dict:
-    use_wizard = inquirer.prompt(
-        [
-            inquirer.Confirm(
-                "use_wizard",
-                message="Would you like to use the CLI wizard to set up agents and tasks?",
-            )
-        ]
+    use_wizard = inquirer.confirm(
+        message="Would you like to use the CLI wizard to set up agents and tasks?",
     )
 
-    if not use_wizard['use_wizard']:
+    if not use_wizard:
         return {
             'agents': [],
             'tasks': []
@@ -237,6 +173,47 @@ First we need to create the agents that will work together to accomplish tasks:
     return {'tasks': tasks, 'agents': agents}
 
 
+def ask_tools() -> list:
+    use_tools = inquirer.confirm(
+        message="Do you want to add agent tools now? (you can do this later with `agentstack tools add <tool_name>`)",
+    )
+
+    if not use_tools:
+        return []
+
+    tools_to_add = []
+
+    adding_tools = True
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    tools_json_path = os.path.join(script_dir, '..', 'tools', 'tools.json')
+
+    # Load the JSON data
+    tools_data = open_json_file(tools_json_path)
+
+    while adding_tools:
+
+        tool_type = inquirer.list_input(
+            message="What category tool do you want to add?",
+            choices=list(tools_data.keys()) + ["~~ Stop adding tools ~~"]
+        )
+
+        tools_in_cat = [f"{t['name']} - {t['url']}" for t in tools_data[tool_type] if t not in tools_to_add]
+        tool_selection = inquirer.list_input(
+            message="Select your tool",
+            choices=tools_in_cat
+        )
+
+        tools_to_add.append(tool_selection.split(' - ')[0])
+
+        print("Adding tools:")
+        for t in tools_to_add:
+            print(f'  - {t}')
+        print('')
+        adding_tools = inquirer.confirm("Add another tool?")
+
+    return tools_to_add
+
+
 def ask_project_details(slug_name: Optional[str] = None) -> dict:
     questions = [
         inquirer.Text("name", message="What's the name of your project (snake_case)", default=slug_name or ''),
@@ -258,8 +235,8 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
     return inquirer.prompt(questions)
 
 
-def insert_template(project_details: dict, stack: dict, design: dict):
-    framework = FrameworkData(stack["framework"].lower())
+def insert_template(project_details: dict, framework_name: str, design: dict):
+    framework = FrameworkData(framework_name.lower())
     project_metadata = ProjectMetadata(project_name=project_details["name"],
                                        description=project_details["description"],
                                        author_name=project_details["author"],
@@ -273,7 +250,7 @@ def insert_template(project_details: dict, stack: dict, design: dict):
 
     cookiecutter_data = CookiecutterData(project_metadata=project_metadata,
                                          structure=project_structure,
-                                         framework=stack["framework"].lower())
+                                         framework=framework_name.lower())
 
     with importlib.resources.path(f'agentstack.templates', str(framework.name)) as template_path:
         with open(f"{template_path}/cookiecutter.json", "w") as json_file:
@@ -317,8 +294,7 @@ def list_tools():
         tools_json_path = os.path.join(script_dir, '..', 'tools', 'tools.json')
 
         # Load the JSON data
-        with open(tools_json_path, 'r') as f:
-            tools_data = json.load(f)
+        tools_data = open_json_file(tools_json_path)
 
         # Display the tools
         print("\n\nAvailable AgentStack Tools:")
