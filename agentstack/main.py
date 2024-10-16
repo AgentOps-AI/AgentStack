@@ -19,6 +19,7 @@ def main():
     # 'init' command
     init_parser = subparsers.add_parser('init', aliases=['i'], help='Initialize a directory for the project')
     init_parser.add_argument('slug_name', nargs='?', help="The directory name to place the project in")
+    init_parser.add_argument('--no-wizard', action='store_true', help="Skip wizard steps")
 
     # 'generate' command
     generate_parser = subparsers.add_parser('generate', aliases=['g'], help='Generate agents or tasks')
@@ -64,7 +65,7 @@ def main():
 
     # Handle commands
     if args.command in ['init', 'i']:
-        init_project_builder(args.slug_name)
+        init_project_builder(args.slug_name, args.no_wizard)
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             generation.generate_agent(args.name, args.role, args.goal, args.backstory, args.llm)

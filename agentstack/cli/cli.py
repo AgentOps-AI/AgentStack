@@ -16,13 +16,31 @@ from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, C
 from agentstack.logger import log
 
 
-def init_project_builder(slug_name: Optional[str] = None):
-    welcome_message()
-    project_details = ask_project_details(slug_name)
+def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = False):
+    if skip_wizard:
+        project_details = {
+            "name": slug_name or "new_agentstack_project",
+            "version": "0.1.0",
+            "description": "New agentstack project",
+            "author": "<NAME>",
+            "license": "MIT"
+        }
 
-    welcome_message()
-    stack = ask_stack()
-    design = ask_design()
+        stack = {
+            "framework": "CrewAI"  # TODO: if --no-wizard, require a framework flag
+        }
+
+        design = {
+            'agents': [],
+            'tasks': []
+        }
+    else:
+        welcome_message()
+        project_details = ask_project_details(slug_name)
+        welcome_message()
+        stack = ask_stack()
+        design = ask_design()
+
     log.debug(
         f"project_details: {project_details}"
         f"stack: {stack}"
@@ -271,8 +289,9 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     # TODO: not where the project is generated. Fix this
     # TODO: also check if git is installed or if there are any git repos above the current dir
     try:
-        subprocess.check_output(["git", "init"])
-        subprocess.check_output(["git", "add", "."])
+        pass
+        # subprocess.check_output(["git", "init"])
+        # subprocess.check_output(["git", "add", "."])
     except:
         print("Failed to initialize git repository. Maybe you're already in one? Do this with: git init")
 
@@ -281,13 +300,13 @@ def insert_template(project_details: dict, stack: dict, design: dict):
     # os.system("cls" if os.name == "nt" else "clear")
     # TODO: add `agentstack docs` command
     print(
-        "\n\n"
+        "\n"
         "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
         "  Next, run:\n"
         f"    cd {project_metadata.project_slug}\n"
         "    poetry install\n"
-        "    poetry run python src/main.py\n"
-        "Run `agentstack --help` for help!\n"
+        "    poetry run python src/main.py\n\n"
+        "  Run `agentstack --help` for help!\n"
     )
 
 
