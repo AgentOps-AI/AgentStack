@@ -13,7 +13,8 @@ from cookiecutter.main import cookiecutter
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
-from ..utils import open_json_file
+from .. import generation
+from ..utils import open_json_file, term_color
 
 
 def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = False):
@@ -32,6 +33,8 @@ def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = Fa
             'agents': [],
             'tasks': []
         }
+
+        tools = []
     else:
         welcome_message()
         project_details = ask_project_details(slug_name)
@@ -46,6 +49,7 @@ def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = Fa
         f"design: {design}"
     )
     insert_template(project_details, framework, design)
+    add_tools(tools, project_details['name'])
 
 
 def welcome_message():
@@ -260,6 +264,11 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
         shutil.copy(
             f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
             f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
+
+        if os.path.isdir(project_details['name']):
+            print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
+            return
+
         cookiecutter(str(template_path), no_input=True, extra_context=None)
 
     # TODO: inits a git repo in the directory the command was run in
@@ -285,6 +294,11 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
         "    poetry run python src/main.py\n\n"
         "  Run `agentstack --help` for help!\n"
     )
+
+
+def add_tools(tools: list, project_name: str):
+    for tool in tools:
+        generation.add_tool(tool, project_name)
 
 
 def list_tools():

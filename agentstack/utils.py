@@ -1,3 +1,5 @@
+from typing import Optional
+
 import toml
 import os
 import sys
@@ -23,9 +25,12 @@ def verify_agentstack_project():
         sys.exit(1)
 
 
-def get_framework() -> str:
+def get_framework(path: Optional[str] = None) -> str:
     try:
-        with open('agentstack.json', 'r') as f:
+        file_path = 'agentstack.json'
+        if path is not None:
+            file_path = path + '/' + file_path
+        with open(file_path, 'r') as f:
             data = json.load(f)
             framework = data.get('framework')
 
@@ -56,3 +61,12 @@ def open_json_file(path) -> dict:
 def clean_input(input_string):
     special_char_pattern = re.compile(r'[^a-zA-Z0-9\s_]')
     return re.sub(special_char_pattern, '', input_string).lower().replace(' ', '_').replace('-', '_')
+
+
+def term_color(text: str, color: str) -> str:
+    if color is 'red':
+        return "\033[91m{}\033[00m".format(text)
+    if color is 'green':
+        return "\033[92m{}\033[00m".format(text)
+    else:
+        return text
