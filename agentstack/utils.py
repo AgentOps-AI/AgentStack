@@ -30,14 +30,14 @@ def get_framework(path: Optional[str] = None) -> str:
         file_path = 'agentstack.json'
         if path is not None:
             file_path = path + '/' + file_path
-        with open(file_path, 'r') as f:
-            data = json.load(f)
-            framework = data.get('framework')
 
-            if framework.lower() not in ['crewai', 'autogen', 'litellm']:
-                print("\033[31magentstack.json contains an invalid framework\033[0m")
+        agentstack_data = open_json_file(file_path)
+        framework = agentstack_data.get('framework')
 
-            return framework
+        if framework.lower() not in ['crewai', 'autogen', 'litellm']:
+            print(term_color("agentstack.json contains an invalid framework", "red"))
+
+        return framework
     except FileNotFoundError:
         print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
         sys.exit(1)

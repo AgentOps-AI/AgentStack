@@ -1,8 +1,9 @@
+import json
 import sys
 from typing import Optional
 
 from .gen_utils import insert_code_after_tag
-from ..utils import snake_to_camel, open_json_file, get_framework
+from ..utils import open_json_file, get_framework, term_color
 import os
 import shutil
 import fileinput
@@ -24,7 +25,14 @@ def add_tool(tool_name: str, path: Optional[str] = None):
     insert_code_after_tag(f'{path}/.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
     insert_code_after_tag(f'{path}/.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
 
-    print(f'\033[92m🔨 Tool {tool_name} added to agentstack project successfully\033[0m')
+    agentstack_json = open_json_file(f'{path}/agentstack.json')
+    if not agentstack_json.get('tools'):
+        agentstack_json['tools'] = []
+    agentstack_json['tools'].append(tool_name)
+    with open(f'{path}/agentstack.json', 'w') as f:
+        json.dump(agentstack_json, f, indent=4)
+
+    print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
 
 
 def add_tool_to_tools_init(tool_data: dict, path: Optional[str] = None):
