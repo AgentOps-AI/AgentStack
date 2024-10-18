@@ -8,6 +8,4 @@ license = "{{cookiecutter.project_metadata.license}}"
 [tool.poetry.dependencies]
 python = "^3.11"
 agentops = "^0.3.12"
-{%- if cookiecutter.framework == "crewai" %}
-crewai = "^0.63.6"
-{%- endif %}
+autogen-agentchat = "~0.2"
