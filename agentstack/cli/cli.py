@@ -302,26 +302,23 @@ def add_tools(tools: list, project_name: str):
 
 
 def list_tools():
-    try:
-        # Determine the path to the tools.json file
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        tools_json_path = os.path.join(script_dir, '..', 'tools', 'tools.json')
+    with importlib.resources.path(f'agentstack.tools', 'tools.json') as tools_json_path:
+        try:
+            # Load the JSON data
+            tools_data = open_json_file(tools_json_path)
 
-        # Load the JSON data
-        tools_data = open_json_file(tools_json_path)
+            # Display the tools
+            print("\n\nAvailable AgentStack Tools:")
+            for category, tools in tools_data.items():
+                print(f"\n{category.capitalize()}:")
+                for tool in tools:
+                    print(f"  - {tool['name']}: {tool['url']}")
 
-        # Display the tools
-        print("\n\nAvailable AgentStack Tools:")
-        for category, tools in tools_data.items():
-            print(f"\n{category.capitalize()}:")
-            for tool in tools:
-                print(f"  - {tool['name']}: {tool['url']}")
+            print("\n\n❇️ Add a tool with: agentstack tools add <tool_name>")
 
-        print("\n\n❇️ Add a tool with: agentstack tools add <tool_name>")
-
-    except FileNotFoundError:
-        print("Error: tools.json file not found at path:", tools_json_path)
-    except json.JSONDecodeError:
-        print("Error: tools.json contains invalid JSON.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        except FileNotFoundError:
+            print("Error: tools.json file not found at path:", tools_json_path)
+        except json.JSONDecodeError:
+            print("Error: tools.json contains invalid JSON.")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")

@@ -1,3 +1,4 @@
+import importlib.resources
 import json
 import sys
 from typing import Optional
@@ -10,33 +11,36 @@ import fileinput
 
 
 def add_tool(tool_name: str, path: Optional[str] = None):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    tools = open_json_file(os.path.join(script_dir, '..', 'tools', 'tools.json'))
-    framework = get_framework(path)
-    assert_tool_exists(tool_name, tools)
+    with importlib.resources.path(f'agentstack.tools', 'tools.json') as tools_data_path:
+        print(tools_data_path)
+        tools = open_json_file(tools_data_path)
+        framework = get_framework(path)
+        assert_tool_exists(tool_name, tools)
 
-    tool_data = open_json_file(os.path.join(script_dir, '..', 'tools', f'{tool_name}.json'))
-    tool_file_route = os.path.join(script_dir, '..', 'templates', framework, 'tools', f'{tool_name}.py')
+        with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
+            tool_data = open_json_file(tool_data_path)
 
-    os.system(tool_data['package'])  # Install package
-    shutil.copy(tool_file_route, f'{path or ""}/src/tools/{tool_name}.py')  # Move tool from package to project
-    add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
-    add_tool_to_agent_definition(framework, tool_data, path)
-    insert_code_after_tag(f'{path}/.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
-    insert_code_after_tag(f'{path}/.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
+            with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}.py") as tool_file_path:
+                os.system(tool_data['package'])  # Install package
+                shutil.copy(tool_file_path, f'{path + "/" if path else ""}src/tools/{tool_name}.py')  # Move tool from package to project
+                add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
+                add_tool_to_agent_definition(framework, tool_data, path)
+                insert_code_after_tag(f'{path + "/" if path else ""}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
+                insert_code_after_tag(f'{path + "/" if path else ""}.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
 
-    agentstack_json = open_json_file(f'{path}/agentstack.json')
-    if not agentstack_json.get('tools'):
-        agentstack_json['tools'] = []
-    agentstack_json['tools'].append(tool_name)
-    with open(f'{path}/agentstack.json', 'w') as f:
-        json.dump(agentstack_json, f, indent=4)
+                agentstack_json = open_json_file(f'{path + "/" if path else ""}agentstack.json')
+                if not agentstack_json.get('tools'):
+                    agentstack_json['tools'] = []
+                agentstack_json['tools'].append(tool_name)
 
-    print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
+                with open(f'{path + "/" if path else ""}agentstack.json', 'w') as f:
+                    json.dump(agentstack_json, f, indent=4)
+
+                print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
 
 
 def add_tool_to_tools_init(tool_data: dict, path: Optional[str] = None):
-    file_path = f'{path or ""}/src/tools/__init__.py'
+    file_path = f'{path + "/" if path else ""}src/tools/__init__.py'
     tag = '# tool import'
     code_to_insert = [
         f"from {tool_data['name']} import {', '.join([tool_name for tool_name in tool_data['tools']])}"
