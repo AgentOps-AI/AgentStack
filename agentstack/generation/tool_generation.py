@@ -12,7 +12,6 @@ import fileinput
 
 def add_tool(tool_name: str, path: Optional[str] = None):
     with importlib.resources.path(f'agentstack.tools', 'tools.json') as tools_data_path:
-        print(tools_data_path)
         tools = open_json_file(tools_data_path)
         framework = get_framework(path)
         assert_tool_exists(tool_name, tools)
