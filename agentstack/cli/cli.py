@@ -315,7 +315,7 @@ def list_tools():
                 for tool in tools:
                     print(f"  - {tool['name']}: {tool['url']}")
 
-            print("\n\n❇️ Add a tool with: agentstack tools add <tool_name>")
+            print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
 
         except FileNotFoundError:
             print("Error: tools.json file not found at path:", tools_json_path)

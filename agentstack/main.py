@@ -75,7 +75,6 @@ def main():
             generate_parser.print_help()
     elif args.command in ['tools', 't']:
         if args.tools_command in ['list', 'l']:
-            print('list')
             list_tools()
         elif args.tools_command in ['add', 'a']:
             generation.add_tool(args.name)
