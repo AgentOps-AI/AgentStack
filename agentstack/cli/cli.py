@@ -66,24 +66,25 @@ def welcome_message():
 
 
 def ask_framework() -> str:
-    framework = inquirer.list_input(
-        message="What agent framework do you want to use?",
-        choices=["CrewAI", "Autogen", "LiteLLM", "Learn what these are (link)"],
-    )
-
-    if framework == "Learn what these are (link)":
-        webbrowser.open("https://youtu.be/xvFZjo5PgG0")
-        framework = inquirer.list_input(
-            message="What agent framework do you want to use?",
-            choices=["CrewAI", "Autogen", "LiteLLM"],
-        )
-
-    while framework in ['Autogen', 'LiteLLM']:
-        print(f"{framework} support coming soon!!")
-        framework = inquirer.list_input(
-            message="What agent framework do you want to use?",
-            choices=["CrewAI", "Autogen", "LiteLLM"],
-        )
+    framework = "CrewAI"
+    # framework = inquirer.list_input(
+    #     message="What agent framework do you want to use?",
+    #     choices=["CrewAI", "Autogen", "LiteLLM", "Learn what these are (link)"],
+    # )
+    #
+    # if framework == "Learn what these are (link)":
+    #     webbrowser.open("https://youtu.be/xvFZjo5PgG0")
+    #     framework = inquirer.list_input(
+    #         message="What agent framework do you want to use?",
+    #         choices=["CrewAI", "Autogen", "LiteLLM"],
+    #     )
+    #
+    # while framework in ['Autogen', 'LiteLLM']:
+    #     print(f"{framework} support coming soon!!")
+    #     framework = inquirer.list_input(
+    #         message="What agent framework do you want to use?",
+    #         choices=["CrewAI", "Autogen", "LiteLLM"],
+    #     )
 
     print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
 
