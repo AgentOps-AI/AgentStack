@@ -14,5 +14,19 @@
   "storage": [{
     "name": "mem0",
     "url": "https://github.com/mem0ai/mem0"
+  }],
+  "code-gen": [{
+    "name": "open_interpreter",
+    "url": "https://github.com/OpenInterpreter/open-interpreter"
+  }],
+  "computer-control": [{
+    "name": "directory-search-tool",
+    "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/directory_search_tool"
+  },{
+    "name": "file_read_tool",
+    "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/file_read_tool"
+  },{
+    "name": "ftp",
+    "url": "AgentStack custom tool"
   }]
 }
