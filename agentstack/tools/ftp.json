@@ -1,0 +1,6 @@
+{
+  "name": "ftp",
+  "package": "",
+  "env": "FTP_HOST=...\nFTP_USER=...\nFTP_PASSWORD=...",
+  "tools": ["upload_files"]
+}
