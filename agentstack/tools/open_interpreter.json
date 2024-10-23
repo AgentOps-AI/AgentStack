@@ -1,0 +1,6 @@
+{
+  "name": "open_interpreter",
+  "package": "poetry add open-interpreter",
+  "env": "",
+  "tools": ["execute_code"]
+}
