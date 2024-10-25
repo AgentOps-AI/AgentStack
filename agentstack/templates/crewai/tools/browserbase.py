@@ -1,3 +1,3 @@
 from crewai_tools import BrowserbaseLoadTool
 
-Browserbase = BrowserbaseLoadTool(text_content=True)
+browserbase = BrowserbaseLoadTool(text_content=True)

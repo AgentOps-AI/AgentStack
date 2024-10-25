@@ -123,6 +123,7 @@ celerybeat.pid
 
 # Environments
 .env
+**/.env
 .venv
 env/
 venv/
@@ -167,3 +168,5 @@ ex/
 **/ex/
 cookiecutter.json
 
+examples/tests/
+examples/tests/**/*

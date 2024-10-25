@@ -225,16 +225,6 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
         inquirer.Text("version", message="What's the initial version", default="0.1.0"),
         inquirer.Text("description", message="Enter a description for your project"),
         inquirer.Text("author", message="Who's the author (your name)?"),
-        inquirer.List(
-            "license",
-            message="License?",
-            choices=[
-                "MIT",
-                "Apache-2.0",
-                "GPL",
-                "other",
-            ],
-        ),
     ]
 
     return inquirer.prompt(questions)
@@ -246,7 +236,7 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
                                        description=project_details["description"],
                                        author_name=project_details["author"],
                                        version=project_details["version"],
-                                       license=project_details["license"],
+                                       license="MIT",
                                        year=datetime.now().year)
 
     project_structure = ProjectStructure()
