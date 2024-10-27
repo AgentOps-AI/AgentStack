@@ -2,5 +2,5 @@
   "name": "browserbase",
   "package": "poetry add browserbase crewai-tools",
   "env": "BROWSERBASE_API_KEY=...\nBROWSERBASE_PROJECT_ID=...",
-  "tools": ["Browserbase"]
+  "tools": ["browserbase"]
 }
