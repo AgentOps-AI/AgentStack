@@ -28,5 +28,9 @@
   },{
     "name": "ftp",
     "url": "AgentStack custom tool"
+  }],
+  "network-protocols": [{
+    "name": "agent-connect",
+    "url": "https://github.com/chgaowei/AgentConnect"
   }]
 }

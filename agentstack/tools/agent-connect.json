@@ -1,0 +1,6 @@
+{
+    "name": "agent-connect",
+    "package": "poetry add agent-connect",
+    "env": "HOST_DOMAIN=...\nHOST_PORT=\"80\"\nHOST_WS_PATH=\"/ws\"\nDID_DOCUMENT_PATH=...\nSSL_CERT_PATH=...\nSSL_KEY_PATH=...",
+    "tools": ["send_message", "receive_message"]
+}
