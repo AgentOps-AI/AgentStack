@@ -70,3 +70,8 @@ def term_color(text: str, color: str) -> str:
         return "\033[92m{}\033[00m".format(text)
     else:
         return text
+
+
+def is_snake_case(string: str):
+    return bool(re.match('^[a-z0-9_]+$', string))
+
