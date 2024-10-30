@@ -7,7 +7,6 @@ from typing import Optional
 from art import text2art
 import inquirer
 import os
-import webbrowser
 import importlib.resources
 from cookiecutter.main import cookiecutter
 
@@ -21,13 +20,13 @@ def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = Fa
     if skip_wizard:
         project_details = {
             "name": slug_name or "new_agentstack_project",
-            "version": "0.1.0",
+            "version": "0.0.1",
             "description": "New agentstack project",
-            "author": "<NAME>",
+            "author": "Name <Email>",
             "license": "MIT"
         }
 
-        framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
+        framework = "CrewAI"
 
         design = {
             'agents': [],
@@ -235,7 +234,7 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
     project_metadata = ProjectMetadata(project_name=project_details["name"],
                                        description=project_details["description"],
                                        author_name=project_details["author"],
-                                       version=project_details["version"],
+                                       version="0.0.1",
                                        license="MIT",
                                        year=datetime.now().year)
 
