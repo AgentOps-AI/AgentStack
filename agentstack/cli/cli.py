@@ -16,10 +16,19 @@ from .. import generation
 from ..utils import open_json_file, term_color
 
 
-def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = False):
-    if skip_wizard:
+def init_project_builder(slug_name: Optional[str] = None, use_wizard: bool = False):
+    if use_wizard:
+        welcome_message()
+        project_details = ask_project_details(slug_name)
+        welcome_message()
+        framework = ask_framework()
+        design = ask_design()
+        tools = ask_tools()
+
+    else:
+        welcome_message()
         project_details = {
-            "name": slug_name or "new_agentstack_project",
+            "name": slug_name or "agentstack_project",
             "version": "0.0.1",
             "description": "New agentstack project",
             "author": "Name <Email>",
@@ -34,13 +43,6 @@ def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = Fa
         }
 
         tools = []
-    else:
-        welcome_message()
-        project_details = ask_project_details(slug_name)
-        welcome_message()
-        framework = ask_framework()
-        design = ask_design()
-        tools = ask_tools()
 
     log.debug(
         f"project_details: {project_details}"
