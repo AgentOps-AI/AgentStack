@@ -139,9 +139,11 @@ First we need to create the agents that will work together to accomplish tasks:
                 # ]),
             ])
 
-            if not is_snake_case(agent['name']):
-                print(term_color("Error: Agent name must be snake case - Try again", 'red'))
+            if not agent['name'] or agent['name'] == '':
+                print(term_color("Error: Agent name is required - Try again", 'red'))
                 agent_incomplete = True
+            elif not is_snake_case(agent['name']):
+                print(term_color("Error: Agent name must be snake case - Try again", 'red'))
             else:
                 agent_incomplete = False
 
@@ -176,9 +178,10 @@ First we need to create the agents that will work together to accomplish tasks:
                               choices=[a['name'] for a in agents], ),
             ])
 
-            if not is_snake_case(task['name']):
+            if not task['name'] or task['name'] == '':
+                print(term_color("Error: Task name is required - Try again", 'red'))
+            elif not is_snake_case(task['name']):
                 print(term_color("Error: Task name must be snake case - Try again", 'red'))
-                task_incomplete = True
             else:
                 task_incomplete = False
 
