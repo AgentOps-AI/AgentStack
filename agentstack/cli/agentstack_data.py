@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import Optional, Literal
 
-from agentstack.utils import clean_input
+from agentstack.utils import clean_input, get_version
 from agentstack.logger import log
 
 
@@ -23,6 +23,7 @@ class ProjectMetadata:
         self.version = version
         self.license = license
         self.year = year
+        self.agentstack_version = get_version()
         log.debug(f"ProjectMetadata: {self.to_dict()}")
 
     def to_dict(self):
@@ -34,6 +35,7 @@ class ProjectMetadata:
             'version': self.version,
             'license': self.license,
             'year': self.year,
+            'agentstack_version': self.agentstack_version,
         }
 
     def to_json(self):

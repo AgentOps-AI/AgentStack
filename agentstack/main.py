@@ -20,6 +20,7 @@ def main():
     init_parser = subparsers.add_parser('init', aliases=['i'], help='Initialize a directory for the project')
     init_parser.add_argument('slug_name', nargs='?', help="The directory name to place the project in")
     init_parser.add_argument('--wizard', '-w', action='store_true', help="Use the setup wizard")
+    init_parser.add_argument('--template', '-t', help="Agent template to use")
 
     # 'generate' command
     generate_parser = subparsers.add_parser('generate', aliases=['g'], help='Generate agents or tasks')
