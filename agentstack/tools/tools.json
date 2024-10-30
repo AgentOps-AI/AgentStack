@@ -20,17 +20,17 @@
     "url": "https://github.com/OpenInterpreter/open-interpreter"
   }],
   "computer-control": [{
-    "name": "directory-search-tool",
+    "name": "directory_search",
     "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/directory_search_tool"
   },{
-    "name": "file_read_tool",
+    "name": "file_read",
     "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/file_read_tool"
   },{
     "name": "ftp",
     "url": "AgentStack custom tool"
   }],
   "network-protocols": [{
-    "name": "agent-connect",
+    "name": "agent_connect",
     "url": "https://github.com/chgaowei/AgentConnect"
   }]
 }
