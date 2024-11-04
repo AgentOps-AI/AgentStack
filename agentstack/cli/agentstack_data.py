@@ -14,7 +14,8 @@ class ProjectMetadata:
                  author_name: str = "",
                  version: str = "",
                  license: str = "",
-                 year: int = datetime.now().year
+                 year: int = datetime.now().year,
+                 template: str = "default"
                  ):
         self.project_name = clean_input(project_name) if project_name else "myagent"
         self.project_slug = clean_input(project_slug) if project_slug else self.project_name
@@ -24,6 +25,8 @@ class ProjectMetadata:
         self.license = license
         self.year = year
         self.agentstack_version = get_version()
+        self.template = template
+
         log.debug(f"ProjectMetadata: {self.to_dict()}")
 
     def to_dict(self):

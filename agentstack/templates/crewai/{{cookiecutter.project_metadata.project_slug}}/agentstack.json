@@ -1,4 +1,5 @@
 {
   "framework": "{{ cookiecutter.framework }}",
-  "agentstack_version": "{{ cookiecutter.agentstack_version }}"
+  "agentstack_version": "{{ cookiecutter.agentstack_version }}",
+  "template": "{{ cookiecutter.template }}"
 }

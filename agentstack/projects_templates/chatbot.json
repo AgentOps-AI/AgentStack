@@ -1,0 +1,16 @@
+{
+  "name": "chatbot",
+  "tools": ["mem0"],
+  "agents": [{
+
+  }],
+  "tasks": [{
+
+  }],
+  "code_swap": [
+    {
+      "direction": "out",
+      "file":
+    }
+  ]
+}
