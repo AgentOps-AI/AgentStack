@@ -36,6 +36,8 @@ def add_tool(tool_name: str, path: Optional[str] = None):
                     json.dump(agentstack_json, f, indent=4)
 
                 print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
+                if tool_data.get('cta'):
+                    print(term_color(f'🪩 {tool_data["cta"]}', 'blue'))
 
 
 def add_tool_to_tools_init(tool_data: dict, path: Optional[str] = None):

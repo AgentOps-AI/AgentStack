@@ -7,7 +7,6 @@ from typing import Optional
 from art import text2art
 import inquirer
 import os
-import webbrowser
 import importlib.resources
 from cookiecutter.main import cookiecutter
 
