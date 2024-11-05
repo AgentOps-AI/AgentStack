@@ -7,7 +7,7 @@ Our vision is to build the defacto CLI for quickly spinning up an AI Agent proje
 
 Grab an issue from the [issues tab](https://github.com/AgentOps-AI/AgentStack/issues)! Plenty are labelled "Good First Issue". Fork the repo and create a PR when ready!
 
-The best place to engage in conversation about your contribution is in the Issue chat or on our [Discord](https://discord.gg/ahqWRGquEV).
+The best place to engage in conversation about your contribution is in the Issue chat or on our [Discord](https://discord.gg/JdWkh9tgTQ).
 
 ## Setup
 

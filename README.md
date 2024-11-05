@@ -8,8 +8,8 @@ Create AI agent projects from the command line.
 - [User Guide](https://docs.agentops.ai) – How to develop agent projects bootstrapped with AgentStack.
 
 AgentStack works on macOS, Windows, and Linux.<br>
-If something doesn't work, please [file an issue](https://github.com/agentops-ai/agentops/issues/new).<br>
-If you have questions or need help, please ask in our [Discord community](https://discord.gg/a4VQ23Aps5).
+If something doesn't work, please [file an issue](https://github.com/agentops-ai/agentstack/issues/new).<br>
+If you have questions or need help, please ask in our [Discord community](https://discord.gg/JdWkh9tgTQ).
 
 > 🛠️🚨 AgentStack is in open preview. We're building in public, use at your own risk but have fun :)
 
@@ -125,6 +125,6 @@ AgentStack is open source software [licensed as MIT](LICENSE).
 
 ## How to Contribute
 
-AgentStack is a new project built by passionate AI agent developers! We'd love help making this tool better. Easy first issues are available, create new issues with feature ideas, or chat with us on our [Discord](https://discord.gg/ahqWRGquEV).
+AgentStack is a new project built by passionate AI agent developers! We'd love help making this tool better. Easy first issues are available, create new issues with feature ideas, or chat with us on our [Discord](https://discord.gg/JdWkh9tgTQ).
 
 If you are an Agent Tool developer, feel free to create an issue or even a PR to add your tool to AgentStack. 
