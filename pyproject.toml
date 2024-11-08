@@ -25,9 +25,6 @@ dependencies = [
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
 
-[project.urls]
-"Homepage" = "https://github.com/AgentOps-AI/AgentStack"
-
 
 [project.scripts]
 agentstack = "agentstack.main:main"

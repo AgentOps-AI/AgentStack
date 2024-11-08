@@ -21,7 +21,7 @@ def add_tool(tool_name: str, path: Optional[str] = None):
 
             with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}_tool.py") as tool_file_path:
                 os.system(tool_data['package'])  # Install package
-                shutil.copy(tool_file_path, f'{path + "/" if path else ""}src/tools/{tool_name}.py')  # Move tool from package to project
+                shutil.copy(tool_file_path, f'{path + "/" if path else ""}src/tools/{tool_name}_tool.py')  # Move tool from package to project
                 add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
                 add_tool_to_agent_definition(framework, tool_data, path)
                 insert_code_after_tag(f'{path + "/" if path else ""}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
@@ -59,7 +59,7 @@ def add_tool_to_agent_definition(framework: str, tool_data: dict, path: Optional
 
     with fileinput.input(files=filename, inplace=True) as f:
         for line in f:
-            print(line.replace('tools=[', f'tools=[tools.{", tools.".join([tool_name for tool_name in tool_data["tools"]])}, '), end='')
+            print(line.replace('tools=[', f'tools=[{"*" if tool_data.get("tools_bundled") else ""}tools.{", tools.".join([tool_name for tool_name in tool_data["tools"]])}, '), end='')
 
 
 def assert_tool_exists(tool_name: str, tools: dict):

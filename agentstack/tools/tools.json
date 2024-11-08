@@ -15,9 +15,12 @@
     "name": "mem0",
     "url": "https://github.com/mem0ai/mem0"
   }],
-  "code-gen": [{
+  "code-execution": [{
     "name": "open_interpreter",
     "url": "https://github.com/OpenInterpreter/open-interpreter"
+  },{
+    "name": "code_interpreter",
+    "url": "CrewAI tool"
   }],
   "computer-control": [{
     "name": "directory_search",
@@ -32,5 +35,9 @@
   "network-protocols": [{
     "name": "agent_connect",
     "url": "https://github.com/chgaowei/AgentConnect"
+  }],
+  "unified-apis": [{
+    "name": "composio",
+    "url": "https://composio.dev/"
   }]
 }
