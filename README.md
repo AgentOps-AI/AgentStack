@@ -26,7 +26,7 @@ agentstack init
 
 
 <p align='center'>
-<img src='https://raw.githubusercontent.com/agentops-ai/agentstack/main/stack.png' width='600' alt='agentstack init'>
+<img src='https://raw.githubusercontent.com/bboynton97/agentstack-docs/3491fe490ea535e7def74c83182dfa8dcfb1f562/logo/dark-sm.svg' width='600' alt='agentstack init'>
 </p>
 
 ### Get Started Immediately
