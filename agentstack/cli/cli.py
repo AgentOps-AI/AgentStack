@@ -95,9 +95,11 @@ def ask_framework() -> str:
 
 
 def ask_design() -> dict:
-    use_wizard = inquirer.confirm(
-        message="Would you like to use the CLI wizard to set up agents and tasks?",
-    )
+    # use_wizard = inquirer.confirm(
+    #     message="Would you like to use the CLI wizard to set up agents and tasks?",
+    # )
+
+    use_wizard = False
 
     if not use_wizard:
         return {
