@@ -199,9 +199,11 @@ First we need to create the agents that will work together to accomplish tasks:
 
 
 def ask_tools() -> list:
-    use_tools = inquirer.confirm(
-        message="Do you want to add agent tools now? (you can do this later with `agentstack tools add <tool_name>`)",
-    )
+    # use_tools = inquirer.confirm(
+    #     message="Do you want to add agent tools now? (you can do this later with `agentstack tools add <tool_name>`)",
+    # )
+
+    use_tools = False
 
     if not use_tools:
         return []
