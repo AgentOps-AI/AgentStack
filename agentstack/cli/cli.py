@@ -238,16 +238,19 @@ def ask_tools() -> list:
 
 
 def ask_project_details(slug_name: Optional[str] = None) -> dict:
+    name = inquirer.text(message="What's the name of your project (snake_case)", default=slug_name or '')
+
+    if not is_snake_case(name):
+        print(term_color("Project name must be snake case", 'red'))
+        return ask_project_details(slug_name)
+
     questions = inquirer.prompt([
-        inquirer.Text("name", message="What's the name of your project (snake_case)", default=slug_name or ''),
         inquirer.Text("version", message="What's the initial version", default="0.1.0"),
         inquirer.Text("description", message="Enter a description for your project"),
         inquirer.Text("author", message="Who's the author (your name)?"),
     ])
 
-    if not is_snake_case(questions['name']):
-        print(term_color("Project name must be snake case", 'red'))
-        return ask_project_details(slug_name)
+    questions['name'] = name
 
     return questions
 
@@ -328,6 +331,7 @@ def list_tools():
                     print(f"  - {tool['name']}: {tool['url']}")
 
             print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
+            print("   https://docs.agentstack.sh/tools/core")
 
         except FileNotFoundError:
             print("Error: tools.json file not found at path:", tools_json_path)
