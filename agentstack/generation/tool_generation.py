@@ -44,7 +44,7 @@ def add_tool_to_tools_init(tool_data: dict, path: Optional[str] = None):
     file_path = f'{path + "/" if path else ""}src/tools/__init__.py'
     tag = '# tool import'
     code_to_insert = [
-        f"from {tool_data['name']}_tool import {', '.join([tool_name for tool_name in tool_data['tools']])}"
+        f"from .{tool_data['name']}_tool import {', '.join([tool_name for tool_name in tool_data['tools']])}"
     ]
     insert_code_after_tag(file_path, tag, code_to_insert, next_line=True)
 
