@@ -20,7 +20,7 @@
     "url": "https://github.com/OpenInterpreter/open-interpreter"
   },{
     "name": "code_interpreter",
-    "url": "CrewAI tool"
+    "url": "AgentStack default tool"
   }],
   "computer-control": [{
     "name": "directory_search",
@@ -30,7 +30,7 @@
     "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/file_read_tool"
   },{
     "name": "ftp",
-    "url": "AgentStack custom tool"
+    "url": "AgentStack default tool"
   }],
   "network-protocols": [{
     "name": "agent_connect",
@@ -39,5 +39,9 @@
   "unified-apis": [{
     "name": "composio",
     "url": "https://composio.dev/"
+  }],
+  "vision": [{
+    "name": "vision",
+    "url": "AgentStack default tool"
   }]
 }
