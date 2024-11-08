@@ -15,9 +15,12 @@
     "name": "mem0",
     "url": "https://github.com/mem0ai/mem0"
   }],
-  "code-gen": [{
+  "code-execution": [{
     "name": "open_interpreter",
     "url": "https://github.com/OpenInterpreter/open-interpreter"
+  },{
+    "name": "code_interpreter",
+    "url": "AgentStack default tool"
   }],
   "computer-control": [{
     "name": "directory_search",
@@ -27,10 +30,18 @@
     "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/file_read_tool"
   },{
     "name": "ftp",
-    "url": "AgentStack custom tool"
+    "url": "AgentStack default tool"
   }],
   "network-protocols": [{
     "name": "agent_connect",
     "url": "https://github.com/chgaowei/AgentConnect"
+  }],
+  "unified-apis": [{
+    "name": "composio",
+    "url": "https://composio.dev/"
+  }],
+  "vision": [{
+    "name": "vision",
+    "url": "AgentStack default tool"
   }]
 }

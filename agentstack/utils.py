@@ -1,17 +1,15 @@
 from typing import Optional
 
-import toml
 import os
 import sys
 import json
 import re
+from importlib.metadata import version
 
 
 def get_version():
     try:
-        with open('../pyproject.toml', 'r') as f:
-            pyproject_data = toml.load(f)
-            return pyproject_data['project']['version']
+        return version('agentstack')
     except (KeyError, FileNotFoundError) as e:
         print(e)
         return "Unknown version"
