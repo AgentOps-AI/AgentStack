@@ -6,6 +6,11 @@
     "name": "firecrawl",
     "url": "https://www.firecrawl.dev/"
   }],
+  "sandboxing": [
+    {
+      "name":"e2b",
+      "url": "https://e2b.dev/"
+    }],
   "storage": [{
     "name": "mem0",
     "url": "https://github.com/mem0ai/mem0"
@@ -38,5 +43,9 @@
   "vision": [{
     "name": "vision",
     "url": "AgentStack core tool"
+  }],
+  "web-retrieval": [{
+    "name": "exa",
+    "url": "https://exa.ai"
   }]
 }
