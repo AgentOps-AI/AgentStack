@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import sys
-from test.crew import TestCrew
+from crew import TripplannerCrew
+import agentops
+
+agentops.init()
 
 # This main file is intended to be a way for your to run your
 # crew locally, so refrain from adding necessary logic into this file.
@@ -12,9 +15,12 @@ def run():
     Run the crew.
     """
     inputs = {
-        'topic': 'AI LLMs'
+        'origin': 'San Francisco',
+        'cities': 'austin,berlin,tokyo',
+        'interests': 'techno,history,culture,art,music',
+        'range': 'one week between next may to july',
     }
-    TestCrew().crew().kickoff(inputs=inputs)
+    TripplannerCrew().crew().kickoff(inputs=inputs)
 
 
 def train():
@@ -25,20 +31,22 @@ def train():
         "topic": "AI LLMs"
     }
     try:
-        TestCrew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
+        TripplannerCrew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
+
 
 def replay():
     """
     Replay the crew execution from a specific task.
     """
     try:
-        TestCrew().crew().replay(task_id=sys.argv[1])
+        TripplannerCrew().crew().replay(task_id=sys.argv[1])
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
+
 
 def test():
     """
@@ -48,7 +56,11 @@ def test():
         "topic": "AI LLMs"
     }
     try:
-        TestCrew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
+        TripplannerCrew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
+
+
+if __name__ == '__main__':
+    run()

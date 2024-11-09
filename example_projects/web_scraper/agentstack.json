@@ -1,0 +1,8 @@
+{
+    "framework": "crewai",
+    "tools": [
+        "firecrawl",
+        "mem0",
+        "browserbase"
+    ]
+}

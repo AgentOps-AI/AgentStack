@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "trip_planner"
+version = "0.1.0"
+description = "A team of agents that expertly design a trip"
+authors = ["Braelyn Boynton"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+agentops = "^0.3.12"
+crewai = "^0.63.6"
+crewai-tools= "0.12.1"
+browserbase = "^0.3.0"
+
+[tool.poetry.scripts]
+trip_planner = "src.main:run"
+run_crew = "src.main:run"
+train = "src.main:train"
+replay = "src.main:replay"
+test = "src.main:test"

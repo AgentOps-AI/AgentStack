@@ -1,0 +1,16 @@
+scraper:
+  role: >-
+    web scraper
+  goal: >-
+    access a web page and provide the contents of the page in markdown format
+  backstory: >-
+    you are a data entry person, capture the result of a website in markdown format
+  llm: openai/gpt-4o
+summarizer:
+  role: >-
+    summarize
+  goal: >-
+    take lengthy content and summarize it focusing on the most important and technical aspects of the content
+  backstory: >-
+    you are an exper analyst and content writer
+  llm: openai/gpt-4o
