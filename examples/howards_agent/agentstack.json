@@ -1,0 +1,14 @@
+{
+    "framework": "crewai",
+    "tools": [
+        "browserbase",
+        "mem0",
+        "mem0",
+        "ftp",
+        "composio",
+        "composio",
+        "composio",
+        "composio",
+        "mem0"
+    ]
+}
