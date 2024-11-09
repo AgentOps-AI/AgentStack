@@ -1,0 +1,9 @@
+
+agent1:
+    role: >
+      role1
+    goal: >
+      goal
+    backstory: >
+      backstory
+    llm: openai/gpt-4

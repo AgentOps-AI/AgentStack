@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "web_researcher"
+version = "0.1.0"
+description = "research a web page and create a short description"
+authors = ["me"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+agentops = "^0.3.12"
+crewai = "^0.63.6"
+crewai-tools= "0.12.1"
+python-dotenv="1.0.1"
+firecrawl-py = "^1.4.0"
+
+[project.scripts]
+web_researcher = "web_researcher.main:run"
+run_crew = "web_researcher.main:run"
+train = "web_researcher.main:train"
+replay = "web_researcher.main:replay"
+test = "web_researcher.main:test"

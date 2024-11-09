@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "howards_agent"
+version = "0.1.0"
+description = "desc"
+authors = ["me"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+agentops = "^0.3.12"
+crewai = "^0.63.6"
+crewai-tools= "0.12.1"
+mem0ai = "^0.1.23"
+composio-core = "^0.5.40"
+composio-crewai = "^0.5.40"
+
+[project.scripts]
+howards_agent = "howards_agent.main:run"
+run_crew = "howards_agent.main:run"
+train = "howards_agent.main:train"
+replay = "howards_agent.main:replay"
+test = "howards_agent.main:test"
