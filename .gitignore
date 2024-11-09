@@ -170,3 +170,5 @@ cookiecutter.json
 
 examples/tests/
 examples/tests/**/*
+
+.DS_store
