@@ -87,16 +87,6 @@ AgentStack is not designed to be a low-code solution to building agents. Instead
 
 ## What's Included?
 
-Your environment will have everything you need to build a modern AI agent project:
-
-- Support for popular agent frameworks like CrewAI, Autogen, and LiteLLM.
-- Easy integration of tools for browsing, RAG, and more.
-- A fast interactive test runner with built-in support for coverage reporting.
-- A live development server that warns about common mistakes.
-- A build script to bundle your project for production.
-- Integration with [AgentOps](https://agentops.ai) for AI agent observability.
-- Hassle-free updates for the above tools with a single dependency.
-
 ## Roadmap
 
 ### Frameworks
@@ -108,16 +98,19 @@ Development of AgentStack is being done primarily on [CrewAI](https://crewai.com
 Some work has been done to add Microsoft's [AutoGen](https://microsoft.github.io/autogen/0.2/), although these efforts have been paused. AutoGen is currently in the process of making [large design decisions](https://microsoft.github.io/autogen/dev/) that will effect the integration with AgentStack.
 
 ### Tools
-Many tools are currently supported. The short-term roadmap includes:
-* MultiOn
-* Firecrawl
-* Anon
-* E2B
-* More
+- Core Tools built by AgentStack
+- Preferred partners in the package directly
+- Community partner tools added through external repositories
 
 ### Other Features
-* Generated testing
-* Integrated benchmarking
+- Generated testing
+- Integrated benchmarking
+- Easy integration of tools for browsing, RAG, and more.
+- A fast interactive test runner with built-in support for coverage reporting.
+- A live development server that warns about common mistakes.
+- A build script to bundle your project for production.
+- Integration with [AgentOps](https://agentops.ai) for AI agent observability.
+- Hassle-free updates for the above tools with a single dependency.
 
 ## License
 
