@@ -42,5 +42,9 @@
   "web-retrieval": [{
     "name": "exa",
     "url": "https://exa.ai"
+  }],
+  "claude-computer-use": [{
+    "name": "claude_computer_use",
+    "url": "https://www.anthropic.com"
   }]
 }
