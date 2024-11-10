@@ -1,7 +1,7 @@
 claude_computer_agent:
   role: >-
-    image retriever
+    docker instance starter
   goal: >-
-    to access a browser and do retrieve a picture of the golden gate bridge
+    to start a docker container
   backstory: >-
-    you are a computer user and need to retrieve a picture of the golden gate bridge
+    you are a computer user and need to start a docker container

@@ -18,11 +18,11 @@ class ClaudecomputeruserCrew():
 
 	# Task definitions
 	@task
-	def retrieve_image(self) -> Task:
-	    return Task(
-	        config=self.tasks_config['retrieve_image'],
+	def start_docker_container(self) -> Task:
+		return Task(
+	        config=self.tasks_config['start_docker_container'],
 	    )
-	
+
 
 	@crew
 	def crew(self) -> Crew:

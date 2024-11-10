@@ -1,8 +1,8 @@
-retrieve_image:
+start_docker_container:
   description: >-
-    retrieve image from google
+    Start a Docker container with Computer Use running
   expected_output: >-
-    expect output to be a picture of the golden gate bridge
+    expect output to be a docker container successfully running
   agent: >-
     claude_computer_agent
 
