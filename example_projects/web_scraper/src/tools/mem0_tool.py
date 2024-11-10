@@ -26,7 +26,7 @@ load_dotenv()
 # These functions can be extended by taking a user_id parameter
 # https://docs.mem0.ai/integrations/multion#add-memories-to-mem0
 
-MEM0_API_KEY = os.getenv('MEM0_API_KEY', 'm0-bQFbUJO49Ydz3LAKhEyjOx6SomgCANmvauk4vaXu')
+MEM0_API_KEY = os.getenv('MEM0_API_KEY')
 client = MemoryClient(api_key=MEM0_API_KEY)
 
 
