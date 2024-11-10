@@ -1,0 +1,8 @@
+retrieve_image:
+  description: >-
+    retrieve image from google
+  expected_output: >-
+    expect output to be a picture of the golden gate bridge
+  agent: >-
+    claude_computer_agent
+
