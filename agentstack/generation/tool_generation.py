@@ -20,7 +20,9 @@ def add_tool(tool_name: str, path: Optional[str] = None):
             tool_data = open_json_file(tool_data_path)
 
             with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}_tool.py") as tool_file_path:
-                os.system(tool_data['package'])  # Install package
+                if os.system(tool_data['package']) == 1:  # Install package
+                    print(term_color("AgentStack: Failed to install tool requirements. Please resolve dependency issues and try again,", 'red'))
+                    return
                 shutil.copy(tool_file_path, f'{path + "/" if path else ""}src/tools/{tool_name}_tool.py')  # Move tool from package to project
                 add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
                 add_tool_to_agent_definition(framework, tool_data, path)
