@@ -1,6 +1,6 @@
 {
   "name": "file_read_tool",
-  "package": "poetry add 'crewai[tools]'",
+  "package": "poetry add crewai-tools",
   "env": "",
   "tools": ["file_read_tool"]
 }

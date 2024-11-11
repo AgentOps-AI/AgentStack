@@ -12,7 +12,7 @@ def web_scrape(url: str):
     need to read all other links as well.
     """
     scrape_result = app.scrape_url(url, params={'formats': ['markdown']})
-    return scrape_result.markdown
+    return scrape_result
 
 
 @tool

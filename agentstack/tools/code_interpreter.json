@@ -1,0 +1,6 @@
+{
+  "name": "code_interpreter",
+  "package": "poetry add crewai-tools",
+  "env": "",
+  "tools": ["code_interpreter"]
+}

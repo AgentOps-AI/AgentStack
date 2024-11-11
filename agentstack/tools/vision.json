@@ -1,0 +1,6 @@
+{
+  "name": "vision",
+  "package": "poetry add crewai-tools",
+  "env": "",
+  "tools": ["vision_tool"]
+}

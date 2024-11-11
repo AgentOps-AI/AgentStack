@@ -1,0 +1,13 @@
+task1:
+  description: >
+    detail
+  expected_output: >
+    result
+  agent: agent1
+new_task:
+  description: >-
+    Add your description here
+  expected_output: >-
+    Add your expected_output here
+  agent: >-
+    default_agent

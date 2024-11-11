@@ -5,6 +5,7 @@ from agentstack.cli import init_project_builder, list_tools
 from agentstack.utils import get_version
 import agentstack.generation as generation
 
+import webbrowser
 
 def main():
     parser = argparse.ArgumentParser(
@@ -15,6 +16,12 @@ def main():
 
     # Create top-level subparsers
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # 'docs' command
+    subparsers.add_parser('docs', help='Open Agentstack docs')
+
+    # 'quickstart' command
+    subparsers.add_parser('quickstart', help='Open the quickstart guide')
 
     # 'init' command
     init_parser = subparsers.add_parser('init', aliases=['i'], help='Initialize a directory for the project')
@@ -65,6 +72,10 @@ def main():
         return
 
     # Handle commands
+    if args.command in ['docs']:
+        webbrowser.open('https://docs.agentstack.sh/')
+    if args.command in ['quickstart']:
+        webbrowser.open('https://docs.agentstack.sh/quickstart')
     if args.command in ['init', 'i']:
         init_project_builder(args.slug_name, args.wizard)
     elif args.command in ['generate', 'g']:

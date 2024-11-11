@@ -2,6 +2,8 @@
 import sys
 from crew import {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew
 import agentops
+from dotenv import load_dotenv
+load_dotenv()
 
 agentops.init()
 

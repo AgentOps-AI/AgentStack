@@ -19,9 +19,9 @@ def add_tool(tool_name: str, path: Optional[str] = None):
         with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
             tool_data = open_json_file(tool_data_path)
 
-            with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}.py") as tool_file_path:
+            with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}_tool.py") as tool_file_path:
                 os.system(tool_data['package'])  # Install package
-                shutil.copy(tool_file_path, f'{path + "/" if path else ""}src/tools/{tool_name}.py')  # Move tool from package to project
+                shutil.copy(tool_file_path, f'{path + "/" if path else ""}src/tools/{tool_name}_tool.py')  # Move tool from package to project
                 add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
                 add_tool_to_agent_definition(framework, tool_data, path)
                 insert_code_after_tag(f'{path + "/" if path else ""}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
@@ -36,13 +36,15 @@ def add_tool(tool_name: str, path: Optional[str] = None):
                     json.dump(agentstack_json, f, indent=4)
 
                 print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
+                if tool_data.get('cta'):
+                    print(term_color(f'🪩 {tool_data["cta"]}', 'blue'))
 
 
 def add_tool_to_tools_init(tool_data: dict, path: Optional[str] = None):
     file_path = f'{path + "/" if path else ""}src/tools/__init__.py'
     tag = '# tool import'
     code_to_insert = [
-        f"from {tool_data['name']} import {', '.join([tool_name for tool_name in tool_data['tools']])}"
+        f"from .{tool_data['name']}_tool import {', '.join([tool_name for tool_name in tool_data['tools']])}"
     ]
     insert_code_after_tag(file_path, tag, code_to_insert, next_line=True)
 
@@ -57,7 +59,7 @@ def add_tool_to_agent_definition(framework: str, tool_data: dict, path: Optional
 
     with fileinput.input(files=filename, inplace=True) as f:
         for line in f:
-            print(line.replace('tools=[', f'tools=[tools.{", tools.".join([tool_name for tool_name in tool_data["tools"]])}, '), end='')
+            print(line.replace('tools=[', f'tools=[{"*" if tool_data.get("tools_bundled") else ""}tools.{", tools.".join([tool_name for tool_name in tool_data["tools"]])}, '), end='')
 
 
 def assert_tool_exists(tool_name: str, tools: dict):

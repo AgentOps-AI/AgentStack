@@ -1,17 +1,15 @@
 from typing import Optional
 
-import toml
 import os
 import sys
 import json
 import re
+from importlib.metadata import version
 
 
 def get_version():
     try:
-        with open('../pyproject.toml', 'r') as f:
-            pyproject_data = toml.load(f)
-            return pyproject_data['project']['version']
+        return version('agentstack')
     except (KeyError, FileNotFoundError) as e:
         print(e)
         return "Unknown version"
@@ -64,9 +62,23 @@ def clean_input(input_string):
 
 
 def term_color(text: str, color: str) -> str:
-    if color is 'red':
-        return "\033[91m{}\033[00m".format(text)
-    if color is 'green':
-        return "\033[92m{}\033[00m".format(text)
+    colors = {
+        'red': '91',
+        'green': '92',
+        'yellow': '93',
+        'blue': '94',
+        'purple': '95',
+        'cyan': '96',
+        'white': '97'
+    }
+    color_code = colors.get(color)
+    if color_code:
+        return f"\033[{color_code}m{text}\033[00m"
     else:
         return text
+
+
+
+def is_snake_case(string: str):
+    return bool(re.match('^[a-z0-9_]+$', string))
+

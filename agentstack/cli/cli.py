@@ -13,10 +13,14 @@ from cookiecutter.main import cookiecutter
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
 from .. import generation
-from ..utils import open_json_file, term_color
+from ..utils import open_json_file, term_color, is_snake_case
 
 
 def init_project_builder(slug_name: Optional[str] = None, use_wizard: bool = False):
+    if slug_name and not is_snake_case(slug_name):
+        print(term_color("Project name must be snake case", 'red'))
+        return
+
     if use_wizard:
         welcome_message()
         project_details = ask_project_details(slug_name)
@@ -35,7 +39,7 @@ def init_project_builder(slug_name: Optional[str] = None, use_wizard: bool = Fal
             "license": "MIT"
         }
 
-        framework = "CrewAI"
+        framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
 
         design = {
             'agents': [],
@@ -119,24 +123,32 @@ First we need to create the agents that will work together to accomplish tasks:
     while make_agent:
         print('---')
         print(f"Agent #{len(agents)+1}")
-        agent = inquirer.prompt([
-            inquirer.Text("name", message="What's the name of this agent? (snake_case)"),
-            inquirer.Text("role", message="What role does this agent have?"),
-            inquirer.Text("goal", message="What is the goal of the agent?"),
-            inquirer.Text("backstory", message="Give your agent a backstory"),
-            # TODO: make a list #2
-            inquirer.Text('model', message="What LLM should this agent use? (any LiteLLM provider)", default="openai/gpt-4"),
-            # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
-            #     'mixtral_llm',
-            #     'mixtral_llm',
-            # ]),
-            inquirer.Confirm(
-                "another",
-                message="Create another agent?"
-            ),
-        ])
 
-        make_agent = agent['another']
+        agent_incomplete = True
+        agent = None
+        while agent_incomplete:
+            agent = inquirer.prompt([
+                inquirer.Text("name", message="What's the name of this agent? (snake_case)"),
+                inquirer.Text("role", message="What role does this agent have?"),
+                inquirer.Text("goal", message="What is the goal of the agent?"),
+                inquirer.Text("backstory", message="Give your agent a backstory"),
+                # TODO: make a list - #2
+                inquirer.Text('model', message="What LLM should this agent use? (any LiteLLM provider)", default="openai/gpt-4"),
+                # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
+                #     'mixtral_llm',
+                #     'mixtral_llm',
+                # ]),
+            ])
+
+            if not agent['name'] or agent['name'] == '':
+                print(term_color("Error: Agent name is required - Try again", 'red'))
+                agent_incomplete = True
+            elif not is_snake_case(agent['name']):
+                print(term_color("Error: Agent name must be snake case - Try again", 'red'))
+            else:
+                agent_incomplete = False
+
+        make_agent = inquirer.confirm(message="Create another agent?")
         agents.append(agent)
 
     print('')
@@ -154,20 +166,27 @@ First we need to create the agents that will work together to accomplish tasks:
     while make_task:
         print('---')
         print(f"Task #{len(tasks) + 1}")
-        task = inquirer.prompt([
-            inquirer.Text("name", message="What's the name of this task?"),
-            inquirer.Text("description", message="Describe the task in more detail"),
-            inquirer.Text("expected_output",
-                          message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)"),
-            inquirer.List("agent", message="Which agent should be assigned this task?",
-                          choices=[a['name'] for a in agents], ),
-            inquirer.Confirm(
-                "another",
-                message="Create another task?"
-            ),
-        ])
 
-        make_task = task['another']
+        task_incomplete = True
+        task = None
+        while task_incomplete:
+            task = inquirer.prompt([
+                inquirer.Text("name", message="What's the name of this task? (snake_case)"),
+                inquirer.Text("description", message="Describe the task in more detail"),
+                inquirer.Text("expected_output",
+                              message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)"),
+                inquirer.List("agent", message="Which agent should be assigned this task?",
+                              choices=[a['name'] for a in agents], ),
+            ])
+
+            if not task['name'] or task['name'] == '':
+                print(term_color("Error: Task name is required - Try again", 'red'))
+            elif not is_snake_case(task['name']):
+                print(term_color("Error: Task name must be snake case - Try again", 'red'))
+            else:
+                task_incomplete = False
+
+        make_task = inquirer.confirm(message="Create another task?")
         tasks.append(task)
 
     print('')
@@ -221,14 +240,21 @@ def ask_tools() -> list:
 
 
 def ask_project_details(slug_name: Optional[str] = None) -> dict:
-    questions = [
-        inquirer.Text("name", message="What's the name of your project (snake_case)", default=slug_name or ''),
+    name = inquirer.text(message="What's the name of your project (snake_case)", default=slug_name or '')
+
+    if not is_snake_case(name):
+        print(term_color("Project name must be snake case", 'red'))
+        return ask_project_details(slug_name)
+
+    questions = inquirer.prompt([
         inquirer.Text("version", message="What's the initial version", default="0.1.0"),
         inquirer.Text("description", message="Enter a description for your project"),
         inquirer.Text("author", message="Who's the author (your name)?"),
-    ]
+    ])
 
-    return inquirer.prompt(questions)
+    questions['name'] = name
+
+    return questions
 
 
 def insert_template(project_details: dict, framework_name: str, design: dict):
@@ -284,7 +310,9 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
         f"    cd {project_metadata.project_slug}\n"
         "    poetry install\n"
         "    poetry run python src/main.py\n\n"
-        "  Run `agentstack --help` for help!\n"
+        "  Add agents and tasks with:\n"
+        "    `agentstack generate agent/task <name>`\n\n"
+        "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
     )
 
 
@@ -307,6 +335,7 @@ def list_tools():
                     print(f"  - {tool['name']}: {tool['url']}")
 
             print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
+            print("   https://docs.agentstack.sh/tools/core")
 
         except FileNotFoundError:
             print("Error: tools.json file not found at path:", tools_json_path)

@@ -1,0 +1,14 @@
+scrape_site:
+  description: >-
+    fetch the contents of https://github.com/AgentOps-AI/AgentStack/tree/main in markdown format
+  expected_output: >-
+    the contents of a website in markdown
+  agent: >-
+    web_scraper
+summarize:
+  description: >-
+    take the contents the website and summarize it into one paragraph. highlight the most important details
+  expected_output: >-
+    one paragraph text output
+  agent: >-
+    content_summarizer

@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentstack"
-version = "0.1.5"
+version = "0.1.8"
 description = "The fastest way to build robust AI agents"
 authors = [
     { name="Braelyn Boynton", email="bboynton97@gmail.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 
 dependencies = [
     "typer>=0.12.5",
@@ -24,9 +24,6 @@ dependencies = [
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
-
-[project.urls]
-"Homepage" = "https://github.com/AgentOps-AI/AgentStack"
 
 
 [project.scripts]
