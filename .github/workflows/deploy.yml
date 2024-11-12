@@ -5,7 +5,7 @@ on:
     types: [created]
 
 jobs:
-  deploy:
+  deploy-pypi:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: pip install build twine
@@ -28,3 +28,65 @@ jobs:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: twine upload dist/*
+
+  deploy-homebrew:
+    needs: deploy-pypi
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" | sed 's/^\///' >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout homebrew-tap
+        uses: actions/checkout@v3
+        with:
+          repository: agentstack-ai/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Create Formula directory
+        run: mkdir -p Formula
+
+      - name: Update Formula
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          # Get SHA256 of PyPI package
+          PACKAGE_NAME="${{ github.event.repository.name }}"
+          curl -sL https://pypi.org/pypi/$PACKAGE_NAME/$VERSION/json
+          SHA256=$(curl -sL https://pypi.org/pypi/$PACKAGE_NAME/$VERSION/json | jq -r '.urls[0].digests.sha256')
+          
+          # Update formula
+          cat > Formula/$PACKAGE_NAME.rb << EOF
+          class Agentstack < Formula
+            include Language::Python::Virtualenv
+          
+            desc "$(gh repo view --json description -q .description)"
+            homepage "https://github.com/${{ github.repository }}"
+            url "https://files.pythonhosted.org/packages/source/${PACKAGE_NAME:0:1}/$PACKAGE_NAME/$PACKAGE_NAME-$VERSION.tar.gz"
+            sha256 "$SHA256"
+          
+            depends_on "python@3.9"
+          
+            def install
+              virtualenv_install_with_resources
+            end
+          
+            test do
+              system bin/"$PACKAGE_NAME", "--version"
+            end
+          end
+          EOF
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add Formula/*.rb
+          git commit -m "Update formula to version ${{ steps.get_version.outputs.VERSION }}" || true
+          git push
