@@ -45,7 +45,7 @@ jobs:
       - name: Checkout homebrew-tap
         uses: actions/checkout@v3
         with:
-          repository: ${{ github.repository_owner }}/homebrew-tap
+          repository: agentstack-ai/homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Create Formula directory
@@ -58,8 +58,6 @@ jobs:
         run: |
           # Get SHA256 of PyPI package
           PACKAGE_NAME="${{ github.event.repository.name }}"
-          echo $PACKAGE_NAME
-          echo $VERSION
           curl -sL https://pypi.org/pypi/$PACKAGE_NAME/$VERSION/json
           SHA256=$(curl -sL https://pypi.org/pypi/$PACKAGE_NAME/$VERSION/json | jq -r '.urls[0].digests.sha256')
           
