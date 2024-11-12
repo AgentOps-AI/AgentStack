@@ -1,0 +1,8 @@
+start_docker_container:
+  description: >-
+    Start a Docker container with Computer Use running
+  expected_output: >-
+    expect output to be a docker container successfully running
+  agent: >-
+    claude_computer_agent
+

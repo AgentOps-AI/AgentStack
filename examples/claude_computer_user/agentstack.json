@@ -1,0 +1,6 @@
+{
+    "framework": "crewai",
+    "tools": [
+        "claude_computer_use"
+    ]
+}

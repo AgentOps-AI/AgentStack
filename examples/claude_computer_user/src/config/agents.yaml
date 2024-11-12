@@ -1,0 +1,7 @@
+claude_computer_agent:
+  role: >-
+    docker instance starter
+  goal: >-
+    to start a docker container
+  backstory: >-
+    you are a computer user and need to start a docker container

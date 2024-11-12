@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "claude_computer_user"
+version = "0.1.0"
+description = "An AI Agent that can control your OS"
+authors = ["Kish"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+agentops = "^0.3.12"
+crewai = "^0.63.6"
+crewai-tools= "0.12.1"
+python-dotenv="1.0.1"
+
+[project.scripts]
+claude_computer_user = "claude_computer_user.main:run"
+run_crew = "claude_computer_user.main:run"
+train = "claude_computer_user.main:train"
+replay = "claude_computer_user.main:replay"
+test = "claude_computer_user.main:test"
