@@ -21,7 +21,7 @@ def generate_agent(
     if not backstory:
         backstory = 'Add your backstory here'
     if not llm:
-        llm = 'Add your llm here with format provider/model'
+        llm = 'openai/gpt-4o'
 
     verify_agentstack_project()
 
@@ -45,7 +45,7 @@ def generate_crew_agent(
         role: Optional[str] = 'Add your role here',
         goal: Optional[str] = 'Add your goal here',
         backstory: Optional[str] = 'Add your backstory here',
-        llm: Optional[str] = 'Add your llm here with format provider/model'
+        llm: Optional[str] = 'openai/gpt-4o'
 ):
     config_path = os.path.join('src', 'config', 'agents.yaml')
 
