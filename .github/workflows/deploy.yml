@@ -68,7 +68,7 @@ jobs:
           
             desc "$(gh repo view --json description -q .description)"
             homepage "https://github.com/${{ github.repository }}"
-            url "https://files.pythonhosted.org/packages/source/${PACKAGE_NAME:0:1}/$PACKAGE_NAME/$PACKAGE_NAME-#{version}.tar.gz"
+            url "https://files.pythonhosted.org/packages/source/${PACKAGE_NAME:0:1}/$PACKAGE_NAME/$PACKAGE_NAME-$VERSION.tar.gz"
             sha256 "$SHA256"
           
             depends_on "python@3.9"
