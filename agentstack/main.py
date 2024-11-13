@@ -23,6 +23,9 @@ def main():
     # 'quickstart' command
     subparsers.add_parser('quickstart', help='Open the quickstart guide')
 
+    # 'templates' command
+    subparsers.add_parser('templates', help='View Agentstack templates')
+
     # 'init' command
     init_parser = subparsers.add_parser('init', aliases=['i'], help='Initialize a directory for the project')
     init_parser.add_argument('slug_name', nargs='?', help="The directory name to place the project in")
@@ -76,8 +79,10 @@ def main():
         webbrowser.open('https://docs.agentstack.sh/')
     if args.command in ['quickstart']:
         webbrowser.open('https://docs.agentstack.sh/quickstart')
+    if args.command in ['templates']:
+        webbrowser.open('https://docs.agentstack.sh/quickstart')
     if args.command in ['init', 'i']:
-        init_project_builder(args.slug_name, args.wizard)
+        init_project_builder(args.slug_name, args.framework, args.wizard)
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             generation.generate_agent(args.name, args.role, args.goal, args.backstory, args.llm)

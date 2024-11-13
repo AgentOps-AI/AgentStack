@@ -16,7 +16,7 @@ from .. import generation
 from ..utils import open_json_file, term_color, is_snake_case
 
 
-def init_project_builder(slug_name: Optional[str] = None, use_wizard: bool = False):
+def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
     if slug_name and not is_snake_case(slug_name):
         print(term_color("Project name must be snake case", 'red'))
         return
