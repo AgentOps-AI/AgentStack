@@ -1,0 +1,6 @@
+{
+  "name": "perplexity",
+  "package": "",
+  "env": "PERPLEXITY_API_KEY=pplx-...",
+  "tools": ["query_perplexity"]
+}

@@ -42,5 +42,9 @@
   "web-retrieval": [{
     "name": "exa",
     "url": "https://exa.ai"
+  }],
+  "search": [{
+    "name": "perplexity",
+    "url": "https://perplexity.ai"
   }]
 }
