@@ -20,17 +20,17 @@
   "tasks": [{
     "name": "research",
     "description": "use the tools at your disposal to thoroughly research the query: {query}",
-    "expected_output": "text output describing what what information was discovered, with labels defining where it was found. only output content found directly through research, do not modify those results in any way.",
+    "expected_output": "text output describing what what information was discovered, with labels defining where it was found. only output content found directly through research, do not modify those results in any way. Cite sources in the result.",
     "agent": "researcher"
   },{
     "name": "analyze",
-    "description": "Using the data gathered by the researcher",
-    "expected_output": "",
+    "description": "Using the data gathered by the researcher, analyze the data and form a conclusion that reports key insights on that data pertaining to the query: {query}",
+    "expected_output": "A report in markdown format outlining the key insights of the research and accurately answering the query.",
     "agent": "analyst"
   }],
   "tools": [{
-    "name": "",
-    "agents": [""]
+    "name": "perplexity",
+    "agents": ["researcher"]
   }],
   "method": "sequential"
 }
