@@ -1,6 +1,6 @@
 from typing import Optional
 
-from .gen_utils import insert_code_after_tag
+from .gen_utils import insert_code_after_tag, insert_after_tasks
 from ..utils import verify_agentstack_project, get_framework
 import os
 from ruamel.yaml import YAML
@@ -77,7 +77,6 @@ def generate_crew_task(
 
     # Add task to crew.py
     file_path = 'src/crew.py'
-    tag = '# Task definitions'
     code_to_insert = [
         "@task",
         f"def {name}(self) -> Task:",
@@ -87,4 +86,4 @@ def generate_crew_task(
         ""
     ]
 
-    insert_code_after_tag(file_path, tag, code_to_insert)
+    insert_after_tasks(file_path, code_to_insert)
