@@ -27,17 +27,31 @@ def insert_after_tasks(file_path, code_to_insert):
 
     module = ast.parse(content)
 
-    # Track the last task function's end line
+    # Track the last task function and its line number
     last_task_end = None
+    last_task_start = None
     for node in ast.walk(module):
         if isinstance(node, ast.FunctionDef) and \
                 any(isinstance(deco, ast.Name) and deco.id == 'task' for deco in node.decorator_list):
             last_task_end = node.end_lineno
+            last_task_start = node.lineno
 
     if last_task_end is not None:
         lines = content.split('\n')
-        for i, line in enumerate(code_to_insert):
-            lines.insert(last_task_end + i, line)
+
+        # Get the indentation of the task function
+        task_line = lines[last_task_start - 1]  # -1 for 0-based indexing
+        indentation = ''
+        for char in task_line:
+            if char in [' ', '\t']:
+                indentation += char
+            else:
+                break
+
+        # Add the same indentation to each line of the inserted code
+        indented_code = '\n' + '\n'.join(indentation + line for line in code_to_insert)
+
+        lines.insert(last_task_end, indented_code)
         content = '\n'.join(lines)
 
         with open(file_path, 'w') as file:
