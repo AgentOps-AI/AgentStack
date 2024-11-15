@@ -33,8 +33,7 @@ def add_tool(tool_name: str, path: Optional[str] = None):
 
             with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}_tool.py") as tool_file_path:
                 if tool_data.get('packages'):
-                    packages = ' '.join(tool_data['packages'])
-                    os.system(f'poetry add {packages}')  # Install packages
+                    os.system(f"poetry add {' '.join(tool_data['packages'])}")  # Install packages
                 shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
                 add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
                 add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
@@ -75,8 +74,7 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
         with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
             tool_data = open_json_file(tool_data_path)
             if tool_data.get('packages'):
-                packages = ' '.join(tool_data['packages'])
-                os.system(f'poetry remove {packages}') # Uninstall packages
+                os.system(f"poetry remove {' '.join(tool_data['packages'])}") # Uninstall packages
             os.remove(f'{path}src/tools/{tool_name}_tool.py')
             remove_tool_from_tools_init(tool_data, path)
             remove_tool_from_agent_definition(framework, tool_data, path)
