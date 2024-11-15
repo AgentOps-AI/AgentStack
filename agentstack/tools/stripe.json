@@ -1,0 +1,8 @@
+{
+  "name": "stripe",
+  "package": "poetry add stripe-agent-toolkit stripe",
+  "env": "STRIPE_SECRET_KEY=sk-...",
+  "tools_bundled": true,
+  "tools": ["stripe_tools"],
+  "cta": "🔑 Create your Stripe API key here: https://dashboard.stripe.com/account/apikeys"
+}
