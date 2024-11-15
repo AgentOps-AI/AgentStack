@@ -86,7 +86,7 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
             with open(f'{path}{AGENTSTACK_JSON_FILENAME}', 'w') as f:
                 json.dump(agentstack_json, f, indent=4)
             
-            print(term_color(f'🔨 Tool {tool_name} removed from agentstack project successfully', 'green'))
+            print(term_color(f'🔨 Tool {tool_name}', 'green'), term_color('removed', 'red'), term_color('from agentstack project successfully', 'green'))
 
 
 def _format_tool_import_statement(tool_data: dict):
