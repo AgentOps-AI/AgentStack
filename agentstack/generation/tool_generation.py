@@ -3,7 +3,7 @@ import json
 import sys
 from typing import Optional
 
-from .gen_utils import insert_code_after_tag
+from .gen_utils import insert_code_after_tag, string_in_file
 from ..utils import open_json_file, get_framework, term_color
 import os
 import shutil
@@ -33,13 +33,17 @@ def add_tool(tool_name: str, path: Optional[str] = None):
 
             with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}_tool.py") as tool_file_path:
                 if tool_data.get('packages'):
-                    os.system(f'poetry add {' '.join(tool_data["packages"])}')  # Install packages
+                    packages = ' '.join(tool_data['packages'])
+                    os.system(f'poetry add {packages}')  # Install packages
                 shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
                 add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
                 add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
-                # TODO If the tool is reinstalled .env variables will be duplicated.
-                insert_code_after_tag(f'{path}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
-                insert_code_after_tag(f'{path}.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
+                if tool_data.get('env'): # if the env vars aren't in the .env files, add them
+                    first_var_name = tool_data['env'].split('=')[0]
+                    if not string_in_file(f'{path}.env', first_var_name):
+                        insert_code_after_tag(f'{path}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
+                    if not string_in_file(f'{path}.env.example', first_var_name):
+                        insert_code_after_tag(f'{path}.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
                 
                 if not agentstack_json.get('tools'):
                     agentstack_json['tools'] = []
@@ -71,7 +75,8 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
         with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
             tool_data = open_json_file(tool_data_path)
             if tool_data.get('packages'):
-                os.system(f'poetry remove {" ".join(tool_data["packages"])}') # Uninstall packages
+                packages = ' '.join(tool_data['packages'])
+                os.system(f'poetry remove {packages}') # Uninstall packages
             os.remove(f'{path}src/tools/{tool_name}_tool.py')
             remove_tool_from_tools_init(tool_data, path)
             remove_tool_from_agent_definition(framework, tool_data, path)
