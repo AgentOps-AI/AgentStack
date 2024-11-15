@@ -59,3 +59,9 @@ def insert_after_tasks(file_path, code_to_insert):
         return True
     return False
 
+
+def string_in_file(file_path: str, str_to_match: str) -> bool:
+    with open(file_path, 'r') as file:
+        file_content = file.read()
+        return str_to_match in file_content
+

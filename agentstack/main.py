@@ -62,6 +62,10 @@ def main():
     tools_add_parser = tools_subparsers.add_parser('add', aliases=['a'], help='Add a new tool')
     tools_add_parser.add_argument('name', help='Name of the tool to add')
 
+    # 'remove' command under 'tools'
+    tools_remove_parser = tools_subparsers.add_parser('remove', aliases=['r'], help='Remove a tool')
+    tools_remove_parser.add_argument('name', help='Name of the tool to remove')
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -89,6 +93,8 @@ def main():
             list_tools()
         elif args.tools_command in ['add', 'a']:
             generation.add_tool(args.name)
+        elif args.tools_command in ['remove', 'r']:
+            generation.remove_tool(args.name)
         else:
             tools_parser.print_help()
     else:

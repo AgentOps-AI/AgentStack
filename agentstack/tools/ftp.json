@@ -1,6 +1,6 @@
 {
   "name": "ftp",
-  "package": "",
+  "packages": [],
   "env": "FTP_HOST=...\nFTP_USER=...\nFTP_PASSWORD=...",
   "tools": ["upload_files"],
   "cta": "Be sure to add your FTP credentials to .env"

@@ -1,6 +1,6 @@
 {
   "name": "composio",
-  "package": "poetry add composio-crewai",
+  "packages": ["composio-crewai"],
   "env": "COMPOSIO_API_KEY=...",
   "tools": ["composio_tools"],
   "tools_bundled": true,
