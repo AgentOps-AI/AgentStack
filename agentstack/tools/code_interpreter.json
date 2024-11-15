@@ -1,6 +1,6 @@
 {
   "name": "code_interpreter",
-  "packages": ["crewai-tools"],
+  "packages": [],
   "env": "",
   "tools": ["code_interpreter"]
 }

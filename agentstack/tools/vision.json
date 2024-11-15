@@ -1,6 +1,6 @@
 {
   "name": "vision",
-  "packages": ["crewai-tools"],
+  "packages": [],
   "env": "",
   "tools": ["vision_tool"]
 }
