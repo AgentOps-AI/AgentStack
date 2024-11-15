@@ -1,6 +1,6 @@
 {
   "name": "mem0",
-  "package": "poetry add mem0ai",
+  "packages": ["mem0ai"],
   "env": "MEM0_API_KEY=...",
   "tools": ["write_to_memory", "read_from_memory"],
   "cta": "Create your mem0 API key at https://mem0.ai/"

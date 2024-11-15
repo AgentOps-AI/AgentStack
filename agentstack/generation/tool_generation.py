@@ -32,7 +32,8 @@ def add_tool(tool_name: str, path: Optional[str] = None):
             tool_data = open_json_file(tool_data_path)
 
             with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}_tool.py") as tool_file_path:
-                os.system(tool_data['package'])  # Install package
+                if tool_data.get('packages'):
+                    os.system(f'poetry add {' '.join(tool_data["packages"])}')  # Install packages
                 shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
                 add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
                 add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
@@ -69,6 +70,8 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
 
         with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
             tool_data = open_json_file(tool_data_path)
+            if tool_data.get('packages'):
+                os.system(f'poetry remove {" ".join(tool_data["packages"])}') # Uninstall packages
             os.remove(f'{path}src/tools/{tool_name}_tool.py')
             remove_tool_from_tools_init(tool_data, path)
             remove_tool_from_agent_definition(framework, tool_data, path)
@@ -79,8 +82,6 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
                 json.dump(agentstack_json, f, indent=4)
             
             print(term_color(f'🔨 Tool {tool_name} removed from agentstack project successfully', 'green'))
-            # TODO If we add an uninstall command to the tool_config json we can run it instead. 
-            print(term_color(f'To uninstall dependencies, reverse the install command: {tool_data["package"]}', 'blue'))
 
 
 def _format_tool_import_statement(tool_data: dict):
