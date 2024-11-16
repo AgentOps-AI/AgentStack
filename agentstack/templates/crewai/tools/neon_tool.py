@@ -75,22 +75,3 @@ def delete_database(project_id: str, database_name: str) -> str:
         return f"Database {database_name} deleted successfully"
     except Exception as e:
         return f"Failed to delete database: {str(e)}"
-
-@tool("Create Branch")
-def create_branch(project_id: str, branch_name: str) -> str:
-    """
-    Creates a new branch in specified Neon project.
-    Args:
-        project_id: ID of the project
-        branch_name: Name of the branch to create
-    Returns:
-        Status message about branch creation
-    """
-    try:
-        result = neon_client.branches.create(
-            project_id=project_id,
-            name=branch_name
-        )
-        return f"Branch {branch_name} created successfully"
-    except Exception as e:
-        return f"Failed to create branch: {str(e)}"

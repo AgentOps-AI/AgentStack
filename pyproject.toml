@@ -2,16 +2,13 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[project]
+[tool.poetry]
 name = "agentstack"
 version = "0.1.12"
 description = "The fastest way to build robust AI agents"
-authors = [
-    { name="Braelyn Boynton", email="bboynton97@gmail.com" }
-]
-license = { text = "MIT" }
+authors = ["Braelyn Boynton <bboynton97@gmail.com>"]
+license = "MIT"
 readme = "README.md"
-requires-python = ">=3.9"
 
 dependencies = [
     "typer>=0.12.5",
@@ -26,6 +23,10 @@ dependencies = [
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
+
+[project]
+name = "agentstack"
+version = "0.1.9"
 
 
 [project.scripts]
