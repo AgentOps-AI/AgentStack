@@ -1,0 +1,7 @@
+{
+    "name": "neon",
+    "package": "poetry add neon-api",
+    "env": "NEON_API_KEY=...",
+    "tools": ["neon"],
+    "cta": "Create an API key at https://www.neon.tech"
+  }
