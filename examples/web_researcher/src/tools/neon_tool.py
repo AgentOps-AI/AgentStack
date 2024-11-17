@@ -13,7 +13,7 @@ neon_client = NeonAPI(api_key=NEON_API_KEY)
 @tool("Create Neon Project and Database")
 def create_database(project_name: str) -> str:
     """
-    Creates a new Neon project.
+    Creates a new Neon project. (this takes less than 500ms)
     Args:
         project_name: Name of the project to create
     Returns:
