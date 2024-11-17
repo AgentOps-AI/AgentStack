@@ -14,8 +14,8 @@ summarize:
     content_summarizer
 store:
   description: >-
-    store the contents of the website in a postgres database
+    store the contents of the website in a postgres database, then come up with the SQL query that one could use to retrieve the data that was just inserted (and test it)
   expected_output: >-
-    the sql query to retrieve the contents of the website from the database
+    the sql query that one could use to retrieve the data that was saved
   agent: >-
     content_storer

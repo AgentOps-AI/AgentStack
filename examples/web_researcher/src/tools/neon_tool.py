@@ -33,17 +33,21 @@ def execute_sql_ddl(connection_uri: str, command: str) -> str:
     Inserts data into a specified Neon database.
     Args:
         connection_uri: The connection URI for the Neon database
-        command: The DDL command to execute
+        command: The DDL SQL command to execute
     Returns:
         the result of the DDL command
     """
     conn = psycopg2.connect(connection_uri)
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute(command)
-    result = cur.fetchone()
+    try:
+        cur.execute(command)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        return f"Failed to execute DDL command: {str(e)}"
     cur.close()
     conn.close()
-    return f"Command result: {result}"
+    return f"Command succeeded"
 
 
 @tool("Execute SQL DML")
@@ -58,8 +62,20 @@ def run_sql_query(connection_uri: str, query: str) -> str:
     """
     conn = psycopg2.connect(connection_uri)
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.query(query)
-    records = cur.fetchall()
-    cur.close()
-    conn.close()
-    return f"Query result: {records}"
+    try:
+        cur.execute(query)
+        conn.commit()
+        
+        # Try to fetch results (for SELECT queries)
+        try:
+            records = cur.fetchall()
+            return f"Query result: {records}"
+        except psycopg2.ProgrammingError:
+            # For INSERT/UPDATE/DELETE operations
+            return f"Query executed successfully"
+    except Exception as e:
+        conn.rollback()
+        return f"Failed to execute SQL query: {str(e)}"
+    finally:
+        cur.close()
+        conn.close()
