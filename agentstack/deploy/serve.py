@@ -3,10 +3,9 @@ import json
 
 from flask import Flask, request, jsonify
 import requests
-from agent_script import run_agent  # Your existing agent script
 from typing import Dict, Any
 import os
-from .src.main import run
+from src.main import run
 
 app = Flask(__name__)
 
