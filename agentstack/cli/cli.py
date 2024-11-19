@@ -13,7 +13,7 @@ from cookiecutter.main import cookiecutter
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
 from .. import generation
-from ..utils import open_json_file, term_color, is_snake_case
+from ..utils import open_json_file, term_color, is_snake_case, verify_agentstack_project
 
 
 def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = False):
@@ -345,3 +345,11 @@ def list_tools():
             print("Error: tools.json contains invalid JSON.")
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
+
+
+def serve_project():
+    verify_agentstack_project()
+
+    with importlib.resources.path('agentstack.deploy', 'Dockerfile') as path:
+        os.system(f"docker build -t agent-service -f {path} .")
+    os.system("docker run --name agentstack-local -p 6969:6969 agent-service")
