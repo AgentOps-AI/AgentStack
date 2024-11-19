@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 import requests
 from typing import Dict, Any
 import os
-from src.main import run
+from main import run
 
 app = Flask(__name__)
 

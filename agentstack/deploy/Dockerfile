@@ -12,10 +12,11 @@ RUN apt-get update && \
 # Copy requirements first to leverage Docker cache
 COPY pyproject.toml .
 RUN pip install --no-cache-dir poetry
-RUN pip install psutil
+RUN pip install psutil flask
 
 RUN #pip install agentstack
 RUN pip install git+https://github.com/bboynton97/AgentStack.git@deploy
+RUN mkdir src
 RUN cp /usr/local/lib/python3.11/site-packages/agentstack/deploy/serve.py ./src
 
 RUN pip uninstall -y agentstack
@@ -23,7 +24,6 @@ RUN pip uninstall -y agentstack
 RUN apt-get update && apt-get install -y gcc
 RUN POETRY_VIRTUALENVS_CREATE=false
 RUN poetry config virtualenvs.create false && poetry install
-RUN pip install flask
 
 # Copy the rest of the application
 COPY . .
@@ -31,8 +31,6 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 6969
 
-WORKDIR .
-
 # Command to run the application
-#CMD ["python", "src/serve.py"]
-CMD ["sleep", "infinity"]
+CMD ["python", "src/serve.py"]
+#CMD ["sleep", "infinity"]
