@@ -1,11 +1,11 @@
 # app.py
-import json
-
 from flask import Flask, request, jsonify
 import requests
 from typing import Dict, Any
 import os
 from main import run
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 
