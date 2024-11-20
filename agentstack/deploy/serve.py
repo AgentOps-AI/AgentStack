@@ -5,7 +5,7 @@ from typing import Dict, Any
 import os
 from main import run
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(dotenv_path="../")
 
 app = Flask(__name__)
 
