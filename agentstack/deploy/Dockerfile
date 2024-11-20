@@ -9,8 +9,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN echo "hi dad"
-
 # Copy requirements first to leverage Docker cache
 COPY pyproject.toml .
 RUN pip install --no-cache-dir poetry
@@ -35,4 +33,3 @@ EXPOSE 6969
 
 # Command to run the application
 CMD ["python", "src/serve.py"]
-#CMD ["sleep", "infinity"]

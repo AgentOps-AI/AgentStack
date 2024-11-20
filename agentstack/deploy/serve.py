@@ -1,11 +1,12 @@
 # app.py
+from dotenv import load_dotenv
+load_dotenv(dotenv_path="/app/.env")
+
 from flask import Flask, request, jsonify
 import requests
 from typing import Dict, Any
 import os
 from main import run
-from dotenv import load_dotenv
-load_dotenv(dotenv_path="../.env")
 
 app = Flask(__name__)
 
