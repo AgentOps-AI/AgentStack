@@ -20,6 +20,11 @@ def call_webhook(webhook_url: str, data: Dict[str, Any]) -> None:
         raise
 
 
+@app.route("/health", methods=["GET"])
+def health():
+    return "Agent Server Up"
+
+
 @app.route('/process', methods=['POST'])
 def process_agent():
     try:
