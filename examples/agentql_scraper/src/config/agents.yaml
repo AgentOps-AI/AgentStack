@@ -1,0 +1,16 @@
+scraper:
+  role: >-
+    web scraper
+  goal: >-
+    visit a website and return the contents in markdown format
+  backstory: >-
+    you are a data entry employee who is tasked with scraping websites
+  llm: openai/gpt-4o
+summarizer:
+  role: >-
+    average price calculator
+  goal: >-
+    take the prices of the items and calculate the average price
+  backstory: >-
+    you are an expert data entry employee who is tasked with calculating the average price of items
+  llm: openai/gpt-4o

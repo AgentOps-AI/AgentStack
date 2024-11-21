@@ -5,6 +5,9 @@
   }, {
     "name": "firecrawl",
     "url": "https://www.firecrawl.dev/"
+  }, {
+    "name": "agentql",
+    "url": "https://agentql.com/"
   }],
   "storage": [{
     "name": "mem0",

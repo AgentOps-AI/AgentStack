@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "agentql_scraper"
+version = "0.1.0"
+description = "use agentql to scrape a website"
+authors = ["tinyfish"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+agentops = "^0.3.12"
+crewai = "^0.63.6"
+crewai-tools= "0.12.1"
+python-dotenv="1.0.1"
+
+[project.scripts]
+agentql_scraper = "agentql_scraper.main:run"
+run_crew = "agentql_scraper.main:run"
+train = "agentql_scraper.main:train"
+replay = "agentql_scraper.main:replay"
+test = "agentql_scraper.main:test"
