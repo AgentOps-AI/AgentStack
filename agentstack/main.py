@@ -1,8 +1,10 @@
 import argparse
+import os
 import sys
 
 from agentstack.cli import init_project_builder, list_tools
-from agentstack.utils import get_version
+from agentstack.telemetry import track_cli_command
+from agentstack.utils import get_version, get_framework
 import agentstack.generation as generation
 
 import webbrowser
@@ -27,6 +29,9 @@ def main():
     init_parser = subparsers.add_parser('init', aliases=['i'], help='Initialize a directory for the project')
     init_parser.add_argument('slug_name', nargs='?', help="The directory name to place the project in")
     init_parser.add_argument('--no-wizard', action='store_true', help="Skip wizard steps")
+
+    # 'run' command
+    run_parser = subparsers.add_parser('run', aliases=['r'], help='Run your agent')
 
     # 'generate' command
     generate_parser = subparsers.add_parser('generate', aliases=['g'], help='Generate agents or tasks')
@@ -74,6 +79,8 @@ def main():
         print(f"AgentStack CLI version: {get_version()}")
         return
 
+    track_cli_command(args.command)
+
     # Handle commands
     if args.command in ['docs']:
         webbrowser.open('https://docs.agentstack.sh/')
@@ -81,6 +88,10 @@ def main():
         webbrowser.open('https://docs.agentstack.sh/quickstart')
     if args.command in ['init', 'i']:
         init_project_builder(args.slug_name, args.no_wizard)
+    if args.command in ['run', 'r']:
+        framework = get_framework()
+        if framework == "crewai":
+            os.system('python src/main.py')
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             generation.generate_agent(args.name, args.role, args.goal, args.backstory, args.llm)
