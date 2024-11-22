@@ -83,7 +83,7 @@ agentstack tools add <tool_name>
 
 ## Running Your Agent
 
-`python src/main.py`
+`agentstack run`
 
 Runs the agent project in development mode.<br>
 
