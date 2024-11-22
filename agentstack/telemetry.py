@@ -30,8 +30,7 @@ import psutil
 import requests
 from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 
-# TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
-TELEMETRY_URL = 'http://localhost:3000/telemetry'
+TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
 
 def collect_machine_telemetry():
     if get_telemetry_opt_out():
