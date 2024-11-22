@@ -41,6 +41,19 @@ def get_framework(path: Optional[str] = None) -> str:
         sys.exit(1)
 
 
+def get_telemetry_opt_out(path: Optional[str] = None) -> str:
+    try:
+        file_path = 'agentstack.json'
+        if path is not None:
+            file_path = path + '/' + file_path
+
+        agentstack_data = open_json_file(file_path)
+        opt_out = agentstack_data.get('telemetry_opt_out', False)
+        return opt_out
+    except FileNotFoundError:
+        print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
+        sys.exit(1)
+
 def camel_to_snake(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()

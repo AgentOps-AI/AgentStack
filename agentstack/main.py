@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from agentstack.cli import init_project_builder, list_tools
+from agentstack.telemetry import track_cli_command
 from agentstack.utils import get_version
 import agentstack.generation as generation
 
@@ -73,6 +74,8 @@ def main():
     if args.version:
         print(f"AgentStack CLI version: {get_version()}")
         return
+
+    track_cli_command(args.command)
 
     # Handle commands
     if args.command in ['docs']:
