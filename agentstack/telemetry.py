@@ -28,8 +28,7 @@ import platform
 import socket
 import psutil
 import requests
-
-from agentstack.utils import get_telemetry_opt_out
+from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 
 # TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
 TELEMETRY_URL = 'http://localhost:3000/telemetry'
@@ -44,7 +43,9 @@ def collect_machine_telemetry():
         'platform': platform.platform(),
         'os_version': platform.version(),
         'cpu_count': psutil.cpu_count(logical=True),
-        'memory': psutil.virtual_memory().total
+        'memory': psutil.virtual_memory().total,
+        'framework': get_framework(),
+        'agentstack_version': get_version()
     }
 
     # Attempt to get general location based on public IP
