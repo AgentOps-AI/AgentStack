@@ -7,8 +7,9 @@ from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
-NEON_API_KEY = os.getenv('NEON_API_KEY')
+NEON_API_KEY = os.getenv("NEON_API_KEY")
 neon_client = NeonAPI(api_key=NEON_API_KEY)
+
 
 @tool("Create Neon Project and Database")
 def create_database(project_name: str) -> str:
@@ -21,7 +22,9 @@ def create_database(project_name: str) -> str:
     """
     try:
         project = neon_client.project_create(project={"name": project_name}).project
-        connection_uri = neon_client.connection_uri(project_id=project.id, database_name="neondb", role_name="neondb_owner").uri
+        connection_uri = neon_client.connection_uri(
+            project_id=project.id, database_name="neondb", role_name="neondb_owner"
+        ).uri
         return f"Project/database created, connection URI: {connection_uri}"
     except Exception as e:
         return f"Failed to create project: {str(e)}"
@@ -65,7 +68,7 @@ def run_sql_query(connection_uri: str, query: str) -> str:
     try:
         cur.execute(query)
         conn.commit()
-        
+
         # Try to fetch results (for SELECT queries)
         try:
             records = cur.fetchall()
