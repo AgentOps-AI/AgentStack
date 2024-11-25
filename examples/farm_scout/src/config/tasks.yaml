@@ -1,0 +1,7 @@
+find_farms:
+  description: >-
+    Find farms for sale in the USA
+  expected_output: >-
+    An array of dicts containing the title, location, see_more_url, price, and acres of the farms
+  agent: >-
+    scout

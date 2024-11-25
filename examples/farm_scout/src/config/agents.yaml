@@ -1,0 +1,8 @@
+scout:
+  role: >-
+    Add your role here
+  goal: >-
+    Add your goal here
+  backstory: >-
+    Add your backstory here
+  llm: openai/gpt-4o-mini

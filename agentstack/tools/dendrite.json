@@ -1,0 +1,7 @@
+{
+  "name": "dendrite",
+  "packages": ["dendrite"],
+  "env": "DENDRITE_API_KEY=...",
+  "tools": ["get_farm_land"],
+  "cta": "!!! To install the browser locally, run `dendrite install`. Get a free API key at https://dendrite.systems/"
+}
