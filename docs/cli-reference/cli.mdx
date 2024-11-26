@@ -1,0 +1,64 @@
+---
+title: 'CLI Reference'
+description: 'Everything to do with the CLI'
+---
+
+It all starts with calling
+```bash
+$ agentstack
+```
+
+## `$ init | i`
+This initializes a new AgentStack project.
+```bash
+agentstack init <slug_name>
+```
+
+- `slug_name` (optional | str) - the name of your project
+- `--no-wizard` (boolean flag) - skips the wizard step and applies default values to project init
+
+## `$ generate | g`
+Code generation commands for automatically creating new agents or tasks.
+
+### `agent | a`
+Generate a new agent
+- `agent_name` (required | str) - the name of the agent
+- `--role` (optional | str) - Prompt parameter: The role of the agent
+- `--goal` (optional | str) - Prompt parameter: The goal of the agent
+- `--backstory` (optional | str) - Prompt parameter: The backstory of the agent
+- `--llm` (optional | `<provider>/<model>`) - Which model to use for this agent
+
+### `task | t`
+Generate a new task
+- `task_name` (required | str) - the name of the task
+- `--description` (optional | str) - Prompt parameter: Explain the task in detail
+- `--expected_output` (optional | str) - What is the expected output from the agent (ex: data in json format)
+- `--agent` (optional | str) - The name of the agent of which to assign the task to (when using Crew in sequential mode)
+
+### Examples
+
+<CodeGroup>
+```bash Generate Agent
+agentstack generate agent script_writer
+```
+
+```bash Generate Task
+agentstack g t gen_script --description Write a short film script about secret agents
+```
+</CodeGroup>
+
+
+## `$ tools | t`
+Tools are what make AgentStack powerful. Adding tools is easy with this command.
+
+### `list | l`
+Lists all tools available in AgentStack.
+
+### `add | a`
+Add a tool by name. By default, this command adds all tools from the provider to every agent.
+- `name` (required | str) - The name of the tool to add
+
+### Examples
+```bash
+agentstack tools add browserbase
+```
