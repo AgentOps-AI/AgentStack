@@ -43,7 +43,8 @@ def add_tool(tool_name: str, path: Optional[str] = None):
                         insert_code_after_tag(f'{path}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
                     if not string_in_file(f'{path}.env.example', first_var_name):
                         insert_code_after_tag(f'{path}.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
-                
+                if tool_data.get('post_install'):
+                    os.system(tool_data['post_install'])
                 if not agentstack_json.get('tools'):
                     agentstack_json['tools'] = []
                 agentstack_json['tools'].append(tool_name)
@@ -78,6 +79,8 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
             os.remove(f'{path}src/tools/{tool_name}_tool.py')
             remove_tool_from_tools_init(tool_data, path)
             remove_tool_from_agent_definition(framework, tool_data, path)
+            if tool_data.get('post_remove'):
+                os.system(tool_data['post_remove'])
             # We don't remove the .env variables to preserve user data.
             
             agentstack_json['tools'].remove(tool_name)
