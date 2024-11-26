@@ -309,7 +309,7 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
         "  Next, run:\n"
         f"    cd {project_metadata.project_slug}\n"
         "    poetry install\n"
-        "    poetry run python src/main.py\n\n"
+        "    agentstack run\n\n"
         "  Add agents and tasks with:\n"
         "    `agentstack generate agent/task <name>`\n\n"
         "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"

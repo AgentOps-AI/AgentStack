@@ -15,7 +15,7 @@ firecrawl-py = "^1.4.0"
 
 [project.scripts]
 web_researcher = "web_researcher.main:run"
-run_crew = "web_researcher.main:run"
+run = "web_researcher.main:run"
 train = "web_researcher.main:train"
 replay = "web_researcher.main:replay"
 test = "web_researcher.main:test"

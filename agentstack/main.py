@@ -1,8 +1,10 @@
 import argparse
+import os
 import sys
 
 from agentstack.cli import init_project_builder, list_tools
-from agentstack.utils import get_version
+from agentstack.telemetry import track_cli_command
+from agentstack.utils import get_version, get_framework
 import agentstack.generation as generation
 
 import webbrowser
@@ -31,6 +33,9 @@ def main():
     init_parser.add_argument('slug_name', nargs='?', help="The directory name to place the project in")
     init_parser.add_argument('--wizard', '-w', action='store_true', help="Use the setup wizard")
     init_parser.add_argument('--template', '-t', help="Agent template to use")
+
+    # 'run' command
+    run_parser = subparsers.add_parser('run', aliases=['r'], help='Run your agent')
 
     # 'generate' command
     generate_parser = subparsers.add_parser('generate', aliases=['g'], help='Generate agents or tasks')
@@ -66,6 +71,10 @@ def main():
     tools_add_parser = tools_subparsers.add_parser('add', aliases=['a'], help='Add a new tool')
     tools_add_parser.add_argument('name', help='Name of the tool to add')
 
+    # 'remove' command under 'tools'
+    tools_remove_parser = tools_subparsers.add_parser('remove', aliases=['r'], help='Remove a tool')
+    tools_remove_parser.add_argument('name', help='Name of the tool to remove')
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -73,6 +82,8 @@ def main():
     if args.version:
         print(f"AgentStack CLI version: {get_version()}")
         return
+
+    track_cli_command(args.command)
 
     # Handle commands
     if args.command in ['docs']:
@@ -83,6 +94,10 @@ def main():
         webbrowser.open('https://docs.agentstack.sh/quickstart')
     if args.command in ['init', 'i']:
         init_project_builder(args.slug_name, args.framework, args.wizard)
+    if args.command in ['run', 'r']:
+        framework = get_framework()
+        if framework == "crewai":
+            os.system('python src/main.py')
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             generation.generate_agent(args.name, args.role, args.goal, args.backstory, args.llm)
@@ -95,6 +110,8 @@ def main():
             list_tools()
         elif args.tools_command in ['add', 'a']:
             generation.add_tool(args.name)
+        elif args.tools_command in ['remove', 'r']:
+            generation.remove_tool(args.name)
         else:
             tools_parser.print_help()
     else:

@@ -1,6 +1,6 @@
 {
   "name": "dir_search_tool",
-  "package": "poetry add crewai-tools",
+  "packages": [],
   "env": "",
   "tools": ["dir_search_tool"]
 }

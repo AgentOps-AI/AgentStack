@@ -1,0 +1,6 @@
+{
+    "framework": "crewai",
+    "tools": [
+        "firecrawl"
+    ]
+}
