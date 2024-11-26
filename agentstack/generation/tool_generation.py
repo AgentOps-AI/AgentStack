@@ -31,7 +31,8 @@ def add_tool(tool_name: str, path: Optional[str] = None):
         with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
             tool_data = open_json_file(tool_data_path)
 
-            with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}_tool.py") as tool_file_path:
+            with importlib.resources.path(f'agentstack.templates.{framework}.tools',
+                                          f"{tool_name}_tool.py") as tool_file_path:
                 if tool_data.get('packages'):
                     if os.system(f"poetry add {' '.join(tool_data['packages'])}") == 1: # Install packages
                         print(term_color("AgentStack: Failed to install tool requirements. Please resolve dependency issues and try again,", 'red'))
