@@ -1,0 +1,42 @@
+---
+title: Composio Tool
+description: The `ComposioTool` is a wrapper around the composio set of tools and gives your agent access to a wide variety of tools from the Composio SDK.
+icon: gear-code
+---
+
+## Description
+
+This tools is a wrapper around the composio set of tools and gives your agent access to a wide variety of tools from the Composio SDK.
+
+## Example
+
+Add the Composio tool with
+```bash
+agentstack tools add composio
+````
+
+The following example demonstrates how to initialize the tool and execute a github action:
+
+```python Code
+from composio_crewai import ComposioToolSet, App
+
+composio_tools = ComposioToolSet().get_tools(apps=[App.GITHUB])
+```
+
+<Note>Its important that `composio_tools` is a list, even if only one element</Note>
+
+If you don't know what action you want to use, use `from_app` and `tags` filter to get relevant actions
+
+```python Code
+from composio_crewai import ComposioToolSet, App
+
+composio_tools = ComposioToolSet().from_app(App.GITHUB, tags=["important"])
+```
+
+or use `use_case` to search relevant actions
+
+```python Code
+composio_tools = ComposioToolSet().from_app(App.GITHUB, use_case="Star a github repository")
+```
+
+* More detailed list of tools can be found [here](https://app.composio.dev)

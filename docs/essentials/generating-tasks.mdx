@@ -1,0 +1,28 @@
+---
+title: 'Generating Tasks'
+description: 'CLI command to add a task to your project'
+---
+
+To generate a new task for your project, run:
+
+```bash
+agentstack generate task <task_name>
+```
+
+This command will modify two files, `crew.py` and `agents.yaml`.
+
+## crew.py
+
+This is the file that declares each of your agents and tasks. It's the core of your AgentStack project with Crew.
+
+
+## agents.yaml
+
+This is your prompt file. Any prompt engineering is abstracted to here for non-technical ease.
+
+Each task has two prompt params:
+- Description
+- Expected Output
+
+And one configuration param:
+- Agent - If operating in Sequential mode, this tells the Crew which agent should accomplish the task
