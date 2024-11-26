@@ -1,38 +1,25 @@
 # job_posting
-create job posting
+_An example project built with AgentStack_
 
-~~ Built with AgentStack ~~
+## Commands used to create this project
 
-## How to build your Crew
-### With the CLI
-Add an agent using AgentStack with the CLI:  
-`agentstack generate agent <agent_name>`  
-You can also shorten this to `agentstack g a <agent_name>`  
-For wizard support use `agentstack g a <agent_name> --wizard`  
-Finally for creation in the CLI alone, use `agentstack g a <agent_name> --role/-r <role> --goal/-g <goal> --backstory/-b <backstory> --model/-m <provider/model>`
+```bash
+agentstack init job_posting
+agentstack g a research_agent
+agentstack g a writer_agent
+agentstack g a review_agent
+agentstack g t research_company_culture_task
+agentstack g t research_role_requirements_task
+agentstack g t draft_job_posting_task
+agentstack g t review_and_edit_job_posting_task
+agentstack g t industry_analysis_task
+```
 
-This will automatically create a new agent in the `agents.yaml` config as well as in your code. Either placeholder strings will be used, or data included in the wizard.
+## Other work
+- Prompt engineering was done in `agents.yaml` and `tasks.yaml`
+- Inputs were modified in `crew.py`
 
-Similarly, tasks can be created with `agentstack g t <tool_name>`
-
-Add tools with `agentstack tools add <tool_name>` and view tools available with `agentstack tools list`
-
-## How to use your Crew
-In this directory, run `poetry install`  
-
-To run your project, use the following command:  
-`crewai run` or `python src/main.py`
-
-This will initialize your crew of AI agents and begin task execution as defined in your configuration in the main.py file.
-
-#### Replay Tasks from Latest Crew Kickoff:
-
-CrewAI now includes a replay feature that allows you to list the tasks from the last run and replay from a specific one. To use this feature, run:  
-`crewai replay <task_id>`  
-Replace <task_id> with the ID of the task you want to replay.
-
-#### Reset Crew Memory
-If you need to reset the memory of your crew before running it again, you can do so by calling the reset memory feature:  
-`crewai reset-memory`  
-This will clear the crew's memory, allowing for a fresh start.
-
+## Run this agent
+```bash
+agentstack run
+```
