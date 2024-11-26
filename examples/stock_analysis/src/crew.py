@@ -4,37 +4,37 @@ import tools
 
 
 @CrewBase
-class WebresearcherCrew():
-    """web_researcher crew"""
+class StockanalysisCrew():
+    """stock_analysis crew"""
 
     # Agent definitions
     @agent
-    def content_summarizer(self) -> Agent:
+    def analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config['content_summarizer'],
+            config=self.agents_config['analyst'],
             tools=[],  # add tools here or use `agentstack tools add <tool_name>
             verbose=True
         )
 
     @agent
-    def web_scraper(self) -> Agent:
+    def researcher(self) -> Agent:
         return Agent(
-            config=self.agents_config['web_scraper'],
-            tools=[tools.web_scrape],  # add tools here or use `agentstack tools add <tool_name>
+            config=self.agents_config['researcher'],
+            tools=[tools.query_perplexity, ],  # add tools here or use `agentstack tools add <tool_name>
             verbose=True
         )
 
     # Task definitions
     @task
-    def scrape_site(self) -> Task:
+    def research_stock(self) -> Task:
         return Task(
-            config=self.tasks_config['scrape_site'],
+            config=self.tasks_config['research_stock'],
         )
 
     @task
-    def summarize(self) -> Task:
+    def buy_sell_decision(self) -> Task:
         return Task(
-            config=self.tasks_config['summarize'],
+            config=self.tasks_config['buy_sell_decision'],
         )
 
     @crew

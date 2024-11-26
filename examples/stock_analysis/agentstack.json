@@ -1,6 +1,6 @@
 {
     "framework": "crewai",
     "tools": [
-        "firecrawl"
+        "perplexity"
     ]
 }
