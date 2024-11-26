@@ -1,6 +1,6 @@
 scrape_site:
   description: >-
-    fetch the contents of https://github.com/AgentOps-AI/AgentStack/tree/main in markdown format
+    fetch the contents of {url} in markdown format
   expected_output: >-
     the contents of a website in markdown
   agent: >-

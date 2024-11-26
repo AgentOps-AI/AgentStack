@@ -1,0 +1,14 @@
+research_stock:
+  description: >-
+    gather realtime information about $NVDA. compile information related to the current stock price, trends, and news.
+  expected_output: >-
+    a list of relevant information related to $NVDA from the research done
+  agent: >-
+    researcher
+buy_sell_decision:
+  description: >-
+    determine whether to buy or not buy the stock given current price, market conditions and news.
+  expected_output: >-
+    either buy or dont buy
+  agent: >-
+    analyst
