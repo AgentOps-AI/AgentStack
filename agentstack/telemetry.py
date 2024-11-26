@@ -32,7 +32,7 @@ from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 
 TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
 
-def collect_machine_telemetry():
+def collect_machine_telemetry(command: str):
     if get_telemetry_opt_out():
         return
 
@@ -43,9 +43,13 @@ def collect_machine_telemetry():
         'os_version': platform.version(),
         'cpu_count': psutil.cpu_count(logical=True),
         'memory': psutil.virtual_memory().total,
-        'framework': get_framework(),
         'agentstack_version': get_version()
     }
+
+    if command is not "init":
+        telemetry_data['framework'] = get_framework()
+    else:
+        telemetry_data['framework'] = "n/a"
 
     # Attempt to get general location based on public IP
     try:
@@ -64,9 +68,9 @@ def collect_machine_telemetry():
     return telemetry_data
 
 
-def track_cli_command(command):
+def track_cli_command(command: str):
     try:
-        data = collect_machine_telemetry()
+        data = collect_machine_telemetry(command)
         requests.post(TELEMETRY_URL, json={"command": command, **data})
     except:
         pass
