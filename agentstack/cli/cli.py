@@ -1,8 +1,10 @@
 import json
 import shutil
+import sys
 import time
 from datetime import datetime
 from typing import Optional
+import requests
 
 from art import text2art
 import inquirer
@@ -21,13 +23,52 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
         print(term_color("Project name must be snake case", 'red'))
         return
 
-    if use_wizard:
+    if template is not None and not use_wizard:
+        print(term_color("Template and wizard flags cannot be used together", 'red'))
+        return
+
+    template_data = None
+    if template is not None:
+        url_start = "https://"
+        if template[:len(url_start)] == url_start:
+            # template is a url
+            response = requests.get(template)
+            if response.status_code == 200:
+                template_data = response.json()
+            else:
+                print(term_color(f"Failed to fetch template data from {template}. Status code: {response.status_code}", 'red'))
+                sys.exit(1)
+        else:
+            with importlib.resources.path('agentstack.templates.proj_templates', template) as template_path:
+                if template_path is None:
+                    print(term_color(f"No such template {template} found", 'red'))
+                    sys.exit(1)
+                template_data = open_json_file(template_path)
+
+    if template_data:
+        project_details = {
+            "name": slug_name or template_data['name'],
+            "version": "0.0.1",
+            "description": template_data['description'],
+            "author": "Name <Email>",
+            "license": "MIT"
+        }
+        framework = template_data['framework']
+        design = {
+            'agents': template_data['agents'],
+            'tasks': template_data['tasks']
+        }
+        for tool_data in template_data['tools']:
+            generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
+
+
+    elif use_wizard:
         welcome_message()
         project_details = ask_project_details(slug_name)
         welcome_message()
         framework = ask_framework()
         design = ask_design()
-        tools = ask_tools()
+        # tools = ask_tools()
 
     else:
         welcome_message()
@@ -46,7 +87,7 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
             'tasks': []
         }
 
-        tools = []
+        # tools = []
 
     log.debug(
         f"project_details: {project_details}"
@@ -54,7 +95,7 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
         f"design: {design}"
     )
     insert_template(project_details, framework, design)
-    add_tools(tools, project_details['name'])
+    # add_tools(tools, project_details['name'])
 
 
 def welcome_message():
@@ -316,9 +357,9 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
     )
 
 
-def add_tools(tools: list, project_name: str):
-    for tool in tools:
-        generation.add_tool(tool, project_name)
+# def add_tools(tools: list, project_name: str):
+#     for tool in tools:
+#         generation.add_tool(tool, path=project_name)
 
 
 def list_tools():

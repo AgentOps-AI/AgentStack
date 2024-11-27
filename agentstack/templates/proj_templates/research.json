@@ -1,6 +1,7 @@
 {
   "name": "research",
   "description": "Starter project research agent",
+  "framework": "Framework",
   "agents": [{
     "name": "researcher",
     "prompt": {
