@@ -1,0 +1,28 @@
+---
+title: 'Adding Tools'
+description: 'Contribute your own Agent tool to the ecosystem'
+---
+
+If you're reading this section, you probably have a product that AI agents can use as a tool. We're glad you're here!
+
+Adding tools is easy once you understand the project structure. A few things need to be done for a tool to be considered completely supported:
+
+<Steps>
+  <Step title="Modify the tool list data">
+    Add your tool and relevant information to `agentstack/tools/tools.json`
+  </Step>
+  <Step title="Create a config for your tool">
+      - As an example, look at `mem0.json`
+      - AgentStack uses this to know what code to insert where. Follow the structure to add your tool.
+  </Step>
+  <Step title="Create your implementation for each framework">
+      - In `agentstack/templates/<framework>/tools`, you'll see other implementations of tools.
+      - Build your tool implementation for that framework. This file will be inserted in the user's project.
+      - The tools that are exported from this file should be listed in the tool's config json.
+  </Step>
+  <Step title="Test your tool">
+      Manually test your tool integration by running `agentstack tools add <your_tool>` and ensure it behaves as expected.
+  </Step>
+  <Step title="Open a PR to add your tool to the next release">
+  </Step>
+</Steps>

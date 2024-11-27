@@ -1,0 +1,49 @@
+---
+title: '🖇️ AgentOps'
+description: 'Using AgentOps makes the agent development process manageable'
+---
+
+## Overview
+
+AgentOps provides monitoring for agents in development and production.
+It provides a dashboard for tracking agent performance, session replays, and custom reporting.
+
+Additionally, AgentOps provides session drilldowns for viewing Crew agent interactions, LLM calls, and tool usage in real-time.
+This feature is useful for debugging and understanding how agents interact with users as well as other agents.
+
+![Overview](https://github.com/AgentOps-AI/agentops/raw/main/docs/images/external/app_screenshots/session-replay.png)
+
+## Features
+
+- **LLM Cost Management and Tracking**: Track spend with foundation model providers.
+- **Replay Analytics**: Watch step-by-step agent execution graphs.
+- **Recursive Thought Detection**: Identify when agents fall into infinite loops.
+- **Custom Reporting**: Create custom analytics on agent performance.
+- **Analytics Dashboard**: Monitor high-level statistics about agents in development and production.
+- **Public Model Testing**: Test your agents against benchmarks and leaderboards.
+- **Custom Tests**: Run your agents against domain-specific tests.
+- **Time Travel Debugging**: Restart your sessions from checkpoints.
+- **Compliance and Security**: Create audit logs and detect potential threats such as profanity and PII leaks.
+- **Prompt Injection Detection**: Identify potential code injection and secret leaks.
+
+## Using AgentOps
+
+AgentOps is baked into AgentStack projects by default! You only need to add an API key to your .env file to unlock observability for free.
+
+<Steps>
+   <Step title="Create an API Key">
+      Create a user API key here: [Create API Key](https://app.agentops.ai/account)
+   </Step>
+   <Step title="Configure Your Environment">
+      Add your API key to your environment variables:
+      ```bash
+      AGENTOPS_API_KEY=<YOUR_AGENTOPS_API_KEY>
+      ```
+   </Step>
+</Steps>
+
+## Further Information
+
+To get started, create an [AgentOps account](https://agentops.ai/?=crew).
+
+For feature requests or bug reports, please reach out to the AgentOps team on the [AgentOps Repo](https://github.com/AgentOps-AI/agentops).

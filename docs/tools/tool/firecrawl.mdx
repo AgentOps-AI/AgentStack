@@ -1,0 +1,44 @@
+---
+title: Firecrawl Web Loader
+description: Web for agents
+icon: browser
+---
+
+Firecrawl Web Loader is a powerful web crawling service that transforms websites into LLM-ready content through intelligent crawling and content extraction.
+
+## Description
+Firecrawl Web Loader is an advanced web crawling and content extraction service that converts entire websites into LLM-ready formats with:
+
+- Comprehensive Crawling that automatically discovers and processes all accessible subpages without requiring sitemaps
+- Intelligent Content Processing converting complex web content into clean markdown and structured data
+- Media Handling capabilities for processing PDFs, DOCX files, and images
+
+### Core Features:
+
+- Web Scraping - Extract content from single URLs in LLM-ready formats
+- Site Crawling - Process entire websites including all discoverable subpages
+- URL Mapping - High-performance discovery of all website URLs
+- Action Automation - Perform clicks, scrolls, form inputs and more
+
+### Output Formats:
+
+- Clean markdown text
+- Structured data via LLM Extract
+- Page screenshots
+- Raw HTML
+- URL maps and metadata
+
+## Installation
+
+```bash
+agentstack tools add firecrawl
+```
+
+Set the environment variable
+
+```env
+FIRECRAWL_API_KEY=...
+```
+
+## Usage
+Firecrawl can be configured for different behaviors by modifying `src/tools/firecrawl_tool.py`

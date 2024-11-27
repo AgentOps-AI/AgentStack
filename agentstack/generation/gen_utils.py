@@ -57,7 +57,8 @@ def insert_after_tasks(file_path, code_to_insert):
         with open(file_path, 'w') as file:
             file.write(content)
         return True
-    return False
+    else:
+        insert_code_after_tag(file_path, '# Task definitions', code_to_insert)
 
 
 def string_in_file(file_path: str, str_to_match: str) -> bool:

@@ -1,0 +1,65 @@
+---
+title: 'mem0'
+description: 'Memory for Agents'
+---
+
+## Installation
+
+```bash
+agentstack tools add mem0
+```
+
+Set the API key
+```env
+MEM0_API_KEY=...
+```
+
+## Usage
+Your agent will be able to write and read from memory. Prompt engineering may be required to instruct the agent when it is important to write and read.
+
+Additionally, `mem0` allows for a `user_id` parameter as part of the tool's function call.
+
+One option is to tell the agent to pass in the appropriate user_id when calling the tool. Another option is to set the user_id in this tool via code.
+
+```python
+@tool("Write to Memory")
+def write_to_memory(user_message: str) -> str:
+    """
+    Writes data to the memory store for a user. The tool will decide what
+    specific information is important to store as memory.
+    """
+    messages = [
+        {"role": "user", "content": user_message},
+    ]
+    result = client.add(messages, user_id='<any_string>')  # configure user
+    return json.dumps(result)
+
+
+@tool("Read from Memory")
+def read_from_memory(query: str) -> str:
+    """
+    Reads memories related to user based on a query.
+    """
+    memories = client.search(query=query, user_id='<any_string>')
+    if memories:
+        return "\n".join([mem['memory'] for mem in memories])
+    else:
+        return "No relevant memories found."
+```
+
+### Other storage options
+Optionally, in `src/tools/mem0.py`, configure your storage:
+
+```python
+config = {
+    "graph_store": {
+        "provider": "neo4j",
+        "config": {
+            "url": os.getenv("NEO4J_URL"),
+            "username": os.getenv("NEO4J_USERNAME", 'neo4j'),
+            "password": os.getenv("NEO4J_PASSWORD"),
+        }
+    },
+    "version": "v1.1"
+}
+```

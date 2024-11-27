@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "job_posting"
+version = "0.1.0"
+description = "create job posting"
+authors = ["me"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+agentops = "^0.3.12"
+crewai = "^0.63.6"
+crewai-tools= "0.12.1"
+python-dotenv="1.0.1"
+firecrawl-py = "^1.6.1"
+
+[project.scripts]
+job_posting = "job_posting.main:run"
+run_crew = "job_posting.main:run"
+train = "job_posting.main:train"
+replay = "job_posting.main:replay"
+test = "job_posting.main:test"

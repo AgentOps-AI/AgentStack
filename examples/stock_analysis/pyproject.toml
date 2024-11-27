@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "stock_analysis"
+version = "0.1.0"
+description = "asdf"
+authors = ["me"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+agentops = "^0.3.12"
+crewai = "^0.63.6"
+crewai-tools= "0.12.1"
+python-dotenv="1.0.1"
+
+[project.scripts]
+stock_analysis = "stock_analysis.main:run"
+run_crew = "stock_analysis.main:run"
+train = "stock_analysis.main:train"
+replay = "stock_analysis.main:replay"
+test = "stock_analysis.main:test"
