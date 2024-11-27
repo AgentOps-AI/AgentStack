@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 
-from .gen_utils import insert_code_after_tag
+from .gen_utils import insert_code_after_tag, get_crew_components, CrewComponentType
 from agentstack.utils import verify_agentstack_project, get_framework
 import os
 from ruamel.yaml import YAML
@@ -99,3 +99,8 @@ def generate_crew_agent(
     ]
 
     insert_code_after_tag(file_path, tag, code_to_insert)
+
+
+def get_agent_names(framework: str = 'crewai', path: str = '') -> List[str]:
+    """Get only agent names from the crew file"""
+    return get_crew_components(framework, CrewComponentType.AGENT, path)['agents']

@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 
-from .gen_utils import insert_code_after_tag, insert_after_tasks
+from .gen_utils import insert_after_tasks, get_crew_components, CrewComponentType
 from ..utils import verify_agentstack_project, get_framework
 import os
 from ruamel.yaml import YAML
@@ -87,3 +87,8 @@ def generate_crew_task(
     ]
 
     insert_after_tasks(file_path, code_to_insert)
+
+
+def get_task_names(framework: str, path: str = '') -> List[str]:
+    """Get only task names from the crew file"""
+    return get_crew_components(framework, CrewComponentType.TASK, path)['tasks']
