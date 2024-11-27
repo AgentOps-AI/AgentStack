@@ -1,5 +1,7 @@
 {
   "name": "exa",
+  "url": "https://exa.ai",
+  "category": "web-retrieval",
   "packages": ["exa_py"],
   "env": "EXA_API_KEY=...",
   "tools": ["search_and_contents"],

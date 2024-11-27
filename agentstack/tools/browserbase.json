@@ -1,5 +1,7 @@
 {
   "name": "browserbase",
+  "url": "https://github.com/browserbase/python-sdk",
+  "category": "browsing",
   "packages": ["browserbase", "playwright"],
   "env": "BROWSERBASE_API_KEY=...\nBROWSERBASE_PROJECT_ID=...",
   "tools": ["browserbase"],

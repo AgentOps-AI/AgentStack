@@ -1,5 +1,7 @@
 {
   "name": "firecrawl",
+  "url": "https://www.firecrawl.dev/",
+  "category": "browsing",
   "packages": ["firecrawl-py"],
   "env": "FIRECRAWL_API_KEY=...",
   "tools": ["web_scrape", "web_crawl", "retrieve_web_crawl"],

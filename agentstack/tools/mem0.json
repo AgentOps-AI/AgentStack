@@ -1,5 +1,7 @@
 {
   "name": "mem0",
+  "url": "https://github.com/mem0ai/mem0",
+  "category": "storage",
   "packages": ["mem0ai"],
   "env": "MEM0_API_KEY=...",
   "tools": ["write_to_memory", "read_from_memory"],

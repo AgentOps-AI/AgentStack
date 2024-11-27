@@ -1,5 +1,7 @@
 {
   "name": "composio",
+  "url": "https://composio.dev/",
+  "category": "unified-apis",
   "packages": ["composio-crewai"],
   "env": "COMPOSIO_API_KEY=...",
   "tools": ["composio_tools"],

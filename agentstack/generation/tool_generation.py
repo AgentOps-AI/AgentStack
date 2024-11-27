@@ -12,7 +12,6 @@ import shutil
 import fileinput
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
-TOOLS_DATA_PATH: Path = importlib.resources.files('agentstack.tools') / 'tools.json'
 AGENTSTACK_JSON_FILENAME = "agentstack.json"
 FRAMEWORK_FILENAMES: dict[str, str] = {
     'crewai': 'src/crew.py', 
@@ -25,18 +24,11 @@ def get_framework_filename(framework: str, path: str = ''):
         print(term_color(f'Unknown framework: {framework}', 'red'))
         sys.exit(1)
 
-def assert_tool_exists(name: str):
-    tools_data = open_json_file(TOOLS_DATA_PATH)
-    for category, tools in tools_data.items():
-        for tool_dict in tools:
-            if tool_dict['name'] == name:
-                return
-    print(term_color(f'No known agentstack tool: {name}', 'red'))
-    sys.exit(1)
-
 class ToolConfig(BaseModel):
     name: str
+    category: str
     tools: list[str]
+    url: Optional[str] = None
     tools_bundled: bool = False
     cta: Optional[str] = None
     env: Optional[str] = None
@@ -46,8 +38,11 @@ class ToolConfig(BaseModel):
     
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
-        assert_tool_exists(name)
-        return cls.from_json(importlib.resources.files('agentstack.tools') / f'{name}.json')
+        path = importlib.resources.files('agentstack.tools') / f'{name}.json'
+        if not os.path.exists(path):
+            print(term_color(f'No known agentstack tool: {name}', 'red'))
+            sys.exit(1)
+        return cls.from_json(path)
 
     @classmethod
     def from_json(cls, path: Path) -> 'ToolConfig':

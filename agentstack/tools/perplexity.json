@@ -1,5 +1,7 @@
 {
   "name": "perplexity",
+  "url": "https://perplexity.ai",
+  "category": "search",
   "packages": [],
   "env": "PERPLEXITY_API_KEY=pplx-...",
   "tools": ["query_perplexity"]
