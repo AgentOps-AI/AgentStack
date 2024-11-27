@@ -321,7 +321,7 @@ def modify_agent_tools(
         base_name: Base module name for tools (default: 'tools')
     """
     if agents is not None:
-        valid_agents = get_agent_names()
+        valid_agents = get_agent_names(path=path)
         for agent in agents:
             if agent not in valid_agents:
                 print(term_color(f"Agent '{agent}' not found in the project.", 'red'))

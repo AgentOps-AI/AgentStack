@@ -23,7 +23,7 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
         print(term_color("Project name must be snake case", 'red'))
         return
 
-    if template is not None and not use_wizard:
+    if template is not None and use_wizard:
         print(term_color("Template and wizard flags cannot be used together", 'red'))
         return
 
@@ -39,7 +39,7 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
                 print(term_color(f"Failed to fetch template data from {template}. Status code: {response.status_code}", 'red'))
                 sys.exit(1)
         else:
-            with importlib.resources.path('agentstack.templates.proj_templates', template) as template_path:
+            with importlib.resources.path('agentstack.templates.proj_templates', f'{template}.json') as template_path:
                 if template_path is None:
                     print(term_color(f"No such template {template} found", 'red'))
                     sys.exit(1)
@@ -58,8 +58,10 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
             'agents': template_data['agents'],
             'tasks': template_data['tasks']
         }
-        for tool_data in template_data['tools']:
-            generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
+
+        tools = template_data['tools']
+        # for tool_data in template_data['tools']:
+        #     generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
 
 
     elif use_wizard:
@@ -68,7 +70,7 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
         welcome_message()
         framework = ask_framework()
         design = ask_design()
-        # tools = ask_tools()
+        tools = ask_tools()
 
     else:
         welcome_message()
@@ -87,15 +89,17 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
             'tasks': []
         }
 
-        # tools = []
+        tools = []
 
     log.debug(
         f"project_details: {project_details}"
         f"framework: {framework}"
         f"design: {design}"
     )
-    insert_template(project_details, framework, design)
+    insert_template(project_details, framework, design, template_data)
     # add_tools(tools, project_details['name'])
+    for tool_data in tools:
+        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
 
 
 def welcome_message():
@@ -298,14 +302,16 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
     return questions
 
 
-def insert_template(project_details: dict, framework_name: str, design: dict):
+def insert_template(project_details: dict, framework_name: str, design: dict, template_data: Optional[dict] = None):
     framework = FrameworkData(framework_name.lower())
     project_metadata = ProjectMetadata(project_name=project_details["name"],
                                        description=project_details["description"],
                                        author_name=project_details["author"],
                                        version="0.0.1",
                                        license="MIT",
-                                       year=datetime.now().year)
+                                       year=datetime.now().year,
+                                       template=template_data['name'],
+                                       template_version=template_data['template_version'] if template_data else None)
 
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]

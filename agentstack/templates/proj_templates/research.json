@@ -1,23 +1,20 @@
 {
   "name": "research",
   "description": "Starter project research agent",
-  "framework": "Framework",
+  "template_version": 1,
+  "framework": "crewai",
   "agents": [{
     "name": "researcher",
-    "prompt": {
-      "role": "Gather data using research tools.",
-      "goal": "Collect all relevant information asked for using the tools available to you. The data will be analyzed later, compile a result of all data that you believe to be relevant to the query.",
-      "backstory": "You are an expert researcher. You are given a query and are tasked with providing as much relevant data in a concise manner."
-    },
-    "llm": "openai/gpt-4o"
+    "role": "Gather data using research tools.",
+    "goal": "Collect all relevant information asked for using the tools available to you. The data will be analyzed later, compile a result of all data that you believe to be relevant to the query.",
+    "backstory": "You are an expert researcher. You are given a query and are tasked with providing as much relevant data in a concise manner.",
+    "model": "openai/gpt-4o"
   },{
     "name": "analyst",
-    "prompt": {
-      "role": "Analyze gathered data.",
-      "goal": "Analyze and consolidate the data gathered from research to adequately answer the query provided in the task.",
-      "backstory": "You are an expert analyst. You are given a collection of research results and should use your knowledge to make conclusions on the data without making any assumptions that are not specifically supported by the data."
-    },
-    "llm": "openai/gpt-4o"
+    "role": "Analyze gathered data.",
+    "goal": "Analyze and consolidate the data gathered from research to adequately answer the query provided in the task.",
+    "backstory": "You are an expert analyst. You are given a collection of research results and should use your knowledge to make conclusions on the data without making any assumptions that are not specifically supported by the data.",
+    "model": "openai/gpt-4o"
   }],
   "tasks": [{
     "name": "research",
