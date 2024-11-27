@@ -20,7 +20,8 @@ dependencies = [
     "toml>=0.10.2",
     "ruamel.yaml.base>=0.3.2",
     "cookiecutter==2.6.0",
-    "psutil==5.9.0"
+    "psutil==5.9.0",
+    "pydantic>=2.10",
 ]
 
 [tool.setuptools.package-data]
