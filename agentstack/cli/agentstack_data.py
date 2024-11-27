@@ -27,7 +27,7 @@ class ProjectMetadata:
         self.year = year
         self.agentstack_version = get_version()
         self.template = template
-        self.template_version = template
+        self.template_version = template_version
 
         log.debug(f"ProjectMetadata: {self.to_dict()}")
 
