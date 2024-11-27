@@ -57,6 +57,9 @@ class ToolConfig(BaseModel):
         
     def get_import_statement(self) -> str:
         return f"from .{self.name}_tool import {', '.join(self.tools)}"
+    
+    def get_impl_file_path(self, framework: str) -> Path:
+        return importlib.resources.files(f'agentstack.templates.{framework}.tools') / f'{self.name}_tool.py'
 
 def add_tool(tool_name: str, path: Optional[str] = None):
     if path:
@@ -72,7 +75,7 @@ def add_tool(tool_name: str, path: Optional[str] = None):
         sys.exit(1)
 
     tool_data = ToolConfig.from_tool_name(tool_name)
-    tool_file_path = importlib.resources.files(f'agentstack.templates.{framework}.tools') / f'{tool_name}_tool.py'
+    tool_file_path = tool_data.get_impl_file_path(framework)
     if tool_data.packages:
         os.system(f"poetry add {' '.join(tool_data.packages)}")  # Install packages
     shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
