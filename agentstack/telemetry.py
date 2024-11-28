@@ -46,7 +46,7 @@ def collect_machine_telemetry(command: str):
         'agentstack_version': get_version()
     }
 
-    if command is not "init":
+    if command != "init":
         telemetry_data['framework'] = get_framework()
     else:
         telemetry_data['framework'] = "n/a"

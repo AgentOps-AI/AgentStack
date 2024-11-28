@@ -1,0 +1,40 @@
+---
+title: Stripe
+description: Access to Stripe functionality for your agents
+icon: credit-card
+---
+
+## Description
+
+Use Stripe to run your agent business and enhance your agents’ functionality. By enabling access to financial services and tools, you allow your agents to help you earn and spend funds, expanding their capabilities.
+
+## Example
+
+Add the Stripe tool with
+```bash
+agentstack tools add stripe
+```
+
+Create your API key from your [Stripe dashboard](https://dashboard.stripe.com/test/apikeys).
+
+## Tools
+
+Stripe has a number of APIs exposed for agent use. By default, the agent will have access to
+
+```python
+{
+    "actions": {
+        "payment_links": {
+            "create": True,
+        },
+        "products": {
+            "create": True,
+        },
+        "prices": {
+            "create": True,
+        },
+    }
+}
+```
+
+* More detailed list of tools can be found [here](https://github.com/stripe/agent-toolkit/blob/main/python/stripe_agent_toolkit/functions.py)
