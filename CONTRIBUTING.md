@@ -36,4 +36,13 @@ Adding tools is easy once you understand the project structure. A few things nee
 4. Manually test your tool integration by running `agentstack tools add <your_tool>` and ensure it behaves as expected.
 
 ## Tests
-HAHAHAHAHAHAHA good one
+Tests are written in `tests` folder with the cli tests being in `tests/test_cli_loads.py`. 
+
+Currently some of the tests will not work but you can run the tests by 
+
+```
+cd tests
+python -m unittest discover
+```
+
+and check the results 
