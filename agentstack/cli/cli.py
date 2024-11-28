@@ -1,8 +1,10 @@
 import json
 import shutil
+import sys
 import time
 from datetime import datetime
 from typing import Optional
+import requests
 
 from art import text2art
 import inquirer
@@ -16,17 +18,67 @@ from .. import generation
 from ..utils import open_json_file, term_color, is_snake_case
 
 
-def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = False):
+def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
     if slug_name and not is_snake_case(slug_name):
         print(term_color("Project name must be snake case", 'red'))
         return
 
-    if skip_wizard:
+    if template is not None and use_wizard:
+        print(term_color("Template and wizard flags cannot be used together", 'red'))
+        return
+
+    template_data = None
+    if template is not None:
+        url_start = "https://"
+        if template[:len(url_start)] == url_start:
+            # template is a url
+            response = requests.get(template)
+            if response.status_code == 200:
+                template_data = response.json()
+            else:
+                print(term_color(f"Failed to fetch template data from {template}. Status code: {response.status_code}", 'red'))
+                sys.exit(1)
+        else:
+            with importlib.resources.path('agentstack.templates.proj_templates', f'{template}.json') as template_path:
+                if template_path is None:
+                    print(term_color(f"No such template {template} found", 'red'))
+                    sys.exit(1)
+                template_data = open_json_file(template_path)
+
+    if template_data:
         project_details = {
-            "name": slug_name or "new_agentstack_project",
-            "version": "0.1.0",
+            "name": slug_name or template_data['name'],
+            "version": "0.0.1",
+            "description": template_data['description'],
+            "author": "Name <Email>",
+            "license": "MIT"
+        }
+        framework = template_data['framework']
+        design = {
+            'agents': template_data['agents'],
+            'tasks': template_data['tasks']
+        }
+
+        tools = template_data['tools']
+        # for tool_data in template_data['tools']:
+        #     generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
+
+
+    elif use_wizard:
+        welcome_message()
+        project_details = ask_project_details(slug_name)
+        welcome_message()
+        framework = ask_framework()
+        design = ask_design()
+        tools = ask_tools()
+
+    else:
+        welcome_message()
+        project_details = {
+            "name": slug_name or "agentstack_project",
+            "version": "0.0.1",
             "description": "New agentstack project",
-            "author": "<NAME>",
+            "author": "Name <Email>",
             "license": "MIT"
         }
 
@@ -38,21 +90,16 @@ def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = Fa
         }
 
         tools = []
-    else:
-        welcome_message()
-        project_details = ask_project_details(slug_name)
-        welcome_message()
-        framework = ask_framework()
-        design = ask_design()
-        tools = ask_tools()
 
     log.debug(
         f"project_details: {project_details}"
         f"framework: {framework}"
         f"design: {design}"
     )
-    insert_template(project_details, framework, design)
-    add_tools(tools, project_details['name'])
+    insert_template(project_details, framework, design, template_data)
+    # add_tools(tools, project_details['name'])
+    for tool_data in tools:
+        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
 
 
 def welcome_message():
@@ -95,11 +142,9 @@ def ask_framework() -> str:
 
 
 def ask_design() -> dict:
-    # use_wizard = inquirer.confirm(
-    #     message="Would you like to use the CLI wizard to set up agents and tasks?",
-    # )
-
-    use_wizard = False
+    use_wizard = inquirer.confirm(
+        message="Would you like to use the CLI wizard to set up agents and tasks?",
+    )
 
     if not use_wizard:
         return {
@@ -199,11 +244,9 @@ First we need to create the agents that will work together to accomplish tasks:
 
 
 def ask_tools() -> list:
-    # use_tools = inquirer.confirm(
-    #     message="Do you want to add agent tools now? (you can do this later with `agentstack tools add <tool_name>`)",
-    # )
-
-    use_tools = False
+    use_tools = inquirer.confirm(
+        message="Do you want to add agent tools now? (you can do this later with `agentstack tools add <tool_name>`)",
+    )
 
     if not use_tools:
         return []
@@ -259,14 +302,16 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
     return questions
 
 
-def insert_template(project_details: dict, framework_name: str, design: dict):
+def insert_template(project_details: dict, framework_name: str, design: dict, template_data: Optional[dict] = None):
     framework = FrameworkData(framework_name.lower())
     project_metadata = ProjectMetadata(project_name=project_details["name"],
                                        description=project_details["description"],
                                        author_name=project_details["author"],
-                                       version=project_details["version"],
+                                       version="0.0.1",
                                        license="MIT",
-                                       year=datetime.now().year)
+                                       year=datetime.now().year,
+                                       template=template_data['name'],
+                                       template_version=template_data['template_version'] if template_data else None)
 
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]
@@ -318,9 +363,9 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
     )
 
 
-def add_tools(tools: list, project_name: str):
-    for tool in tools:
-        generation.add_tool(tool, project_name)
+# def add_tools(tools: list, project_name: str):
+#     for tool in tools:
+#         generation.add_tool(tool, path=project_name)
 
 
 def list_tools():
