@@ -1,5 +1,5 @@
 import os, sys
-from typing import Optional, List
+from typing import Optional, Any, List
 import importlib.resources
 from pathlib import Path
 import json
@@ -36,7 +36,7 @@ class ToolConfig(BaseModel):
     url: Optional[str] = None
     tools_bundled: bool = False
     cta: Optional[str] = None
-    env: Optional[str] = None
+    env: Optional[dict] = None
     packages: Optional[List[str]] = None
     post_install: Optional[str] = None
     post_remove: Optional[str] = None
@@ -101,11 +101,13 @@ def add_tool(tool_name: str, path: Optional[str] = None):
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
     if tool_data.env: # if the env vars aren't in the .env files, add them
-        first_var_name = tool_data.env.split('=')[0]
-        if not string_in_file(f'{path}.env', first_var_name):
-            insert_code_after_tag(f'{path}.env', '# Tools', [tool_data.env], next_line=True)  # Add env var
-        if not string_in_file(f'{path}.env.example', first_var_name):
-            insert_code_after_tag(f'{path}.env.example', '# Tools', [tool_data.env], next_line=True)  # Add env var
+        # tool_data.env is a dict, key is the env var name, value is the value
+        for var, value in tool_data.env.items():
+            env_var = f'{var}={value}'
+            if not string_in_file(f'{path}.env', env_var):
+                insert_code_after_tag(f'{path}.env', '# Tools', [env_var, ])
+            if not string_in_file(f'{path}.env.example', env_var):
+                insert_code_after_tag(f'{path}.env.example', '# Tools', [env_var, ])
     
     if tool_data.post_install:
         os.system(tool_data.post_install)

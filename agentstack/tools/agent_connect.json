@@ -1,8 +1,15 @@
 {
-    "name": "agent_connect",
-    "url": "https://github.com/chgaowei/AgentConnect",
-    "category": "network-protocols",
-    "packages": ["agent-connect"],
-    "env": "HOST_DOMAIN=...\nHOST_PORT=\"80\"\nHOST_WS_PATH=\"/ws\"\nDID_DOCUMENT_PATH=...\nSSL_CERT_PATH=...\nSSL_KEY_PATH=...",
-    "tools": ["send_message", "receive_message"]
+  "name": "agent_connect",
+  "url": "https://github.com/chgaowei/AgentConnect",
+  "category": "network-protocols",
+  "packages": ["agent-connect"],
+  "env": {
+    "HOST_DOMAIN": "...",
+    "HOST_PORT": 80,
+    "HOST_WS_PATH": "/ws",
+    "DID_DOCUMENT_PATH": "...",
+    "SSL_CERT_PATH": "...",
+    "SSL_KEY_PATH": "..."
+  },
+  "tools": ["send_message", "receive_message"]
 }

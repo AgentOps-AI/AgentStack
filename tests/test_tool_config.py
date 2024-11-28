@@ -28,7 +28,7 @@ class ToolConfigTest(unittest.TestCase):
         assert config.url == "https://example.com"
         assert config.tools_bundled is True
         assert config.cta == "Click me!"
-        assert config.env == "test"
+        assert config.env == {"ENV_VAR1": "value1", "ENV_VAR2": "value2"}
         assert config.packages == ["package1", "package2"]
         assert config.post_install == "install.sh"
         assert config.post_remove == "remove.sh"

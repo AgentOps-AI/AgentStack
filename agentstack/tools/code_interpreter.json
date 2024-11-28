@@ -1,7 +1,5 @@
 {
   "name": "code_interpreter",
   "category": "code-execution",
-  "packages": [],
-  "env": "",
   "tools": ["code_interpreter"]
 }

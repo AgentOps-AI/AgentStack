@@ -5,7 +5,10 @@
     "url": "https://example.com",
     "tools_bundled": true,
     "cta": "Click me!",
-    "env": "test",
+    "env": {
+        "ENV_VAR1": "value1",
+        "ENV_VAR2": "value2"
+    },
     "packages": ["package1", "package2"],
     "post_install": "install.sh",
     "post_remove": "remove.sh"

@@ -2,7 +2,5 @@
   "name": "directory_search",
   "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/directory_search_tool",
   "category": "computer-control",
-  "packages": [],
-  "env": "",
   "tools": ["dir_search_tool"]
 }
