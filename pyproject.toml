@@ -23,6 +23,7 @@ dependencies = [
     "psutil==5.9.0",
     "pydantic>=2.10",
     "packaging>=24.2",
+    "requests>=2.32",
 ]
 
 [tool.setuptools.package-data]
