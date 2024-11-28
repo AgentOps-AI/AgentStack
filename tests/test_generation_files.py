@@ -4,7 +4,7 @@ import importlib.resources
 from pathlib import Path
 import shutil
 from agentstack.generation.files import ConfigFile, EnvFile
-from agentstack.utils import get_framework, get_telemetry_opt_out
+from agentstack.utils import verify_agentstack_project, get_framework, get_telemetry_opt_out
 
 BASE_PATH = Path(__file__).parent
 
@@ -45,6 +45,13 @@ class GenerationFilesTest(unittest.TestCase):
         with self.assertRaises(FileNotFoundError) as context:
             config = ConfigFile(BASE_PATH / "missing")
 
+    def test_verify_agentstack_project_valid(self):
+        verify_agentstack_project(BASE_PATH / "fixtures")
+
+    def test_verify_agentstack_project_invalid(self):
+        with self.assertRaises(SystemExit) as context:
+            verify_agentstack_project(BASE_PATH / "missing")
+    
     def test_get_framework(self):
         assert get_framework(BASE_PATH / "fixtures") == "crewai"
         with self.assertRaises(SystemExit) as context:

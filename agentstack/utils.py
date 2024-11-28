@@ -16,9 +16,11 @@ def get_version():
         return "Unknown version"
 
 
-def verify_agentstack_project():
-    from agentstack.generation import CONFIG_FILENAME
-    if not os.path.isfile(CONFIG_FILENAME):
+def verify_agentstack_project(path: Optional[str] = None):
+    from agentstack.generation import ConfigFile
+    try:
+        agentstack_config = ConfigFile(path)
+    except FileNotFoundError:
         print("\033[31mAgentStack Error: This does not appear to be an AgentStack project."
               "\nPlease ensure you're at the root directory of your project and a file named agentstack.json exists. "
               "If you're starting a new project, run `agentstack init`\033[0m")
