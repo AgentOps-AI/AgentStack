@@ -13,7 +13,6 @@ def get_package_path(): # TODO get this from utils in upstream branch
 
 ENDPOINT_URL = "https://pypi.org/simple/agentstack/"
 LAST_CHECK_FILENAME = Path.cwd()/".agentstack-last-update"
-print(LAST_CHECK_FILENAME)
 CHECK_EVERY = 3600 # hour
 
 
