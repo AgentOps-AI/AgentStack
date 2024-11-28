@@ -8,7 +8,6 @@ from importlib.metadata import version
 from pathlib import Path
 import importlib.resources
 
-
 def get_version():
     try:
         return version('agentstack')
@@ -18,7 +17,8 @@ def get_version():
 
 
 def verify_agentstack_project():
-    if not os.path.isfile('agentstack.json'):
+    from agentstack.generation import CONFIG_FILENAME
+    if not os.path.isfile(CONFIG_FILENAME):
         print("\033[31mAgentStack Error: This does not appear to be an AgentStack project."
               "\nPlease ensure you're at the root directory of your project and a file named agentstack.json exists. "
               "If you're starting a new project, run `agentstack init`\033[0m")
@@ -33,13 +33,10 @@ def get_package_path() -> Path:
 
 
 def get_framework(path: Optional[str] = None) -> str:
+    from agentstack.generation import ConfigFile
     try:
-        file_path = 'agentstack.json'
-        if path is not None:
-            file_path = path + '/' + file_path
-
-        agentstack_data = open_json_file(file_path)
-        framework = agentstack_data.get('framework')
+        agentstack_config = ConfigFile(path)
+        framework = agentstack_config.framework
 
         if framework.lower() not in ['crewai', 'autogen', 'litellm']:
             print(term_color("agentstack.json contains an invalid framework", "red"))
@@ -51,14 +48,10 @@ def get_framework(path: Optional[str] = None) -> str:
 
 
 def get_telemetry_opt_out(path: Optional[str] = None) -> str:
+    from agentstack.generation import ConfigFile
     try:
-        file_path = 'agentstack.json'
-        if path is not None:
-            file_path = path + '/' + file_path
-
-        agentstack_data = open_json_file(file_path)
-        opt_out = agentstack_data.get('telemetry_opt_out', False)
-        return opt_out
+        agentstack_config = ConfigFile(path)
+        return bool(agentstack_config.telemetry_opt_out)
     except FileNotFoundError:
         print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
         sys.exit(1)
