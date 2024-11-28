@@ -1,53 +1,53 @@
+import os, sys
+from typing import Optional, Any, List
 import importlib.resources
 from pathlib import Path
 import json
-import sys
-from typing import Optional, List
-from pydantic import BaseModel, ValidationError
-
-from .gen_utils import insert_code_after_tag, string_in_file
-from ..utils import open_json_file, get_framework, term_color
-import os
 import shutil
 import fileinput
+from pydantic import BaseModel, ValidationError
+
+from agentstack.utils import get_package_path
+from .gen_utils import insert_code_after_tag, string_in_file
+from ..utils import open_json_file, get_framework, term_color
+
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
-TOOLS_DATA_PATH: Path = importlib.resources.files('agentstack.tools') / 'tools.json'
 AGENTSTACK_JSON_FILENAME = "agentstack.json"
 FRAMEWORK_FILENAMES: dict[str, str] = {
     'crewai': 'src/crew.py', 
 }
 
 def get_framework_filename(framework: str, path: str = ''):
+    if path:
+        path = path.endswith('/') and path or path + '/'
+    else:
+        path = './'
     try:
-        return FRAMEWORK_FILENAMES[framework]
+        return f"{path}{FRAMEWORK_FILENAMES[framework]}"
     except KeyError:
         print(term_color(f'Unknown framework: {framework}', 'red'))
         sys.exit(1)
 
-def assert_tool_exists(name: str):
-    tools_data = open_json_file(TOOLS_DATA_PATH)
-    for category, tools in tools_data.items():
-        for tool_dict in tools:
-            if tool_dict['name'] == name:
-                return
-    print(term_color(f'No known agentstack tool: {name}', 'red'))
-    sys.exit(1)
-
 class ToolConfig(BaseModel):
     name: str
+    category: str
     tools: list[str]
+    url: Optional[str] = None
     tools_bundled: bool = False
     cta: Optional[str] = None
-    env: Optional[str] = None
+    env: Optional[dict] = None
     packages: Optional[List[str]] = None
     post_install: Optional[str] = None
     post_remove: Optional[str] = None
     
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
-        assert_tool_exists(name)
-        return cls.from_json(importlib.resources.files('agentstack.tools') / f'{name}.json')
+        path = get_package_path() / f'tools/{name}.json'
+        if not os.path.exists(path):
+            print(term_color(f'No known agentstack tool: {name}', 'red'))
+            sys.exit(1)
+        return cls.from_json(path)
 
     @classmethod
     def from_json(cls, path: Path) -> 'ToolConfig':
@@ -62,6 +62,23 @@ class ToolConfig(BaseModel):
         
     def get_import_statement(self) -> str:
         return f"from .{self.name}_tool import {', '.join(self.tools)}"
+    
+    def get_impl_file_path(self, framework: str) -> Path:
+        return get_package_path() / f'templates/{framework}/tools/{self.name}_tool.py'
+
+def get_all_tool_paths() -> list[Path]:
+    paths = []
+    tools_dir = get_package_path() / 'tools'
+    for file in tools_dir.iterdir():
+        if file.is_file() and file.suffix == '.json':
+            paths.append(file)
+    return paths
+
+def get_all_tool_names() -> list[str]:
+    return [path.stem for path in get_all_tool_paths()]
+
+def get_all_tools() -> list[ToolConfig]:
+    return [ToolConfig.from_json(path) for path in get_all_tool_paths()]
 
 def add_tool(tool_name: str, path: Optional[str] = None):
     if path:
@@ -77,18 +94,23 @@ def add_tool(tool_name: str, path: Optional[str] = None):
         sys.exit(1)
 
     tool_data = ToolConfig.from_tool_name(tool_name)
-    tool_file_path = importlib.resources.files(f'agentstack.templates.{framework}.tools') / f'{tool_name}_tool.py'
+    tool_file_path = tool_data.get_impl_file_path(framework)
     if tool_data.packages:
         os.system(f"poetry add {' '.join(tool_data.packages)}")  # Install packages
     shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
     if tool_data.env: # if the env vars aren't in the .env files, add them
-        first_var_name = tool_data.env.split('=')[0]
-        if not string_in_file(f'{path}.env', first_var_name):
-            insert_code_after_tag(f'{path}.env', '# Tools', [tool_data.env], next_line=True)  # Add env var
-        if not string_in_file(f'{path}.env.example', first_var_name):
-            insert_code_after_tag(f'{path}.env.example', '# Tools', [tool_data.env], next_line=True)  # Add env var
+        # tool_data.env is a dict, key is the env var name, value is the value
+        for var, value in tool_data.env.items():
+            env_var = f'{var}={value}'
+            if not string_in_file(f'{path}.env', env_var):
+                insert_code_after_tag(f'{path}.env', '# Tools', [env_var, ])
+            if not string_in_file(f'{path}.env.example', env_var):
+                insert_code_after_tag(f'{path}.env.example', '# Tools', [env_var, ])
+    
+    if tool_data.post_install:
+        os.system(tool_data.post_install)
     
     if tool_data.post_install:
         os.system(tool_data.post_install)
