@@ -23,8 +23,12 @@ def get_package_path() -> Path:
     return importlib.resources.files('agentstack')
 
 def get_framework_filename(framework: str, path: str = ''):
+    if path:
+        path = path.endswith('/') and path or path + '/'
+    else:
+        path = './'
     try:
-        return FRAMEWORK_FILENAMES[framework]
+        return f"{path}{FRAMEWORK_FILENAMES[framework]}"
     except KeyError:
         print(term_color(f'Unknown framework: {framework}', 'red'))
         sys.exit(1)
