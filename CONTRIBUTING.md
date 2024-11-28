@@ -44,5 +44,3 @@ Currently some of the tests will not work but you can run the tests by
 cd tests
 python -m unittest discover
 ```
-
-and check the results 
