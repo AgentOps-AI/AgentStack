@@ -45,7 +45,7 @@ class ConfigFile(BaseModel):
             raise FileNotFoundError(f"File {path / CONFIG_FILENAME} does not exist.")
         self._path = path # attribute needs to be set after init
 
-    def model_dump(self, *args, **kwargs):
+    def model_dump(self, *args, **kwargs) -> dict:
         # Ignore None values
         dump = super().model_dump(*args, **kwargs)
         return {key: value for key, value in dump.items() if value is not None}
@@ -54,7 +54,7 @@ class ConfigFile(BaseModel):
         with open(self._path / CONFIG_FILENAME, 'w') as f:
             f.write(json.dumps(self.model_dump(), indent=4))
     
-    def __enter__(self): return self
+    def __enter__(self) -> 'ConfigFile': return self
     def __exit__(self, *args): self.write()
 
 
@@ -62,7 +62,7 @@ class EnvFile:
     """
     Interface for interacting with the .env file inside a project directory.
     Unlike the ConfigFile, we do not re-write the entire file on every change, 
-    and instead just aooend new lines to the end of the file. This preseres
+    and instead just append new lines to the end of the file. This preseres
     comments and other formatting that the user may have added and prevents
     opportunities for data loss.
     
@@ -91,7 +91,7 @@ class EnvFile:
             raise ValueError("EnvFile does not allow overwriting values.")
         self.append_if_new(key, value)
     
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         return key in self.variables
     
     def append_if_new(self, key, value):
@@ -116,6 +116,6 @@ class EnvFile:
             for key, value in self._new_variables.items():
                 f.write(f"\n{key}={value}")
     
-    def __enter__(self): return self
+    def __enter__(self) -> 'EnvFile': return self
     def __exit__(self, *args): self.write()
 
