@@ -16,29 +16,14 @@ LAST_CHECK_FILENAME = Path.cwd()/".agentstack-last-update"
 CHECK_EVERY = 3600 # hour
 
 
-class Package:
-    url: str
-    version: Version
-    
-    def __init__(self, url: str, version: str):
-        self.url = url
-        self.version = Version(version)
-    
-    @classmethod
-    def get_latest(cls) -> 'Package':
-        """Get version information from PyPi to save a full package manager invocation"""
-        import requests # defer import until we know we need it
-        response = requests.get(ENDPOINT_URL, headers={"Accept": "application/vnd.pypi.simple.v1+json"})
-        if response.status_code != 200:
-            raise Exception(f"Failed to fetch package data from pypi.")
-        data = response.json()
-        return cls(
-            url=data['files'][-1]['url'], 
-            version=data['versions'][-1])
-    
-    def install(self):
-        """Use our internal packaging module to install the package"""
-        packaging.upgrade('agentstack')
+def get_latest_version() -> Version:
+    """Get version information from PyPi to save a full package manager invocation"""
+    import requests # defer import until we know we need it
+    response = requests.get(ENDPOINT_URL, headers={"Accept": "application/vnd.pypi.simple.v1+json"})
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch package data from pypi.")
+    data = response.json()
+    return parse_version(data['versions'][-1])
 
 def should_update() -> bool:
     """Has it been longer than CHECK_EVERY since the last update check?"""
@@ -61,18 +46,18 @@ def check_for_updates(update_requested: bool = False):
 
     print("Checking for updates... ", end='')
     try:
-        package = Package.get_latest()
+        latest_version: Version = get_latest_version()
         record_update_check()
     except Exception as e:
         print(term_color("Failed to retrieve package index.", 'red'))
         return
     
-    installed_version = parse_version(get_version())
-    if package.version > installed_version:
+    installed_version: Version = parse_version(get_version())
+    if latest_version > installed_version:
         print('') # newline
-        if inquirer.confirm(f"New version available: {package.version}! Do you want to install?"):
-            package.install()
-            print(term_color(f"Successfully installed agentstack {package.version}. Re-run your command.", 'green'))
+        if inquirer.confirm(f"New version available: {latest_version}! Do you want to install?"):
+            packaging.upgrade('agentstack')
+            print(term_color(f"agentstack updated. Re-run your command to use the latest version.", 'green'))
             sys.exit(0)
         else:
             print(term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue'))

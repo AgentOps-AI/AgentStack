@@ -112,6 +112,8 @@ def main():
             generation.remove_tool(args.name)
         else:
             tools_parser.print_help()
+    elif args.command in ['update', 'u']:
+        pass # Update check already done
     else:
         parser.print_help()
 
