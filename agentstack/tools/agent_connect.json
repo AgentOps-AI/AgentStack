@@ -1,5 +1,5 @@
 {
-    "name": "agent-connect",
+    "name": "agent_connect",
     "url": "https://github.com/chgaowei/AgentConnect",
     "category": "network-protocols",
     "packages": ["agent-connect"],

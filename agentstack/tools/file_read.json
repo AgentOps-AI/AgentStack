@@ -1,5 +1,5 @@
 {
-  "name": "file_read_tool",
+  "name": "file_read",
   "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/file_read_tool", 
   "category": "computer-control",
   "packages": [],

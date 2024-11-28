@@ -1,21 +1,26 @@
+import os, sys
+from typing import Optional, List
 import importlib.resources
 from pathlib import Path
 import json
-import sys
-from typing import Optional, List
+import shutil
+import fileinput
 from pydantic import BaseModel, ValidationError
 
 from .gen_utils import insert_code_after_tag, string_in_file
 from ..utils import open_json_file, get_framework, term_color
-import os
-import shutil
-import fileinput
+
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
 AGENTSTACK_JSON_FILENAME = "agentstack.json"
 FRAMEWORK_FILENAMES: dict[str, str] = {
     'crewai': 'src/crew.py', 
 }
+
+def get_package_path() -> Path:
+    if sys.version_info <= (3, 9):
+        return Path(sys.modules['agentstack'].__path__[0])
+    return importlib.resources.files('agentstack')
 
 def get_framework_filename(framework: str, path: str = ''):
     try:
@@ -38,7 +43,7 @@ class ToolConfig(BaseModel):
     
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
-        path = importlib.resources.files('agentstack.tools') / f'{name}.json'
+        path = get_package_path() / f'tools/{name}.json'
         if not os.path.exists(path):
             print(term_color(f'No known agentstack tool: {name}', 'red'))
             sys.exit(1)
@@ -59,7 +64,7 @@ class ToolConfig(BaseModel):
         return f"from .{self.name}_tool import {', '.join(self.tools)}"
     
     def get_impl_file_path(self, framework: str) -> Path:
-        return importlib.resources.files(f'agentstack.templates.{framework}.tools') / f'{self.name}_tool.py'
+        return get_package_path() / f'templates/{framework}/tools/{self.name}_tool.py'
 
 def add_tool(tool_name: str, path: Optional[str] = None):
     if path:
