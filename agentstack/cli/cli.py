@@ -336,7 +336,9 @@ def list_tools():
             print(f"\n{category}:")
             curr_category = category
         for tool in tools:
-            print(f"  - {tool.name}: {tool.url if tool.url else 'AgentStack default tool'}")
+            print("  - ", end='')
+            print(term_color(f"{tool.name}", 'blue'), end='')
+            print(f": {tool.url if tool.url else 'AgentStack default tool'}")
 
     print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
     print("   https://docs.agentstack.sh/tools/core")
