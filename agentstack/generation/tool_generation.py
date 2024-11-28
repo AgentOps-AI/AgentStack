@@ -5,6 +5,7 @@ import sys
 from typing import Optional, List
 from pydantic import BaseModel, ValidationError
 
+from agentstack import packaging
 from .gen_utils import insert_code_after_tag, string_in_file
 from ..utils import open_json_file, get_framework, term_color
 import os
@@ -79,7 +80,7 @@ def add_tool(tool_name: str, path: Optional[str] = None):
     tool_data = ToolConfig.from_tool_name(tool_name)
     tool_file_path = importlib.resources.files(f'agentstack.templates.{framework}.tools') / f'{tool_name}_tool.py'
     if tool_data.packages:
-        os.system(f"poetry add {' '.join(tool_data.packages)}")  # Install packages
+        packaging.install(' '.join(tool_data.packages))
     shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
@@ -119,7 +120,7 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
 
     tool_data = ToolConfig.from_tool_name(tool_name)
     if tool_data.packages:
-        os.system(f"poetry remove {' '.join(tool_data.packages)}") # Uninstall packages
+        packaging.remove(' '.join(tool_data.packages))
     try:
         os.remove(f'{path}src/tools/{tool_name}_tool.py')
     except FileNotFoundError:
