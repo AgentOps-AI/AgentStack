@@ -66,6 +66,20 @@ class ToolConfig(BaseModel):
     def get_impl_file_path(self, framework: str) -> Path:
         return get_package_path() / f'templates/{framework}/tools/{self.name}_tool.py'
 
+def get_all_tool_paths() -> list[Path]:
+    paths = []
+    tools_dir = get_package_path() / 'tools'
+    for file in tools_dir.iterdir():
+        if file.is_file() and file.suffix == '.json':
+            paths.append(file)
+    return paths
+
+def get_all_tool_names() -> list[str]:
+    return [path.stem for path in get_all_tool_paths()]
+
+def get_all_tools() -> list[ToolConfig]:
+    return [ToolConfig.from_json(path) for path in get_all_tool_paths()]
+
 def add_tool(tool_name: str, path: Optional[str] = None):
     if path:
         path = path.endswith('/') and path or path + '/'

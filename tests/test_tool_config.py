@@ -2,15 +2,9 @@ import os, sys
 import unittest
 import importlib.resources
 from pathlib import Path
-from agentstack.generation.tool_generation import get_package_path, ToolConfig
+from agentstack.generation.tool_generation import get_all_tool_paths, get_all_tool_names, ToolConfig
 
 BASE_PATH = Path(__file__).parent
-
-def all_tool_names():
-    tools_dir = get_package_path() / 'tools'
-    for file in tools_dir.iterdir():
-        if file.is_file() and file.suffix == '.json':
-            yield file.stem
 
 class ToolConfigTest(unittest.TestCase):
     def test_minimal_json(self):
@@ -40,8 +34,13 @@ class ToolConfigTest(unittest.TestCase):
         assert config.post_remove == "remove.sh"
     
     def test_all_json_configs_from_tool_name(self):
-        for tool_name in all_tool_names():
+        for tool_name in get_all_tool_names():
             config = ToolConfig.from_tool_name(tool_name)
             assert config.name == tool_name
             # We can assume that pydantic validation caught any other issues
 
+    def test_all_json_configs_from_tool_path(self):
+        for path in get_all_tool_paths():
+            config = ToolConfig.from_json(path)
+            assert config.name == path.stem
+            # We can assume that pydantic validation caught any other issues

@@ -3,6 +3,7 @@ import shutil
 import time
 from datetime import datetime
 from typing import Optional
+import itertools
 
 from art import text2art
 import inquirer
@@ -12,6 +13,7 @@ from cookiecutter.main import cookiecutter
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
+from agentstack.generation.tool_generation import get_all_tools
 from .. import generation
 from ..utils import open_json_file, term_color, is_snake_case
 
@@ -324,24 +326,17 @@ def add_tools(tools: list, project_name: str):
 
 
 def list_tools():
-    with importlib.resources.path(f'agentstack.tools', 'tools.json') as tools_json_path:
-        try:
-            # Load the JSON data
-            tools_data = open_json_file(tools_json_path)
+    # Display the tools
+    tools = get_all_tools()
+    curr_category = None
+    
+    print("\n\nAvailable AgentStack Tools:")
+    for category, tools in itertools.groupby(tools, lambda x: x.category):
+        if curr_category != category:
+            print(f"\n{category}:")
+            curr_category = category
+        for tool in tools:
+            print(f"  - {tool.name}: {tool.url if tool.url else 'AgentStack default tool'}")
 
-            # Display the tools
-            print("\n\nAvailable AgentStack Tools:")
-            for category, tools in tools_data.items():
-                print(f"\n{category.capitalize()}:")
-                for tool in tools:
-                    print(f"  - {tool['name']}: {tool['url']}")
-
-            print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
-            print("   https://docs.agentstack.sh/tools/core")
-
-        except FileNotFoundError:
-            print("Error: tools.json file not found at path:", tools_json_path)
-        except json.JSONDecodeError:
-            print("Error: tools.json contains invalid JSON.")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+    print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
+    print("   https://docs.agentstack.sh/tools/core")
