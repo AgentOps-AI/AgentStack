@@ -27,10 +27,6 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
         assert_tool_exists(tool_name, tools)
         agentstack_json = open_json_file(f'{path}{AGENTSTACK_JSON_FILENAME}')
 
-        # if tool_name in agentstack_json.get('tools', []):
-        #     print(term_color(f'Tool {tool_name} is already installed', 'red'))
-        #     sys.exit(1)
-
         with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
             tool_data = open_json_file(tool_data_path)
 
@@ -49,7 +45,8 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
                         insert_code_after_tag(f'{path}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
                     if not string_in_file(f'{path}.env.example', first_var_name):
                         insert_code_after_tag(f'{path}.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
-
+                if tool_data.get('post_install'):
+                    os.system(tool_data['post_install'])
                 if not agentstack_json.get('tools'):
                     agentstack_json['tools'] = []
                 if tool_name not in agentstack_json['tools']:
@@ -85,6 +82,8 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
             os.remove(f'{path}src/tools/{tool_name}_tool.py')
             remove_tool_from_tools_init(tool_data, path)
             remove_tool_from_agent_definition(framework, tool_data, path)
+            if tool_data.get('post_remove'):
+                os.system(tool_data['post_remove'])
             # We don't remove the .env variables to preserve user data.
 
             agentstack_json['tools'].remove(tool_name)

@@ -11,7 +11,7 @@ agentops = "^0.3.12"
 crewai = "^0.63.6"
 crewai-tools= "0.12.1"
 python-dotenv="1.0.1"
-firecrawl-py = "^1.5.0"
+firecrawl-py = "^1.6.1"
 
 [project.scripts]
 job_posting = "job_posting.main:run"
