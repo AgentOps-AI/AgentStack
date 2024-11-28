@@ -7,6 +7,7 @@ import shutil
 import fileinput
 from pydantic import BaseModel, ValidationError
 
+from agentstack.utils import get_package_path
 from .gen_utils import insert_code_after_tag, string_in_file
 from ..utils import open_json_file, get_framework, term_color
 
@@ -16,11 +17,6 @@ AGENTSTACK_JSON_FILENAME = "agentstack.json"
 FRAMEWORK_FILENAMES: dict[str, str] = {
     'crewai': 'src/crew.py', 
 }
-
-def get_package_path() -> Path:
-    if sys.version_info <= (3, 9):
-        return Path(sys.modules['agentstack'].__path__[0])
-    return importlib.resources.files('agentstack')
 
 def get_framework_filename(framework: str, path: str = ''):
     if path:

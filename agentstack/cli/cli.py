@@ -13,6 +13,7 @@ from cookiecutter.main import cookiecutter
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
+from agentstack.utils import get_package_path
 from agentstack.generation.tool_generation import get_all_tools
 from .. import generation
 from ..utils import open_json_file, term_color, is_snake_case
@@ -278,20 +279,20 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
                                          structure=project_structure,
                                          framework=framework_name.lower())
 
-    with importlib.resources.path(f'agentstack.templates', str(framework.name)) as template_path:
-        with open(f"{template_path}/cookiecutter.json", "w") as json_file:
-            json.dump(cookiecutter_data.to_dict(), json_file)
+    template_path = get_package_path() / f'templates/{framework.name}'
+    with open(f"{template_path}/cookiecutter.json", "w") as json_file:
+        json.dump(cookiecutter_data.to_dict(), json_file)
 
-        # copy .env.example to .env
-        shutil.copy(
-            f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
-            f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
+    # copy .env.example to .env
+    shutil.copy(
+        f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
+        f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
 
-        if os.path.isdir(project_details['name']):
-            print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
-            return
+    if os.path.isdir(project_details['name']):
+        print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
+        return
 
-        cookiecutter(str(template_path), no_input=True, extra_context=None)
+    cookiecutter(str(template_path), no_input=True, extra_context=None)
 
     # TODO: inits a git repo in the directory the command was run in
     # TODO: not where the project is generated. Fix this

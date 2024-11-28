@@ -5,6 +5,8 @@ import sys
 import json
 import re
 from importlib.metadata import version
+from pathlib import Path
+import importlib.resources
 
 
 def get_version():
@@ -21,6 +23,13 @@ def verify_agentstack_project():
               "\nPlease ensure you're at the root directory of your project and a file named agentstack.json exists. "
               "If you're starting a new project, run `agentstack init`\033[0m")
         sys.exit(1)
+
+
+def get_package_path() -> Path:
+    """This is the Path where agentstack is installed."""
+    if sys.version_info <= (3, 9):
+        return Path(sys.modules['agentstack'].__path__[0])
+    return importlib.resources.files('agentstack')
 
 
 def get_framework(path: Optional[str] = None) -> str:
