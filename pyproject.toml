@@ -24,6 +24,11 @@ dependencies = [
     "pydantic>=2.10",
 ]
 
+[project.optional-dependencies]
+test = [
+    "tox>=4.23.2",
+]
+
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
 
