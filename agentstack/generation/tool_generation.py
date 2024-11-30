@@ -112,6 +112,9 @@ def add_tool(tool_name: str, path: Optional[str] = None):
     if tool_data.post_install:
         os.system(tool_data.post_install)
     
+    if tool_data.post_install:
+        os.system(tool_data.post_install)
+    
     if not agentstack_json.get('tools'):
         agentstack_json['tools'] = []
     agentstack_json['tools'].append(tool_name)

@@ -14,3 +14,11 @@ content_summarizer:
   backstory: >-
     you are an expert content writer who concisely summarizes technical writing
   llm: openai/gpt-4o
+content_storer:
+  role: >-
+    content storer
+  goal: >-
+    store the contents of a web page in a database
+  backstory: >-
+    you are an expert database engineer who knows how to use neon postgres to create tables, insert data, and query data
+  llm: openai/gpt-4o

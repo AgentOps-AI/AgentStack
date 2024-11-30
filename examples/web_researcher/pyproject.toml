@@ -12,6 +12,8 @@ crewai = "^0.63.6"
 crewai-tools= "0.12.1"
 python-dotenv="1.0.1"
 firecrawl-py = "^1.4.0"
+neon-api = "^0.1.4"
+psycopg2-binary = "^2.9.9"
 
 [project.scripts]
 web_researcher = "web_researcher.main:run"

@@ -24,6 +24,14 @@ class WebresearcherCrew():
             verbose=True
         )
 
+    @agent
+    def content_storer(self) -> Agent:
+        return Agent(
+            config=self.agents_config['content_storer'],
+            tools=[tools.create_database, tools.execute_sql_ddl, tools.run_sql_query],  # add tools here or use `agentstack tools add <tool_name>
+            verbose=True
+        )
+
     # Task definitions
     @task
     def scrape_site(self) -> Task:
@@ -35,6 +43,12 @@ class WebresearcherCrew():
     def summarize(self) -> Task:
         return Task(
             config=self.tasks_config['summarize'],
+        )
+
+    @task
+    def store(self) -> Task:
+        return Task(
+            config=self.tasks_config['store'],
         )
 
     @crew
