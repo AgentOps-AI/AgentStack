@@ -41,7 +41,6 @@ class ToolConfig(BaseModel):
     tools_bundled: bool = False
     cta: Optional[str] = None
     env: Optional[str] = None
-    packages: Optional[List[str]] = None
     post_install: Optional[str] = None
     post_remove: Optional[str] = None
     
@@ -64,6 +63,10 @@ class ToolConfig(BaseModel):
     def get_import_statement(self) -> str:
         return f"from .{self.name}_tool import {', '.join(self.tools)}"
 
+    def get_path(self) -> Path:
+        return get_package_path()/'tools'/tool_name
+
+
 def add_tool(tool_name: str, path: Optional[str] = None):
     if path:
         path = path.endswith('/') and path or path + '/'
@@ -79,9 +82,8 @@ def add_tool(tool_name: str, path: Optional[str] = None):
 
     tool_data = ToolConfig.from_tool_name(tool_name)
     tool_file_path = importlib.resources.files(f'agentstack.templates.{framework}.tools') / f'{tool_name}_tool.py'
-    if tool_data.packages:
-        packaging.install(' '.join(tool_data.packages))
-    shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
+
+    packaging.install_tool(tool_data, path)
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
     if tool_data.env: # if the env vars aren't in the .env files, add them

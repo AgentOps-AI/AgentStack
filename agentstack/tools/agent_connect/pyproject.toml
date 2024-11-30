@@ -1,0 +1,16 @@
+[project]
+name = "agentstack.agent_connect"
+version = "0.1"
+description = "agent_connect implementation for AgentStack"
+readme = "README.md"
+
+dependencies = [
+    "agentstack >= 0.1.0",
+    "agent-connect >= 0.2.0",
+]
+
+[project.optional-dependencies]
+crew = [
+    "crewai >= 0.83.0",
+]
+

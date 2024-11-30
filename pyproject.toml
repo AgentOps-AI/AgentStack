@@ -24,6 +24,7 @@ dependencies = [
     "pydantic>=2.10",
     "packaging>=24.2",
     "requests>=2.32",
+    "tomli >= 2; python_version < '3.11'",
 ]
 
 [tool.setuptools.package-data]
