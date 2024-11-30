@@ -37,7 +37,7 @@ class TestAgentStackCLI(unittest.TestCase):
         if test_dir.exists():
             shutil.rmtree(test_dir)
 
-        result = self.run_cli("init", str(test_dir), "--no-wizard")
+        result = self.run_cli("init", str(test_dir))
         self.assertEqual(result.returncode, 0)
         self.assertTrue(test_dir.exists())
 

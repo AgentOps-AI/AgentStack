@@ -309,7 +309,7 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
                                        version="0.0.1",
                                        license="MIT",
                                        year=datetime.now().year,
-                                       template=template_data['name'],
+                                       template=template_data['name'] if template_data else None,
                                        template_version=template_data['template_version'] if template_data else None)
 
     project_structure = ProjectStructure()

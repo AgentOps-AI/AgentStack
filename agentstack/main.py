@@ -90,13 +90,13 @@ def main():
     # Handle commands
     if args.command in ['docs']:
         webbrowser.open('https://docs.agentstack.sh/')
-    if args.command in ['quickstart']:
+    elif args.command in ['quickstart']:
         webbrowser.open('https://docs.agentstack.sh/quickstart')
-    if args.command in ['templates']:
+    elif args.command in ['templates']:
         webbrowser.open('https://docs.agentstack.sh/quickstart')
-    if args.command in ['init', 'i']:
+    elif args.command in ['init', 'i']:
         init_project_builder(args.slug_name, args.template, args.wizard)
-    if args.command in ['run', 'r']:
+    elif args.command in ['run', 'r']:
         framework = get_framework()
         if framework == "crewai":
             os.system('python src/main.py')
