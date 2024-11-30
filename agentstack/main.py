@@ -71,6 +71,7 @@ def main():
     tools_add_parser = tools_subparsers.add_parser('add', aliases=['a'], help='Add a new tool')
     tools_add_parser.add_argument('name', help='Name of the tool to add')
     tools_add_parser.add_argument('--agents', '-a', help='Name of agents to add this tool to, comma separated')
+    tools_add_parser.add_argument('--agent', help='Name of agent to add this tool to')
 
     # 'remove' command under 'tools'
     tools_remove_parser = tools_subparsers.add_parser('remove', aliases=['r'], help='Remove a tool')
@@ -110,7 +111,8 @@ def main():
         if args.tools_command in ['list', 'l']:
             list_tools()
         elif args.tools_command in ['add', 'a']:
-            agents = args.agents.split(',') if args.agents else None
+            agents = [args.agent] if args.agent else None
+            agents = args.agents.split(',') if args.agents else agents
             generation.add_tool(args.name, agents=agents)
         elif args.tools_command in ['remove', 'r']:
             generation.remove_tool(args.name)

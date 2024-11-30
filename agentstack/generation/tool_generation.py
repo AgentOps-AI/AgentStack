@@ -111,7 +111,7 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
         os.system(f"poetry add {' '.join(tool_data.packages)}")  # Install packages
     shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
-    add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
+    add_tool_to_agent_definition(framework=framework, tool_data=tool_data, path=path, agents=agents)  # Add tool to agent definition
 
     if tool_data.env: # add environment variables which don't exist
         with EnvFile(path) as env:
@@ -123,27 +123,6 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
 
     if tool_data.post_install:
         os.system(tool_data.post_install)
-        with importlib.resources.path(f'agentstack.templates.{framework}.tools',
-                                          f"{tool_name}_tool.py") as tool_file_path:
-                if tool_data.get('packages'):
-                    if os.system(f"poetry add {' '.join(tool_data['packages'])}") == 1: # Install packages
-                        print(term_color("AgentStack: Failed to install tool requirements. Please resolve dependency issues and try again,", 'red'))
-                        return
-                shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
-                add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
-                add_tool_to_agent_definition(framework, tool_data, path, agents)  # Add tool to agent definition
-                if tool_data.get('env'): # if the env vars aren't in the .env files, add them
-                    first_var_name = tool_data['env'].split('=')[0]
-                    if not string_in_file(f'{path}.env', first_var_name):
-                        insert_code_after_tag(f'{path}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
-                    if not string_in_file(f'{path}.env.example', first_var_name):
-                        insert_code_after_tag(f'{path}.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
-                if tool_data.get('post_install'):
-                    os.system(tool_data['post_install'])
-                if not agentstack_json.get('tools'):
-                    agentstack_json['tools'] = []
-                if tool_name not in agentstack_json['tools']:
-                    agentstack_json['tools'].append(tool_name)
 
     with agentstack_config as config:
         config.tools.append(tool_name)
@@ -151,6 +130,7 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
     print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
     if tool_data.cta:
         print(term_color(f'🪩 {tool_data.cta}', 'blue'))
+
 
 def remove_tool(tool_name: str, path: Optional[str] = None):
     if path:
@@ -183,11 +163,13 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
 
     print(term_color(f'🔨 Tool {tool_name}', 'green'), term_color('removed', 'red'), term_color('from agentstack project successfully', 'green'))
 
+
 def add_tool_to_tools_init(tool_data: ToolConfig, path: str = ''):
     file_path = f'{path}{TOOL_INIT_FILENAME}'
     tag = '# tool import'
     code_to_insert = [tool_data.get_import_statement(), ]
     insert_code_after_tag(file_path, tag, code_to_insert, next_line=True)
+
 
 def remove_tool_from_tools_init(tool_data: ToolConfig, path: str = ''):
     """Search for the import statement in the init and remove it."""
@@ -198,35 +180,22 @@ def remove_tool_from_tools_init(tool_data: ToolConfig, path: str = ''):
             if line.strip() != import_statement:
                 print(line, end='')
 
-def add_tool_to_agent_definition(framework: str, tool_data: ToolConfig, path: str = ''):
-    with fileinput.input(files=get_framework_filename(framework, path), inplace=True) as f:
-        for line in f:
-            print(line.replace('tools=[', f'tools=[{"*" if tool_data.tools_bundled else ""}tools.{", tools.".join(tool_data.tools)}, '), end='')
 
-def add_tool_to_agent_definition(framework: str, tool_data: dict, path: str = '', agents: list[str] = []):
+def add_tool_to_agent_definition(framework: str, tool_data: ToolConfig, path: str = '', agents: list[str] = []):
     """
         Add tools to specific agent definitions using AST transformation.
 
         Args:
             framework: Name of the framework
-            tool_data: Dictionary containing tool information
-                {
-                    "tools": List[str],  # List of tool names to add
-                    "tools_bundled": bool  # Whether to include tools.*
-                }
+            tool_data: ToolConfig
             agents: Optional list of agent names to modify. If None, modifies all agents.
             path: Optional path to the framework file
         """
-    modify_agent_tools(framework, tool_data, 'add', agents, path, 'tools')
+    modify_agent_tools(framework=framework, tool_data=tool_data, operation='add', agents=agents, path=path, base_name='tools')
 
-
-def remove_tool_from_agent_definition(framework: str, tool_data: dict, path: str = ''):
-    modify_agent_tools(framework, tool_data, 'remove', None, path, 'tools')
 
 def remove_tool_from_agent_definition(framework: str, tool_data: ToolConfig, path: str = ''):
-    with fileinput.input(files=get_framework_filename(framework, path), inplace=True) as f:
-        for line in f:
-            print(line.replace(f'{", ".join([f"tools.{name}" for name in tool_data.tools])}, ', ''), end='')
+    modify_agent_tools(framework=framework, tool_data=tool_data, operation='remove', agents=None, path=path, base_name='tools')
 
 
 def _create_tool_attribute(tool_name: str, base_name: str = 'tools') -> ast.Attribute:
@@ -298,7 +267,7 @@ def _is_tool_node_match(node: ast.AST, tool_name: str, base_name: str = 'tools')
 
 def _process_tools_list(
         current_tools: List[ast.AST],
-        tool_data: Dict,
+        tool_data: ToolConfig,
         operation: str,
         base_name: str = 'tools'
 ) -> List[ast.AST]:
@@ -307,7 +276,7 @@ def _process_tools_list(
 
     Args:
         current_tools: Current list of tool nodes
-        tool_data: Tool configuration dictionary
+        tool_data: Tool configuration
         operation: Operation to perform ('add' or 'remove')
         base_name: Base module name for tools
     """
@@ -315,8 +284,8 @@ def _process_tools_list(
         new_tools = current_tools.copy()
         # Add new tools with bundling if specified
         new_tools.extend(_create_tool_nodes(
-            tool_data["tools"],
-            tool_data.get("tools_bundled", False),
+            tool_data.tools,
+            tool_data.tools_bundled,
             base_name
         ))
         return new_tools
@@ -326,7 +295,7 @@ def _process_tools_list(
         return [
             tool for tool in current_tools
             if not any(_is_tool_node_match(tool, name, base_name)
-                       for name in tool_data["tools"])
+                       for name in tool_data.tools)
         ]
 
     raise ValueError(f"Unsupported operation: {operation}")
@@ -334,7 +303,7 @@ def _process_tools_list(
 
 def _modify_agent_tools(
         node: ast.FunctionDef,
-        tool_data: Dict,
+        tool_data: ToolConfig,
         operation: str,
         agents: Optional[List[str]] = None,
         base_name: str = 'tools'
@@ -344,14 +313,15 @@ def _modify_agent_tools(
 
     Args:
         node: AST node of the function to modify
-        tool_data: Tool configuration dictionary
+        tool_data: Tool configuration
         operation: Operation to perform ('add' or 'remove')
         agents: Optional list of agent names to modify
         base_name: Base module name for tools
     """
     # Skip if not in specified agents list
-    if agents is not None and node.name not in agents:
-        return node
+    if agents is not None and agents != []:
+        if node.name not in agents:
+            return node
 
     # Check if this is an agent-decorated function
     if not any(isinstance(d, ast.Name) and d.id == 'agent'
@@ -382,7 +352,7 @@ def _modify_agent_tools(
 
 def modify_agent_tools(
         framework: str,
-        tool_data: Dict,
+        tool_data: ToolConfig,
         operation: str,
         agents: Optional[List[str]] = None,
         path: str = '',
@@ -393,11 +363,7 @@ def modify_agent_tools(
 
     Args:
         framework: Name of the framework
-        tool_data: Dictionary containing tool information
-            {
-                "tools": List[str],  # List of tool names
-                "tools_bundled": bool  # Whether to include tools.* (for add operation)
-            }
+        tool_data: ToolConfig
         operation: Operation to perform ('add' or 'remove')
         agents: Optional list of agent names to modify
         path: Optional path to the framework file
