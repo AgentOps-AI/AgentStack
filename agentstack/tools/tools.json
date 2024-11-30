@@ -9,6 +9,9 @@
   "storage": [{
     "name": "mem0",
     "url": "https://github.com/mem0ai/mem0"
+  }, {
+    "name": "neon",
+    "url": "https://github.com/neondatabase/neon"
   }],
   "code-execution": [{
     "name": "open_interpreter",
