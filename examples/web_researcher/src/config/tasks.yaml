@@ -12,3 +12,10 @@ summarize:
     one paragraph text output
   agent: >-
     content_summarizer
+store:
+  description: >-
+    store the contents of the website in a postgres database, then come up with the SQL query that one could use to retrieve the data that was just inserted (and test it)
+  expected_output: >-
+    the sql query that one could use to retrieve the data that was saved
+  agent: >-
+    content_storer

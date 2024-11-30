@@ -1,6 +1,5 @@
 {
   "name": "vision",
-  "packages": [],
-  "env": "",
+  "category": "vision",
   "tools": ["vision_tool"]
 }
