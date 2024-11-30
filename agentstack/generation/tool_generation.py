@@ -9,12 +9,12 @@ from pydantic import BaseModel, ValidationError
 
 from agentstack import packaging
 from agentstack.utils import get_package_path
+from agentstack.generation.files import ConfigFile, EnvFile
 from .gen_utils import insert_code_after_tag, string_in_file
 from ..utils import open_json_file, get_framework, term_color
 
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
-AGENTSTACK_JSON_FILENAME = "agentstack.json"
 FRAMEWORK_FILENAMES: dict[str, str] = {
     'crewai': 'src/crew.py', 
 }
@@ -88,9 +88,9 @@ def add_tool(tool_name: str, path: Optional[str] = None):
         path = './'
     
     framework = get_framework(path)
-    agentstack_json = open_json_file(f'{path}{AGENTSTACK_JSON_FILENAME}')
+    agentstack_config = ConfigFile(path)
     
-    if tool_name in agentstack_json.get('tools', []):
+    if tool_name in agentstack_config.tools:
         print(term_color(f'Tool {tool_name} is already installed', 'red'))
         sys.exit(1)
 
@@ -101,27 +101,20 @@ def add_tool(tool_name: str, path: Optional[str] = None):
     shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
-    if tool_data.env: # if the env vars aren't in the .env files, add them
-        # tool_data.env is a dict, key is the env var name, value is the value
-        for var, value in tool_data.env.items():
-            env_var = f'{var}={value}'
-            if not string_in_file(f'{path}.env', env_var):
-                insert_code_after_tag(f'{path}.env', '# Tools', [env_var, ])
-            if not string_in_file(f'{path}.env.example', env_var):
-                insert_code_after_tag(f'{path}.env.example', '# Tools', [env_var, ])
+
+    if tool_data.env: # add environment variables which don't exist
+        with EnvFile(path) as env:
+            for var, value in tool_data.env.items():
+                env.append_if_new(var, value)
+        with EnvFile(path, filename=".env.example") as env:
+            for var, value in tool_data.env.items():
+                env.append_if_new(var, value)
 
     if tool_data.post_install:
         os.system(tool_data.post_install)
-    
-    if tool_data.post_install:
-        os.system(tool_data.post_install)
-    
-    if not agentstack_json.get('tools'):
-        agentstack_json['tools'] = []
-    agentstack_json['tools'].append(tool_name)
 
-    with open(f'{path}{AGENTSTACK_JSON_FILENAME}', 'w') as f:
-        json.dump(agentstack_json, f, indent=4)
+    with agentstack_config as config:
+        config.tools.append(tool_name)
 
     print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
     if tool_data.cta:
@@ -134,9 +127,9 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
         path = './'
     
     framework = get_framework()
-    agentstack_json = open_json_file(f'{path}{AGENTSTACK_JSON_FILENAME}')
+    agentstack_config = ConfigFile(path)
     
-    if not tool_name in agentstack_json.get('tools', []):
+    if not tool_name in agentstack_config.tools:
         print(term_color(f'Tool {tool_name} is not installed', 'red'))
         sys.exit(1)
 
@@ -153,9 +146,8 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
         os.system(tool_data.post_remove)
     # We don't remove the .env variables to preserve user data.
     
-    agentstack_json['tools'].remove(tool_name)
-    with open(f'{path}{AGENTSTACK_JSON_FILENAME}', 'w') as f:
-        json.dump(agentstack_json, f, indent=4)
+    with agentstack_config as config:
+        config.tools.remove(tool_name)
     
     print(term_color(f'🔨 Tool {tool_name}', 'green'), term_color('removed', 'red'), term_color('from agentstack project successfully', 'green'))
 
