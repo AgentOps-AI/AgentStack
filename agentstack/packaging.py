@@ -9,5 +9,7 @@ def remove(package: str):
     os.system(f"{PACKAGING_CMD} remove {package}")
 
 def upgrade(package: str):
-    os.system(f"{PACKAGING_CMD} update {package}")
+    packages = package.split(' ')
+    packages_latest = ' '.join(f"{pkg}@latest" for pkg in packages)
+    os.system(f"{PACKAGING_CMD} add {packages_latest}")
 
