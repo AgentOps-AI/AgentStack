@@ -1,0 +1,11 @@
+{
+    "name": "neon",
+    "category": "database",
+    "url": "https://github.com/neondatabase/neon",
+    "packages": ["neon-api", "psycopg2-binary"],
+    "env": {
+        "NEON_API_KEY": "..."
+    },
+    "tools": ["create_database", "execute_sql_ddl", "run_sql_query"],
+    "cta": "Create an API key at https://www.neon.tech"
+}

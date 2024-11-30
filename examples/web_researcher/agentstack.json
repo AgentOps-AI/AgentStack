@@ -1,6 +1,7 @@
 {
     "framework": "crewai",
     "tools": [
-        "firecrawl"
+        "firecrawl",
+        "neon"
     ]
 }
