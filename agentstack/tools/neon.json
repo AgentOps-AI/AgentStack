@@ -1,5 +1,6 @@
 {
     "name": "neon",
+    "category": "database",
     "url": "https://github.com/neondatabase/neon",
     "packages": ["neon-api", "psycopg2-binary"],
     "env": {
