@@ -47,6 +47,7 @@ def check_for_updates(update_requested: bool = False):
         framework = get_framework()
         packages_to_check += [framework, 'agentops']
 
+    any_updated = False
     for package in packages_to_check:
         try:
             latest_version: Version = get_latest_version(package)
@@ -66,10 +67,13 @@ def check_for_updates(update_requested: bool = False):
                     package = 'crewai crewai-tools'
                 packaging.upgrade(package)
                 print(term_color(f"{package} updated. Re-run your command to use the latest version.", 'green'))
+                any_updated = True
             else:
                 print(term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue'))
         else:
             print(f"{package} is up to date ({installed_version})")
 
     record_update_check()
-    sys.exit(0)
+
+    if any_updated:
+        sys.exit(0)
