@@ -3,6 +3,7 @@ import sys
 import unittest
 from pathlib import Path
 import shutil
+import os
 
 
 class TestAgentStackCLI(unittest.TestCase):
@@ -43,6 +44,25 @@ class TestAgentStackCLI(unittest.TestCase):
 
         # Clean up
         shutil.rmtree(test_dir)
+
+    def test_rollback_on_error(self):
+        """Test rollback functionality when an error occurs during project initialization."""
+        test_dir = Path("test_project_with_error")
+
+        # Ensure the directory doesn't exist from previous runs
+        if test_dir.exists():
+            shutil.rmtree(test_dir)
+
+        # Simulate an error by creating a directory that will cause a failure
+        os.makedirs(test_dir / "src")
+
+        result = self.run_cli("init", str(test_dir))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(test_dir.exists())  # Directory should be removed on rollback
+
+        # Clean up
+        if test_dir.exists():
+            shutil.rmtree(test_dir)
 
 
 if __name__ == "__main__":
