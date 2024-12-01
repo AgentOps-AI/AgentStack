@@ -1,5 +1,6 @@
 # Contributing
-First of all, __thank you__ for your interest in contributing to AgentStack! Even the smallest contributions help a _ton_.
+
+First of all, **thank you** for your interest in contributing to AgentStack! Even the smallest contributions help a _ton_.
 
 Our vision is to build the defacto CLI for quickly spinning up an AI Agent project. We want to be the [create-react-app](https://create-react-app.dev/) of agents. Our inspiration also includes the oh-so-convenient [Angular CLI](https://v17.angular.io/cli).
 
@@ -17,9 +18,11 @@ The best place to engage in conversation about your contribution is in the Issue
    - This will install the CLI locally and in editable mode so you can use `agentstack <command>` to test your latest changes
 
 ## Project Structure
+
 TODO
 
 ## Adding Tools
+
 If you're reading this section, you probably have a product that AI agents can use as a tool. We're glad you're here!
 
 Adding tools is easy once you understand the project structure. A few things need to be done for a tool to be considered completely supported:
@@ -36,11 +39,19 @@ Adding tools is easy once you understand the project structure. A few things nee
 4. Manually test your tool integration by running `agentstack tools add <your_tool>` and ensure it behaves as expected.
 
 ## Tests
-Tests are written in `tests` folder with the cli tests being in `tests/test_cli_loads.py`. 
 
-Currently some of the tests will not work but you can run the tests by 
+Tests are written in `tests` folder with the cli tests being in `tests/test_cli_loads.py`.
 
+Testing is sparse at the moment but contributions are very welcome! 🙏
+
+You can run tests by first installing test dependencies with
+
+```bash
+pip install ".[test]"
 ```
-cd tests
-python -m unittest discover
+
+Then running tox with
+
+```bash
+tox
 ```
