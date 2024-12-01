@@ -6,6 +6,16 @@ import os
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
+created_files = []
+created_dirs = []
+
+def rollback_actions():
+    for file in created_files:
+        if os.path.exists(file):
+            os.remove(file)
+    for dir in created_dirs:
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
 
 def generate_task(
         name,
@@ -24,15 +34,19 @@ def generate_task(
 
     framework = get_framework()
 
-    if framework == 'crewai':
-        generate_crew_task(name, description, expected_output, agent)
-        print("    > Added to src/config/tasks.yaml")
-    else:
-        print(f"This function is not yet implemented for {framework}")
-        return
+    try:
+        if framework == 'crewai':
+            generate_crew_task(name, description, expected_output, agent)
+            print("    > Added to src/config/tasks.yaml")
+        else:
+            print(f"This function is not yet implemented for {framework}")
+            return
 
-    print(f"Added task \"{name}\" to your AgentStack project successfully!")
-
+        print(f"Added task \"{name}\" to your AgentStack project successfully!")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        rollback_actions()
+        sys.exit(1)
 
 def generate_crew_task(
         name,
@@ -74,6 +88,7 @@ def generate_crew_task(
     # Write back to the file without altering existing content
     with open(config_path, 'w') as file:
         yaml.dump(data, file)
+        created_files.append(config_path)
 
     # Add task to crew.py
     file_path = 'src/crew.py'

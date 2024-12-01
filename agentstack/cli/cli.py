@@ -20,86 +20,100 @@ from agentstack.generation.tool_generation import get_all_tools
 from .. import generation
 from ..utils import open_json_file, term_color, is_snake_case
 
+created_files = []
+created_dirs = []
+
+def rollback_actions():
+    for file in created_files:
+        if os.path.exists(file):
+            os.remove(file)
+    for dir in created_dirs:
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
 
 def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
-    if slug_name and not is_snake_case(slug_name):
-        print(term_color("Project name must be snake case", 'red'))
-        return
+    try:
+        if slug_name and not is_snake_case(slug_name):
+            print(term_color("Project name must be snake case", 'red'))
+            return
 
-    if template is not None and use_wizard:
-        print(term_color("Template and wizard flags cannot be used together", 'red'))
-        return
+        if template is not None and use_wizard:
+            print(term_color("Template and wizard flags cannot be used together", 'red'))
+            return
 
-    template_data = None
-    if template is not None:
-        url_start = "https://"
-        if template[:len(url_start)] == url_start:
-            # template is a url
-            response = requests.get(template)
-            if response.status_code == 200:
-                template_data = response.json()
-            else:
-                print(term_color(f"Failed to fetch template data from {template}. Status code: {response.status_code}", 'red'))
-                sys.exit(1)
-        else:
-            with importlib.resources.path('agentstack.templates.proj_templates', f'{template}.json') as template_path:
-                if template_path is None:
-                    print(term_color(f"No such template {template} found", 'red'))
+        template_data = None
+        if template is not None:
+            url_start = "https://"
+            if template[:len(url_start)] == url_start:
+                # template is a url
+                response = requests.get(template)
+                if response.status_code == 200:
+                    template_data = response.json()
+                else:
+                    print(term_color(f"Failed to fetch template data from {template}. Status code: {response.status_code}", 'red'))
                     sys.exit(1)
-                template_data = open_json_file(template_path)
+            else:
+                with importlib.resources.path('agentstack.templates.proj_templates', f'{template}.json') as template_path:
+                    if template_path is None:
+                        print(term_color(f"No such template {template} found", 'red'))
+                        sys.exit(1)
+                    template_data = open_json_file(template_path)
 
-    if template_data:
-        project_details = {
-            "name": slug_name or template_data['name'],
-            "version": "0.0.1",
-            "description": template_data['description'],
-            "author": "Name <Email>",
-            "license": "MIT"
-        }
-        framework = template_data['framework']
-        design = {
-            'agents': template_data['agents'],
-            'tasks': template_data['tasks']
-        }
+        if template_data:
+            project_details = {
+                "name": slug_name or template_data['name'],
+                "version": "0.0.1",
+                "description": template_data['description'],
+                "author": "Name <Email>",
+                "license": "MIT"
+            }
+            framework = template_data['framework']
+            design = {
+                'agents': template_data['agents'],
+                'tasks': template_data['tasks']
+            }
 
-        tools = template_data['tools']
+            tools = template_data['tools']
 
-    elif use_wizard:
-        welcome_message()
-        project_details = ask_project_details(slug_name)
-        welcome_message()
-        framework = ask_framework()
-        design = ask_design()
-        tools = ask_tools()
+        elif use_wizard:
+            welcome_message()
+            project_details = ask_project_details(slug_name)
+            welcome_message()
+            framework = ask_framework()
+            design = ask_design()
+            tools = ask_tools()
 
-    else:
-        welcome_message()
-        project_details = {
-            "name": slug_name or "agentstack_project",
-            "version": "0.0.1",
-            "description": "New agentstack project",
-            "author": "Name <Email>",
-            "license": "MIT"
-        }
+        else:
+            welcome_message()
+            project_details = {
+                "name": slug_name or "agentstack_project",
+                "version": "0.0.1",
+                "description": "New agentstack project",
+                "author": "Name <Email>",
+                "license": "MIT"
+            }
 
-        framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
+            framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
 
-        design = {
-            'agents': [],
-            'tasks': []
-        }
+            design = {
+                'agents': [],
+                'tasks': []
+            }
 
-        tools = []
+            tools = []
 
-    log.debug(
-        f"project_details: {project_details}"
-        f"framework: {framework}"
-        f"design: {design}"
-    )
-    insert_template(project_details, framework, design, template_data)
-    for tool_data in tools:
-        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
-
+        log.debug(
+            f"project_details: {project_details}"
+            f"framework: {framework}"
+            f"design: {design}"
+        )
+        insert_template(project_details, framework, design, template_data)
+        for tool_data in tools:
+            generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
+    except Exception as e:
+        print(term_color(f"An error occurred: {e}", 'red'))
+        rollback_actions()
+        sys.exit(1)
 
 def welcome_message():
     os.system("cls" if os.name == "nt" else "clear")
@@ -323,17 +337,20 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
     template_path = get_package_path() / f'templates/{framework.name}'
     with open(f"{template_path}/cookiecutter.json", "w") as json_file:
         json.dump(cookiecutter_data.to_dict(), json_file)
+        created_files.append(f"{template_path}/cookiecutter.json")
 
     # copy .env.example to .env
     shutil.copy(
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
+    created_files.append(f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
 
     if os.path.isdir(project_details['name']):
         print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
         return
 
     cookiecutter(str(template_path), no_input=True, extra_context=None)
+    created_dirs.append(project_details['name'])
 
     # TODO: inits a git repo in the directory the command was run in
     # TODO: not where the project is generated. Fix this
