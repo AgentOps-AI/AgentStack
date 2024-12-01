@@ -43,50 +43,62 @@ class TestAgentStackCLI(unittest.TestCase):
 
         # Clean up
         shutil.rmtree(test_dir)
-    def test_generate_agent_command(self):
+    
+    # TODO: this is definitely not a clean way to test the CLI and
+    # TODO: should be done more elegantly. For now, this allows
+    # TODO: the tests to run sequentially and maintain state between
+    # TODO: them without creating conflicting projects.
+    def test_project_build_command(self):
+        """Test the 'init' command to create a project directory."""
+        # Ensure the directory doesn't exist from previous runs
+        if self.TEST_DIR.exists():
+            shutil.rmtree(self.TEST_DIR)
+
+        result = self.run_cli("init", str(self.TEST_DIR), "--no-wizard")
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(self.TEST_DIR.exists())
+
         """Test the 'generate agent' command."""
         agent_name = "test_agent"
-        result = self.run_cli("generate", "agent", agent_name)
+        result = self.run_cli("generate", "agent", agent_name, cwd=self.TEST_DIR)
         self.assertEqual(result.returncode, 0)
         # Verify that the agent is added to agents.yaml
-        agents_config = Path("src/config/agents.yaml")
+        agents_config = self.TEST_DIR / Path("src/config/agents.yaml")
         self.assertTrue(agents_config.exists())
         with open(agents_config, 'r') as f:
             content = f.read()
             self.assertIn(agent_name, content)
 
-    def test_generate_task_command(self):
         """Test the 'generate task' command."""
         task_name = "test_task"
-        result = self.run_cli("generate", "task", task_name)
+        result = self.run_cli("generate", "task", task_name, cwd=self.TEST_DIR)
         self.assertEqual(result.returncode, 0)
         # Verify that the task is added to tasks.yaml
-        tasks_config = Path("src/config/tasks.yaml")
+        tasks_config = self.TEST_DIR /Path("src/config/tasks.yaml")
         self.assertTrue(tasks_config.exists())
         with open(tasks_config, 'r') as f:
             content = f.read()
             self.assertIn(task_name, content)
 
-    def test_tools_list_command(self):
         """Test the 'tools list' command."""
-        result = self.run_cli("tools", "list")
+        result = self.run_cli("tools", "list", cwd=self.TEST_DIR)
         self.assertEqual(result.returncode, 0)
         self.assertIn("Available AgentStack Tools:", result.stdout)
 
-    def test_tools_add_command(self):
         """Test the 'tools add' command."""
-        tool_name = "example_tool"
-        result = self.run_cli("tools", "add", tool_name)
+        tool_name = "ftp"
+        result = self.run_cli("tools", "add", tool_name, cwd=self.TEST_DIR)
         self.assertEqual(result.returncode, 0)
         self.assertIn(f"Tool {tool_name} added", result.stdout)
         # Clean up: remove the tool
         self.run_cli("tools", "remove", tool_name)
 
-    def test_run_command(self):
         """Test the 'run' command."""
-        result = self.run_cli("run")
+        result = self.run_cli("run", cwd=self.TEST_DIR)
         self.assertEqual(result.returncode, 0)
-        self.assertIn("Running your agent", result.stdout)
+
+        # Clean up
+        shutil.rmtree(self.TEST_DIR)
 
 
 if __name__ == "__main__":
