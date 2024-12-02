@@ -1,4 +1,4 @@
 {
     "framework": "crewai", 
-    "tools": ["tool1", "tool2"]
+    "tools": []
 }

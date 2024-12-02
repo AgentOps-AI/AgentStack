@@ -7,7 +7,7 @@ import sys
 from typing import Optional, List, Dict, Union
 
 from . import get_agent_names
-from .gen_utils import insert_code_after_tag, string_in_file, _framework_filename
+from .gen_utils import insert_code_after_tag, string_in_file
 from ..utils import open_json_file, get_framework, term_color
 import os
 import shutil
@@ -18,26 +18,12 @@ from pydantic import BaseModel, ValidationError
 
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ConfigFile, EnvFile
+from agentstack import frameworks
 from .gen_utils import insert_code_after_tag, string_in_file
 from ..utils import open_json_file, get_framework, term_color
 
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
-
-FRAMEWORK_FILENAMES: dict[str, str] = {
-    'crewai': 'src/crew.py',
-}
-
-def get_framework_filename(framework: str, path: str = ''):
-    if path:
-        path = path.endswith('/') and path or path + '/'
-    else:
-        path = './'
-    try:
-        return f"{path}{FRAMEWORK_FILENAMES[framework]}"
-    except KeyError:
-        print(term_color(f'Unknown framework: {framework}', 'red'))
-        sys.exit(1)
 
 class ToolConfig(BaseModel):
     name: str
@@ -105,7 +91,6 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
 
     tool_data = ToolConfig.from_tool_name(tool_name)
     tool_file_path = tool_data.get_impl_file_path(framework)
-
 
     if tool_data.packages:
         os.system(f"poetry add {' '.join(tool_data.packages)}")  # Install packages
@@ -376,7 +361,8 @@ def modify_agent_tools(
                 print(term_color(f"Agent '{agent}' not found in the project.", 'red'))
                 sys.exit(1)
 
-    filename = _framework_filename(framework, path)
+    path = Path(path)
+    filename = path/frameworks.get_entrypoint_path(framework)
 
     with open(filename, 'r') as f:
         source = f.read()
