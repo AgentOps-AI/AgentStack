@@ -127,21 +127,17 @@ def configure_default_model(path: Optional[str] = None):
     agentstack_config = ConfigFile(path)
     if agentstack_config.default_model:
         return # Default model already set
-
-    print("Project does not have a default model configured.")
-    model_list = [f"{i+1}. {model}" for i, model in enumerate(PREFERRED_MODELS)]
-    other_msg = f"{len(PREFERRED_MODELS)+1}. Other (enter a model name)"
-    response = inquirer.list_input(
-        message="Which model would you like to use?",
-        choices=model_list + [other_msg],
-    )
-    response_index = int(response.split('.')[0]) - 1
     
-    if response_index == len(PREFERRED_MODELS): # If the user selects "Other", prompt for a model name
+    print("Project does not have a default model configured.")
+    other_msg = f"Other (enter a model name)"
+    model = inquirer.list_input(
+        message="Which model would you like to use?",
+        choices=PREFERRED_MODELS + [other_msg],
+    )
+
+    if model == other_msg: # If the user selects "Other", prompt for a model name
         print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
         model = inquirer.text(message="Enter the model name")
-    else:
-        model = PREFERRED_MODELS[response_index]
     
     with ConfigFile(path) as agentstack_config:
         agentstack_config.default_model = model
