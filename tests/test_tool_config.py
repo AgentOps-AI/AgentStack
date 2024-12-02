@@ -17,7 +17,6 @@ class ToolConfigTest(unittest.TestCase):
         assert config.tools_bundled is False
         assert config.cta is None
         assert config.env is None
-        assert config.packages is None
         assert config.post_install is None
         assert config.post_remove is None
     
@@ -30,7 +29,6 @@ class ToolConfigTest(unittest.TestCase):
         assert config.tools_bundled is True
         assert config.cta == "Click me!"
         assert config.env == {"ENV_VAR1": "value1", "ENV_VAR2": "value2"}
-        assert config.packages == ["package1", "package2"]
         assert config.post_install == "install.sh"
         assert config.post_remove == "remove.sh"
     
