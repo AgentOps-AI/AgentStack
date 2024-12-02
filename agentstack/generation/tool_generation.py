@@ -1,6 +1,5 @@
 import os, sys
 from typing import Optional, Any, List
-import importlib.resources
 from pathlib import Path
 import json
 import sys
@@ -106,8 +105,6 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
         sys.exit(1)
 
     tool_data = ToolConfig.from_tool_name(tool_name)
-    tool_file_path = importlib.resources.files(f'agentstack.templates.{framework}.tools') / f'{tool_name}_tool.py'
-
     packaging.install_tool(tool_data, path)
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework=framework, tool_data=tool_data, path=path, agents=agents)  # Add tool to agent definition
