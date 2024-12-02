@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-from agentstack.cli import init_project_builder, list_tools
+from agentstack.cli import init_project_builder, list_tools, configure_default_model
 from agentstack.telemetry import track_cli_command
 from agentstack.utils import get_version, get_framework
 import agentstack.generation as generation
@@ -102,6 +102,8 @@ def main():
             os.system('python src/main.py')
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
+            if not args.llm:
+                configure_default_model()
             generation.generate_agent(args.name, args.role, args.goal, args.backstory, args.llm)
         elif args.generate_command in ['task', 't']:
             generation.generate_task(args.name, args.description, args.expected_output, args.agent)
