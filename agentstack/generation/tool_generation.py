@@ -73,7 +73,7 @@ class ToolConfig(BaseModel):
         return f"from .{self.name}_tool import {', '.join(self.tools)}"
 
     def get_path(self) -> Path:
-        return get_package_path()/'tools'/tool_name
+        return get_package_path()/'tools'/self.name
 
     def get_impl_file_path(self, framework: str) -> Path:
         return get_package_path() / f'templates/{framework}/tools/{self.name}_tool.py'
