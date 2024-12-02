@@ -37,7 +37,7 @@ class TestAgentStackCLI(unittest.TestCase):
         # Ensure the directory doesn't exist from previous runs
         if test_dir.exists():
             shutil.rmtree(test_dir)
-        os.mkdir(test_dir)
+        os.makedirs(test_dir)
         
         os.chdir(test_dir)
         result = self.run_cli("init", str(test_dir))
@@ -52,7 +52,7 @@ class TestAgentStackCLI(unittest.TestCase):
         test_dir = Path(BASE_PATH/'tmp/test_project')
         if test_dir.exists():
             shutil.rmtree(test_dir)
-        os.mkdir(test_dir)
+        os.makedirs(test_dir)
         
         # Write a basic agentstack.json file
         with (test_dir/'agentstack.json').open('w') as f:
