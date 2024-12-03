@@ -43,6 +43,19 @@ class TestAgentStackCLI(unittest.TestCase):
 
         # Clean up
         shutil.rmtree(test_dir)
+        
+    def setUp(self):
+        self.TEST_DIR = Path("test_project")
+
+    def run_cli(self, *args, cwd=None):
+        """Helper method to run the CLI with arguments."""
+        result = subprocess.run(
+            [*self.CLI_ENTRY, *args],
+            capture_output=True,
+            text=True,
+            cwd=cwd
+        )
+        return result
     
     # TODO: this is definitely not a clean way to test the CLI and
     # TODO: should be done more elegantly. For now, this allows
