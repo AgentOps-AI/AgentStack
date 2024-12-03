@@ -1,13 +1,18 @@
+import json
 import os, sys
 import time
-from packaging.version import parse as parse_version, Version
+from datetime import datetime
 from pathlib import Path
+from packaging.version import parse as parse_version, Version
 import inquirer
-from agentstack.utils import term_color, get_version, get_package_path, get_framework
+from agentstack.utils import term_color, get_version, get_framework
 from agentstack import packaging
+from appdirs import user_data_dir
 
+
+LAST_CHECK_FILE_PATH = Path(os.path.join(user_data_dir("agentstack", "agency"), ".cli-last-update"))
+INSTALL_PATH = Path(sys.executable).parent.parent
 ENDPOINT_URL = "https://pypi.org/simple"
-LAST_CHECK_FILENAME = Path.cwd()/".agentstack-last-update"
 CHECK_EVERY = 3600 # hour
 
 
@@ -20,17 +25,35 @@ def get_latest_version(package: str) -> Version:
     data = response.json()
     return parse_version(data['versions'][-1])
 
+def load_update_data():
+    """Load existing update data or return empty dict if file doesn't exist"""
+    if Path(LAST_CHECK_FILE_PATH).exists():
+        try:
+            with open(LAST_CHECK_FILE_PATH, 'r') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
 def should_update() -> bool:
     """Has it been longer than CHECK_EVERY since the last update check?"""
-    if not os.path.exists(LAST_CHECK_FILENAME):
+    data = load_update_data()
+    last_check = data.get(str(INSTALL_PATH))
+
+    if not last_check:
         return True
-    last_check = float(open(LAST_CHECK_FILENAME, 'r').read())
+
     return time.time() - last_check > CHECK_EVERY
 
 def record_update_check():
-    """Record the time of the last update"""
-    with open(LAST_CHECK_FILENAME, 'w') as f:
-        f.write(str(time.time()))
+    """Save current timestamp for this installation"""
+    data = load_update_data()
+
+    # Store timestamp for current installation path
+    data[str(INSTALL_PATH)] = datetime.now().isoformat()
+
+    with open(LAST_CHECK_FILE_PATH, 'w') as f:
+        json.dump(data, f, indent=2)
 
 def check_for_updates(update_requested: bool = False):
     """
