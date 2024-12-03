@@ -4,37 +4,39 @@ import tools
 
 
 @CrewBase
-class StockanalysisCrew():
+class StockanalysisCrew:
     """stock_analysis crew"""
 
     # Agent definitions
     @agent
     def analyst(self) -> Agent:
         return Agent(
-            config=self.agents_config['analyst'],
+            config=self.agents_config["analyst"],
             tools=[],  # add tools here or use `agentstack tools add <tool_name>
-            verbose=True
+            verbose=True,
         )
 
     @agent
     def researcher(self) -> Agent:
         return Agent(
-            config=self.agents_config['researcher'],
-            tools=[tools.query_perplexity, ],  # add tools here or use `agentstack tools add <tool_name>
-            verbose=True
+            config=self.agents_config["researcher"],
+            tools=[
+                tools.query_perplexity,
+            ],  # add tools here or use `agentstack tools add <tool_name>
+            verbose=True,
         )
 
     # Task definitions
     @task
     def research_stock(self) -> Task:
         return Task(
-            config=self.tasks_config['research_stock'],
+            config=self.tasks_config["research_stock"],
         )
 
     @task
     def buy_sell_decision(self) -> Task:
         return Task(
-            config=self.tasks_config['buy_sell_decision'],
+            config=self.tasks_config["buy_sell_decision"],
         )
 
     @crew

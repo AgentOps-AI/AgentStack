@@ -30,40 +30,43 @@ import psutil
 import requests
 from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 
-TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
+TELEMETRY_URL = "https://api.agentstack.sh/telemetry"
+
 
 def collect_machine_telemetry(command: str):
     if command != "init" and get_telemetry_opt_out():
         return
 
     telemetry_data = {
-        'os': platform.system(),
-        'hostname': socket.gethostname(),
-        'platform': platform.platform(),
-        'os_version': platform.version(),
-        'cpu_count': psutil.cpu_count(logical=True),
-        'memory': psutil.virtual_memory().total,
-        'agentstack_version': get_version()
+        "os": platform.system(),
+        "hostname": socket.gethostname(),
+        "platform": platform.platform(),
+        "os_version": platform.version(),
+        "cpu_count": psutil.cpu_count(logical=True),
+        "memory": psutil.virtual_memory().total,
+        "agentstack_version": get_version(),
     }
 
     if command != "init":
-        telemetry_data['framework'] = get_framework()
+        telemetry_data["framework"] = get_framework()
     else:
-        telemetry_data['framework'] = "n/a"
+        telemetry_data["framework"] = "n/a"
 
     # Attempt to get general location based on public IP
     try:
-        response = requests.get('https://ipinfo.io/json')
+        response = requests.get("https://ipinfo.io/json")
         if response.status_code == 200:
             location_data = response.json()
-            telemetry_data.update({
-                'ip': location_data.get('ip'),
-                'city': location_data.get('city'),
-                'region': location_data.get('region'),
-                'country': location_data.get('country')
-            })
+            telemetry_data.update(
+                {
+                    "ip": location_data.get("ip"),
+                    "city": location_data.get("city"),
+                    "region": location_data.get("region"),
+                    "country": location_data.get("country"),
+                }
+            )
     except requests.RequestException as e:
-        telemetry_data['location_error'] = str(e)
+        telemetry_data["location_error"] = str(e)
 
     return telemetry_data
 

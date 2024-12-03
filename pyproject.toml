@@ -37,3 +37,17 @@ agentstack = ["templates/**/*"]
 
 [project.scripts]
 agentstack = "agentstack.main:main"
+
+[tool.ruff]
+exclude = [
+    ".git",
+    ".env",
+    ".venv",
+    "venv",
+    "env",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    "agentstack/templates/",
+]
