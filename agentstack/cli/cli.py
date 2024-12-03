@@ -4,6 +4,7 @@ import sys
 import time
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
 import requests
 import itertools
 
@@ -18,6 +19,8 @@ from agentstack.logger import log
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ConfigFile
 from agentstack.generation.tool_generation import get_all_tools
+from agentstack import frameworks
+import agentstack.frameworks.crewai
 from .. import generation
 from ..utils import open_json_file, term_color, is_snake_case
 
@@ -141,6 +144,24 @@ def configure_default_model(path: Optional[str] = None):
     
     with ConfigFile(path) as agentstack_config:
         agentstack_config.default_model = model
+
+
+def run_project(framework: str, path: str = ''):
+    """Validate that the project is ready to run and then run it."""
+    if not framework in frameworks.SUPPORTED_FRAMEWORKS:
+        print(term_color(f"Framework {framework} is not supported by agentstack.", 'red'))
+        sys.exit(1)
+    
+    try:
+        frameworks.validate_project(framework, path)
+    except frameworks.ValidationError as e:
+        print(term_color("Project validation failed:", 'red'))
+        print(e)
+        sys.exit(1)
+
+    path = Path(path)
+    entrypoint = path/frameworks.get_entrypoint_path(framework)
+    os.system(f'python {entrypoint}')
 
 
 def ask_framework() -> str:

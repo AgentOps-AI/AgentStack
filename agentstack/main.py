@@ -2,10 +2,11 @@ import argparse
 import os
 import sys
 
-from agentstack.cli import init_project_builder, list_tools, configure_default_model
+from agentstack.cli import init_project_builder, list_tools, configure_default_model, run_project
 from agentstack.telemetry import track_cli_command
 from agentstack.utils import get_version, get_framework
 import agentstack.generation as generation
+from agentstack import frameworks
 
 import webbrowser
 
@@ -98,8 +99,7 @@ def main():
         init_project_builder(args.slug_name, args.template, args.wizard)
     elif args.command in ['run', 'r']:
         framework = get_framework()
-        if framework == "crewai":
-            os.system('python src/main.py')
+        run_project(framework)
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             if not args.llm:
