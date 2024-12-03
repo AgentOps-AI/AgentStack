@@ -7,6 +7,7 @@ import tools
 class WebresearcherCrew:
     """web_researcher crew"""
 
+    # Agent definitions
     @agent
     def content_summarizer(self) ->Agent:
         return Agent(config=self.agents_config['content_summarizer'], tools
@@ -23,6 +24,7 @@ class WebresearcherCrew:
             tools.create_database, tools.execute_sql_ddl, tools.
             run_sql_query], verbose=True)
 
+    # Task definitions
     @task
     def scrape_site(self) ->Task:
         return Task(config=self.tasks_config['scrape_site'])

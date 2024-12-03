@@ -378,10 +378,17 @@ def modify_agent_tools(
 
     filename = _framework_filename(framework, path)
 
-    with open(filename, 'r') as f:
-        source = f.read()
+    with open(filename, 'r', encoding='utf-8') as f:
+        source_lines = f.readlines()
 
-    tree = ast.parse(source)
+    # Create a map of line numbers to comments
+    comments = {}
+    for i, line in enumerate(source_lines):
+        stripped = line.strip()
+        if stripped.startswith('#'):
+            comments[i + 1] = line
+
+    tree = ast.parse(''.join(source_lines))
 
     class ModifierTransformer(ast.NodeTransformer):
         def visit_FunctionDef(self, node):
@@ -389,6 +396,14 @@ def modify_agent_tools(
 
     modified_tree = ModifierTransformer().visit(tree)
     modified_source = astor.to_source(modified_tree)
+    modified_lines = modified_source.splitlines()
 
-    with open(filename, 'w') as f:
-        f.write(modified_source)
+    # Reinsert comments
+    final_lines = []
+    for i, line in enumerate(modified_lines, 1):
+        if i in comments:
+            final_lines.append(comments[i])
+        final_lines.append(line + '\n')
+
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(''.join(final_lines))
