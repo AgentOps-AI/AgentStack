@@ -67,7 +67,8 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
         framework = template_data['framework']
         design = {
             'agents': template_data['agents'],
-            'tasks': template_data['tasks']
+            'tasks': template_data['tasks'],
+            'inputs': template_data['inputs'],
         }
 
         tools = template_data['tools']
@@ -94,7 +95,8 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
 
         design = {
             'agents': [],
-            'tasks': []
+            'tasks': [],
+            'inputs': []
         }
 
         tools = []
@@ -344,6 +346,7 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
+    project_structure.set_inputs(design["inputs"])
 
     cookiecutter_data = CookiecutterData(project_metadata=project_metadata,
                                          structure=project_structure,
