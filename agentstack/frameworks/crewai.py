@@ -26,11 +26,15 @@ def validate_project(path: Optional[Path] = None) -> None:
 
     # The Crew class must have one or more methods decorated with `@agent`
     if len(_find_decorated_method_in_class(class_node, 'task')) < 1:
-        raise ValidationError(f"`@task` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}")
+        raise ValidationError(
+            f"`@task` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
+            "Create a new task using `agentstack generate task <task_name>`.")
 
     # The Crew class must have one or more methods decorated with `@agent`
     if len(_find_decorated_method_in_class(class_node, 'agent')) < 1:
-        raise ValidationError(f"`@agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}")
+        raise ValidationError(
+            f"`@agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
+            "Create a new agent using `agentstack generate agent <agent_name>`.")
 
     # The Crew class must have one method decorated with `@crew`
     if len(_find_decorated_method_in_class(class_node, 'crew')) < 1:
