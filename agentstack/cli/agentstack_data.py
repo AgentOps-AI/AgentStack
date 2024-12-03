@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import Optional, Literal
 
-from agentstack.utils import clean_input
+from agentstack.utils import clean_input, get_version
 from agentstack.logger import log
 
 
@@ -14,7 +14,9 @@ class ProjectMetadata:
                  author_name: str = "",
                  version: str = "",
                  license: str = "",
-                 year: int = datetime.now().year
+                 year: int = datetime.now().year,
+                 template: str = "none",
+                 template_version: str = "0",
                  ):
         self.project_name = clean_input(project_name) if project_name else "myagent"
         self.project_slug = clean_input(project_slug) if project_slug else self.project_name
@@ -23,6 +25,10 @@ class ProjectMetadata:
         self.version = version
         self.license = license
         self.year = year
+        self.agentstack_version = get_version()
+        self.template = template
+        self.template_version = template_version
+
         log.debug(f"ProjectMetadata: {self.to_dict()}")
 
     def to_dict(self):
@@ -34,6 +40,9 @@ class ProjectMetadata:
             'version': self.version,
             'license': self.license,
             'year': self.year,
+            'agentstack_version': self.agentstack_version,
+            'template': self.template,
+            'template_version': self.template_version,
         }
 
     def to_json(self):

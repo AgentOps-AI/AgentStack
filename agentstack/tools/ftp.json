@@ -1,7 +1,12 @@
 {
   "name": "ftp",
+  "category": "computer-control",
   "packages": [],
-  "env": "FTP_HOST=...\nFTP_USER=...\nFTP_PASSWORD=...",
+  "env": {
+    "FTP_HOST": "...", 
+    "FTP_USER": "...", 
+    "FTP_PASSWORD": "..."
+  },
   "tools": ["upload_files"],
   "cta": "Be sure to add your FTP credentials to .env"
 }
