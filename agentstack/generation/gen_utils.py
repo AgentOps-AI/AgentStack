@@ -1,4 +1,9 @@
 import ast
+import sys
+from enum import Enum
+from typing import Optional, Union, List
+
+from agentstack.utils import term_color
 
 
 def insert_code_after_tag(file_path, tag, code_to_insert, next_line=False):
@@ -66,3 +71,72 @@ def string_in_file(file_path: str, str_to_match: str) -> bool:
         file_content = file.read()
         return str_to_match in file_content
 
+
+def _framework_filename(framework: str, path: str = ''):
+    if framework == 'crewai':
+        return f'{path}src/crew.py'
+
+    print(term_color(f'Unknown framework: {framework}', 'red'))
+    sys.exit(1)
+
+
+class CrewComponent(str, Enum):
+    AGENT = "agent"
+    TASK = "task"
+
+
+def get_crew_components(
+        framework: str = 'crewai',
+        component_type: Optional[Union[CrewComponent, List[CrewComponent]]] = None,
+        path: str = ''
+) -> dict[str, List[str]]:
+    """
+    Get names of components (agents and/or tasks) defined in a crew file.
+
+    Args:
+        framework: Name of the framework
+        component_type: Optional filter for specific component types.
+                      Can be CrewComponentType.AGENT, CrewComponentType.TASK,
+                      or a list of types. If None, returns all components.
+        path: Optional path to the framework file
+
+    Returns:
+        Dictionary with 'agents' and 'tasks' keys containing lists of names
+    """
+    filename = _framework_filename(framework, path)
+
+    # Convert single component type to list for consistent handling
+    if isinstance(component_type, CrewComponent):
+        component_type = [component_type]
+
+    # Read the source file
+    with open(filename, 'r') as f:
+        source = f.read()
+
+    # Parse the source into an AST
+    tree = ast.parse(source)
+
+    components = {
+        'agents': [],
+        'tasks': []
+    }
+
+    # Find all function definitions with relevant decorators
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            # Check decorators
+            for decorator in node.decorator_list:
+                if isinstance(decorator, ast.Name):
+                    if (component_type is None or CrewComponent.AGENT in component_type) \
+                            and decorator.id == 'agent':
+                        components['agents'].append(node.name)
+                    elif (component_type is None or CrewComponent.TASK in component_type) \
+                            and decorator.id == 'task':
+                        components['tasks'].append(node.name)
+
+    # If specific types were requested, only return those
+    if component_type:
+        return {k: v for k, v in components.items()
+                if CrewComponent(k[:-1]) in component_type}
+
+    return components

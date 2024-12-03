@@ -26,10 +26,14 @@ def main():
     # 'quickstart' command
     subparsers.add_parser('quickstart', help='Open the quickstart guide')
 
+    # 'templates' command
+    subparsers.add_parser('templates', help='View Agentstack templates')
+
     # 'init' command
     init_parser = subparsers.add_parser('init', aliases=['i'], help='Initialize a directory for the project')
     init_parser.add_argument('slug_name', nargs='?', help="The directory name to place the project in")
-    init_parser.add_argument('--no-wizard', action='store_true', help="Skip wizard steps")
+    init_parser.add_argument('--wizard', '-w', action='store_true', help="Use the setup wizard")
+    init_parser.add_argument('--template', '-t', help="Agent template to use")
 
     # 'run' command
     run_parser = subparsers.add_parser('run', aliases=['r'], help='Run your agent')
@@ -67,6 +71,8 @@ def main():
     # 'add' command under 'tools'
     tools_add_parser = tools_subparsers.add_parser('add', aliases=['a'], help='Add a new tool')
     tools_add_parser.add_argument('name', help='Name of the tool to add')
+    tools_add_parser.add_argument('--agents', '-a', help='Name of agents to add this tool to, comma separated')
+    tools_add_parser.add_argument('--agent', help='Name of agent to add this tool to')
 
     # 'remove' command under 'tools'
     tools_remove_parser = tools_subparsers.add_parser('remove', aliases=['r'], help='Remove a tool')
@@ -88,11 +94,13 @@ def main():
     # Handle commands
     if args.command in ['docs']:
         webbrowser.open('https://docs.agentstack.sh/')
-    if args.command in ['quickstart']:
+    elif args.command in ['quickstart']:
         webbrowser.open('https://docs.agentstack.sh/quickstart')
-    if args.command in ['init', 'i']:
-        init_project_builder(args.slug_name, args.no_wizard)
-    if args.command in ['run', 'r']:
+    elif args.command in ['templates']:
+        webbrowser.open('https://docs.agentstack.sh/quickstart')
+    elif args.command in ['init', 'i']:
+        init_project_builder(args.slug_name, args.template, args.wizard)
+    elif args.command in ['run', 'r']:
         framework = get_framework()
         if framework == "crewai":
             os.system('python src/main.py')
@@ -107,7 +115,9 @@ def main():
         if args.tools_command in ['list', 'l']:
             list_tools()
         elif args.tools_command in ['add', 'a']:
-            generation.add_tool(args.name)
+            agents = [args.agent] if args.agent else None
+            agents = args.agents.split(',') if args.agents else agents
+            generation.add_tool(args.name, agents=agents)
         elif args.tools_command in ['remove', 'r']:
             generation.remove_tool(args.name)
         else:
