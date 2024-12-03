@@ -1,13 +1,14 @@
 import json
 import os, sys
 import time
-from datetime import datetime
 from pathlib import Path
 from packaging.version import parse as parse_version, Version
 import inquirer
 from agentstack.utils import term_color, get_version, get_framework
 from agentstack import packaging
 from appdirs import user_data_dir
+
+AGENTSTACK_PACKAGE = 'agentstack'
 
 
 def _is_ci_environment():
@@ -74,7 +75,7 @@ def should_update() -> bool:
     if not last_check:
         return True
 
-    return time.time() - last_check > CHECK_EVERY
+    return time.time() - float(last_check) > CHECK_EVERY
 
 
 def record_update_check():
@@ -85,7 +86,7 @@ def record_update_check():
 
     try:
         data = load_update_data()
-        data[str(INSTALL_PATH)] = datetime.now().isoformat()
+        data[str(INSTALL_PATH)] = time.time()
 
         # Create directory if it doesn't exist
         LAST_CHECK_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -106,39 +107,23 @@ def check_for_updates(update_requested: bool = False):
 
     print("Checking for updates...\n")
 
-    # always check agentstack, check others if requested
-    packages_to_check = ['agentstack']
-    if update_requested:
-        framework = get_framework()
-        packages_to_check += [framework, 'agentops']
+    try:
+        latest_version: Version = get_latest_version(AGENTSTACK_PACKAGE)
+    except Exception as e:
+        print(term_color("Failed to retrieve package index.", 'red'))
+        return
 
-    any_updated = False
-    for package in packages_to_check:
-        try:
-            latest_version: Version = get_latest_version(package)
-        except Exception as e:
-            print(term_color("Failed to retrieve package index.", 'red'))
-            return
-
-        installed_version: Version = parse_version(get_version(package))
-        if latest_version > installed_version:
-            print('')  # newline
-            if inquirer.confirm(f"New version of {package} available: {latest_version}! Do you want to install?"):
-                # TODO: i dont like this explicit check here. we may need to have a
-                # TODO: framework config eventually that can list supporting packages
-                # TODO: these have to be run at the same time with `poetry add`
-                # TODO: otherwise the dependency resolution fails
-                if package == 'crewai':
-                    package = 'crewai crewai-tools'
-                packaging.upgrade(package)
-                print(term_color(f"{package} updated. Re-run your command to use the latest version.", 'green'))
-                any_updated = True
-            else:
-                print(term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue'))
+    installed_version: Version = parse_version(get_version(AGENTSTACK_PACKAGE))
+    if latest_version > installed_version:
+        print('')  # newline
+        if inquirer.confirm(f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"):
+            packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
+            print(term_color(f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.", 'green'))
+            sys.exit(0)
         else:
-            print(f"{package} is up to date ({installed_version})")
+            print(term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue'))
+    else:
+        print(f"{AGENTSTACK_PACKAGE} is up to date ({installed_version})")
 
     record_update_check()
 
-    if any_updated:
-        sys.exit(0)
