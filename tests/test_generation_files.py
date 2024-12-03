@@ -14,6 +14,7 @@ class GenerationFilesTest(unittest.TestCase):
         assert config.framework == "crewai"
         assert config.tools == ["tool1", "tool2"]
         assert config.telemetry_opt_out is None
+        assert config.default_model is None
     
     def test_write_config(self):
         try:
@@ -25,6 +26,7 @@ class GenerationFilesTest(unittest.TestCase):
                 config.framework = "crewai"
                 config.tools = ["tool1", "tool2"]
                 config.telemetry_opt_out = True
+                config.default_model = "openai/gpt-4o"
             
             tmp_data = open(BASE_PATH/"tmp/agentstack.json").read()
             assert tmp_data == """{
@@ -33,7 +35,8 @@ class GenerationFilesTest(unittest.TestCase):
         "tool1",
         "tool2"
     ],
-    "telemetry_opt_out": true
+    "telemetry_opt_out": true,
+    "default_model": "openai/gpt-4o"
 }"""
         except Exception as e:
             raise e
