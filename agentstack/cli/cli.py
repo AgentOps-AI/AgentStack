@@ -17,12 +17,20 @@ from cookiecutter.main import cookiecutter
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
 from agentstack.utils import get_package_path
+from agentstack.generation.files import ConfigFile
 from agentstack.generation.tool_generation import get_all_tools
 from agentstack import frameworks
 import agentstack.frameworks.crewai
 from .. import generation
 from ..utils import open_json_file, term_color, is_snake_case
 
+PREFERRED_MODELS = [
+    'openai/gpt-4o',
+    'anthropic/claude-3-5-sonnet',
+    'openai/o1-preview',
+    'openai/gpt-4-turbo',
+    'anthropic/claude-3-opus',
+]
 
 def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
     if slug_name and not is_snake_case(slug_name):
@@ -115,6 +123,27 @@ def welcome_message():
     print(border)
     print(tagline)
     print(border)
+
+
+def configure_default_model(path: Optional[str] = None):
+    """Set the default model"""
+    agentstack_config = ConfigFile(path)
+    if agentstack_config.default_model:
+        return # Default model already set
+    
+    print("Project does not have a default model configured.")
+    other_msg = f"Other (enter a model name)"
+    model = inquirer.list_input(
+        message="Which model would you like to use?",
+        choices=PREFERRED_MODELS + [other_msg],
+    )
+
+    if model == other_msg: # If the user selects "Other", prompt for a model name
+        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+        model = inquirer.text(message="Enter the model name")
+    
+    with ConfigFile(path) as agentstack_config:
+        agentstack_config.default_model = model
 
 
 def run_project(framework: str, path: str = ''):
