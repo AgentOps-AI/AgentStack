@@ -378,7 +378,6 @@ def modify_agent_tools(
 
     filename = _framework_filename(framework, path)
 
-    # Read the original source and store line information
     with open(filename, 'r', encoding='utf-8') as f:
         source_lines = f.readlines()
 
@@ -389,7 +388,6 @@ def modify_agent_tools(
         if stripped.startswith('#'):
             comments[i + 1] = line
 
-    # Parse and modify the AST
     tree = ast.parse(''.join(source_lines))
 
     class ModifierTransformer(ast.NodeTransformer):
@@ -397,21 +395,15 @@ def modify_agent_tools(
             return _modify_agent_tools(node, tool_data, operation, agents, base_name)
 
     modified_tree = ModifierTransformer().visit(tree)
-
-    # Generate the modified source without comments
     modified_source = astor.to_source(modified_tree)
-
-    # Split the modified source into lines
     modified_lines = modified_source.splitlines()
 
-    # Reinsert comments at appropriate positions
+    # Reinsert comments
     final_lines = []
     for i, line in enumerate(modified_lines, 1):
-        # If there was a comment at this line number in the original file, add it
         if i in comments:
             final_lines.append(comments[i])
         final_lines.append(line + '\n')
 
-    # Write the final source back
     with open(filename, 'w', encoding='utf-8') as f:
         f.write(''.join(final_lines))
