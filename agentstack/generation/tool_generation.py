@@ -17,6 +17,7 @@ import ast
 from pydantic import BaseModel, ValidationError
 
 from agentstack.utils import get_package_path
+from agentstack.generation import astools
 from agentstack.generation.files import ConfigFile, EnvFile
 from agentstack import frameworks
 from .gen_utils import insert_code_after_tag, string_in_file
@@ -183,47 +184,6 @@ def remove_tool_from_agent_definition(framework: str, tool_data: ToolConfig, pat
     modify_agent_tools(framework=framework, tool_data=tool_data, operation='remove', agents=None, path=path, base_name='tools')
 
 
-def _create_tool_attribute(tool_name: str, base_name: str = 'tools') -> ast.Attribute:
-    """Create an AST node for a tool attribute"""
-    return ast.Attribute(
-        value=ast.Name(id=base_name, ctx=ast.Load()),
-        attr=tool_name,
-        ctx=ast.Load()
-    )
-
-def _create_starred_tool(tool_name: str, base_name: str = 'tools') -> ast.Starred:
-    """Create an AST node for a starred tool expression"""
-    return ast.Starred(
-        value=ast.Attribute(
-            value=ast.Name(id=base_name, ctx=ast.Load()),
-            attr=tool_name,
-            ctx=ast.Load()
-        ),
-        ctx=ast.Load()
-    )
-
-
-def _create_tool_attributes(
-        tool_names: List[str],
-        base_name: str = 'tools'
-) -> List[ast.Attribute]:
-    """Create AST nodes for multiple tool attributes"""
-    return [_create_tool_attribute(name, base_name) for name in tool_names]
-
-
-def _create_tool_nodes(
-    tool_names: List[str],
-    is_bundled: bool = False,
-    base_name: str = 'tools'
-) -> List[Union[ast.Attribute, ast.Starred]]:
-    """Create AST nodes for multiple tool attributes"""
-    return [
-        _create_starred_tool(name, base_name) if is_bundled
-        else _create_tool_attribute(name, base_name)
-        for name in tool_names
-    ]
-
-
 def _is_tool_node_match(node: ast.AST, tool_name: str, base_name: str = 'tools') -> bool:
     """
     Check if an AST node matches a tool reference, regardless of whether it's starred
@@ -268,11 +228,11 @@ def _process_tools_list(
     if operation == 'add':
         new_tools = current_tools.copy()
         # Add new tools with bundling if specified
-        new_tools.extend(_create_tool_nodes(
-            tool_data.tools,
-            tool_data.tools_bundled,
-            base_name
-        ))
+        new_tools.extend([
+            ast.Starred(astools.create_attribute(name, base_name)) if tool_data.tools_bundled,
+            else astools.create_attribute(name, base_name)
+            for name in tool_data.tools
+        ])
         return new_tools
 
     elif operation == 'remove':
