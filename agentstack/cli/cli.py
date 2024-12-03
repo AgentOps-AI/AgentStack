@@ -142,7 +142,7 @@ def configure_default_model(path: Optional[str] = None):
         return  # Default model already set
 
     print("Project does not have a default model configured.")
-    other_msg = f"Other (enter a model name)"
+    other_msg = "Other (enter a model name)"
     model = inquirer.list_input(
         message="Which model would you like to use?",
         choices=PREFERRED_MODELS + [other_msg],
@@ -150,7 +150,7 @@ def configure_default_model(path: Optional[str] = None):
 
     if model == other_msg:  # If the user selects "Other", prompt for a model name
         print(
-            f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"'
+            'A list of available models is available at: "https://docs.litellm.ai/docs/providers"'
         )
         model = inquirer.text(message="Enter the model name")
 
@@ -200,11 +200,13 @@ def ask_design() -> dict:
 
     print(title)
 
-    print("""
+    print(
+        """
 🪄 welcome to the agent builder wizard!! 🪄
 
 First we need to create the agents that will work together to accomplish tasks:
-    """)
+    """
+    )
     make_agent = True
     agents = []
     while make_agent:
@@ -435,7 +437,7 @@ def insert_template(
         pass
         # subprocess.check_output(["git", "init"])
         # subprocess.check_output(["git", "add", "."])
-    except:
+    except Exception:
         print(
             "Failed to initialize git repository. Maybe you're already in one? Do this with: git init"
         )

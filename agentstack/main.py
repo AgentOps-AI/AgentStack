@@ -42,7 +42,7 @@ def main():
     init_parser.add_argument("--template", "-t", help="Agent template to use")
 
     # 'run' command
-    run_parser = subparsers.add_parser("run", aliases=["r"], help="Run your agent")
+    _ = subparsers.add_parser("run", aliases=["r"], help="Run your agent")
 
     # 'generate' command
     generate_parser = subparsers.add_parser(
@@ -84,9 +84,7 @@ def main():
     )
 
     # 'list' command under 'tools'
-    tools_list_parser = tools_subparsers.add_parser(
-        "list", aliases=["l"], help="List tools"
-    )
+    _ = tools_subparsers.add_parser("list", aliases=["l"], help="List tools")
 
     # 'add' command under 'tools'
     tools_add_parser = tools_subparsers.add_parser(

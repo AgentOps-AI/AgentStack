@@ -1,6 +1,5 @@
 from typing import Optional
 
-import os
 import sys
 import json
 import re
@@ -21,7 +20,7 @@ def verify_agentstack_project(path: Optional[str] = None):
     from agentstack.generation import ConfigFile
 
     try:
-        agentstack_config = ConfigFile(path)
+        _ = ConfigFile(path)
     except FileNotFoundError:
         print(
             "\033[31mAgentStack Error: This does not appear to be an AgentStack project."

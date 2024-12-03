@@ -50,4 +50,6 @@ exclude = [
     "dist",
     "*.egg-info",
     "agentstack/templates/",
+    "examples",
+    "__init__.py"
 ]

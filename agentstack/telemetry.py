@@ -75,5 +75,5 @@ def track_cli_command(command: str):
     try:
         data = collect_machine_telemetry(command)
         requests.post(TELEMETRY_URL, json={"command": command, **data})
-    except:
+    except Exception:
         pass

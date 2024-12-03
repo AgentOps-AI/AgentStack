@@ -1,15 +1,12 @@
-import os, sys
-from typing import Optional, Any, List
-import importlib.resources
-from pathlib import Path
-import json
+import os
 import sys
-from typing import Optional, List, Dict, Union
+from typing import Optional, List
+from pathlib import Path
+from typing import Union
 
 from . import get_agent_names
-from .gen_utils import insert_code_after_tag, string_in_file, _framework_filename
+from .gen_utils import insert_code_after_tag, _framework_filename
 from ..utils import open_json_file, get_framework, term_color
-import os
 import shutil
 import fileinput
 import astor
@@ -18,8 +15,6 @@ from pydantic import BaseModel, ValidationError
 
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ConfigFile, EnvFile
-from .gen_utils import insert_code_after_tag, string_in_file
-from ..utils import open_json_file, get_framework, term_color
 
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
@@ -156,7 +151,7 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
     framework = get_framework()
     agentstack_config = ConfigFile(path)
 
-    if not tool_name in agentstack_config.tools:
+    if tool_name not in agentstack_config.tools:
         print(term_color(f"Tool {tool_name} is not installed", "red"))
         sys.exit(1)
 

@@ -1,6 +1,5 @@
-import os, sys
+import os
 import unittest
-import importlib.resources
 from pathlib import Path
 import shutil
 from agentstack.generation.files import ConfigFile, EnvFile
@@ -55,24 +54,24 @@ class GenerationFilesTest(unittest.TestCase):
             # os.rmdir(BASE_PATH / "tmp")
 
     def test_read_missing_config(self):
-        with self.assertRaises(FileNotFoundError) as context:
-            config = ConfigFile(BASE_PATH / "missing")
+        with self.assertRaises(FileNotFoundError) as _:
+            _ = ConfigFile(BASE_PATH / "missing")
 
     def test_verify_agentstack_project_valid(self):
         verify_agentstack_project(BASE_PATH / "fixtures")
 
     def test_verify_agentstack_project_invalid(self):
-        with self.assertRaises(SystemExit) as context:
+        with self.assertRaises(SystemExit) as _:
             verify_agentstack_project(BASE_PATH / "missing")
 
     def test_get_framework(self):
         assert get_framework(BASE_PATH / "fixtures") == "crewai"
-        with self.assertRaises(SystemExit) as context:
+        with self.assertRaises(SystemExit) as _:
             get_framework(BASE_PATH / "missing")
 
     def test_get_telemetry_opt_out(self):
         assert get_telemetry_opt_out(BASE_PATH / "fixtures") is False
-        with self.assertRaises(SystemExit) as context:
+        with self.assertRaises(SystemExit) as _:
             get_telemetry_opt_out(BASE_PATH / "missing")
 
     def test_read_env(self):
@@ -80,7 +79,7 @@ class GenerationFilesTest(unittest.TestCase):
         assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2"}
         assert env["ENV_VAR1"] == "value1"
         assert env["ENV_VAR2"] == "value2"
-        with self.assertRaises(KeyError) as context:
+        with self.assertRaises(KeyError) as _:
             env["ENV_VAR3"]
 
     def test_write_env(self):
