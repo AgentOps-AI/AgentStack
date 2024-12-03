@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from typing import Optional
 import requests
+import itertools
 
 from art import text2art
 import inquirer
@@ -14,9 +15,19 @@ from cookiecutter.main import cookiecutter
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
+from agentstack.utils import get_package_path
+from agentstack.generation.files import ConfigFile
+from agentstack.generation.tool_generation import get_all_tools
 from .. import generation
 from ..utils import open_json_file, term_color, is_snake_case
 
+PREFERRED_MODELS = [
+    'openai/gpt-4o',
+    'anthropic/claude-3-5-sonnet',
+    'openai/o1-preview',
+    'openai/gpt-4-turbo',
+    'anthropic/claude-3-opus',
+]
 
 def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
     if slug_name and not is_snake_case(slug_name):
@@ -60,9 +71,6 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
         }
 
         tools = template_data['tools']
-        # for tool_data in template_data['tools']:
-        #     generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
-
 
     elif use_wizard:
         welcome_message()
@@ -97,7 +105,6 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
         f"design: {design}"
     )
     insert_template(project_details, framework, design, template_data)
-    # add_tools(tools, project_details['name'])
     for tool_data in tools:
         generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
 
@@ -113,6 +120,27 @@ def welcome_message():
     print(border)
     print(tagline)
     print(border)
+
+
+def configure_default_model(path: Optional[str] = None):
+    """Set the default model"""
+    agentstack_config = ConfigFile(path)
+    if agentstack_config.default_model:
+        return # Default model already set
+    
+    print("Project does not have a default model configured.")
+    other_msg = f"Other (enter a model name)"
+    model = inquirer.list_input(
+        message="Which model would you like to use?",
+        choices=PREFERRED_MODELS + [other_msg],
+    )
+
+    if model == other_msg: # If the user selects "Other", prompt for a model name
+        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+        model = inquirer.text(message="Enter the model name")
+    
+    with ConfigFile(path) as agentstack_config:
+        agentstack_config.default_model = model
 
 
 def ask_framework() -> str:
@@ -310,7 +338,7 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
                                        version="0.0.1",
                                        license="MIT",
                                        year=datetime.now().year,
-                                       template=template_data['name'],
+                                       template=template_data['name'] if template_data else None,
                                        template_version=template_data['template_version'] if template_data else None)
 
     project_structure = ProjectStructure()
@@ -321,20 +349,20 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
                                          structure=project_structure,
                                          framework=framework_name.lower())
 
-    with importlib.resources.path(f'agentstack.templates', str(framework.name)) as template_path:
-        with open(f"{template_path}/cookiecutter.json", "w") as json_file:
-            json.dump(cookiecutter_data.to_dict(), json_file)
+    template_path = get_package_path() / f'templates/{framework.name}'
+    with open(f"{template_path}/cookiecutter.json", "w") as json_file:
+        json.dump(cookiecutter_data.to_dict(), json_file)
 
-        # copy .env.example to .env
-        shutil.copy(
-            f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
-            f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
+    # copy .env.example to .env
+    shutil.copy(
+        f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
+        f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
 
-        if os.path.isdir(project_details['name']):
-            print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
-            return
+    if os.path.isdir(project_details['name']):
+        print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
+        return
 
-        cookiecutter(str(template_path), no_input=True, extra_context=None)
+    cookiecutter(str(template_path), no_input=True, extra_context=None)
 
     # TODO: inits a git repo in the directory the command was run in
     # TODO: not where the project is generated. Fix this
@@ -363,30 +391,20 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
     )
 
 
-# def add_tools(tools: list, project_name: str):
-#     for tool in tools:
-#         generation.add_tool(tool, path=project_name)
-
-
 def list_tools():
-    with importlib.resources.path(f'agentstack.tools', 'tools.json') as tools_json_path:
-        try:
-            # Load the JSON data
-            tools_data = open_json_file(tools_json_path)
+    # Display the tools
+    tools = get_all_tools()
+    curr_category = None
 
-            # Display the tools
-            print("\n\nAvailable AgentStack Tools:")
-            for category, tools in tools_data.items():
-                print(f"\n{category.capitalize()}:")
-                for tool in tools:
-                    print(f"  - {tool['name']}: {tool['url']}")
+    print("\n\nAvailable AgentStack Tools:")
+    for category, tools in itertools.groupby(tools, lambda x: x.category):
+        if curr_category != category:
+            print(f"\n{category}:")
+            curr_category = category
+        for tool in tools:
+            print("  - ", end='')
+            print(term_color(f"{tool.name}", 'blue'), end='')
+            print(f": {tool.url if tool.url else 'AgentStack default tool'}")
 
-            print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
-            print("   https://docs.agentstack.sh/tools/core")
-
-        except FileNotFoundError:
-            print("Error: tools.json file not found at path:", tools_json_path)
-        except json.JSONDecodeError:
-            print("Error: tools.json contains invalid JSON.")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+    print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
+    print("   https://docs.agentstack.sh/tools/core")

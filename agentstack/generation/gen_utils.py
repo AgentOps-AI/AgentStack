@@ -80,14 +80,14 @@ def _framework_filename(framework: str, path: str = ''):
     sys.exit(1)
 
 
-class CrewComponentType(str, Enum):
+class CrewComponent(str, Enum):
     AGENT = "agent"
     TASK = "task"
 
 
 def get_crew_components(
         framework: str = 'crewai',
-        component_type: Optional[Union[CrewComponentType, List[CrewComponentType]]] = None,
+        component_type: Optional[Union[CrewComponent, List[CrewComponent]]] = None,
         path: str = ''
 ) -> dict[str, List[str]]:
     """
@@ -106,7 +106,7 @@ def get_crew_components(
     filename = _framework_filename(framework, path)
 
     # Convert single component type to list for consistent handling
-    if isinstance(component_type, CrewComponentType):
+    if isinstance(component_type, CrewComponent):
         component_type = [component_type]
 
     # Read the source file
@@ -127,16 +127,16 @@ def get_crew_components(
             # Check decorators
             for decorator in node.decorator_list:
                 if isinstance(decorator, ast.Name):
-                    if (component_type is None or CrewComponentType.AGENT in component_type) \
+                    if (component_type is None or CrewComponent.AGENT in component_type) \
                             and decorator.id == 'agent':
                         components['agents'].append(node.name)
-                    elif (component_type is None or CrewComponentType.TASK in component_type) \
+                    elif (component_type is None or CrewComponent.TASK in component_type) \
                             and decorator.id == 'task':
                         components['tasks'].append(node.name)
 
     # If specific types were requested, only return those
     if component_type:
         return {k: v for k, v in components.items()
-                if CrewComponentType(k[:-1]) in component_type}
+                if CrewComponent(k[:-1]) in component_type}
 
     return components

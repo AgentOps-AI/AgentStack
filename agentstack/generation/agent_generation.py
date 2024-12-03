@@ -1,7 +1,8 @@
 from typing import Optional, List
 
-from .gen_utils import insert_code_after_tag, get_crew_components, CrewComponentType
+from .gen_utils import insert_code_after_tag, get_crew_components, CrewComponent
 from agentstack.utils import verify_agentstack_project, get_framework
+from agentstack.generation.files import ConfigFile
 import os
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
@@ -14,6 +15,7 @@ def generate_agent(
         backstory: Optional[str],
         llm: Optional[str]
 ):
+    agentstack_config = ConfigFile() # TODO path
     if not role:
         role = 'Add your role here'
     if not goal:
@@ -21,7 +23,7 @@ def generate_agent(
     if not backstory:
         backstory = 'Add your backstory here'
     if not llm:
-        llm = 'openai/gpt-4o'
+        llm = agentstack_config.default_model
 
     verify_agentstack_project()
 
@@ -35,9 +37,6 @@ def generate_agent(
         return
 
     print(f"Added agent \"{name}\" to your AgentStack project successfully!")
-
-
-
 
 
 def generate_crew_agent(
@@ -103,4 +102,4 @@ def generate_crew_agent(
 
 def get_agent_names(framework: str = 'crewai', path: str = '') -> List[str]:
     """Get only agent names from the crew file"""
-    return get_crew_components(framework, CrewComponentType.AGENT, path)['agents']
+    return get_crew_components(framework, CrewComponent.AGENT, path)['agents']

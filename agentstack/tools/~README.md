@@ -17,9 +17,10 @@ of the list in the `tools` field.
 ### `cta` (string) [optional]
 String to print in the terminal when the tool is installed that provides a call to action.
 
-### `env` (string) [optional]
+### `env` (list[dict(str, Any)]) [optional]
 Definitions for environment variables that will be appended to the local `.env` file.
-Separate multiple environment variables with a newline character.
+This is a list of key-value pairs ie. `[{"ENV_VAR": "value"}, ...]`.
+In cases where the user is expected to provide a value, the value is `"..."`.
 
 ### `packages` (list) [optional]
 A list of package names to install. These are the names of the packages that will 
