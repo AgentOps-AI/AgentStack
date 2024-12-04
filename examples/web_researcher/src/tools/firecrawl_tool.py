@@ -2,7 +2,7 @@ from crewai_tools import tool
 from firecrawl import FirecrawlApp
 import os
 
-app = FirecrawlApp(api_key=os.getenv('FIRECRAWL_API_KEY'))
+app = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
 
 
 @tool
@@ -11,7 +11,7 @@ def web_scrape(url: str):
     Scrape a url and return markdown. Use this to read a singular page and web_crawl only if you
     need to read all other links as well.
     """
-    scrape_result = app.scrape_url(url, params={'formats': ['markdown']})
+    scrape_result = app.scrape_url(url, params={"formats": ["markdown"]})
     return scrape_result
 
 
@@ -29,11 +29,8 @@ def web_crawl(url: str):
 
     crawl_status = app.crawl_url(
         url,
-        params={
-            'limit': 100,
-            'scrapeOptions': {'formats': ['markdown']}
-        },
-        poll_interval=30
+        params={"limit": 100, "scrapeOptions": {"formats": ["markdown"]}},
+        poll_interval=30,
     )
 
     return crawl_status
@@ -47,4 +44,3 @@ def retrieve_web_crawl(crawl_id: str):
     will tell you if the crawl is finished. If it is not, wait some more time then try again.
     """
     return app.check_crawl_status(crawl_id)
-

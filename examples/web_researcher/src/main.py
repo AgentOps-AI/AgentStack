@@ -6,9 +6,10 @@ from typing import Optional
 from crew import WebresearcherCrew
 import agentops
 from dotenv import load_dotenv
+
 load_dotenv()
 
-agentops.init(default_tags=['web_researcher', 'agentstack'])
+agentops.init(default_tags=["web_researcher", "agentstack"])
 
 
 def run(inputs: Optional[dict] = None):
@@ -19,9 +20,7 @@ def run(inputs: Optional[dict] = None):
     print(inputs)
 
     if not inputs:
-        inputs = {
-            'url': 'https://github.com/AgentOps-AI/AgentStack/tree/main'
-        }
+        inputs = {"url": "https://github.com/AgentOps-AI/AgentStack/tree/main"}
     return WebresearcherCrew().crew().kickoff(inputs=inputs)
 
 
@@ -29,12 +28,11 @@ def train():
     """
     Train the crew for a given number of iterations.
     """
-    inputs = {
-        "topic": "AI LLMs"
-    }
+    inputs = {"topic": "AI LLMs"}
     try:
-        WebresearcherCrew().crew().train(n_iterations=int(
-            sys.argv[1]), filename=sys.argv[2], inputs=inputs)
+        WebresearcherCrew().crew().train(
+            n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs
+        )
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
@@ -55,18 +53,17 @@ def test():
     """
     Test the crew execution and returns the results.
     """
-    inputs = {
-        "topic": "AI LLMs"
-    }
+    inputs = {"topic": "AI LLMs"}
     try:
-        WebresearcherCrew().crew().test(n_iterations=int(
-            sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
+        WebresearcherCrew().crew().test(
+            n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs
+        )
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     data = None
     if len(sys.argv) > 1:
         data_str = sys.argv[1]
