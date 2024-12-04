@@ -6,6 +6,7 @@ from agentstack.cli import init_project_builder, list_tools, configure_default_m
 from agentstack.telemetry import track_cli_command
 from agentstack.utils import get_version, get_framework
 import agentstack.generation as generation
+from agentstack.update import check_for_updates
 
 import webbrowser
 
@@ -77,6 +78,9 @@ def main():
     tools_remove_parser = tools_subparsers.add_parser('remove', aliases=['r'], help='Remove a tool')
     tools_remove_parser.add_argument('name', help='Name of the tool to remove')
 
+    # 'update' command
+    update = subparsers.add_parser('update', aliases=['u'], help='Check for updates')
+
     # 'deploy' command
     serve_parser = subparsers.add_parser('serve', aliases=['s'], help='Serve your agent')
 
@@ -89,6 +93,7 @@ def main():
         return
 
     track_cli_command(args.command)
+    check_for_updates(update_requested=args.command in ('update', 'u'))
 
     # Handle commands
     if args.command in ['docs']:
@@ -123,6 +128,8 @@ def main():
             generation.remove_tool(args.name)
         else:
             tools_parser.print_help()
+    elif args.command in ['update', 'u']:
+        pass # Update check already done
     if args.command in ['serve', 's']:
         serve_project()
     else:

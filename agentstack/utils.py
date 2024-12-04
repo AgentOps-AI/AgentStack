@@ -8,9 +8,9 @@ from importlib.metadata import version
 from pathlib import Path
 import importlib.resources
 
-def get_version():
+def get_version(package: str = 'agentstack'):
     try:
-        return version('agentstack')
+        return version(package)
     except (KeyError, FileNotFoundError) as e:
         print(e)
         return "Unknown version"
