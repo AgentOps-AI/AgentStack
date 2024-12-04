@@ -13,4 +13,3 @@ def remove(package: str):
 
 def upgrade(package: str):
     os.system(f"{PACKAGING_CMD} add {package}")
-

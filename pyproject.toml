@@ -21,11 +21,10 @@ dependencies = [
     "toml>=0.10.2",
     "ruamel.yaml.base>=0.3.2",
     "cookiecutter==2.6.0",
-    "psutil==5.9.0",
+    "psutil==5.9.8",
     "astor==0.8.1",
-    "psutil==5.9.0",
     "pydantic>=2.10",
-    "packaging>=24.2",
+    "packaging>=23.2",
     "requests>=2.32",
     "appdirs>=1.4.4"
 ]
