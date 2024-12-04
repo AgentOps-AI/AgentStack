@@ -8,6 +8,7 @@ upgrade tools and install dependencies.
 import os, sys
 import shutil
 from typing import TYPE_CHECKING, Optional
+from pathlib import Path
 from packaging.metadata import Metadata
 from agentstack.utils import term_color, get_package_path, get_framework
 if TYPE_CHECKING: # TODO move ToolConfig to a separate file
@@ -27,7 +28,7 @@ class PackageManager:
     def upgrade(self, *args):
         os.system(f"{self.cmd} {self.update} {' '.join(args)}")
 
-    def install_tool(self, tool: 'ToolConfig', framework: str, path: Optional[str] = None):
+    def install_tool(self, tool: 'ToolConfig', framework: str, path: Optional[Path] = None):
         """
         Copy a tool's source files from the agentstack install directory to the app 
         tools directory and install relevant dependencies. 
@@ -39,7 +40,7 @@ class PackageManager:
         """
         raise NotImplementedError
 
-    def remove_tool(self, tool: 'ToolConfig', path: Optional[str] = None):
+    def remove_tool(self, tool: 'ToolConfig', path: Optional[Path] = None):
         """
         Remove a tool's source files from the app tools directory.
         
@@ -52,18 +53,20 @@ class UV(PackageManager):
     def __init__(self):
         super().__init__('uv', 'add', 'pip install --upgrade')
     
-    def install_tool(self, tool: 'ToolConfig', path: Optional[str] = None):
+    def install_tool(self, tool: 'ToolConfig', framework: str, path: Optional[Path] = None):
         # uv pip install --directory <tool directory> --target <app tools directory> --link-mode copy <tool name> --editable .[<framework>]
-        os.system(f"{self.cmd} pip install --link-mode copy --directory {tool.get_path()} --target {path}src/tools/ --editable .[{framework}]")
+        if path is None: path = Path('')
+        os.system(f"{self.cmd} pip install --link-mode copy --directory {tool.get_path()} --target {path}src/tools/ --editable .")
 
 class Poetry(PackageManager):
     def __init__(self):
         super().__init__('poetry', 'add', 'update')
     
-    def install_tool(self, tool: 'ToolConfig', framework: str, path: Optional[str] = None):
+    def install_tool(self, tool: 'ToolConfig', framework: str, path: Optional[Path] = None):
         # poetry doesn't have a way to install into a target directory afaik so we
         # first install the dependencies and then manually copy the tool files
         # poetry install --no-root --directory <package_path> --with <optional_dependencies_tags>
+        if path is None: path = Path('')
         arg = f' --directory {package_path}'
         if optional_dependencies_tag:
             arg += f" --with {','.join(optional_dependencies_tags)}"
@@ -74,8 +77,9 @@ class PIP(PackageManager):
     def __init__(self):
         super().__init__('pip', 'install', 'install --upgrade')
     
-    def install_tool(self, tool: 'ToolConfig', framework: str, path: Optional[str] = None):
+    def install_tool(self, tool: 'ToolConfig', framework: str, path: Optional[Path] = None):
         # pip install --target <app tools directory> --editable .[<framework>]
+        if path is None: path = Path('')
         os.system(f"{self.cmd} {self.install} --target {path}src/tools/ --editable {tool.get_path()}[{framework}]")
 
 UV = UV()
@@ -102,12 +106,14 @@ def detect_package_manager() -> PackageManager:
     print(', '.join(manager.cmd for manager in PACKAGE_MANAGERS))
     sys.exit(1)
 
-def install(package: str, path: Optional[str] = None):
+def install(package: str, path: Optional[Path] = None):
     if path:
         os.chdir(path)
     detect_package_manager().install(package)
 
-def upgrade(package: str):
+def upgrade(package: str, path: Optional[Path] = None):
+    if path:
+        os.chdir(path)
     detect_package_manager().upgrade(package)
 
 def get_tool_metadata(tool: 'ToolConfig') -> Metadata:
@@ -117,7 +123,17 @@ def get_tool_metadata(tool: 'ToolConfig') -> Metadata:
     """
     return Metadata.from_pyproject(get_tool_path()/'pyproject.toml')
 
-def install_tool(tool: 'ToolConfig', path: Optional[str] = None):
+def validate_tool(tool: 'ToolConfig') -> bool:
+    """
+    Check if the tool is installed correctly
+    """
+    metadata = get_tool_metadata(tool)
+    # TODO validate metadata
+    # TODO ensure framework implementations are present
+    # TODO tests?
+    raise NotImplementedError
+
+def install_tool(tool: 'ToolConfig', path: Optional[Path] = None):
     """
     Copy a tool's applicable source files and install relevant dependencies
     """
@@ -125,7 +141,7 @@ def install_tool(tool: 'ToolConfig', path: Optional[str] = None):
     manager = detect_package_manager()
     manager.install_tool(tool, framework, path)
 
-def remove_tool(tool: 'ToolConfig', path: Optional[str] = None):
+def remove_tool(tool: 'ToolConfig', path: Optional[Path] = None):
     """
     Remove a tool's source files.
     Removing dependencies is messy, so we just leave them installed. 

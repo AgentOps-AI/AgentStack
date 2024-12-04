@@ -1,5 +1,30 @@
-Tool Configuration Files
-========================
+
+
+Tool Implementations
+====================
+Each tool gets a directory in this folder. 
+
+The directory should contain the following files:
+
+`config.json`
+-------------
+This contains the configuration for the tool for use by agentstack.
+
+`pyproject.toml`
+----------------
+This contains the build configuration for the tool and any dependencies.
+
+`crew.py`
+---------
+Python package which contains the tool implementation specific to CrewAI.
+Use relative imports to include shared code from the root of the tool's package.
+Deploy/install command should handle both single files and directories.
+
+Additional frameworks will get their own directories.
+
+
+`config.json` Format
+--------------------
 Tools are configured for installation & removal using JSON files in this directory. 
 
 ## Parameters
@@ -21,10 +46,6 @@ String to print in the terminal when the tool is installed that provides a call 
 Definitions for environment variables that will be appended to the local `.env` file.
 This is a list of key-value pairs ie. `[{"ENV_VAR": "value"}, ...]`.
 In cases where the user is expected to provide a value, the value is `"..."`.
-
-### `packages` (list) [optional]
-A list of package names to install. These are the names of the packages that will 
-be installed and removed by the package manager.
 
 ### `post_install` (string) [optional]
 Shell command that will be executed after packages have been installed and environment 

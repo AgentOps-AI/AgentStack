@@ -1,9 +1,9 @@
 [project]
-name = "agentstack.agent_connect"
+name = "agentstack.browserbase"
 version = "0.1"
 
 dependencies = [
-    "agent-connect",
+    "browserbase",
 ]
 
 [project.optional-dependencies]

@@ -1,9 +1,9 @@
 [project]
-name = "agentstack.agent_connect"
+name = "agentstack.firecrawl"
 version = "0.1"
 
 dependencies = [
-    "agent-connect",
+    "firecrawl-py",
 ]
 
 [project.optional-dependencies]

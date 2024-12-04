@@ -1,9 +1,9 @@
 [project]
-name = "agentstack.agent_connect"
+name = "agentstack.exa"
 version = "0.1"
 
 dependencies = [
-    "agent-connect",
+    "exa_py"
 ]
 
 [project.optional-dependencies]

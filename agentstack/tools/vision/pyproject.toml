@@ -1,0 +1,8 @@
+[project]
+name = "agentstack.vision"
+version = "0.1"
+
+dependencies = []
+
+[project.optional-dependencies]
+crewai = []

@@ -1,9 +1,9 @@
 [project]
-name = "agentstack.agent_connect"
+name = "agentstack.open_interpreter"
 version = "0.1"
 
 dependencies = [
-    "agent-connect",
+    "open-interpreter",
 ]
 
 [project.optional-dependencies]

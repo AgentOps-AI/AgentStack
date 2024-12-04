@@ -1,9 +1,10 @@
 [project]
-name = "agentstack.agent_connect"
+name = "agentstack.neon"
 version = "0.1"
 
 dependencies = [
-    "agent-connect",
+    "neon-api",
+    "psycopg2-binary",
 ]
 
 [project.optional-dependencies]

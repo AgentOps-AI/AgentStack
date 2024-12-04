@@ -1,0 +1,8 @@
+[project]
+name = "agentstack.directory_search"
+version = "0.1"
+
+dependencies = []
+
+[project.optional-dependencies]
+crewai = []
