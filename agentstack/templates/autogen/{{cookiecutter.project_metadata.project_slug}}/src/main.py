@@ -14,7 +14,7 @@ def main():
     # For example, if you have created a OAI_CONFIG_LIST file in the current working directory, that file will be used.
     config_list = config_list_from_json(env_or_file="OAI_CONFIG_LIST")
 
-    {%- for agent in cookiecutter.structure.agents % }
+    {%- for agent in cookiecutter.structure.agents %}
 
     {{agent.name}}_agent = ConversableAgent(
         name="{{agent.name}}",
@@ -28,15 +28,14 @@ def main():
         """,
         llm_config={"config_list": config_list},  # TODO: support other models
     )
-    {%- endfor % }
+    {%- endfor %}
 
     # # The user proxy agent is used for interacting with the assistant agent
     # # and executes tool calls.
     user_proxy = ConversableAgent(
         name="User",
         llm_config=False,
-        is_termination_msg=lambda msg: msg.get(
-            "content") is not None and "TERMINATE" in msg["content"],
+        is_termination_msg=lambda msg: msg.get("content") is not None and "TERMINATE" in msg["content"],
         human_input_mode="NEVER",
     )
 
