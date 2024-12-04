@@ -8,11 +8,9 @@ If you're reading this section, you probably have a product that AI agents can u
 Adding tools is easy once you understand the project structure. A few things need to be done for a tool to be considered completely supported:
 
 <Steps>
-  <Step title="Modify the tool list data">
-    Add your tool and relevant information to `agentstack/tools/tools.json`
-  </Step>
   <Step title="Create a config for your tool">
-      - As an example, look at `mem0.json`
+      - Create a new tool config at `agentstack/tools/<your_tool>.json`
+      - As an example, look at our [tool config fixture](https://github.com/AgentOps-AI/AgentStack/blob/main/tests/fixtures/tool_config_max.json)
       - AgentStack uses this to know what code to insert where. Follow the structure to add your tool.
   </Step>
   <Step title="Create your implementation for each framework">
@@ -26,3 +24,15 @@ Adding tools is easy once you understand the project structure. A few things nee
   <Step title="Open a PR to add your tool to the next release">
   </Step>
 </Steps>
+
+# Tool Config
+- `name` (str) - Name of your tool
+- `category` (str) - Category your tool belongs in
+- `tools` (List[str]) - The exported functions within your tool file
+- `url` (str) - URL to where developers can learn more about your tool
+- `tools_bundled` (bool) - True if the tool file exports a list of tools
+- `cta` (str) - Call To Action printed in the terminal after install
+- `env` (dict) - Key: Environment variable name; Value: default value
+- `packages` (List[str]) - Python packages to be installed to support your tool
+- `post_install` (str) - A script to be run after install of your tool
+- `post_remove` (str) - A script to be run after removal of your tool

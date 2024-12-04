@@ -1,8 +1,11 @@
 import json
 import shutil
+import sys
 import time
 from datetime import datetime
 from typing import Optional
+import requests
+import itertools
 
 from art import text2art
 import inquirer
@@ -12,33 +15,66 @@ from cookiecutter.main import cookiecutter
 
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
-from .. import generation
-from ..utils import open_json_file, term_color, is_snake_case
+from agentstack.utils import get_package_path
+from agentstack.generation.files import ConfigFile
+from agentstack.generation.tool_generation import get_all_tools
+from agentstack import packaging, generation
+from agentstack.utils import open_json_file, term_color, is_snake_case
+from agentstack.update import AGENTSTACK_PACKAGE
 
+PREFERRED_MODELS = [
+    'openai/gpt-4o',
+    'anthropic/claude-3-5-sonnet',
+    'openai/o1-preview',
+    'openai/gpt-4-turbo',
+    'anthropic/claude-3-opus',
+]
 
-def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = False):
+def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
     if slug_name and not is_snake_case(slug_name):
         print(term_color("Project name must be snake case", 'red'))
         return
 
-    if skip_wizard:
+    if template is not None and use_wizard:
+        print(term_color("Template and wizard flags cannot be used together", 'red'))
+        return
+
+    template_data = None
+    if template is not None:
+        url_start = "https://"
+        if template[:len(url_start)] == url_start:
+            # template is a url
+            response = requests.get(template)
+            if response.status_code == 200:
+                template_data = response.json()
+            else:
+                print(term_color(f"Failed to fetch template data from {template}. Status code: {response.status_code}", 'red'))
+                sys.exit(1)
+        else:
+            with importlib.resources.path('agentstack.templates.proj_templates', f'{template}.json') as template_path:
+                if template_path is None:
+                    print(term_color(f"No such template {template} found", 'red'))
+                    sys.exit(1)
+                template_data = open_json_file(template_path)
+
+    if template_data:
         project_details = {
-            "name": slug_name or "new_agentstack_project",
-            "version": "0.1.0",
-            "description": "New agentstack project",
-            "author": "<NAME>",
+            "name": slug_name or template_data['name'],
+            "version": "0.0.1",
+            "description": template_data['description'],
+            "author": "Name <Email>",
             "license": "MIT"
         }
-
-        framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
-
+        framework = template_data['framework']
         design = {
-            'agents': [],
-            'tasks': []
+            'agents': template_data['agents'],
+            'tasks': template_data['tasks'],
+            'inputs': template_data['inputs'],
         }
 
-        tools = []
-    else:
+        tools = template_data['tools']
+
+    elif use_wizard:
         welcome_message()
         project_details = ask_project_details(slug_name)
         welcome_message()
@@ -46,13 +82,39 @@ def init_project_builder(slug_name: Optional[str] = None, skip_wizard: bool = Fa
         design = ask_design()
         tools = ask_tools()
 
+    else:
+        welcome_message()
+        project_details = {
+            "name": slug_name or "agentstack_project",
+            "version": "0.0.1",
+            "description": "New agentstack project",
+            "author": "Name <Email>",
+            "license": "MIT"
+        }
+
+        framework = "crewai"  # TODO: if --no-wizard, require a framework flag
+
+        design = {
+            'agents': [],
+            'tasks': [],
+            'inputs': []
+        }
+
+        tools = []
+
     log.debug(
         f"project_details: {project_details}"
         f"framework: {framework}"
         f"design: {design}"
     )
-    insert_template(project_details, framework, design)
-    add_tools(tools, project_details['name'])
+    insert_template(project_details, framework, design, template_data)
+    for tool_data in tools:
+        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
+
+    try:
+        packaging.install(f'{AGENTSTACK_PACKAGE}[{framework}]', path=slug_name)
+    except Exception as e:
+        print(term_color(f"Failed to install dependencies for {slug_name}. Please try again by running `agentstack update`", 'red'))
 
 
 def welcome_message():
@@ -66,6 +128,27 @@ def welcome_message():
     print(border)
     print(tagline)
     print(border)
+
+
+def configure_default_model(path: Optional[str] = None):
+    """Set the default model"""
+    agentstack_config = ConfigFile(path)
+    if agentstack_config.default_model:
+        return # Default model already set
+    
+    print("Project does not have a default model configured.")
+    other_msg = f"Other (enter a model name)"
+    model = inquirer.list_input(
+        message="Which model would you like to use?",
+        choices=PREFERRED_MODELS + [other_msg],
+    )
+
+    if model == other_msg: # If the user selects "Other", prompt for a model name
+        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+        model = inquirer.text(message="Enter the model name")
+    
+    with ConfigFile(path) as agentstack_config:
+        agentstack_config.default_model = model
 
 
 def ask_framework() -> str:
@@ -95,11 +178,9 @@ def ask_framework() -> str:
 
 
 def ask_design() -> dict:
-    # use_wizard = inquirer.confirm(
-    #     message="Would you like to use the CLI wizard to set up agents and tasks?",
-    # )
-
-    use_wizard = False
+    use_wizard = inquirer.confirm(
+        message="Would you like to use the CLI wizard to set up agents and tasks?",
+    )
 
     if not use_wizard:
         return {
@@ -199,11 +280,9 @@ First we need to create the agents that will work together to accomplish tasks:
 
 
 def ask_tools() -> list:
-    # use_tools = inquirer.confirm(
-    #     message="Do you want to add agent tools now? (you can do this later with `agentstack tools add <tool_name>`)",
-    # )
-
-    use_tools = False
+    use_tools = inquirer.confirm(
+        message="Do you want to add agent tools now? (you can do this later with `agentstack tools add <tool_name>`)",
+    )
 
     if not use_tools:
         return []
@@ -259,37 +338,40 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
     return questions
 
 
-def insert_template(project_details: dict, framework_name: str, design: dict):
+def insert_template(project_details: dict, framework_name: str, design: dict, template_data: Optional[dict] = None):
     framework = FrameworkData(framework_name.lower())
     project_metadata = ProjectMetadata(project_name=project_details["name"],
                                        description=project_details["description"],
                                        author_name=project_details["author"],
-                                       version=project_details["version"],
+                                       version="0.0.1",
                                        license="MIT",
-                                       year=datetime.now().year)
+                                       year=datetime.now().year,
+                                       template=template_data['name'] if template_data else None,
+                                       template_version=template_data['template_version'] if template_data else None)
 
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
+    project_structure.set_inputs(design["inputs"])
 
     cookiecutter_data = CookiecutterData(project_metadata=project_metadata,
                                          structure=project_structure,
                                          framework=framework_name.lower())
 
-    with importlib.resources.path(f'agentstack.templates', str(framework.name)) as template_path:
-        with open(f"{template_path}/cookiecutter.json", "w") as json_file:
-            json.dump(cookiecutter_data.to_dict(), json_file)
+    template_path = get_package_path() / f'templates/{framework.name}'
+    with open(f"{template_path}/cookiecutter.json", "w") as json_file:
+        json.dump(cookiecutter_data.to_dict(), json_file)
 
-        # copy .env.example to .env
-        shutil.copy(
-            f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
-            f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
+    # copy .env.example to .env
+    shutil.copy(
+        f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
+        f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
 
-        if os.path.isdir(project_details['name']):
-            print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
-            return
+    if os.path.isdir(project_details['name']):
+        print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
+        return
 
-        cookiecutter(str(template_path), no_input=True, extra_context=None)
+    cookiecutter(str(template_path), no_input=True, extra_context=None)
 
     # TODO: inits a git repo in the directory the command was run in
     # TODO: not where the project is generated. Fix this
@@ -318,30 +400,20 @@ def insert_template(project_details: dict, framework_name: str, design: dict):
     )
 
 
-def add_tools(tools: list, project_name: str):
-    for tool in tools:
-        generation.add_tool(tool, project_name)
-
-
 def list_tools():
-    with importlib.resources.path(f'agentstack.tools', 'tools.json') as tools_json_path:
-        try:
-            # Load the JSON data
-            tools_data = open_json_file(tools_json_path)
+    # Display the tools
+    tools = get_all_tools()
+    curr_category = None
 
-            # Display the tools
-            print("\n\nAvailable AgentStack Tools:")
-            for category, tools in tools_data.items():
-                print(f"\n{category.capitalize()}:")
-                for tool in tools:
-                    print(f"  - {tool['name']}: {tool['url']}")
+    print("\n\nAvailable AgentStack Tools:")
+    for category, tools in itertools.groupby(tools, lambda x: x.category):
+        if curr_category != category:
+            print(f"\n{category}:")
+            curr_category = category
+        for tool in tools:
+            print("  - ", end='')
+            print(term_color(f"{tool.name}", 'blue'), end='')
+            print(f": {tool.url if tool.url else 'AgentStack default tool'}")
 
-            print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
-            print("   https://docs.agentstack.sh/tools/core")
-
-        except FileNotFoundError:
-            print("Error: tools.json file not found at path:", tools_json_path)
-        except json.JSONDecodeError:
-            print("Error: tools.json contains invalid JSON.")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+    print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
+    print("   https://docs.agentstack.sh/tools/core")

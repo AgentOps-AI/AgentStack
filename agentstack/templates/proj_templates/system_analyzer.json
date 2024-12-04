@@ -1,0 +1,53 @@
+{
+  "name": "system_analyzer",
+  "description": "Multi-agent system for analyzing codebases and system architecture",
+  "template_version": 1,
+  "framework": "crewai",
+  "agents": [{
+    "name": "file_explorer",
+    "role": "Navigate and catalog system structure",
+    "goal": "Create a comprehensive map of the system structure, identifying key files, dependencies, and architectural patterns.",
+    "backstory": "You are an expert system architect with deep experience in analyzing complex codebases. You excel at understanding system organization and identifying architectural patterns.",
+    "model": "openai/gpt-4o"
+  },{
+    "name": "code_analyzer",
+    "role": "Analyze code quality and patterns",
+    "goal": "Review code for quality, security issues, and architectural concerns. Document findings and potential improvements.",
+    "backstory": "You are a senior code reviewer with extensive experience in multiple programming languages and best practices. You have a strong focus on code quality, security, and maintainability.",
+    "model": "openai/gpt-4o"
+  },{
+    "name": "documentation_writer",
+    "role": "Create technical documentation",
+    "goal": "Transform analysis findings into clear, comprehensive technical documentation that helps understand and maintain the system.",
+    "backstory": "You are a technical writer specializing in system documentation. You excel at explaining complex technical concepts clearly and creating maintainable documentation.",
+    "model": "openai/gpt-4o"
+  }],
+  "tasks": [{
+    "name": "system_mapping",
+    "description": "Map the system structure at path: {system_path}. Identify key components, dependencies, and patterns.",
+    "expected_output": "Detailed system map including file structure, key components, and architectural patterns identified.",
+    "agent": "file_explorer"
+  },{
+    "name": "code_analysis",
+    "description": "Analyze the codebase for quality, security, and architectural concerns using the system map.",
+    "expected_output": "Comprehensive analysis report detailing code quality, security issues, and architectural recommendations.",
+    "agent": "code_analyzer"
+  },{
+    "name": "documentation_creation",
+    "description": "Create technical documentation based on the system map and code analysis.",
+    "expected_output": "Complete technical documentation including system overview, architecture details, and maintenance guidelines.",
+    "agent": "documentation_writer"
+  }],
+  "tools": [{
+    "name": "directory_search",
+    "agents": ["file_explorer"]
+  },{
+    "name": "file_read",
+    "agents": ["file_explorer", "code_analyzer"]
+  },{
+    "name": "code_interpreter",
+    "agents": ["code_analyzer"]
+  }],
+  "method": "sequential",
+  "inputs": ["system_path"]
+}

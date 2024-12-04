@@ -33,7 +33,7 @@ from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
 
 def collect_machine_telemetry(command: str):
-    if get_telemetry_opt_out():
+    if command != "init" and get_telemetry_opt_out():
         return
 
     telemetry_data = {
@@ -46,7 +46,7 @@ def collect_machine_telemetry(command: str):
         'agentstack_version': get_version()
     }
 
-    if command is not "init":
+    if command != "init":
         telemetry_data['framework'] = get_framework()
     else:
         telemetry_data['framework'] = "n/a"
