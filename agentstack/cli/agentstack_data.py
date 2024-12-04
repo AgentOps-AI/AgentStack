@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 
 from agentstack.utils import clean_input, get_version
 from agentstack.logger import log
@@ -53,6 +53,7 @@ class ProjectStructure:
     def __init__(self):
         self.agents = []
         self.tasks = []
+        self.inputs = []
 
     def add_agent(self, agent):
         self.agents.append(agent)
@@ -60,10 +61,14 @@ class ProjectStructure:
     def add_task(self, task):
         self.tasks.append(task)
 
+    def set_inputs(self, inputs):
+        self.inputs = inputs
+
     def to_dict(self):
         return {
             'agents': self.agents,
             'tasks': self.tasks,
+            'inputs': self.inputs,
         }
 
     def to_json(self):
