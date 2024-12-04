@@ -31,10 +31,13 @@ class ConfigFile(BaseModel):
         A list of tools that are currently installed in the project.
     telemetry_opt_out: Optional[bool]
         Whether the user has opted out of telemetry. 
+    default_model: Optional[str]
+        The default model to use when generating agent configurations.
     """
     framework: Optional[str] = DEFAULT_FRAMEWORK
     tools: list[str] = []
     telemetry_opt_out: Optional[bool] = None
+    default_model: Optional[str] = None
     
     def __init__(self, path: Union[str, Path, None] = None):
         path = Path(path) if path else Path.cwd()

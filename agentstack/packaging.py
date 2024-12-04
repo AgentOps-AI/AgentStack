@@ -102,7 +102,9 @@ def detect_package_manager() -> PackageManager:
     print(', '.join(manager.cmd for manager in PACKAGE_MANAGERS))
     sys.exit(1)
 
-def install(package: str):
+def install(package: str, path: Optional[str] = None):
+    if path:
+        os.chdir(path)
     detect_package_manager().install(package)
 
 def upgrade(package: str):

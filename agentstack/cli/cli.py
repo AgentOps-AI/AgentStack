@@ -16,10 +16,19 @@ from cookiecutter.main import cookiecutter
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
 from agentstack.utils import get_package_path
+from agentstack.generation.files import ConfigFile
 from agentstack.generation.tool_generation import get_all_tools
-from .. import generation
-from ..utils import open_json_file, term_color, is_snake_case
+from agentstack import packaging, generation
+from agentstack.utils import open_json_file, term_color, is_snake_case
+from agentstack.update import AGENTSTACK_PACKAGE
 
+PREFERRED_MODELS = [
+    'openai/gpt-4o',
+    'anthropic/claude-3-5-sonnet',
+    'openai/o1-preview',
+    'openai/gpt-4-turbo',
+    'anthropic/claude-3-opus',
+]
 
 def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
     if slug_name and not is_snake_case(slug_name):
@@ -59,7 +68,8 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
         framework = template_data['framework']
         design = {
             'agents': template_data['agents'],
-            'tasks': template_data['tasks']
+            'tasks': template_data['tasks'],
+            'inputs': template_data['inputs'],
         }
 
         tools = template_data['tools']
@@ -82,11 +92,12 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
             "license": "MIT"
         }
 
-        framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
+        framework = "crewai"  # TODO: if --no-wizard, require a framework flag
 
         design = {
             'agents': [],
-            'tasks': []
+            'tasks': [],
+            'inputs': []
         }
 
         tools = []
@@ -100,6 +111,11 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
     for tool_data in tools:
         generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
 
+    try:
+        packaging.install(f'{AGENTSTACK_PACKAGE}[{framework}]', path=slug_name)
+    except Exception as e:
+        print(term_color(f"Failed to install dependencies for {slug_name}. Please try again by running `agentstack update`", 'red'))
+
 
 def welcome_message():
     os.system("cls" if os.name == "nt" else "clear")
@@ -112,6 +128,27 @@ def welcome_message():
     print(border)
     print(tagline)
     print(border)
+
+
+def configure_default_model(path: Optional[str] = None):
+    """Set the default model"""
+    agentstack_config = ConfigFile(path)
+    if agentstack_config.default_model:
+        return # Default model already set
+    
+    print("Project does not have a default model configured.")
+    other_msg = f"Other (enter a model name)"
+    model = inquirer.list_input(
+        message="Which model would you like to use?",
+        choices=PREFERRED_MODELS + [other_msg],
+    )
+
+    if model == other_msg: # If the user selects "Other", prompt for a model name
+        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+        model = inquirer.text(message="Enter the model name")
+    
+    with ConfigFile(path) as agentstack_config:
+        agentstack_config.default_model = model
 
 
 def ask_framework() -> str:
@@ -315,6 +352,7 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
+    project_structure.set_inputs(design["inputs"])
 
     cookiecutter_data = CookiecutterData(project_metadata=project_metadata,
                                          structure=project_structure,

@@ -15,6 +15,7 @@ import astor
 import ast
 from pydantic import BaseModel, ValidationError
 
+from agentstack import packaging
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ConfigFile, EnvFile
 from .gen_utils import insert_code_after_tag, string_in_file
@@ -22,7 +23,6 @@ from ..utils import open_json_file, get_framework, term_color
 
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
-
 FRAMEWORK_FILENAMES: dict[str, str] = {
     'crewai': 'src/crew.py',
 }
@@ -369,10 +369,17 @@ def modify_agent_tools(
 
     filename = _framework_filename(framework, path)
 
-    with open(filename, 'r') as f:
-        source = f.read()
+    with open(filename, 'r', encoding='utf-8') as f:
+        source_lines = f.readlines()
 
-    tree = ast.parse(source)
+    # Create a map of line numbers to comments
+    comments = {}
+    for i, line in enumerate(source_lines):
+        stripped = line.strip()
+        if stripped.startswith('#'):
+            comments[i + 1] = line
+
+    tree = ast.parse(''.join(source_lines))
 
     class ModifierTransformer(ast.NodeTransformer):
         def visit_FunctionDef(self, node):
@@ -380,6 +387,14 @@ def modify_agent_tools(
 
     modified_tree = ModifierTransformer().visit(tree)
     modified_source = astor.to_source(modified_tree)
+    modified_lines = modified_source.splitlines()
 
-    with open(filename, 'w') as f:
-        f.write(modified_source)
+    # Reinsert comments
+    final_lines = []
+    for i, line in enumerate(modified_lines, 1):
+        if i in comments:
+            final_lines.append(comments[i])
+        final_lines.append(line + '\n')
+
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(''.join(final_lines))
