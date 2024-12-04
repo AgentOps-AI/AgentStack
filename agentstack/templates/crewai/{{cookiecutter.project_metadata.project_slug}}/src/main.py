@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import sys
-from crew import {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew
+from crew import {{cookiecutter.project_metadata.project_name | replace('-', '') | replace('_', '') | capitalize}}Crew
 import agentops
 from dotenv import load_dotenv
 load_dotenv()
 
-agentops.init()
+agentops.init(default_tags=['crewai', 'agentstack'])
 
 
 def run():
@@ -15,7 +15,7 @@ def run():
     inputs = {
         'topic': 'AI LLMs'
     }
-    {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().kickoff(inputs=inputs)
+    {{cookiecutter.project_metadata.project_name | replace('-', '') | replace('_', '') | capitalize}}Crew().crew().kickoff(inputs=inputs)
 
 
 def train():
@@ -26,7 +26,7 @@ def train():
         "topic": "AI LLMs"
     }
     try:
-        {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
+        {{cookiecutter.project_metadata.project_name | replace('-', '') | replace('_', '') | capitalize}}Crew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
@@ -37,7 +37,7 @@ def replay():
     Replay the crew execution from a specific task.
     """
     try:
-        {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().replay(task_id=sys.argv[1])
+        {{cookiecutter.project_metadata.project_name | replace('-', '') | replace('_', '') | capitalize}}Crew().crew().replay(task_id=sys.argv[1])
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
@@ -51,7 +51,7 @@ def test():
         "topic": "AI LLMs"
     }
     try:
-        {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
+        {{cookiecutter.project_metadata.project_name | replace('-', '') | replace('_', '') | capitalize}}Crew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")

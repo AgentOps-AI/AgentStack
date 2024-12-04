@@ -8,7 +8,7 @@ import agentops
 from dotenv import load_dotenv
 load_dotenv()
 
-agentops.init()
+agentops.init(default_tags=['web_researcher', 'agentstack'])
 
 
 def run(inputs: Optional[dict] = None):
@@ -33,7 +33,8 @@ def train():
         "topic": "AI LLMs"
     }
     try:
-        WebresearcherCrew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
+        WebresearcherCrew().crew().train(n_iterations=int(
+            sys.argv[1]), filename=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
@@ -58,7 +59,8 @@ def test():
         "topic": "AI LLMs"
     }
     try:
-        WebresearcherCrew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
+        WebresearcherCrew().crew().test(n_iterations=int(
+            sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
