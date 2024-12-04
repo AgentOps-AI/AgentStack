@@ -16,6 +16,7 @@ import astor
 import ast
 from pydantic import BaseModel, ValidationError
 
+from agentstack import packaging
 from agentstack.utils import get_package_path
 from agentstack.generation import astools
 from agentstack.generation.files import ConfigFile, EnvFile
@@ -94,7 +95,7 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
     tool_file_path = tool_data.get_impl_file_path(framework)
 
     if tool_data.packages:
-        os.system(f"poetry add {' '.join(tool_data.packages)}")  # Install packages
+        packaging.install(' '.join(tool_data.packages))
     shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework=framework, tool_data=tool_data, path=path, agents=agents)  # Add tool to agent definition
@@ -133,7 +134,7 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
 
     tool_data = ToolConfig.from_tool_name(tool_name)
     if tool_data.packages:
-        os.system(f"poetry remove {' '.join(tool_data.packages)}") # Uninstall packages
+        packaging.remove(' '.join(tool_data.packages))
     try:
         os.remove(f'{path}src/tools/{tool_name}_tool.py')
     except FileNotFoundError:
@@ -324,10 +325,17 @@ def modify_agent_tools(
     path = Path(path)
     filename = path/frameworks.get_entrypoint_path(framework)
 
-    with open(filename, 'r') as f:
-        source = f.read()
+    with open(filename, 'r', encoding='utf-8') as f:
+        source_lines = f.readlines()
 
-    tree = ast.parse(source)
+    # Create a map of line numbers to comments
+    comments = {}
+    for i, line in enumerate(source_lines):
+        stripped = line.strip()
+        if stripped.startswith('#'):
+            comments[i + 1] = line
+
+    tree = ast.parse(''.join(source_lines))
 
     class ModifierTransformer(ast.NodeTransformer):
         def visit_FunctionDef(self, node):
@@ -335,6 +343,14 @@ def modify_agent_tools(
 
     modified_tree = ModifierTransformer().visit(tree)
     modified_source = astor.to_source(modified_tree)
+    modified_lines = modified_source.splitlines()
 
-    with open(filename, 'w') as f:
-        f.write(modified_source)
+    # Reinsert comments
+    final_lines = []
+    for i, line in enumerate(modified_lines, 1):
+        if i in comments:
+            final_lines.append(comments[i])
+        final_lines.append(line + '\n')
+
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(''.join(final_lines))
