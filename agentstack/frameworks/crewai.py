@@ -1,26 +1,20 @@
 from typing import Optional
 from pathlib import Path
 import ast
+from agentstack import ValidationError
+from agentstack.tools import ToolConfig
 from agentstack.generation import astools
-from . import SUPPORTED_FRAMEWORKS, ValidationError
+from . import SUPPORTED_FRAMEWORKS
 
 
 ENTRYPOINT: Path = Path('src/crew.py')
 
-class CrewFile:
+class CrewFile(astools.File):
     """
     Parses and manipulates the CrewAI entrypoint file.
+    All AST interactions should happen within the methods of this class.
     """
-    tree: ast.AST
-    _base_class: ast.ClassDef
-
-    def __init__(self, path: Optional[Path] = None):
-        if path is None: path = Path()
-        try:
-            with open(path/ENTRYPOINT, 'r') as f:
-                self.tree = ast.parse(f.read())
-        except (FileNotFoundError, SyntaxError) as e:
-            raise ValidationError(f"Failed to parse {ENTRYPOINT}\n{e}")
+    _base_class: ast.ClassDef = None
 
     def get_base_class(self) -> ast.ClassDef:
         """A base class is a class decorated with `@CrewBase`."""
@@ -28,7 +22,7 @@ class CrewFile:
             try:
                 self._base_class = astools.find_class_with_decorator(self.tree, 'CrewBase')[0]
             except IndexError:
-                raise ValidationError(f"`@CrewBase` decorated class not found in {self.ENTRYPOINT}")
+                raise ValidationError(f"`@CrewBase` decorated class not found in {ENTRYPOINT}")
         return self._base_class
 
     def get_crew_method(self) -> ast.FunctionDef:
@@ -37,7 +31,7 @@ class CrewFile:
             base_class = self.get_base_class()
             return astools.find_decorated_method_in_class(base_class, 'crew')[0]
         except IndexError:
-            raise ValidationError(f"`@crew` decorated method not found in `{base_class.name}` class in {self.ENTRYPOINT}")
+            raise ValidationError(f"`@crew` decorated method not found in `{base_class.name}` class in {ENTRYPOINT}")
 
     def get_task_methods(self) -> list[ast.FunctionDef]:
         """A `task` method is a method decorated with `@task`."""
@@ -47,16 +41,98 @@ class CrewFile:
         """An `agent` method is a method decorated with `@agent`."""
         return astools.find_decorated_method_in_class(self.get_base_class(), 'agent')
 
+    def get_agent_tools(self, agent_name: str) -> ast.List:
+        """
+        Get the tools used by an agent as AST nodes.
+        
+        Tool definitons are inside of the methods marked with an `@agent` decorator.
+        The method returns a new class instance with the tools as a list of callables
+        under the kwarg `tools`.
+        """
+        method = astools.find_method(self.get_agent_methods(), agent_name)
+        if method is None:
+            raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
+        
+        agent_class = astools.find_class_instantiation(method, 'Agent')
+        if agent_class is None:
+            raise ValidationError(f"`@agent` method `{agent_name}` does not have an `Agent` class instantiation in {ENTRYPOINT}")
+        
+        tools_kwarg = astools.find_kwarg_in_method_call(agent_class, 'tools')
+        if not tools_kwarg:
+            raise ValidationError(f"`@agent` method `{agent_name}` does not have a keyword argument `tools` in {ENTRYPOINT}")
+
+        return tools_kwarg.value
+
+    def add_agent_tools(self, agent_name: str, tool: ToolConfig):
+        """
+        Add new tools to be used by an agent.
+        
+        Tool definitons are inside of the methods marked with an `@agent` decorator.
+        The method returns a new class instance with the tools as a list of callables
+        under the kwarg `tools`.
+        """
+        method = astools.find_method(self.get_agent_methods(), agent_name)
+        if method is None:
+            raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
+        
+        new_tool_nodes = []
+        for tool_name in tool.tools:
+            # This prefixes the tool name with the 'tools' module
+            node = astools.create_attribute('tools', tool_name)
+            if tool.tools_bundled: # Splat the variable if it's bundled
+                node = ast.Starred(value=node, ctx=ast.Load())
+            new_tool_nodes.append(node)
+        
+        existing_node: ast.List = self.get_agent_tools(agent_name)
+        new_node = ast.List(
+            elts=set(existing_node.elts + new_tool_nodes),
+            ctx=ast.Load()
+        )
+        start, end = self.get_node_range(existing_node)
+        self.edit_node_range(start, end, new_node)
+    
+    def remove_agent_tools(self, agent_name: str, tool: ToolConfig):
+        """
+        Remove tools from an agent belonging to `tool`.
+        """
+        existing_node: ast.List = self.get_agent_tools(agent_name)
+        start, end = self.get_node_range(existing_node)
+        
+        # modify the existing node to remove any matching tools
+        for tool_name in tool.tools:
+            for node in existing_node.elts:
+                if isinstance(node, ast.Starred):
+                    attr_name = node.value.attr
+                else:
+                    attr_name = node.attr
+                if attr_name == tool_name:
+                    existing_node.elts.remove(node)
+        
+        self.edit_node_range(start, end, existing_node)
+
+
 def validate_project(path: Optional[Path] = None) -> None:
     """
     Validate that a CrewAI project is ready to run.
     Raises a frameworks.VaidationError if the project is not valid.
     """
-    crew_file = CrewFile(path) # raises ValidationError
+    if path is None: path = Path()
+    try:
+        crew_file = CrewFile(path/ENTRYPOINT)
+    except ValidationError as e:
+        raise e
+
     # A valid project must have a class in the crew.py file decorated with `@CrewBase`
-    class_node = crew_file.get_base_class() # raises ValidationError
+    try:
+        class_node = crew_file.get_base_class()
+    except ValidationError as e:
+        raise e
+
     # The Crew class must have one method decorated with `@crew`
-    crew_file.get_crew_method() # raises ValidationError
+    try:
+        crew_file.get_crew_method()
+    except ValidationError as e:
+        raise e
 
     # The Crew class must have one or more methods decorated with `@agent`
     if len(crew_file.get_task_methods()) < 1:
@@ -70,27 +146,40 @@ def validate_project(path: Optional[Path] = None) -> None:
             f"`@agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
             "Create a new agent using `agentstack generate agent <agent_name>`.")
 
-def add_tool(path: Optional[Path] = None) -> None:
+def add_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
     """
-    Add a tool to the CrewAI framework.
-
-    Creates the tool's method in the Crew class in the entrypoint file and 
-    imports the tool's methods from the tool module.
+    Add a tool to the CrewAI framework for the specified agent.
+    
+    The agent should already exist in the crew class and have a keyword argument `tools`.
     """
-    pass
+    if path is None: path = Path()
+    with CrewFile(path/ENTRYPOINT) as crew_file:
+        crew_file.add_agent_tools(agent_name, tool)
 
-def remove_tool(path: Optional[Path] = None) -> None:
-    pass
+def remove_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
+    """
+    Remove a tool from the CrewAI framework for the specified agent.
+    """
+    if path is None: path = Path()
+    with CrewFile(path/ENTRYPOINT) as crew_file:
+        crew_file.remove_agent_tools(agent_name, tool)
+
+def get_agent_names(path: Optional[Path] = None) -> list[str]:
+    """
+    Get a list of agent names (methods with an @agent decorator).
+    """
+    crew_file = CrewFile(path/ENTRYPOINT)
+    return [method.name for method in crew_file.get_agent_methods()]
 
 def add_agent(path: Optional[Path] = None) -> None:
-    pass
+    raise NotImplementedError
 
 def remove_agent(path: Optional[Path] = None) -> None:
-    pass
+    raise NotImplementedError
 
 def add_input(path: Optional[Path] = None) -> None:
-    pass
+    raise NotImplementedError
 
 def remove_input(path: Optional[Path] = None) -> None:
-    pass
+    raise NotImplementedError
 

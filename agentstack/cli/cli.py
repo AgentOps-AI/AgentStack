@@ -17,8 +17,8 @@ from cookiecutter.main import cookiecutter
 from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
 from agentstack.logger import log
 from agentstack.utils import get_package_path
+from agentstack.tools import get_all_tools
 from agentstack.generation.files import ConfigFile
-from agentstack.generation.tool_generation import get_all_tools
 from agentstack import frameworks
 from agentstack import packaging
 from agentstack import generation

@@ -3,7 +3,7 @@ import os, sys
 import unittest
 import importlib.resources
 from pathlib import Path
-from agentstack.generation.tool_generation import get_all_tool_paths, get_all_tool_names, ToolConfig
+from agentstack.tools import ToolConfig, get_all_tool_paths, get_all_tool_names
 
 BASE_PATH = Path(__file__).parent
 
