@@ -18,8 +18,9 @@ from agentstack.logger import log
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ConfigFile
 from agentstack.generation.tool_generation import get_all_tools
-from .. import generation
-from ..utils import open_json_file, term_color, is_snake_case
+from agentstack import packaging, generation
+from agentstack.utils import open_json_file, term_color, is_snake_case
+from agentstack.update import AGENTSTACK_PACKAGE
 
 PREFERRED_MODELS = [
     'openai/gpt-4o',
@@ -91,7 +92,7 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
             "license": "MIT"
         }
 
-        framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
+        framework = "crewai"  # TODO: if --no-wizard, require a framework flag
 
         design = {
             'agents': [],
@@ -109,6 +110,11 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
     insert_template(project_details, framework, design, template_data)
     for tool_data in tools:
         generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
+
+    try:
+        packaging.install(f'{AGENTSTACK_PACKAGE}[{framework}]', path=slug_name)
+    except Exception as e:
+        print(term_color(f"Failed to install dependencies for {slug_name}. Please try again by running `agentstack update`", 'red'))
 
 
 def welcome_message():

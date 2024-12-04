@@ -16,6 +16,7 @@ import astor
 import ast
 from pydantic import BaseModel, ValidationError
 
+from agentstack import packaging
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ConfigFile, EnvFile
 from .gen_utils import insert_code_after_tag, string_in_file
@@ -23,7 +24,6 @@ from ..utils import open_json_file, get_framework, term_color
 
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
-
 FRAMEWORK_FILENAMES: dict[str, str] = {
     'crewai': 'src/crew.py',
 }
@@ -106,9 +106,8 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
     tool_data = ToolConfig.from_tool_name(tool_name)
     tool_file_path = tool_data.get_impl_file_path(framework)
 
-
     if tool_data.packages:
-        os.system(f"poetry add {' '.join(tool_data.packages)}")  # Install packages
+        packaging.install(' '.join(tool_data.packages))
     shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework=framework, tool_data=tool_data, path=path, agents=agents)  # Add tool to agent definition
@@ -147,7 +146,7 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
 
     tool_data = ToolConfig.from_tool_name(tool_name)
     if tool_data.packages:
-        os.system(f"poetry remove {' '.join(tool_data.packages)}") # Uninstall packages
+        packaging.remove(' '.join(tool_data.packages))
     try:
         os.remove(f'{path}src/tools/{tool_name}_tool.py')
     except FileNotFoundError:
