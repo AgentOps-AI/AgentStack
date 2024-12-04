@@ -5,7 +5,7 @@ import agentops
 from dotenv import load_dotenv
 load_dotenv()
 
-agentops.init(default_tags=['autogen', 'agentstack'])
+agentops.init(default_tags=['crewai', 'agentstack'])
 
 
 def run():
