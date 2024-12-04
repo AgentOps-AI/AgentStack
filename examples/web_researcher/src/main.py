@@ -8,7 +8,7 @@ import agentops
 from dotenv import load_dotenv
 load_dotenv()
 
-agentops.init()
+agentops.init(default_tags=['web_researcher', 'agentstack'])
 
 
 def run(inputs: Optional[dict] = None):

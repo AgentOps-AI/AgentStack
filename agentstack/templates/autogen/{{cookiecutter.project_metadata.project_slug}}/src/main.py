@@ -4,7 +4,7 @@ import agentops
 
 from autogen import ConversableAgent, UserProxyAgent, config_list_from_json, register_function
 
-agentops.init()
+agentops.init(default_tags=['autogen', 'agentstack'])
 
 
 def main():
