@@ -2,8 +2,10 @@ import ast
 import sys
 from enum import Enum
 from typing import Optional, Union, List
+from pathlib import Path
 
 from agentstack.utils import term_color
+from agentstack import frameworks
 
 
 def insert_code_after_tag(file_path, tag, code_to_insert, next_line=False):
@@ -72,14 +74,6 @@ def string_in_file(file_path: str, str_to_match: str) -> bool:
         return str_to_match in file_content
 
 
-def _framework_filename(framework: str, path: str = ''):
-    if framework == 'crewai':
-        return f'{path}src/crew.py'
-
-    print(term_color(f'Unknown framework: {framework}', 'red'))
-    sys.exit(1)
-
-
 class CrewComponent(str, Enum):
     AGENT = "agent"
     TASK = "task"
@@ -103,7 +97,8 @@ def get_crew_components(
     Returns:
         Dictionary with 'agents' and 'tasks' keys containing lists of names
     """
-    filename = _framework_filename(framework, path)
+    path = Path(path)
+    filename = path/frameworks.get_entrypoint_path(framework)
 
     # Convert single component type to list for consistent handling
     if isinstance(component_type, CrewComponent):

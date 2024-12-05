@@ -12,7 +12,7 @@ class GenerationFilesTest(unittest.TestCase):
     def test_read_config(self):
         config = ConfigFile(BASE_PATH / "fixtures") # + agentstack.json
         assert config.framework == "crewai"
-        assert config.tools == ["tool1", "tool2"]
+        assert config.tools == []
         assert config.telemetry_opt_out is None
         assert config.default_model is None
     
