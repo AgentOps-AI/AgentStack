@@ -30,13 +30,23 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = [
+    "ruff",
+]
 test = [
     "tox>=4.23.2",
 ]
 crewai = [
+<<<<<<< Updated upstream
     "crewai>=0.83.0",
     "crewai-tools>=0.14.0"
 ]
+=======
+    "crewai==0.83.0",
+    "crewai-tools==0.14.0",
+]
+
+>>>>>>> Stashed changes
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
