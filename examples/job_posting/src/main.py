@@ -5,7 +5,7 @@ import agentops
 from dotenv import load_dotenv
 load_dotenv()
 
-agentops.init()
+agentops.init(default_tags=['job_posting', 'agentstack'])
 
 inputs = {
         'company_domain': 'https://agen.cy',
