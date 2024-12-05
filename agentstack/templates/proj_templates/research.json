@@ -31,5 +31,6 @@
     "name": "perplexity",
     "agents": ["researcher"]
   }],
-  "method": "sequential"
+  "method": "sequential",
+  "inputs": ["query"]
 }

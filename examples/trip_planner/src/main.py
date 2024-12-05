@@ -3,7 +3,7 @@ import sys
 from crew import TripplannerCrew
 import agentops
 
-agentops.init()
+agentops.init(default_tags=['trip_planner', 'agentstack'])
 
 # This main file is intended to be a way for your to run your
 # crew locally, so refrain from adding necessary logic into this file.

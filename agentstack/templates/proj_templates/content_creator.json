@@ -1,0 +1,50 @@
+{
+  "name": "content_creation",
+  "description": "Multi-agent system for creating high-quality content",
+  "template_version": 1,
+  "framework": "crewai",
+  "agents": [{
+    "name": "researcher",
+    "role": "Research topic and gather reference material",
+    "goal": "Find relevant, high-quality sources and extract key information about the requested topic. Focus on authoritative sources and diverse perspectives.",
+    "backstory": "You are an expert content researcher with years of experience identifying quality sources and extracting valuable information. You have a keen eye for credible references and can quickly identify key concepts.",
+    "model": "openai/gpt-4o"
+  },{
+    "name": "writer",
+    "role": "Create engaging content from research",
+    "goal": "Transform research materials into compelling, well-structured content that effectively communicates key ideas while maintaining accuracy.",
+    "backstory": "You are a skilled content writer with expertise in creating engaging, clear, and informative content. You excel at organizing information logically and maintaining a consistent tone.",
+    "model": "openai/gpt-4o"
+  },{
+    "name": "editor",
+    "role": "Review and enhance content",
+    "goal": "Ensure content accuracy, clarity, and engagement while maintaining consistency with style guidelines and target audience expectations.",
+    "backstory": "You are an experienced editor with a sharp eye for detail and deep understanding of content quality. You excel at improving clarity, flow, and impact while preserving the writer's voice.",
+    "model": "openai/gpt-4o"
+  }],
+  "tasks": [{
+    "name": "research_topic",
+    "description": "Research the given topic thoroughly: {topic}. Focus on authoritative sources and gather diverse perspectives.",
+    "expected_output": "Comprehensive research document with key findings, quotes, statistics, and properly cited sources.",
+    "agent": "researcher"
+  },{
+    "name": "create_content",
+    "description": "Using the research materials, create engaging content about: {topic}. Target audience: {audience}. Content type: {content_type}.",
+    "expected_output": "Well-structured content draft incorporating key research findings while maintaining engagement and appropriate tone.",
+    "agent": "writer"
+  },{
+    "name": "edit_content",
+    "description": "Review and enhance the content for: {topic}. Ensure accuracy, clarity, and alignment with style guidelines.",
+    "expected_output": "Polished final content with improved clarity, flow, and impact, along with an editorial summary noting major changes.",
+    "agent": "editor"
+  }],
+  "tools": [{
+    "name": "perplexity",
+    "agents": ["researcher"]
+  },{
+    "name": "firecrawl",
+    "agents": ["researcher"]
+  }],
+  "method": "sequential",
+  "inputs": ["topic", "audience", "content_type"]
+}

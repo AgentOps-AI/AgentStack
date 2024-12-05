@@ -1,5 +1,6 @@
 from typing import Optional
 
+import os
 import sys
 import json
 import re
@@ -7,10 +8,9 @@ from importlib.metadata import version
 from pathlib import Path
 import importlib.resources
 
-
-def get_version():
+def get_version(package: str = 'agentstack'):
     try:
-        return version('agentstack')
+        return version(package)
     except (KeyError, FileNotFoundError) as e:
         print(e)
         return "Unknown version"
@@ -18,15 +18,12 @@ def get_version():
 
 def verify_agentstack_project(path: Optional[str] = None):
     from agentstack.generation import ConfigFile
-
     try:
-        _ = ConfigFile(path)
+        agentstack_config = ConfigFile(path)
     except FileNotFoundError:
-        print(
-            "\033[31mAgentStack Error: This does not appear to be an AgentStack project."
-            "\nPlease ensure you're at the root directory of your project and a file named agentstack.json exists. "
-            "If you're starting a new project, run `agentstack init`\033[0m"
-        )
+        print("\033[31mAgentStack Error: This does not appear to be an AgentStack project."
+              "\nPlease ensure you're at the root directory of your project and a file named agentstack.json exists. "
+              "If you're starting a new project, run `agentstack init`\033[0m")
         sys.exit(1)
 
 
@@ -39,7 +36,6 @@ def get_package_path() -> Path:
 
 def get_framework(path: Optional[str] = None) -> str:
     from agentstack.generation import ConfigFile
-
     try:
         agentstack_config = ConfigFile(path)
         framework = agentstack_config.framework
@@ -49,24 +45,18 @@ def get_framework(path: Optional[str] = None) -> str:
 
         return framework
     except FileNotFoundError:
-        print(
-            "\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m"
-        )
+        print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
         sys.exit(1)
 
 
 def get_telemetry_opt_out(path: Optional[str] = None) -> str:
     from agentstack.generation import ConfigFile
-
     try:
         agentstack_config = ConfigFile(path)
         return bool(agentstack_config.telemetry_opt_out)
     except FileNotFoundError:
-        print(
-            "\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m"
-        )
+        print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
         sys.exit(1)
-
 
 def camel_to_snake(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
@@ -85,12 +75,7 @@ def open_json_file(path) -> dict:
 
 def clean_input(input_string):
     special_char_pattern = re.compile(r'[^a-zA-Z0-9\s_]')
-    return (
-        re.sub(special_char_pattern, '', input_string)
-        .lower()
-        .replace(' ', '_')
-        .replace('-', '_')
-    )
+    return re.sub(special_char_pattern, '', input_string).lower().replace(' ', '_').replace('-', '_')
 
 
 def term_color(text: str, color: str) -> str:
@@ -101,7 +86,7 @@ def term_color(text: str, color: str) -> str:
         'blue': '94',
         'purple': '95',
         'cyan': '96',
-        'white': '97',
+        'white': '97'
     }
     color_code = colors.get(color)
     if color_code:
@@ -110,5 +95,7 @@ def term_color(text: str, color: str) -> str:
         return text
 
 
+
 def is_snake_case(string: str):
     return bool(re.match('^[a-z0-9_]+$', string))
+
