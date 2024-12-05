@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 import unittest
 from parameterized import parameterized_class
+
 from agentstack import ValidationError
 from agentstack import frameworks
 from agentstack.tools import ToolConfig
@@ -17,7 +18,7 @@ BASE_PATH = Path(__file__).parent
 ])
 class TestToolGenerationInit(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH/'tmp'/'tool_generation'
+        self.project_dir = BASE_PATH/'tmp'/'tool_generation_init'
         os.makedirs(self.project_dir)
         os.makedirs(self.project_dir/'src')
         os.makedirs(self.project_dir/'src'/'tools')

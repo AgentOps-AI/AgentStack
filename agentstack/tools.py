@@ -41,11 +41,15 @@ class ToolConfig(pydantic.BaseModel):
                 print(f"{' '.join(error['loc'])}: {error['msg']}")
             sys.exit(1)
 
+    @property
+    def module_name(self) -> str:
+        return f"{self.name}_tool"
+
     def get_import_statement(self, framework: str) -> str:
-        return f"from .{self.name}_tool import {', '.join(self.tools)}"
+        return f"from .{self.module_name} import {', '.join(self.tools)}"
 
     def get_impl_file_path(self, framework: str) -> Path:
-        return get_package_path()/f'templates/{framework}/tools/{self.name}_tool.py'
+        return get_package_path()/f'templates/{framework}/tools/{self.module_name}.py'
 
 def get_all_tool_paths() -> list[Path]:
     paths = []
