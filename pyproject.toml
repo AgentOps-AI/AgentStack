@@ -30,13 +30,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = [
+    "ruff",
+]
 test = [
     "tox>=4.23.2",
 ]
 crewai = [
-    "crewai>=0.83.0",
-    "crewai-tools>=0.14.0"
+    "crewai==0.83.0",
+    "crewai-tools==0.14.0",
 ]
+
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
@@ -44,3 +48,22 @@ agentstack = ["templates/**/*"]
 
 [project.scripts]
 agentstack = "agentstack.main:main"
+
+[tool.ruff]
+exclude = [
+    ".git",
+    ".env",
+    ".venv",
+    "venv",
+    "env",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    "agentstack/templates/",
+    "examples",
+    "__init__.py"
+]
+
+[tool.ruff.format]
+quote-style = "preserve"
