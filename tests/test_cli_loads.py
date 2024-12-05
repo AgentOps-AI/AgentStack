@@ -6,14 +6,16 @@ import shutil
 
 
 class TestAgentStackCLI(unittest.TestCase):
-    CLI_ENTRY = [sys.executable, "-m", "agentstack.main"]  # Replace with your actual CLI entry point if different
+    CLI_ENTRY = [
+        sys.executable,
+        "-m",
+        "agentstack.main",
+    ]  # Replace with your actual CLI entry point if different
 
     def run_cli(self, *args):
         """Helper method to run the CLI with arguments."""
         result = subprocess.run(
-            [*self.CLI_ENTRY, *args],
-            capture_output=True,
-            text=True
+            [*self.CLI_ENTRY, *args], capture_output=True, text=True
         )
         return result
 

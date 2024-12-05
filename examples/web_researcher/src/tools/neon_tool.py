@@ -50,7 +50,7 @@ def execute_sql_ddl(connection_uri: str, command: str) -> str:
         return f"Failed to execute DDL command: {str(e)}"
     cur.close()
     conn.close()
-    return f"Command succeeded"
+    return "Command succeeded"
 
 
 @tool("Execute SQL DML")
@@ -75,7 +75,7 @@ def run_sql_query(connection_uri: str, query: str) -> str:
             return f"Query result: {records}"
         except psycopg2.ProgrammingError:
             # For INSERT/UPDATE/DELETE operations
-            return f"Query executed successfully"
+            return "Query executed successfully"
     except Exception as e:
         conn.rollback()
         return f"Failed to execute SQL query: {str(e)}"
