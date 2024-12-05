@@ -38,6 +38,7 @@ from importlib import import_module
 from pathlib import Path
 from agentstack import ValidationError
 from agentstack.tools import ToolConfig
+from agentstack.agents import AgentConfig
 
 
 CREWAI = 'crewai'
@@ -47,20 +48,15 @@ def get_framework_module(framework: str) -> import_module:
     """
     Get the module for a framework.
     """
-    if not framework in SUPPORTED_FRAMEWORKS:
-        raise ValueError(f"Framework {framework} not supported")
-
     try:
-        # repeated calls hit the `sys.modules` cache
-        return import_module(f".{framework}", __package__)
+        return import_module(f".{framework}", package=__package__)
     except ImportError:
-        raise ValueError(f"Framework {framework} could not be imported.")
+        raise Exception(f"Framework {framework} could not be imported.")
 
 def get_entrypoint_path(framework: str, path: Optional[Path] = None) -> Path:
     """
     Get the path to the entrypoint file for a framework.
     """
-    if not path: path = Path()
     return path/get_framework_module(framework).ENTRYPOINT
 
 def validate_project(framework: str, path: Optional[Path] = None):
@@ -89,17 +85,17 @@ def get_agent_names(framework: str, path: Optional[Path] = None) -> list[str]:
     """
     return get_framework_module(framework).get_agent_names(path)
 
-def add_agent(framework: str, path: Optional[Path] = None):
+def add_agent(framework: str, agent: AgentConfig, path: Optional[Path] = None):
     """
     Add an agent to the user's project.
     """
-    return get_framework_module(framework).add_agent(path)
+    return get_framework_module(framework).add_agent(agent, path)
 
-def remove_agent(framework: str, path: Optional[Path] = None):
+def remove_agent(framework: str, agent: AgentConfig, path: Optional[Path] = None):
     """
     Remove an agent from the user's project.
     """
-    return get_framework_module(framework).remove_agent(path)
+    return get_framework_module(framework).remove_agent(agent, path)
 
 def add_input(framework: str, path: Optional[Path] = None):
     """

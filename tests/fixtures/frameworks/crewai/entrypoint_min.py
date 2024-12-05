@@ -3,7 +3,7 @@ from crewai.project import CrewBase, agent, crew, task
 import tools
 
 @CrewBase
-class TestCrew():
+class TestCrew:
 
     @crew
     def crew(self) -> Crew:

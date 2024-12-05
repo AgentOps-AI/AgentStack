@@ -49,7 +49,7 @@ class TestFrameworks(unittest.TestCase):
         assert module.__name__ == f"agentstack.frameworks.{self.framework}"
     
     def test_get_framework_module_invalid(self):
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(Exception) as context:
             frameworks.get_framework_module('invalid')
     
     def test_validate_project(self):

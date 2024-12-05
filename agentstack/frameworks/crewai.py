@@ -3,6 +3,7 @@ from pathlib import Path
 import ast
 from agentstack import ValidationError
 from agentstack.tools import ToolConfig
+from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 from . import SUPPORTED_FRAMEWORKS
 
@@ -40,6 +41,31 @@ class CrewFile(asttools.File):
     def get_agent_methods(self) -> list[ast.FunctionDef]:
         """An `agent` method is a method decorated with `@agent`."""
         return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
+
+    def add_agent_method(self, agent: AgentConfig):
+        """Add a new agent method to the CrewAI entrypoint."""
+        # TODO do we want to pre-populate any tools?
+        agent_methods = self.get_agent_methods()
+        if agent.name in [method.name for method in agent_methods]:
+            raise ValidationError(f"Agent `{agent.name}` already exists in {ENTRYPOINT}")
+        if agent_methods:
+            # Add after the existing agent methods
+            _, pos = self.get_node_range(agent_methods[-1])
+        else:
+            # Add before the `crew` method
+            crew_method = self.get_crew_method()
+            pos, _ = self.get_node_range(crew_method)
+        
+        code = f"""
+    
+    @agent
+    def {agent.name}(self) -> Agent:
+        return Agent(
+            config=self.agents_config['{agent.name}'],
+            tools=[], # add tools here or use `agentstack tools add <tool_name>
+            verbose=True,
+        )"""
+        self.edit_node_range(pos, pos, code)
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
         """
@@ -170,10 +196,15 @@ def get_agent_names(path: Optional[Path] = None) -> list[str]:
     crew_file = CrewFile(path/ENTRYPOINT)
     return [method.name for method in crew_file.get_agent_methods()]
 
-def add_agent(path: Optional[Path] = None) -> None:
-    raise NotImplementedError
+def add_agent(agent: AgentConfig, path: Optional[Path] = None) -> None:
+    """
+    Add an agent method to the CrewAI entrypoint.
+    """
+    if path is None: path = Path()
+    with CrewFile(path/ENTRYPOINT) as crew_file:
+        crew_file.add_agent_method(agent)
 
-def remove_agent(path: Optional[Path] = None) -> None:
+def remove_agent(agent: AgentConfig, path: Optional[Path] = None) -> None:
     raise NotImplementedError
 
 def add_input(path: Optional[Path] = None) -> None:

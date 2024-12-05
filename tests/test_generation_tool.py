@@ -16,7 +16,7 @@ BASE_PATH = Path(__file__).parent
 @parameterized_class([
     {"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS
 ])
-class TestToolGeneration(unittest.TestCase):
+class TestGenerationTool(unittest.TestCase):
     def setUp(self):
         self.project_dir = BASE_PATH/'tmp'/'tool_generation'
         

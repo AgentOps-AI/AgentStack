@@ -3,6 +3,7 @@ from typing import Optional
 import os
 import sys
 import json
+from ruamel.yaml import YAML
 import re
 from importlib.metadata import version
 from pathlib import Path
@@ -70,6 +71,15 @@ def snake_to_camel(s):
 def open_json_file(path) -> dict:
     with open(path, 'r') as f:
         data = json.load(f)
+    return data
+
+
+def open_yaml_file(path) -> dict:
+    yaml = YAML()
+    yaml.preserve_quotes = True  # Preserve quotes in existing data
+    
+    with open(path, 'r') as f:
+        data = yaml.load(f)
     return data
 
 
