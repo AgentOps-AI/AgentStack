@@ -1,0 +1,37 @@
+name: 🔧 Feature Request
+description: Got a tool you want to see in AgentStack? We're all ears!
+title: "[Tool request]: "
+labels: ["tool"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to share your feature idea! Your input helps us improve AgentStack.
+  - type: textarea
+    id: feature-description-and-solution
+    attributes:
+      label: 💡 Tool Description and Proposed Solution
+      description: Briefly describe your which tool you want to see and how you envision it working. Include links, screenshots, etc.
+      placeholder: What tool do you want to see?
+    validations:
+      required: true
+  - type: textarea
+    id: problem-related
+    attributes:
+      label: 🤔 Extra context
+      description: What will be needed to implement this tool? Is it free? What are the costs?
+      placeholder: Explain the context.
+    validations:
+      required: false
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 🤝 Contribution
+      description: Would you be willing to contribute to this update?
+      options:
+        - label: Yes, I'd be happy to submit a pull request with these changes.
+        - label: I need some guidance on how to contribute.
+        - label: I'd prefer the AgentStack team to handle this update.
+    validations:
+      required: true
