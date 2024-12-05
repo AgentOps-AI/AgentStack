@@ -37,26 +37,3 @@ jobs:
         run: pip install tox
       - name: Run tests with tox
         run: tox
-
-  ruff:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Ruff
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff
-
-      - name: Run Ruff Format Check
-        run: |
-          # Check if any files would be reformatted
-          ruff format --check .
-          
-          # Run Ruff linting checks
-          ruff check .

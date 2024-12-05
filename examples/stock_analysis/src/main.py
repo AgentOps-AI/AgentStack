@@ -3,7 +3,6 @@ import sys
 from crew import StockanalysisCrew
 import agentops
 from dotenv import load_dotenv
-
 load_dotenv()
 
 agentops.init()
@@ -13,12 +12,13 @@ agentops.init()
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
 
-
 def run():
     """
     Run the crew.
     """
-    inputs = {"topic": "AI LLMs"}
+    inputs = {
+        'topic': 'AI LLMs'
+    }
     StockanalysisCrew().crew().kickoff(inputs=inputs)
 
 
@@ -26,11 +26,11 @@ def train():
     """
     Train the crew for a given number of iterations.
     """
-    inputs = {"topic": "AI LLMs"}
+    inputs = {
+        "topic": "AI LLMs"
+    }
     try:
-        StockanalysisCrew().crew().train(
-            n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs
-        )
+        StockanalysisCrew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
@@ -51,15 +51,15 @@ def test():
     """
     Test the crew execution and returns the results.
     """
-    inputs = {"topic": "AI LLMs"}
+    inputs = {
+        "topic": "AI LLMs"
+    }
     try:
-        StockanalysisCrew().crew().test(
-            n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs
-        )
+        StockanalysisCrew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run()

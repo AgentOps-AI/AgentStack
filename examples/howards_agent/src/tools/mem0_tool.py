@@ -12,11 +12,11 @@ config = {
         "provider": "neo4j",
         "config": {
             "url": os.getenv("NEO4J_URL"),
-            "username": os.getenv("NEO4J_USERNAME", "neo4j"),
+            "username": os.getenv("NEO4J_USERNAME", 'neo4j'),
             "password": os.getenv("NEO4J_PASSWORD"),
-        },
+        }
     },
-    "version": "v1.1",
+    "version": "v1.1"
 }
 
 memory = Memory.from_config(config)

@@ -4,12 +4,10 @@ import requests
 from crewai_tools import tool
 
 from dotenv import load_dotenv
-
 load_dotenv()
 
 url = "https://api.perplexity.ai/chat/completions"
 api_key = os.getenv("PERPLEXITY_API_KEY")
-
 
 @tool
 def query_perplexity(query: str):
@@ -20,8 +18,14 @@ def query_perplexity(query: str):
     payload = {
         "model": "llama-3.1-sonar-small-128k-online",
         "messages": [
-            {"role": "system", "content": "Be precise and concise."},
-            {"role": "user", "content": query},
+            {
+                "role": "system",
+                "content": "Be precise and concise."
+            },
+            {
+                "role": "user",
+                "content": query
+            }
         ],
         # "max_tokens": "Optional",
         "temperature": 0.2,
@@ -34,9 +38,12 @@ def query_perplexity(query: str):
         "top_k": 0,
         "stream": False,
         "presence_penalty": 0,
-        "frequency_penalty": 1,
+        "frequency_penalty": 1
     }
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
 
     response = requests.request("POST", url, json=payload, headers=headers)
     if response.status_code == 200 and response.text:
