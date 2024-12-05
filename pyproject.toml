@@ -53,3 +53,6 @@ exclude = [
     "examples",
     "__init__.py"
 ]
+
+[tool.ruff.format]
+quote-style = "preserve"
