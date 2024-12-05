@@ -1,0 +1,11 @@
+[project]
+name = "agentstack.stripe"
+version = "0.1"
+
+dependencies = [
+    "stripe-agent-toolkit",
+    "stripe",
+]
+
+[project.optional-dependencies]
+crewai = []

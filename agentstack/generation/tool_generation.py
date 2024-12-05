@@ -1,6 +1,5 @@
 import os, sys
 from typing import Optional, Any, List
-import importlib.resources
 from pathlib import Path
 import json
 import sys
@@ -24,20 +23,7 @@ from ..utils import open_json_file, get_framework, term_color
 
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
-FRAMEWORK_FILENAMES: dict[str, str] = {
-    'crewai': 'src/crew.py',
-}
-
-def get_framework_filename(framework: str, path: str = ''):
-    if path:
-        path = path.endswith('/') and path or path + '/'
-    else:
-        path = './'
-    try:
-        return f"{path}{FRAMEWORK_FILENAMES[framework]}"
-    except KeyError:
-        print(term_color(f'Unknown framework: {framework}', 'red'))
-        sys.exit(1)
+TOOL_CONFIG_FILENAME = "config.json"
 
 class ToolConfig(BaseModel):
     name: str
@@ -47,40 +33,41 @@ class ToolConfig(BaseModel):
     tools_bundled: bool = False
     cta: Optional[str] = None
     env: Optional[dict] = None
-    packages: Optional[List[str]] = None
     post_install: Optional[str] = None
     post_remove: Optional[str] = None
 
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
-        path = get_package_path() / f'tools/{name}.json'
+        path = get_package_path()/'tools'/name/TOOL_CONFIG_FILENAME
         if not os.path.exists(path):
             print(term_color(f'No known agentstack tool: {name}', 'red'))
             sys.exit(1)
         return cls.from_json(path)
 
     @classmethod
-    def from_json(cls, path: Path) -> 'ToolConfig':
-        data = open_json_file(path)
+    def from_json(cls, filename: Path) -> 'ToolConfig':
+        data = open_json_file(filename)
         try:
             return cls(**data)
         except ValidationError as e:
-            print(term_color(f"Error validating tool config JSON: \n{path}", 'red'))
+            print(term_color(f"Error validating tool config JSON: \n{filename}", 'red'))
             for error in e.errors():
                 print(f"{' '.join(error['loc'])}: {error['msg']}")
             sys.exit(1)
 
-    def get_import_statement(self) -> str:
-        return f"from .{self.name}_tool import {', '.join(self.tools)}"
+    def get_import_statement(self, framework: str) -> str:
+        return f"from .{self.name}.{framework} import {', '.join(self.tools)}"
 
-    def get_impl_file_path(self, framework: str) -> Path:
-        return get_package_path() / f'templates/{framework}/tools/{self.name}_tool.py'
+    def get_path(self) -> Path:
+        return get_package_path()/'tools'/self.name
+
 
 def get_all_tool_paths() -> list[Path]:
     paths = []
-    tools_dir = get_package_path() / 'tools'
+    tools_dir = get_package_path()/'tools'
     for file in tools_dir.iterdir():
-        if file.is_file() and file.suffix == '.json':
+        # TODO packaging.validate_tool
+        if file.is_dir() and (file/TOOL_CONFIG_FILENAME).exists():
             paths.append(file)
     return paths
 
@@ -88,7 +75,7 @@ def get_all_tool_names() -> list[str]:
     return [path.stem for path in get_all_tool_paths()]
 
 def get_all_tools() -> list[ToolConfig]:
-    return [ToolConfig.from_json(path) for path in get_all_tool_paths()]
+    return [ToolConfig.from_json(path/TOOL_CONFIG_FILENAME) for path in get_all_tool_paths()]
 
 def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[str]] = []):
     if path:
@@ -104,11 +91,7 @@ def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[s
         sys.exit(1)
 
     tool_data = ToolConfig.from_tool_name(tool_name)
-    tool_file_path = tool_data.get_impl_file_path(framework)
-
-    if tool_data.packages:
-        packaging.install(' '.join(tool_data.packages))
-    shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
+    packaging.install_tool(tool_data, path)
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(framework=framework, tool_data=tool_data, path=path, agents=agents)  # Add tool to agent definition
 
@@ -145,12 +128,7 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
         sys.exit(1)
 
     tool_data = ToolConfig.from_tool_name(tool_name)
-    if tool_data.packages:
-        packaging.remove(' '.join(tool_data.packages))
-    try:
-        os.remove(f'{path}src/tools/{tool_name}_tool.py')
-    except FileNotFoundError:
-        print(f'"src/tools/{tool_name}_tool.py" not found')
+    packaging.remove_tool(tool_data, path)
     remove_tool_from_tools_init(tool_data, path)
     remove_tool_from_agent_definition(framework, tool_data, path)
     if tool_data.post_remove:
@@ -164,16 +142,18 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
 
 
 def add_tool_to_tools_init(tool_data: ToolConfig, path: str = ''):
+    framework = get_framework(path)
     file_path = f'{path}{TOOL_INIT_FILENAME}'
     tag = '# tool import'
-    code_to_insert = [tool_data.get_import_statement(), ]
+    code_to_insert = [tool_data.get_import_statement(framework), ]
     insert_code_after_tag(file_path, tag, code_to_insert, next_line=True)
 
 
 def remove_tool_from_tools_init(tool_data: ToolConfig, path: str = ''):
     """Search for the import statement in the init and remove it."""
+    framework = get_framework(path)
     file_path = f'{path}{TOOL_INIT_FILENAME}'
-    import_statement = tool_data.get_import_statement()
+    import_statement = tool_data.get_import_statement(framework)
     with fileinput.input(files=file_path, inplace=True) as f:
         for line in f:
             if line.strip() != import_statement:

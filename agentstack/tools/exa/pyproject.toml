@@ -1,0 +1,10 @@
+[project]
+name = "agentstack.exa"
+version = "0.1"
+
+dependencies = [
+    "exa_py"
+]
+
+[project.optional-dependencies]
+crewai = []

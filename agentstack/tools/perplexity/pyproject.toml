@@ -1,0 +1,10 @@
+[project]
+name = "agentstack.perplexity"
+version = "0.1"
+
+dependencies = [
+    "open-interpreter",
+]
+
+[project.optional-dependencies]
+crewai = []

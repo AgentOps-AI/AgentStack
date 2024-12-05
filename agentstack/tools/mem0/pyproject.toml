@@ -1,0 +1,10 @@
+[project]
+name = "agentstack.mem0"
+version = "0.1"
+
+dependencies = [
+    "mem0ai",
+]
+
+[project.optional-dependencies]
+crewai = []

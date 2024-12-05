@@ -1,0 +1,10 @@
+[project]
+name = "agentstack.open_interpreter"
+version = "0.1"
+
+dependencies = [
+    "open-interpreter",
+]
+
+[project.optional-dependencies]
+crewai = []

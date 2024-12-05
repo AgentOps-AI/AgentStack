@@ -1,0 +1,10 @@
+[project]
+name = "agentstack.browserbase"
+version = "0.1"
+
+dependencies = [
+    "browserbase",
+]
+
+[project.optional-dependencies]
+crewai = []

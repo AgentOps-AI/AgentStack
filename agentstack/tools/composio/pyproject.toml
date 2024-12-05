@@ -1,0 +1,10 @@
+[project]
+name = "agentstack.composio"
+version = "0.1"
+
+dependencies = []
+
+[project.optional-dependencies]
+crewai = [
+    "composio-crewai"
+]

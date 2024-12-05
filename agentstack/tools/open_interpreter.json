@@ -1,7 +1,0 @@
-{
-  "name": "open_interpreter",
-  "url": "https://github.com/OpenInterpreter/open-interpreter",
-  "category": "code-execution",
-  "packages": ["open-interpreter"],
-  "tools": ["execute_code"]
-}

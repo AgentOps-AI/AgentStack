@@ -1,0 +1,10 @@
+[project]
+name = "agentstack.agent_connect"
+version = "0.1"
+
+dependencies = [
+    "agent-connect",
+]
+
+[project.optional-dependencies]
+crewai = []
