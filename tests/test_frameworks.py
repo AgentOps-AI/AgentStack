@@ -66,6 +66,7 @@ class TestFrameworks(unittest.TestCase):
         frameworks.add_tool(self.framework, self._get_test_tool(), 'test_agent', self.project_dir)
         
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework, self.project_dir)).read()
+        # TODO these asserts are not framework agnostic
         assert 'tools=[tools.test_tool' in entrypoint_src
     
     def test_add_tool_starred(self):

@@ -32,7 +32,8 @@ class File:
     Edits are done using string indexing on the source code, which preserves a
     majority of the original formatting and prevents comments from being lost.
     
-    In cases where we are constructing new AST nodes, we use `ast.unparse`.
+    In cases where we are constructing new AST nodes, we use `astor` to render
+    the node as source code. 
     """
     filename: Path = None
     source: str = None

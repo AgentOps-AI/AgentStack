@@ -3,13 +3,13 @@ from pathlib import Path
 import ast
 from agentstack import ValidationError
 from agentstack.tools import ToolConfig
-from agentstack.generation import astools
+from agentstack.generation import asttools
 from . import SUPPORTED_FRAMEWORKS
 
 
 ENTRYPOINT: Path = Path('src/crew.py')
 
-class CrewFile(astools.File):
+class CrewFile(asttools.File):
     """
     Parses and manipulates the CrewAI entrypoint file.
     All AST interactions should happen within the methods of this class.
@@ -20,7 +20,7 @@ class CrewFile(astools.File):
         """A base class is a class decorated with `@CrewBase`."""
         if self._base_class is None: # Gets cached to save repeat iteration
             try:
-                self._base_class = astools.find_class_with_decorator(self.tree, 'CrewBase')[0]
+                self._base_class = asttools.find_class_with_decorator(self.tree, 'CrewBase')[0]
             except IndexError:
                 raise ValidationError(f"`@CrewBase` decorated class not found in {ENTRYPOINT}")
         return self._base_class
@@ -29,17 +29,17 @@ class CrewFile(astools.File):
         """A `crew` method is a method decorated with `@crew`."""
         try:
             base_class = self.get_base_class()
-            return astools.find_decorated_method_in_class(base_class, 'crew')[0]
+            return asttools.find_decorated_method_in_class(base_class, 'crew')[0]
         except IndexError:
             raise ValidationError(f"`@crew` decorated method not found in `{base_class.name}` class in {ENTRYPOINT}")
 
     def get_task_methods(self) -> list[ast.FunctionDef]:
         """A `task` method is a method decorated with `@task`."""
-        return astools.find_decorated_method_in_class(self.get_base_class(), 'task')
+        return asttools.find_decorated_method_in_class(self.get_base_class(), 'task')
 
     def get_agent_methods(self) -> list[ast.FunctionDef]:
         """An `agent` method is a method decorated with `@agent`."""
-        return astools.find_decorated_method_in_class(self.get_base_class(), 'agent')
+        return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
         """
@@ -49,15 +49,15 @@ class CrewFile(astools.File):
         The method returns a new class instance with the tools as a list of callables
         under the kwarg `tools`.
         """
-        method = astools.find_method(self.get_agent_methods(), agent_name)
+        method = asttools.find_method(self.get_agent_methods(), agent_name)
         if method is None:
             raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
         
-        agent_class = astools.find_class_instantiation(method, 'Agent')
+        agent_class = asttools.find_class_instantiation(method, 'Agent')
         if agent_class is None:
             raise ValidationError(f"`@agent` method `{agent_name}` does not have an `Agent` class instantiation in {ENTRYPOINT}")
         
-        tools_kwarg = astools.find_kwarg_in_method_call(agent_class, 'tools')
+        tools_kwarg = asttools.find_kwarg_in_method_call(agent_class, 'tools')
         if not tools_kwarg:
             raise ValidationError(f"`@agent` method `{agent_name}` does not have a keyword argument `tools` in {ENTRYPOINT}")
 
@@ -71,14 +71,14 @@ class CrewFile(astools.File):
         The method returns a new class instance with the tools as a list of callables
         under the kwarg `tools`.
         """
-        method = astools.find_method(self.get_agent_methods(), agent_name)
+        method = asttools.find_method(self.get_agent_methods(), agent_name)
         if method is None:
             raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
         
         new_tool_nodes = []
         for tool_name in tool.tools:
             # This prefixes the tool name with the 'tools' module
-            node = astools.create_attribute('tools', tool_name)
+            node = asttools.create_attribute('tools', tool_name)
             if tool.tools_bundled: # Splat the variable if it's bundled
                 node = ast.Starred(value=node, ctx=ast.Load())
             new_tool_nodes.append(node)
@@ -114,7 +114,7 @@ class CrewFile(astools.File):
 def validate_project(path: Optional[Path] = None) -> None:
     """
     Validate that a CrewAI project is ready to run.
-    Raises a frameworks.VaidationError if the project is not valid.
+    Raises an `agentstack.VaidationError` if the project is not valid.
     """
     if path is None: path = Path()
     try:
@@ -134,7 +134,7 @@ def validate_project(path: Optional[Path] = None) -> None:
     except ValidationError as e:
         raise e
 
-    # The Crew class must have one or more methods decorated with `@agent`
+    # The Crew class must have one or more methods decorated with `@task`
     if len(crew_file.get_task_methods()) < 1:
         raise ValidationError(
             f"`@task` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
@@ -148,8 +148,7 @@ def validate_project(path: Optional[Path] = None) -> None:
 
 def add_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
     """
-    Add a tool to the CrewAI framework for the specified agent.
-    
+    Add a tool to the CrewAI entrypoint for the specified agent.
     The agent should already exist in the crew class and have a keyword argument `tools`.
     """
     if path is None: path = Path()

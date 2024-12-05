@@ -10,14 +10,14 @@ from agentstack import packaging
 from agentstack import ValidationError
 from agentstack.utils import term_color
 from agentstack.tools import ToolConfig
-from agentstack.generation import astools
+from agentstack.generation import asttools
 from agentstack.generation.files import ConfigFile, EnvFile
 
 
 # This is the filename of the location of tool imports in the user's project.
 TOOLS_INIT_FILENAME: Path = Path("src/tools/__init__.py")
 
-class ToolsInitFile(astools.File):
+class ToolsInitFile(asttools.File):
     """
     Modifiable AST representation of the tools init file.
     
@@ -27,12 +27,12 @@ class ToolsInitFile(astools.File):
         tools_init.add_import_for_tool(...)
     ```
     """
-    def get_import_for_tool(self, tool: ToolConfig) -> ast.Import:
+    def get_import_for_tool(self, tool: ToolConfig) -> Union[ast.Import, ast.ImportFrom]:
         """
         Get the import statement for a tool.
         raises a ValidationError if the tool is imported multiple times.
         """
-        all_imports = astools.get_all_imports(self.tree)
+        all_imports = asttools.get_all_imports(self.tree)
         tool_imports = [i for i in all_imports if tool.module_name == i.module]
         
         if len(tool_imports) > 1:
@@ -53,7 +53,7 @@ class ToolsInitFile(astools.File):
             raise ValidationError(f"Tool {tool.name} already imported in {self.filename}")
 
         try:
-            last_import = astools.get_all_imports(self.tree)[-1]
+            last_import = asttools.get_all_imports(self.tree)[-1]
             start, end = self.get_node_range(last_import)
         except IndexError:
             start, end = 0, 0 # No imports in the file
@@ -136,6 +136,7 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional
     if tool.packages:
         packaging.remove(' '.join(tool.packages))
 
+    # TODO ensure that other agents in the project are not using the tool. 
     try:
         os.remove(path/f'src/tools/{tool.module_name}.py')
     except FileNotFoundError:
