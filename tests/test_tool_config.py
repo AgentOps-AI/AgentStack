@@ -1,9 +1,14 @@
 import json
 import unittest
 from pathlib import Path
-from agentstack.generation.tool_generation import get_all_tool_paths, get_all_tool_names, ToolConfig
+from agentstack.generation.tool_generation import (
+    get_all_tool_paths,
+    get_all_tool_names,
+    ToolConfig,
+)
 
 BASE_PATH = Path(__file__).parent
+
 
 class ToolConfigTest(unittest.TestCase):
     def test_minimal_json(self):

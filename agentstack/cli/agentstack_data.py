@@ -6,19 +6,22 @@ from agentstack.logger import log
 
 
 class ProjectMetadata:
-    def __init__(self,
-                 project_name: str = None,
-                 project_slug: str = None,
-                 description: str = "",
-                 author_name: str = "",
-                 version: str = "",
-                 license: str = "",
-                 year: int = datetime.now().year,
-                 template: str = "none",
-                 template_version: str = "0",
-                 ):
+    def __init__(
+        self,
+        project_name: str = None,
+        project_slug: str = None,
+        description: str = "",
+        author_name: str = "",
+        version: str = "",
+        license: str = "",
+        year: int = datetime.now().year,
+        template: str = "none",
+        template_version: str = "0",
+    ):
         self.project_name = clean_input(project_name) if project_name else "myagent"
-        self.project_slug = clean_input(project_slug) if project_slug else self.project_name
+        self.project_slug = (
+            clean_input(project_slug) if project_slug else self.project_name
+        )
         self.description = description
         self.author_name = author_name
         self.version = version
@@ -70,10 +73,11 @@ class ProjectStructure:
 
 
 class FrameworkData:
-    def __init__(self,
-                 # name: Optional[Literal["crewai"]] = None
-                 name: str = None  # TODO: better framework handling, Literal or Enum
-                 ):
+    def __init__(
+        self,
+        # name: Optional[Literal["crewai"]] = None
+        name: str = None,  # TODO: better framework handling, Literal or Enum
+    ):
         self.name = name
 
     def to_dict(self):
@@ -86,12 +90,13 @@ class FrameworkData:
 
 
 class CookiecutterData:
-    def __init__(self,
-                 project_metadata: ProjectMetadata,
-                 structure: ProjectStructure,
-                 # framework: Literal["crewai"],
-                 framework: str,
-                 ):
+    def __init__(
+        self,
+        project_metadata: ProjectMetadata,
+        structure: ProjectStructure,
+        # framework: Literal["crewai"],
+        framework: str,
+    ):
         self.project_metadata = project_metadata
         self.framework = framework
         self.structure = structure

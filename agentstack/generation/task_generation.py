@@ -8,10 +8,10 @@ from ruamel.yaml.scalarstring import FoldedScalarString
 
 
 def generate_task(
-        name,
-        description: Optional[str],
-        expected_output: Optional[str],
-        agent: Optional[str]
+    name,
+    description: Optional[str],
+    expected_output: Optional[str],
+    agent: Optional[str],
 ):
     if not description:
         description = 'Add your description here'
@@ -35,10 +35,10 @@ def generate_task(
 
 
 def generate_crew_task(
-        name,
-        description: Optional[str],
-        expected_output: Optional[str],
-        agent: Optional[str]
+    name,
+    description: Optional[str],
+    expected_output: Optional[str],
+    agent: Optional[str],
 ):
     config_path = os.path.join('src', 'config', 'tasks.yaml')
 
@@ -60,8 +60,14 @@ def generate_crew_task(
         data = {}
 
     # Handle None values
-    description_str = FoldedScalarString(description) if description else FoldedScalarString('')
-    expected_output_str = FoldedScalarString(expected_output) if expected_output else FoldedScalarString('')
+    description_str = (
+        FoldedScalarString(description) if description else FoldedScalarString('')
+    )
+    expected_output_str = (
+        FoldedScalarString(expected_output)
+        if expected_output
+        else FoldedScalarString('')
+    )
     agent_str = FoldedScalarString(agent) if agent else FoldedScalarString('')
 
     # Add new agent details
@@ -83,7 +89,7 @@ def generate_crew_task(
         "    return Task(",
         f"        config=self.tasks_config['{name}'],",
         "    )",
-        ""
+        "",
     ]
 
     insert_after_tasks(file_path, code_to_insert)

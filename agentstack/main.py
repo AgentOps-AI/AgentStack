@@ -9,6 +9,7 @@ import agentstack.generation as generation
 
 import webbrowser
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="AgentStack CLI - The easiest way to build an agent application"

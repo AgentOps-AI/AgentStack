@@ -13,7 +13,12 @@ import os
 import importlib.resources
 from cookiecutter.main import cookiecutter
 
-from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
+from .agentstack_data import (
+    FrameworkData,
+    ProjectMetadata,
+    ProjectStructure,
+    CookiecutterData,
+)
 from agentstack.logger import log
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ConfigFile
@@ -29,7 +34,12 @@ PREFERRED_MODELS = [
     "anthropic/claude-3-opus",
 ]
 
-def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
+
+def init_project_builder(
+    slug_name: Optional[str] = None,
+    template: Optional[str] = None,
+    use_wizard: bool = False,
+):
     if slug_name and not is_snake_case(slug_name):
         print(term_color("Project name must be snake case", "red"))
         return
@@ -41,7 +51,7 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
     template_data = None
     if template is not None:
         url_start = "https://"
-        if template[:len(url_start)] == url_start:
+        if template[: len(url_start)] == url_start:
             # template is a url
             response = requests.get(template)
             if response.status_code == 200:
@@ -91,7 +101,7 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
             "version": "0.0.1",
             "description": "New agentstack project",
             "author": "Name <Email>",
-            "license": "MIT"
+            "license": "MIT",
         }
 
         framework = "CrewAI"  # TODO: if --no-wizard, require a framework flag
@@ -129,7 +139,7 @@ def configure_default_model(path: Optional[str] = None):
     """Set the default model"""
     agentstack_config = ConfigFile(path)
     if agentstack_config.default_model:
-        return # Default model already set
+        return  # Default model already set
 
     print("Project does not have a default model configured.")
     other_msg = "Other (enter a model name)"
@@ -138,8 +148,10 @@ def configure_default_model(path: Optional[str] = None):
         choices=PREFERRED_MODELS + [other_msg],
     )
 
-    if model == other_msg: # If the user selects "Other", prompt for a model name
-        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+    if model == other_msg:  # If the user selects "Other", prompt for a model name
+        print(
+            f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"'
+        )
         model = inquirer.text(message="Enter the model name")
 
     with ConfigFile(path) as agentstack_config:
@@ -316,7 +328,6 @@ def ask_tools() -> list:
     tools_data = open_json_file(tools_json_path)
 
     while adding_tools:
-
         tool_type = inquirer.list_input(
             message="What category tool do you want to add?",
             choices=list(tools_data.keys()) + ["~~ Stop adding tools ~~"],
@@ -368,7 +379,12 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
     return questions
 
 
-def insert_template(project_details: dict, framework_name: str, design: dict, template_data: Optional[dict] = None):
+def insert_template(
+    project_details: dict,
+    framework_name: str,
+    design: dict,
+    template_data: Optional[dict] = None,
+):
     framework = FrameworkData(framework_name.lower())
     project_metadata = ProjectMetadata(
         project_name=project_details["name"],
@@ -385,9 +401,11 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
 
-    cookiecutter_data = CookiecutterData(project_metadata=project_metadata,
-                                         structure=project_structure,
-                                         framework=framework_name.lower())
+    cookiecutter_data = CookiecutterData(
+        project_metadata=project_metadata,
+        structure=project_structure,
+        framework=framework_name.lower(),
+    )
 
     template_path = get_package_path() / f"templates/{framework.name}"
     with open(f"{template_path}/cookiecutter.json", "w") as json_file:
