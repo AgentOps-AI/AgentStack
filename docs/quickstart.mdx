@@ -8,30 +8,32 @@ icon: 'circle-play'
 
 AgentStack's greatest ability is that of quickly scaffolding agent projects
 
-### Wizard
-
-AgentStack v0.1 supports a friendly setup wizard!
-
 To start, ensure you have AgentStack [installed](/installation) and run:
 ```bash
-agentstack init
+agentstack init <project_name>
 ```
 
-<Note>Using the wizard is recommended in AgentStack version 0.1 (current release)</Note>
 
+**With the Wizard**
 
-### Without Wizard
-
-Starting a project without the wizard is useful if you are past the ideation stage and want to just start with a default project template:
+Optionally, if you're a little overwhelmed with the code generated, you can use our Wizard to help guide you through some core setup!
 ```bash
-agentstack init --no-wizard
+agentstack init <project_name> --wizard
+```
+
+**With a Template**
+
+By default, your project will contain no agents or tasks.
+
+If you find it easier to start with a complete project and edit it to fit your use-case, you can use [Templates](/templates/templates)
+
+```bash
+agentstack init --template=<template_name/url>
 ```
 
 ## Building your project
 
-By default, your project will contain no agents or tasks.
-
-AgentStack 0.1 is built on top of [CrewAI](https://docs.crewai.com/introduction). The majority of your development experience will be with Crew.
+AgentStack 0.2 is built on top of [CrewAI](https://docs.crewai.com/introduction). The majority of your development experience will be with Crew.
 
 When working with your Crew project, AgentStack makes generating new agents and tasks easy.
 

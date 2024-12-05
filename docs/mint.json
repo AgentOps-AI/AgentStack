@@ -61,7 +61,15 @@
         "tools/core",
         "tools/community"
       ]
-    },{
+    },
+    {
+      "group": "Templating",
+      "pages": [
+        "templates/templates",
+        "templates/community"
+      ]
+    },
+    {
       "group": "Contributing",
       "pages": [
         "contributing/how-to-contribute",

@@ -5,7 +5,7 @@ import agentops
 from dotenv import load_dotenv
 load_dotenv()
 
-agentops.init()
+agentops.init(default_tags=['crewai', 'agentstack'])
 
 
 def run():
@@ -51,9 +51,11 @@ def test():
     """
     Test the crew execution and returns the results.
     """
+    inputs = {
 {%- for input in cookiecutter.structure.inputs %}
         "{{input}}": "",
 {%- endfor %}
+    }
     try:
         {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
 
