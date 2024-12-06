@@ -20,9 +20,7 @@ class ProjectMetadata:
         template_version: str = "0",
     ):
         self.project_name = clean_input(project_name) if project_name else "myagent"
-        self.project_slug = (
-            clean_input(project_slug) if project_slug else self.project_name
-        )
+        self.project_slug = clean_input(project_slug) if project_slug else self.project_name
         self.description = description
         self.author_name = author_name
         self.version = version
