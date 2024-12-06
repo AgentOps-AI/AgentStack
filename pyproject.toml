@@ -23,6 +23,7 @@ dependencies = [
     "cookiecutter==2.6.0",
     "psutil==5.9.8",
     "astor==0.8.1",
+    "asttokens",
     "pydantic>=2.10",
     "packaging==23.2",
     "requests>=2.32",

@@ -16,17 +16,14 @@ class GenerationFilesTest(unittest.TestCase):
     def test_read_config(self):
         config = ConfigFile(BASE_PATH / "fixtures")  # + agentstack.json
         assert config.framework == "crewai"
-        assert config.tools == ["tool1", "tool2"]
+        assert config.tools == []
         assert config.telemetry_opt_out is None
         assert config.default_model is None
 
     def test_write_config(self):
         try:
             os.makedirs(BASE_PATH / "tmp", exist_ok=True)
-            shutil.copy(
-                BASE_PATH / "fixtures/agentstack.json",
-                BASE_PATH / "tmp/agentstack.json",
-            )
+            shutil.copy(BASE_PATH / "fixtures/agentstack.json", BASE_PATH / "tmp/agentstack.json")
 
             with ConfigFile(BASE_PATH / "tmp") as config:
                 config.framework = "crewai"

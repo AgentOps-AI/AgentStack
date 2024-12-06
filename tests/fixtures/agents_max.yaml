@@ -1,0 +1,16 @@
+agent_name:
+  role: >-
+    role
+  goal: >-
+    this is a goal
+  backstory: >-
+    backstory
+  llm: provider/model
+second_agent_name:
+  role: >-
+    role
+  goal: >-
+    this is a goal
+  backstory: >-
+    this is a backstory
+  llm: provider/model

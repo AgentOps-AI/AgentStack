@@ -4,6 +4,7 @@ import sys
 import time
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
 import requests
 import itertools
 
@@ -21,11 +22,14 @@ from .agentstack_data import (
 )
 from agentstack.logger import log
 from agentstack.utils import get_package_path
+from agentstack.tools import get_all_tools
 from agentstack.generation.files import ConfigFile
-from agentstack.generation.tool_generation import get_all_tools
-from agentstack import packaging, generation
+from agentstack import frameworks
+from agentstack import packaging
+from agentstack import generation
 from agentstack.utils import open_json_file, term_color, is_snake_case
 from agentstack.update import AGENTSTACK_PACKAGE
+
 
 PREFERRED_MODELS = [
     'openai/gpt-4o',
@@ -158,11 +162,30 @@ def configure_default_model(path: Optional[str] = None):
     )
 
     if model == other_msg:  # If the user selects "Other", prompt for a model name
-        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+        print('A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
         model = inquirer.text(message="Enter the model name")
 
     with ConfigFile(path) as agentstack_config:
         agentstack_config.default_model = model
+
+
+def run_project(framework: str, path: str = ''):
+    """Validate that the project is ready to run and then run it."""
+    if framework not in frameworks.SUPPORTED_FRAMEWORKS:
+        print(term_color(f"Framework {framework} is not supported by agentstack.", 'red'))
+        sys.exit(1)
+
+    _path = Path(path)
+
+    try:
+        frameworks.validate_project(framework, _path)
+    except frameworks.ValidationError as e:
+        print(term_color("Project validation failed:", 'red'))
+        print(e)
+        sys.exit(1)
+
+    entrypoint = _path / frameworks.get_entrypoint_path(framework)
+    os.system(f'python {entrypoint}')
 
 
 def ask_framework() -> str:

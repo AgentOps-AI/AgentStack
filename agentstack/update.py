@@ -47,8 +47,7 @@ def get_latest_version(package: str) -> Version:
     import requests  # defer import until we know we need it
 
     response = requests.get(
-        f"{ENDPOINT_URL}/{package}/",
-        headers={"Accept": "application/vnd.pypi.simple.v1+json"},
+        f"{ENDPOINT_URL}/{package}/", headers={"Accept": "application/vnd.pypi.simple.v1+json"}
     )
     if response.status_code != 200:
         raise Exception(f"Failed to fetch package data from pypi.")
@@ -126,17 +125,13 @@ def check_for_updates(update_requested: bool = False):
             packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
             print(
                 term_color(
-                    f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.",
-                    'green',
+                    f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.", 'green'
                 )
             )
             sys.exit(0)
         else:
             print(
-                term_color(
-                    "Skipping update. Run `agentstack update` to install the latest version.",
-                    'blue',
-                )
+                term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue')
             )
     else:
         print(f"{AGENTSTACK_PACKAGE} is up to date ({installed_version})")
