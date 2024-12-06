@@ -2,15 +2,12 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 import tools
 
+
 @CrewBase
-class TestCrew():
+class TestCrew:
     @agent
     def test_agent(self) -> Agent:
-        return Agent(
-            config=self.agents_config['test_agent'],
-            tools=[],
-            verbose=True
-        )
+        return Agent(config=self.agents_config['test_agent'], tools=[], verbose=True)
 
     @task
     def test_task(self) -> Task:
@@ -26,4 +23,3 @@ class TestCrew():
             process=Process.sequential,
             verbose=True,
         )
-

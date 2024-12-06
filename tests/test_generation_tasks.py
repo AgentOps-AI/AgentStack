@@ -12,36 +12,36 @@ from agentstack.generation.task_generation import add_task
 BASE_PATH = Path(__file__).parent
 
 
-@parameterized_class([
-    {"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS
-])
+@parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
 class TestGenerationAgent(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH/'tmp'/'agent_generation'
-        
+        self.project_dir = BASE_PATH / 'tmp' / 'agent_generation'
+
         os.makedirs(self.project_dir)
-        os.makedirs(self.project_dir/'src')
-        os.makedirs(self.project_dir/'src'/'config')
-        (self.project_dir/'src'/'__init__.py').touch()
-        
+        os.makedirs(self.project_dir / 'src')
+        os.makedirs(self.project_dir / 'src' / 'config')
+        (self.project_dir / 'src' / '__init__.py').touch()
+
         # populate the entrypoint
         entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
-        shutil.copy(BASE_PATH/f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
-        
+        shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
+
         # set the framework in agentstack.json
-        shutil.copy(BASE_PATH/'fixtures'/'agentstack.json', self.project_dir/'agentstack.json')
+        shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')
         with ConfigFile(self.project_dir) as config:
             config.framework = self.framework
-    
+
     def tearDown(self):
         shutil.rmtree(self.project_dir)
-    
+
     def test_add_task(self):
-        add_task('task_test_two', 
-            description='description', 
-            expected_output='expected_output', 
-            agent='agent', 
-            path=self.project_dir)
+        add_task(
+            'task_test_two',
+            description='description',
+            expected_output='expected_output',
+            agent='agent',
+            path=self.project_dir,
+        )
 
         entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
         entrypoint_src = open(entrypoint_path).read()
@@ -53,8 +53,10 @@ class TestGenerationAgent(unittest.TestCase):
 
     def test_add_agent_exists(self):
         with self.assertRaises(SystemExit) as context:
-            add_task('test_task', 
-                description='description', 
-                expected_output='expected_output', 
-                agent='agent', 
-                path=self.project_dir)
+            add_task(
+                'test_task',
+                description='description',
+                expected_output='expected_output',
+                agent='agent',
+                path=self.project_dir,
+            )
