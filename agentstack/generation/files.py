@@ -36,7 +36,7 @@ class ConfigFile(BaseModel):
         The default model to use when generating agent configurations.
     """
 
-    framework: Optional[str] = DEFAULT_FRAMEWORK
+    framework: str = DEFAULT_FRAMEWORK
     tools: list[str] = []
     telemetry_opt_out: Optional[bool] = None
     default_model: Optional[str] = None

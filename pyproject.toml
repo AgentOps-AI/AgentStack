@@ -14,7 +14,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "agentops>=0.3.18",
+    "agentops>=0.3.19",
     "typer>=0.12.5",
     "inquirer>=3.4.0",
     "art>=6.3",
@@ -24,17 +24,19 @@ dependencies = [
     "psutil==5.9.8",
     "astor==0.8.1",
     "pydantic>=2.10",
-    "packaging>=23.2",
+    "packaging==23.2",
     "requests>=2.32",
     "appdirs>=1.4.4"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.1",
+    "ruff>=0.8.2",
 ]
 test = [
-    "tox>=4.23.2",
+    "tox",
 ]
 crewai = [
     "crewai==0.83.0",
@@ -67,3 +69,10 @@ exclude = [
 
 [tool.ruff.format]
 quote-style = "preserve"
+
+[tool.mypy]
+exclude = [
+    "templates/.*" # cookiecutter paths are not compatible
+]
+ignore_missing_imports = true
+
