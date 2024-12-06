@@ -162,7 +162,7 @@ def configure_default_model(path: Optional[str] = None):
     )
 
     if model == other_msg:  # If the user selects "Other", prompt for a model name
-        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+        print('A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
         model = inquirer.text(message="Enter the model name")
 
     with ConfigFile(path) as agentstack_config:
@@ -171,19 +171,20 @@ def configure_default_model(path: Optional[str] = None):
 
 def run_project(framework: str, path: str = ''):
     """Validate that the project is ready to run and then run it."""
-    if not framework in frameworks.SUPPORTED_FRAMEWORKS:
+    if framework not in frameworks.SUPPORTED_FRAMEWORKS:
         print(term_color(f"Framework {framework} is not supported by agentstack.", 'red'))
         sys.exit(1)
 
+    _path = Path(path)
+
     try:
-        frameworks.validate_project(framework, path)
+        frameworks.validate_project(framework, _path)
     except frameworks.ValidationError as e:
         print(term_color("Project validation failed:", 'red'))
         print(e)
         sys.exit(1)
 
-    path = Path(path)
-    entrypoint = path / frameworks.get_entrypoint_path(framework)
+    entrypoint = _path / frameworks.get_entrypoint_path(framework)
     os.system(f'python {entrypoint}')
 
 

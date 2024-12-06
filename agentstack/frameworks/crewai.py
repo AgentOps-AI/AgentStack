@@ -17,7 +17,7 @@ class CrewFile(asttools.File):
     All AST interactions should happen within the methods of this class.
     """
 
-    _base_class: ast.ClassDef = None
+    _base_class: Optional[ast.ClassDef] = None
 
     def get_base_class(self) -> ast.ClassDef:
         """A base class is a class decorated with `@CrewBase`."""
@@ -123,6 +123,11 @@ class CrewFile(asttools.File):
                 f"`@agent` method `{agent_name}` does not have a keyword argument `tools` in {ENTRYPOINT}"
             )
 
+        if not isinstance(tools_kwarg.value, ast.List):
+            raise ValidationError(
+                f"`@agent` method `{agent_name}` has a non-list value for the `tools` kwarg in {ENTRYPOINT}"
+            )
+
         return tools_kwarg.value
 
     def add_agent_tools(self, agent_name: str, tool: ToolConfig):
@@ -137,16 +142,17 @@ class CrewFile(asttools.File):
         if method is None:
             raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
 
-        new_tool_nodes = []
+        new_tool_nodes: set[ast.expr] = set()
         for tool_name in tool.tools:
             # This prefixes the tool name with the 'tools' module
-            node = asttools.create_attribute('tools', tool_name)
+            node: ast.expr = asttools.create_attribute('tools', tool_name)
             if tool.tools_bundled:  # Splat the variable if it's bundled
                 node = ast.Starred(value=node, ctx=ast.Load())
-            new_tool_nodes.append(node)
+            new_tool_nodes.add(node)
 
         existing_node: ast.List = self.get_agent_tools(agent_name)
-        new_node = ast.List(elts=set(existing_node.elts + new_tool_nodes), ctx=ast.Load())
+        elts: set[ast.expr] = set(existing_node.elts) | new_tool_nodes
+        new_node = ast.List(elts=list(elts), ctx=ast.Load())
         start, end = self.get_node_range(existing_node)
         self.edit_node_range(start, end, new_node)
 
@@ -161,9 +167,14 @@ class CrewFile(asttools.File):
         for tool_name in tool.tools:
             for node in existing_node.elts:
                 if isinstance(node, ast.Starred):
-                    attr_name = node.value.attr
-                else:
+                    if isinstance(node.value, ast.Attribute):
+                        attr_name = node.value.attr
+                    else:
+                        continue  # not an attribute node
+                elif isinstance(node, ast.Attribute):
                     attr_name = node.attr
+                else:
+                    continue  # not an attribute node
                 if attr_name == tool_name:
                     existing_node.elts.remove(node)
 

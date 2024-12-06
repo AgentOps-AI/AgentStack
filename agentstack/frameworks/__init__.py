@@ -27,7 +27,8 @@ following methods:
 `add_task(task: TaskConfig, path: Optional[Path] = None) -> None`:
     Add a task to the user's project.
 """
-from typing import Optional
+from typing import Optional, Protocol
+from types import ModuleType
 from importlib import import_module
 from pathlib import Path
 from agentstack import ValidationError
@@ -39,7 +40,29 @@ from agentstack.tasks import TaskConfig
 CREWAI = 'crewai'
 SUPPORTED_FRAMEWORKS = [CREWAI, ]
 
-def get_framework_module(framework: str) -> import_module:
+class FrameworkModule(Protocol):
+    ENTRYPOINT: Path
+
+    def validate_project(self, path: Optional[Path] = None) -> None:
+        ...
+
+    def add_tool(self, tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None:
+        ...
+
+    def remove_tool(self, tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None:
+        ...
+
+    def get_agent_names(self, path: Optional[Path] = None) -> list[str]:
+        ...
+
+    def add_agent(self, agent: AgentConfig, path: Optional[Path] = None) -> None:
+        ...
+
+    def add_task(self, task: TaskConfig, path: Optional[Path] = None) -> None:
+        ...
+
+
+def get_framework_module(framework: str) -> FrameworkModule:
     """
     Get the module for a framework.
     """
@@ -52,7 +75,9 @@ def get_entrypoint_path(framework: str, path: Optional[Path] = None) -> Path:
     """
     Get the path to the entrypoint file for a framework.
     """
-    return path/get_framework_module(framework).ENTRYPOINT
+    if path is None:
+        path = Path()
+    return path / get_framework_module(framework).ENTRYPOINT
 
 def validate_project(framework: str, path: Optional[Path] = None):
     """

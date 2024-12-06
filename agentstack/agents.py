@@ -1,5 +1,5 @@
 from typing import Optional
-import os, sys
+import os
 from pathlib import Path
 import pydantic
 from ruamel.yaml import YAML, YAMLError
@@ -50,12 +50,13 @@ class AgentConfig(pydantic.BaseModel):
         if not path:
             path = Path()
 
-        if not os.path.exists(path / AGENTS_FILENAME):
-            os.makedirs((path / AGENTS_FILENAME).parent, exist_ok=True)
-            (path / AGENTS_FILENAME).touch()
+        filename = path / AGENTS_FILENAME
+        if not os.path.exists(filename):
+            os.makedirs(filename.parent, exist_ok=True)
+            filename.touch()
 
         try:
-            with open(path / AGENTS_FILENAME, 'r') as f:
+            with open(filename, 'r') as f:
                 data = yaml.load(f) or {}
             data = data.get(name, {}) or {}
             super().__init__(**{**{'name': name}, **data})
@@ -65,7 +66,7 @@ class AgentConfig(pydantic.BaseModel):
         except pydantic.ValidationError as e:
             error_str = "Error validating agent config:\n"
             for error in e.errors():
-                error_str += f"{' '.join(error['loc'])}: {error['msg']}\n"
+                error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(f"Error loading agent {name} from {filename}.\n{error_str}")
 
         # store the path *after* loading data
@@ -80,12 +81,14 @@ class AgentConfig(pydantic.BaseModel):
         return {self.name: dump}
 
     def write(self):
-        with open(self._path / AGENTS_FILENAME, 'r') as f:
+        filename = self._path / AGENTS_FILENAME
+
+        with open(filename, 'r') as f:
             data = yaml.load(f) or {}
 
         data.update(self.model_dump())
 
-        with open(self._path / AGENTS_FILENAME, 'w') as f:
+        with open(filename, 'w') as f:
             yaml.dump(data, f)
 
     def __enter__(self) -> 'AgentConfig':

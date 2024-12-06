@@ -9,12 +9,16 @@ unwieldy, but since our use-cases are well-defined, we can provide a set of
 functions that are useful for the specific tasks we need to accomplish.
 """
 
-from typing import Optional, Union
+from typing import TypeVar, Optional, Union, Iterable
 from pathlib import Path
 import ast
 import astor
 import asttokens
 from agentstack import ValidationError
+
+
+FileT = TypeVar('FileT', bound='File')
+ASTT = TypeVar('ASTT', bound=ast.AST)
 
 
 class File:
@@ -37,10 +41,10 @@ class File:
     the node as source code.
     """
 
-    filename: Path = None
-    source: str = None
-    atok: asttokens.ASTTokens = None
-    tree: ast.AST = None
+    filename: Path
+    source: str
+    atok: asttokens.ASTTokens
+    tree: ast.Module
 
     def __init__(self, filename: Path):
         self.filename = filename
@@ -65,36 +69,45 @@ class File:
 
     def edit_node_range(self, start: int, end: int, node: Union[str, ast.AST]):
         """Splice a new node or string into the source code at the given range."""
-        if isinstance(node, ast.AST):
+        if isinstance(node, ast.expr):
             module = ast.Module(body=[ast.Expr(value=node)], type_ignores=[])
-            node = astor.to_source(module).strip()
+            _node = astor.to_source(module).strip()
+        else:
+            _node = node
 
-        self.source = self.source[:start] + node + self.source[end:]
+        self.source = self.source[:start] + _node + self.source[end:]
         # In order to continue accurately modifying the AST, we need to re-parse the source.
         self.atok = asttokens.ASTTokens(self.source, parse=True)
-        self.tree = self.atok.tree
 
-    def __enter__(self) -> 'File':
+        if self.atok.tree:
+            self.tree = self.atok.tree
+        else:
+            raise ValidationError(f"Failed to parse {self.filename} after edit")
+
+    def __enter__(self: FileT) -> FileT:
         return self
 
     def __exit__(self, *args):
         self.write()
 
 
-def get_all_imports(tree: ast.AST) -> list[Union[ast.Import, ast.ImportFrom]]:
+def get_all_imports(tree: ast.Module) -> list[ast.ImportFrom]:
     """Find all import statements in an AST."""
     imports = []
     for node in ast.iter_child_nodes(tree):
-        if isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom):
+        if isinstance(node, ast.ImportFrom):  # NOTE must be in format `from x import y`
             imports.append(node)
     return imports
 
 
-def find_method(tree: Union[list[ast.AST], ast.AST], method_name: str) -> Optional[ast.FunctionDef]:
+def find_method(tree: Union[Iterable[ASTT], ASTT], method_name: str) -> Optional[ast.FunctionDef]:
     """Find a method definition in an AST."""
-    if not isinstance(tree, list):
-        tree: generator = ast.iter_child_nodes(tree)
-    for node in tree:
+    if isinstance(tree, ast.AST):
+        _tree = list(ast.iter_child_nodes(tree))
+    else:
+        _tree = list(tree)
+
+    for node in _tree:
         if isinstance(node, ast.FunctionDef) and node.name == method_name:
             return node
     return None
@@ -108,25 +121,36 @@ def find_kwarg_in_method_call(node: ast.Call, kwarg_name: str) -> Optional[ast.k
     return None
 
 
-def find_class_instantiation(tree: Union[list[ast.AST], ast.AST], class_name: str) -> Optional[ast.Call]:
+def find_class_instantiation(tree: Union[Iterable[ast.AST], ast.AST], class_name: str) -> Optional[ast.Call]:
     """
     Find a class instantiation statement in an AST by the class name.
     This can either be an assignment to a variable or a return statement.
     """
-    if not isinstance(tree, list):
-        tree: generator = ast.iter_child_nodes(tree)
-    for node in tree:
+    if isinstance(tree, ast.AST):
+        _tree = list(ast.iter_child_nodes(tree))
+    else:
+        _tree = list(tree)
+
+    for node in _tree:
         if isinstance(node, ast.Assign):
             for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == class_name:
+                if (
+                    isinstance(target, ast.Name)
+                    and isinstance(node.value, ast.Call)
+                    and target.id == class_name
+                ):
                     return node.value
-        elif isinstance(node, ast.Return):
-            if isinstance(node.value, ast.Call) and node.value.func.id == class_name:
-                return node.value
+        elif (
+            isinstance(node, ast.Return)
+            and isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == class_name
+        ):
+            return node.value
     return None
 
 
-def find_class_with_decorator(tree: ast.AST, decorator_name: str) -> list[ast.ClassDef]:
+def find_class_with_decorator(tree: ast.Module, decorator_name: str) -> list[ast.ClassDef]:
     """Find a class definition that is marked by a decorator in an AST."""
     nodes = []
     for node in ast.iter_child_nodes(tree):

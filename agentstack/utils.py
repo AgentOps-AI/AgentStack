@@ -16,7 +16,7 @@ def get_version(package: str = 'agentstack'):
         return "Unknown version"
 
 
-def verify_agentstack_project(path: Optional[str] = None):
+def verify_agentstack_project(path: Optional[Path] = None):
     from agentstack.generation import ConfigFile
 
     try:

@@ -1,5 +1,6 @@
 from typing import Optional
-import os, sys
+import os
+import sys
 from pathlib import Path
 import pydantic
 from agentstack.utils import get_package_path, open_json_file, term_color
@@ -39,7 +40,7 @@ class ToolConfig(pydantic.BaseModel):
             # TODO raise exceptions and handle message/exit in cli
             print(term_color(f"Error validating tool config JSON: \n{path}", 'red'))
             for error in e.errors():
-                print(f"{' '.join(error['loc'])}: {error['msg']}")
+                print(f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}")
             sys.exit(1)
 
     @property

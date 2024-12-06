@@ -1,8 +1,8 @@
-import os, sys
-from typing import Optional, Union, Any
+import os
+import sys
+from typing import Optional
 from pathlib import Path
 import shutil
-import fileinput
 import ast
 
 from agentstack import frameworks
@@ -29,7 +29,7 @@ class ToolsInitFile(asttools.File):
     ```
     """
 
-    def get_import_for_tool(self, tool: ToolConfig) -> Union[ast.Import, ast.ImportFrom]:
+    def get_import_for_tool(self, tool: ToolConfig) -> Optional[ast.ImportFrom]:
         """
         Get the import statement for a tool.
         raises a ValidationError if the tool is imported multiple times.
@@ -170,4 +170,3 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional
         term_color('removed', 'red'),
         term_color('from agentstack project successfully', 'green'),
     )
-
