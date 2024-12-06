@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Optional, Literal, List
+from typing import Optional
 
 from agentstack.utils import clean_input, get_version
 from agentstack.logger import log
@@ -9,8 +9,8 @@ from agentstack.logger import log
 class ProjectMetadata:
     def __init__(
         self,
-        project_name: str = None,
-        project_slug: str = None,
+        project_name: Optional[str] = None,
+        project_slug: Optional[str] = None,
         description: str = "",
         author_name: str = "",
         version: str = "",
@@ -80,7 +80,7 @@ class FrameworkData:
     def __init__(
         self,
         # name: Optional[Literal["crewai"]] = None
-        name: str = None,  # TODO: better framework handling, Literal or Enum
+        name: Optional[str] = None,  # TODO: better framework handling, Literal or Enum
     ):
         self.name = name
 

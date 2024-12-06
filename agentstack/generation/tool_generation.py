@@ -1,15 +1,12 @@
-import os, sys
-from typing import Optional, Any, List
-import importlib.resources
-from pathlib import Path
-import json
+import os
 import sys
-from typing import Optional, List, Dict, Union
+from typing import Optional, List
+from pathlib import Path
+from typing import Union
 
 from . import get_agent_names
-from .gen_utils import insert_code_after_tag, string_in_file, _framework_filename
+from .gen_utils import insert_code_after_tag, _framework_filename
 from ..utils import open_json_file, get_framework, term_color
-import os
 import shutil
 import fileinput
 import astor
@@ -19,8 +16,6 @@ from pydantic import BaseModel, ValidationError
 from agentstack import packaging
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ConfigFile, EnvFile
-from .gen_utils import insert_code_after_tag, string_in_file
-from ..utils import open_json_file, get_framework, term_color
 
 
 TOOL_INIT_FILENAME = "src/tools/__init__.py"
@@ -69,7 +64,7 @@ class ToolConfig(BaseModel):
         except ValidationError as e:
             print(term_color(f"Error validating tool config JSON: \n{path}", 'red'))
             for error in e.errors():
-                print(f"{' '.join(error['loc'])}: {error['msg']}")
+                print(f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}")
             sys.exit(1)
 
     def get_import_statement(self) -> str:
@@ -148,7 +143,7 @@ def remove_tool(tool_name: str, path: Optional[str] = None):
     framework = get_framework()
     agentstack_config = ConfigFile(path)
 
-    if not tool_name in agentstack_config.tools:
+    if tool_name not in agentstack_config.tools:
         print(term_color(f'Tool {tool_name} is not installed', 'red'))
         sys.exit(1)
 
@@ -195,7 +190,10 @@ def remove_tool_from_tools_init(tool_data: ToolConfig, path: str = ''):
 
 
 def add_tool_to_agent_definition(
-    framework: str, tool_data: ToolConfig, path: str = '', agents: list[str] = []
+    framework: str,
+    tool_data: ToolConfig,
+    path: str = '',
+    agents: Optional[list[str]] = [],
 ):
     """
     Add tools to specific agent definitions using AST transformation.
@@ -285,7 +283,7 @@ def _process_tools_list(
     tool_data: ToolConfig,
     operation: str,
     base_name: str = 'tools',
-) -> List[ast.AST]:
+) -> List[ast.AST]:  # type: ignore[return-type,arg-type]
     """
     Process a tools list according to the specified operation.
 
@@ -347,10 +345,9 @@ def _modify_agent_tools(
                     if kw.arg == 'tools':
                         if isinstance(kw.value, ast.List):
                             # Process the tools list
-                            new_tools = _process_tools_list(kw.value.elts, tool_data, operation, base_name)
-
+                            new_tools = _process_tools_list(kw.value.elts, tool_data, operation, base_name)  # type: ignore
                             # Replace with new list
-                            kw.value = ast.List(elts=new_tools, ctx=ast.Load())
+                            kw.value = ast.List(elts=new_tools, ctx=ast.Load())  # type: ignore
 
     return node
 

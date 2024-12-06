@@ -24,17 +24,19 @@ dependencies = [
     "psutil==5.9.8",
     "astor==0.8.1",
     "pydantic>=2.10",
-    "packaging>=23.2",
+    "packaging==23.2",
     "requests>=2.32",
-    "appdirs>=1.4.4"
+    "appdirs>=1.4.4",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.1",
+    "ruff>=0.8.2",
 ]
 test = [
-    "tox>=4.23.2",
+    "tox",
 ]
 crewai = [
     "crewai==0.83.0",
@@ -68,3 +70,12 @@ line-length = 110
 
 [tool.ruff.format]
 quote-style = "preserve"
+
+[tool.mypy]
+exclude = [
+    "templates/.*" # cookiecutter paths are not compatible
+]
+allow_untyped_defs = true
+disable_error_code = ["var-annotated", "import-untyped"]
+ignore_missing_imports = true
+
