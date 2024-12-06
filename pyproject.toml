@@ -64,6 +64,7 @@ exclude = [
     "examples",
     "__init__.py"
 ]
+line-length = 110
 
 [tool.ruff.format]
 quote-style = "preserve"

@@ -92,9 +92,7 @@ class GenerationFilesTest(unittest.TestCase):
                 env.append_if_new("ENV_VAR100", "value2")  # Should be added
 
             tmp_data = open(BASE_PATH / "tmp/.env").read()
-            assert (
-                tmp_data == """\nENV_VAR1=value1\nENV_VAR2=value2\nENV_VAR100=value2"""
-            )
+            assert tmp_data == """\nENV_VAR1=value1\nENV_VAR2=value2\nENV_VAR100=value2"""
         except Exception as e:
             raise e
         finally:

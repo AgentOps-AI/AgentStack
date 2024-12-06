@@ -68,9 +68,7 @@ def generate_crew_agent(
     # Handle None values
     role_str = FoldedScalarString(role) if role else FoldedScalarString('')
     goals_str = FoldedScalarString(goal) if goal else FoldedScalarString('')
-    backstory_str = (
-        FoldedScalarString(backstory) if backstory else FoldedScalarString('')
-    )
+    backstory_str = FoldedScalarString(backstory) if backstory else FoldedScalarString('')
     model_str = llm if llm else ''
 
     # Add new agent details
