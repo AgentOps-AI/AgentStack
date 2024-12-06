@@ -1,5 +1,5 @@
-import os, sys
-from typing import Optional, List
+import sys
+from typing import Optional
 from pathlib import Path
 from agentstack import ValidationError
 from agentstack import frameworks
@@ -10,9 +10,9 @@ from agentstack.generation.files import ConfigFile
 
 def add_agent(
         agent_name: str, 
-        role: str = 'Add your role here',
-        goal: str = 'Add your goal here',
-        backstory: str = 'Add your backstory here',
+        role: Optional[str] = None, 
+        goal: Optional[str] = None, 
+        backstory: Optional[str] = None, 
         llm: Optional[str] = None, 
         path: Optional[Path] = None):
 
@@ -23,13 +23,10 @@ def add_agent(
 
     agent = AgentConfig(agent_name, path)
     with agent as config:
-        config.role = role
-        config.goal = goal
-        config.backstory = backstory
-        if llm:
-            config.llm = llm
-        else:
-            config.llm = agentstack_config.default_model
+        config.role = role or "Add your role here"
+        config.goal = goal or "Add your goal here"
+        config.backstory = backstory or "Add your backstory here"
+        config.llm = llm or agentstack_config.default_model
     
     try:
         frameworks.add_agent(framework, agent, path)

@@ -7,7 +7,7 @@ import ast
 
 from agentstack import frameworks, ValidationError
 from agentstack.generation.files import ConfigFile
-from agentstack.generation.agent_generation import add_agent
+from agentstack.generation.task_generation import add_task
 
 BASE_PATH = Path(__file__).parent
 
@@ -36,27 +36,25 @@ class TestGenerationAgent(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.project_dir)
     
-    def test_add_agent(self):
-        add_agent('test_agent_two', 
-            role='role', 
-            goal='goal', 
-            backstory='backstory', 
-            llm='llm', 
+    def test_add_task(self):
+        add_task('task_test_two', 
+            description='description', 
+            expected_output='expected_output', 
+            agent='agent', 
             path=self.project_dir)
 
         entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
         entrypoint_src = open(entrypoint_path).read()
         # agents.yaml is covered in test_agents_config.py
         # TODO framework-specific validation for code structure
-        assert 'def test_agent_two' in entrypoint_src
+        assert 'def task_test_two' in entrypoint_src
         # verify that the file's syntax is valid with ast
         ast.parse(entrypoint_src)
 
     def test_add_agent_exists(self):
         with self.assertRaises(SystemExit) as context:
-            add_agent('test_agent', 
-                role='role', 
-                goal='goal', 
-                backstory='backstory', 
-                llm='llm', 
+            add_task('test_task', 
+                description='description', 
+                expected_output='expected_output', 
+                agent='agent', 
                 path=self.project_dir)

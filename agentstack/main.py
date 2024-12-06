@@ -109,7 +109,7 @@ def main():
                 configure_default_model()
             generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm)
         elif args.generate_command in ['task', 't']:
-            generation.generate_task(args.name, args.description, args.expected_output, args.agent)
+            generation.add_task(args.name, args.description, args.expected_output, args.agent)
         else:
             generate_parser.print_help()
     elif args.command in ['tools', 't']:

@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 import unittest
 from parameterized import parameterized_class
+import ast
 
 from agentstack import frameworks
 from agentstack.tools import get_all_tools, ToolConfig
@@ -44,6 +45,7 @@ class TestGenerationTool(unittest.TestCase):
         
         entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
         entrypoint_src = open(entrypoint_path).read()
+        ast.parse(entrypoint_src)
         tools_init_src = open(self.project_dir/TOOLS_INIT_FILENAME).read()
         
         # TODO verify tool is added to all agents (this is covered in test_frameworks.py)
@@ -59,6 +61,7 @@ class TestGenerationTool(unittest.TestCase):
         
         entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
         entrypoint_src = open(entrypoint_path).read()
+        ast.parse(entrypoint_src)
         tools_init_src = open(self.project_dir/TOOLS_INIT_FILENAME).read()
         
         # TODO verify tool is removed from all agents (this is covered in test_frameworks.py)

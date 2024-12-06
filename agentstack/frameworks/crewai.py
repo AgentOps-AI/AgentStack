@@ -3,9 +3,9 @@ from pathlib import Path
 import ast
 from agentstack import ValidationError
 from agentstack.tools import ToolConfig
+from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
-from . import SUPPORTED_FRAMEWORKS
 
 
 ENTRYPOINT: Path = Path('src/crew.py')
@@ -38,6 +38,31 @@ class CrewFile(asttools.File):
         """A `task` method is a method decorated with `@task`."""
         return asttools.find_decorated_method_in_class(self.get_base_class(), 'task')
 
+    def add_task_method(self, task: TaskConfig):
+        """Add a new task method to the CrewAI entrypoint."""
+        task_methods = self.get_task_methods()
+        if task.name in [method.name for method in task_methods]:
+            # TODO this should check all methods in the class for duplicates
+            raise ValidationError(f"Task `{task.name}` already exists in {ENTRYPOINT}")
+        if task_methods:
+            # Add after the existing task methods
+            _, pos = self.get_node_range(task_methods[-1])
+        else:
+            # Add before the `crew` method
+            crew_method = self.get_crew_method()
+            pos, _ = self.get_node_range(crew_method)
+        
+        code = f"""    @task
+    def {task.name}(self) -> Task:
+        return Task(
+            config=self.tasks_config['{task.name}'],
+        )"""
+        if not self.source[:pos].endswith('\n'):
+            code = '\n\n' + code
+        if not self.source[pos:].startswith('\n'):
+            code += '\n\n'
+        self.edit_node_range(pos, pos, code)
+
     def get_agent_methods(self) -> list[ast.FunctionDef]:
         """An `agent` method is a method decorated with `@agent`."""
         return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
@@ -47,6 +72,7 @@ class CrewFile(asttools.File):
         # TODO do we want to pre-populate any tools?
         agent_methods = self.get_agent_methods()
         if agent.name in [method.name for method in agent_methods]:
+            # TODO this should check all methods in the class for duplicates
             raise ValidationError(f"Agent `{agent.name}` already exists in {ENTRYPOINT}")
         if agent_methods:
             # Add after the existing agent methods
@@ -56,15 +82,17 @@ class CrewFile(asttools.File):
             crew_method = self.get_crew_method()
             pos, _ = self.get_node_range(crew_method)
         
-        code = f"""
-    
-    @agent
+        code = f"""    @agent
     def {agent.name}(self) -> Agent:
         return Agent(
             config=self.agents_config['{agent.name}'],
             tools=[], # add tools here or use `agentstack tools add <tool_name>
             verbose=True,
         )"""
+        if not self.source[:pos].endswith('\n'):
+            code = '\n\n' + code
+        if not self.source[pos:].startswith('\n'):
+            code += '\n\n'
         self.edit_node_range(pos, pos, code)
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
@@ -172,6 +200,38 @@ def validate_project(path: Optional[Path] = None) -> None:
             f"`@agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
             "Create a new agent using `agentstack generate agent <agent_name>`.")
 
+def get_task_names(path: Optional[Path] = None) -> list[str]:
+    """
+    Get a list of task names (methods with an @task decorator).
+    """
+    if path is None: path = Path()
+    crew_file = CrewFile(path/ENTRYPOINT)
+    return [method.name for method in crew_file.get_task_methods()]
+
+def add_task(task: TaskConfig, path: Optional[Path] = None) -> None:
+    """
+    Add a task method to the CrewAI entrypoint.
+    """
+    if path is None: path = Path()
+    with CrewFile(path/ENTRYPOINT) as crew_file:
+        crew_file.add_task_method(task)
+
+def get_agent_names(path: Optional[Path] = None) -> list[str]:
+    """
+    Get a list of agent names (methods with an @agent decorator).
+    """
+    if path is None: path = Path()
+    crew_file = CrewFile(path/ENTRYPOINT)
+    return [method.name for method in crew_file.get_agent_methods()]
+
+def add_agent(agent: AgentConfig, path: Optional[Path] = None) -> None:
+    """
+    Add an agent method to the CrewAI entrypoint.
+    """
+    if path is None: path = Path()
+    with CrewFile(path/ENTRYPOINT) as crew_file:
+        crew_file.add_agent_method(agent)
+
 def add_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
     """
     Add a tool to the CrewAI entrypoint for the specified agent.
@@ -188,28 +248,4 @@ def remove_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
     if path is None: path = Path()
     with CrewFile(path/ENTRYPOINT) as crew_file:
         crew_file.remove_agent_tools(agent_name, tool)
-
-def get_agent_names(path: Optional[Path] = None) -> list[str]:
-    """
-    Get a list of agent names (methods with an @agent decorator).
-    """
-    crew_file = CrewFile(path/ENTRYPOINT)
-    return [method.name for method in crew_file.get_agent_methods()]
-
-def add_agent(agent: AgentConfig, path: Optional[Path] = None) -> None:
-    """
-    Add an agent method to the CrewAI entrypoint.
-    """
-    if path is None: path = Path()
-    with CrewFile(path/ENTRYPOINT) as crew_file:
-        crew_file.add_agent_method(agent)
-
-def remove_agent(agent: AgentConfig, path: Optional[Path] = None) -> None:
-    raise NotImplementedError
-
-def add_input(path: Optional[Path] = None) -> None:
-    raise NotImplementedError
-
-def remove_input(path: Optional[Path] = None) -> None:
-    raise NotImplementedError
 

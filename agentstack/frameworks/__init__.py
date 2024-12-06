@@ -21,17 +21,11 @@ following methods:
 `get_agent_names(path: Optional[Path] = None) -> list[str]`:
     Get a list of agent names in the user's project.
 
-`add_agent(path: Optional[Path] = None) -> None`:
+`add_agent(agent: AgentConfig, path: Optional[Path] = None) -> None`:
     Add an agent to the user's project.
 
-`remove_agent(path: Optional[Path] = None) -> None`:
-    Remove an agent from the user's project.
-
-`add_input(path: Optional[Path] = None) -> None`:
-    Add an input to the user's project.
-
-`remove_input(path: Optional[Path] = None) -> None`:
-    Remove an input from the user's project.
+`add_task(task: TaskConfig, path: Optional[Path] = None) -> None`:
+    Add a task to the user's project.
 """
 from typing import Optional
 from importlib import import_module
@@ -39,6 +33,7 @@ from pathlib import Path
 from agentstack import ValidationError
 from agentstack.tools import ToolConfig
 from agentstack.agents import AgentConfig
+from agentstack.tasks import TaskConfig
 
 
 CREWAI = 'crewai'
@@ -91,21 +86,9 @@ def add_agent(framework: str, agent: AgentConfig, path: Optional[Path] = None):
     """
     return get_framework_module(framework).add_agent(agent, path)
 
-def remove_agent(framework: str, agent: AgentConfig, path: Optional[Path] = None):
+def add_task(framework: str, task: TaskConfig, path: Optional[Path] = None):
     """
-    Remove an agent from the user's project.
+    Add a task to the user's project.
     """
-    return get_framework_module(framework).remove_agent(agent, path)
-
-def add_input(framework: str, path: Optional[Path] = None):
-    """
-    Add an input to the user's project.
-    """
-    return get_framework_module(framework).add_input(path)
-
-def remove_input(framework: str, path: Optional[Path] = None):
-    """
-    Remove an input from the user's project.
-    """
-    return get_framework_module(framework).remove_input(path)
+    return get_framework_module(framework).add_task(task, path)
 

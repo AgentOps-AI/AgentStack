@@ -36,7 +36,6 @@ class AgentConfigTest(unittest.TestCase):
     def test_read_maximal_yaml(self):
         shutil.copy(BASE_PATH/"fixtures/agents_max.yaml", self.project_dir/AGENTS_FILENAME)
         config = AgentConfig("agent_name", self.project_dir)
-        print(config.model_dump())
         assert config.name == "agent_name"
         assert config.role == "role"
         assert config.goal == "this is a goal"

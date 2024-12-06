@@ -69,6 +69,7 @@ class File:
                 type_ignores=[]
             )
             node = astor.to_source(module).strip()
+        
         self.source = self.source[:start] + node + self.source[end:]
         # In order to continue accurately modifying the AST, we need to re-parse the source.
         self.atok = asttokens.ASTTokens(self.source, parse=True)
