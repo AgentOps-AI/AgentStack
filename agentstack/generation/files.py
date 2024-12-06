@@ -123,7 +123,11 @@ class EnvFile:
     def write(self):
         with open(self._path / self._filename, 'a') as f:
             for key, value in self._new_variables.items():
-                f.write(f"\n{key}={value}")
+                """
+                We don't want to override values the user may already have set
+                in their environment variables so we add a new line commented out.
+                """
+                f.write(f"\n# {key}={value}")
 
     def __enter__(self) -> 'EnvFile':
         return self
