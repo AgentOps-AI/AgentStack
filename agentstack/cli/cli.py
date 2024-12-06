@@ -14,7 +14,12 @@ import os
 import importlib.resources
 from cookiecutter.main import cookiecutter
 
-from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
+from .agentstack_data import (
+    FrameworkData,
+    ProjectMetadata,
+    ProjectStructure,
+    CookiecutterData,
+)
 from agentstack.logger import log
 from agentstack.utils import get_package_path
 from agentstack.tools import get_all_tools
@@ -36,7 +41,9 @@ PREFERRED_MODELS = [
 
 
 def init_project_builder(
-    slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False
+    slug_name: Optional[str] = None,
+    template: Optional[str] = None,
+    use_wizard: bool = False,
 ):
     if slug_name and not is_snake_case(slug_name):
         print(term_color("Project name must be snake case", 'red'))
@@ -376,7 +383,10 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
 
 
 def insert_template(
-    project_details: dict, framework_name: str, design: dict, template_data: Optional[dict] = None
+    project_details: dict,
+    framework_name: str,
+    design: dict,
+    template_data: Optional[dict] = None,
 ):
     framework = FrameworkData(framework_name.lower())
     project_metadata = ProjectMetadata(
@@ -396,7 +406,9 @@ def insert_template(
     project_structure.set_inputs(design["inputs"])
 
     cookiecutter_data = CookiecutterData(
-        project_metadata=project_metadata, structure=project_structure, framework=framework_name.lower()
+        project_metadata=project_metadata,
+        structure=project_structure,
+        framework=framework_name.lower(),
     )
 
     template_path = get_package_path() / f'templates/{framework.name}'
@@ -410,7 +422,12 @@ def insert_template(
     )
 
     if os.path.isdir(project_details['name']):
-        print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
+        print(
+            term_color(
+                f"Directory {template_path} already exists. Please check this and try again",
+                "red",
+            )
+        )
         return
 
     cookiecutter(str(template_path), no_input=True, extra_context=None)

@@ -1,7 +1,5 @@
 import json
-import os, sys
 import unittest
-import importlib.resources
 from pathlib import Path
 from agentstack.tools import ToolConfig, get_all_tool_paths, get_all_tool_names
 
@@ -45,7 +43,7 @@ class ToolConfigTest(unittest.TestCase):
         for path in get_all_tool_paths():
             try:
                 config = ToolConfig.from_json(path)
-            except json.decoder.JSONDecodeError as e:
+            except json.decoder.JSONDecodeError:
                 raise Exception(
                     f"Failed to decode tool json at {path}. Does your tool config fit the required formatting? https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/tools/~README.md"
                 )

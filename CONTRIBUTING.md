@@ -35,5 +35,16 @@ Adding tools is easy once you understand the project structure. A few things nee
    - The tools that are exported from this file should be listed in the tool's config json.
 4. Manually test your tool integration by running `agentstack tools add <your_tool>` and ensure it behaves as expected.
 
+## Before creating your PR
+Be sure that you are opening a PR using a branch other than `main` on your fork. This enables us
+to pull your branch and make modifications to the PR with your permission that may be helpful.
+
+### Formatting
+AgentStack uses Ruff formatter for consistent code formatting. To format your code, run:
+```bash
+pip install ruff
+ruff format .
+```
+
 ## Tests
 HAHAHAHAHAHAHA good one

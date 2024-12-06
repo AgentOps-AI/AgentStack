@@ -104,7 +104,7 @@ class EnvFile:
         return key in self.variables
 
     def append_if_new(self, key, value):
-        if not key in self.variables:
+        if key not in self.variables:
             self.variables[key] = value
             self._new_variables[key] = value
 
