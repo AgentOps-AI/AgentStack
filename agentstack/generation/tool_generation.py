@@ -132,7 +132,7 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional
     agentstack_config = ConfigFile(path)
     framework = agentstack_config.framework
 
-    if not tool_name in agentstack_config.tools:
+    if tool_name not in agentstack_config.tools:
         print(term_color(f'Tool {tool_name} is not installed', 'red'))
         sys.exit(1)
 
@@ -170,3 +170,4 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional
         term_color('removed', 'red'),
         term_color('from agentstack project successfully', 'green'),
     )
+

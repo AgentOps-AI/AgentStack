@@ -1,6 +1,4 @@
 from typing import Optional
-
-import os
 import sys
 import json
 from ruamel.yaml import YAML
@@ -36,7 +34,7 @@ def get_package_path() -> Path:
     """This is the Path where agentstack is installed."""
     if sys.version_info <= (3, 9):
         return Path(sys.modules['agentstack'].__path__[0])
-    return importlib.resources.files('agentstack')
+    return importlib.resources.files('agentstack')  # type: ignore[return-value]
 
 
 def get_framework(path: Optional[str] = None) -> str:
@@ -55,7 +53,7 @@ def get_framework(path: Optional[str] = None) -> str:
         sys.exit(1)
 
 
-def get_telemetry_opt_out(path: Optional[str] = None) -> str:
+def get_telemetry_opt_out(path: Optional[str] = None) -> bool:
     from agentstack.generation import ConfigFile
 
     try:

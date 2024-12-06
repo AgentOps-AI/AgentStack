@@ -126,7 +126,7 @@ def init_project_builder(
 
     try:
         packaging.install(f'{AGENTSTACK_PACKAGE}[{framework}]', path=slug_name)
-    except Exception as e:
+    except Exception:
         print(
             term_color(
                 f"Failed to install dependencies for {slug_name}. Please try again by running `agentstack update`",
@@ -155,7 +155,7 @@ def configure_default_model(path: Optional[str] = None):
         return  # Default model already set
 
     print("Project does not have a default model configured.")
-    other_msg = f"Other (enter a model name)"
+    other_msg = "Other (enter a model name)"
     model = inquirer.list_input(
         message="Which model would you like to use?",
         choices=PREFERRED_MODELS + [other_msg],
@@ -301,7 +301,7 @@ First we need to create the agents that will work together to accomplish tasks:
                     inquirer.List(
                         "agent",
                         message="Which agent should be assigned this task?",
-                        choices=[a['name'] for a in agents],
+                        choices=[a['name'] for a in agents],  # type: ignore
                     ),
                 ]
             )
@@ -396,8 +396,8 @@ def insert_template(
         version="0.0.1",
         license="MIT",
         year=datetime.now().year,
-        template=template_data['name'] if template_data else None,
-        template_version=template_data['template_version'] if template_data else None,
+        template=template_data['name'] if template_data else 'none',
+        template_version=template_data['template_version'] if template_data else '0',
     )
 
     project_structure = ProjectStructure()
