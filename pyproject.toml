@@ -26,7 +26,7 @@ dependencies = [
     "pydantic>=2.10",
     "packaging==23.2",
     "requests>=2.32",
-    "appdirs>=1.4.4"
+    "appdirs>=1.4.4",
 ]
 
 [project.optional-dependencies]
@@ -75,5 +75,7 @@ quote-style = "preserve"
 exclude = [
     "templates/.*" # cookiecutter paths are not compatible
 ]
+allow_untyped_defs = true
+disable_error_code = ["var-annotated", "import-untyped"]
 ignore_missing_imports = true
 

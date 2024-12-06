@@ -1,6 +1,5 @@
-from typing import Optional, Union
-from importlib.abc import Traversable
-import os, sys
+from typing import Optional
+import sys
 import json
 import re
 from importlib.metadata import version
@@ -30,11 +29,11 @@ def verify_agentstack_project(path: Optional[str] = None):
         sys.exit(1)
 
 
-def get_package_path() -> Union[Path, Traversable]:
+def get_package_path() -> Path:
     """This is the Path where agentstack is installed."""
     if sys.version_info <= (3, 9):
         return Path(sys.modules['agentstack'].__path__[0])
-    return importlib.resources.files('agentstack')
+    return importlib.resources.files('agentstack')  # type: ignore[return-value]
 
 
 def get_framework(path: Optional[str] = None) -> str:
