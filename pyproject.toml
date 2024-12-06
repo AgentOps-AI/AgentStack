@@ -14,7 +14,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "agentops>=0.3.19",
+    "agentops>=0.3.18",
     "typer>=0.12.5",
     "inquirer>=3.4.0",
     "art>=6.3",
