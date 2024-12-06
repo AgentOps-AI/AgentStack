@@ -14,9 +14,7 @@ class TestAgentStackCLI(unittest.TestCase):
 
     def run_cli(self, *args):
         """Helper method to run the CLI with arguments."""
-        result = subprocess.run(
-            [*self.CLI_ENTRY, *args], capture_output=True, text=True
-        )
+        result = subprocess.run([*self.CLI_ENTRY, *args], capture_output=True, text=True)
         return result
 
     def test_version(self):

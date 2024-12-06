@@ -87,9 +87,7 @@ class EnvFile:
 
     variables: dict[str, str]
 
-    def __init__(
-        self, path: Union[str, Path, None] = None, filename: str = ENV_FILEMANE
-    ):
+    def __init__(self, path: Union[str, Path, None] = None, filename: str = ENV_FILEMANE):
         self._path = Path(path) if path else Path.cwd()
         self._filename = filename
         self.read()
@@ -117,9 +115,7 @@ class EnvFile:
 
         if os.path.exists(self._path / self._filename):
             with open(self._path / self._filename, 'r') as f:
-                self.variables = dict(
-                    [parse_line(line) for line in f.readlines() if '=' in line]
-                )
+                self.variables = dict([parse_line(line) for line in f.readlines() if '=' in line])
         else:
             self.variables = {}
         self._new_variables = {}

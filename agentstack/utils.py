@@ -50,9 +50,7 @@ def get_framework(path: Optional[str] = None) -> str:
 
         return framework
     except FileNotFoundError:
-        print(
-            "\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m"
-        )
+        print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
         sys.exit(1)
 
 
@@ -63,9 +61,7 @@ def get_telemetry_opt_out(path: Optional[str] = None) -> str:
         agentstack_config = ConfigFile(path)
         return bool(agentstack_config.telemetry_opt_out)
     except FileNotFoundError:
-        print(
-            "\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m"
-        )
+        print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
         sys.exit(1)
 
 
@@ -86,12 +82,7 @@ def open_json_file(path) -> dict:
 
 def clean_input(input_string):
     special_char_pattern = re.compile(r'[^a-zA-Z0-9\s_]')
-    return (
-        re.sub(special_char_pattern, '', input_string)
-        .lower()
-        .replace(' ', '_')
-        .replace('-', '_')
-    )
+    return re.sub(special_char_pattern, '', input_string).lower().replace(' ', '_').replace('-', '_')
 
 
 def term_color(text: str, color: str) -> str:

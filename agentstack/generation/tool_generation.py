@@ -96,9 +96,7 @@ def get_all_tools() -> list[ToolConfig]:
     return [ToolConfig.from_json(path) for path in get_all_tool_paths()]
 
 
-def add_tool(
-    tool_name: str, path: Optional[str] = None, agents: Optional[List[str]] = []
-):
+def add_tool(tool_name: str, path: Optional[str] = None, agents: Optional[List[str]] = []):
     if path:
         path = path.endswith('/') and path or path + '/'
     else:
@@ -116,9 +114,7 @@ def add_tool(
 
     if tool_data.packages:
         packaging.install(' '.join(tool_data.packages))
-    shutil.copy(
-        tool_file_path, f'{path}src/tools/{tool_name}_tool.py'
-    )  # Move tool from package to project
+    shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
     add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
     add_tool_to_agent_definition(
         framework=framework, tool_data=tool_data, path=path, agents=agents
@@ -138,11 +134,7 @@ def add_tool(
     with agentstack_config as config:
         config.tools.append(tool_name)
 
-    print(
-        term_color(
-            f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'
-        )
-    )
+    print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
     if tool_data.cta:
         print(term_color(f'🪩 {tool_data.cta}', 'blue'))
 
@@ -224,9 +216,7 @@ def add_tool_to_agent_definition(
     )
 
 
-def remove_tool_from_agent_definition(
-    framework: str, tool_data: ToolConfig, path: str = ''
-):
+def remove_tool_from_agent_definition(framework: str, tool_data: ToolConfig, path: str = ''):
     modify_agent_tools(
         framework=framework,
         tool_data=tool_data,
@@ -239,24 +229,18 @@ def remove_tool_from_agent_definition(
 
 def _create_tool_attribute(tool_name: str, base_name: str = 'tools') -> ast.Attribute:
     """Create an AST node for a tool attribute"""
-    return ast.Attribute(
-        value=ast.Name(id=base_name, ctx=ast.Load()), attr=tool_name, ctx=ast.Load()
-    )
+    return ast.Attribute(value=ast.Name(id=base_name, ctx=ast.Load()), attr=tool_name, ctx=ast.Load())
 
 
 def _create_starred_tool(tool_name: str, base_name: str = 'tools') -> ast.Starred:
     """Create an AST node for a starred tool expression"""
     return ast.Starred(
-        value=ast.Attribute(
-            value=ast.Name(id=base_name, ctx=ast.Load()), attr=tool_name, ctx=ast.Load()
-        ),
+        value=ast.Attribute(value=ast.Name(id=base_name, ctx=ast.Load()), attr=tool_name, ctx=ast.Load()),
         ctx=ast.Load(),
     )
 
 
-def _create_tool_attributes(
-    tool_names: List[str], base_name: str = 'tools'
-) -> List[ast.Attribute]:
+def _create_tool_attributes(tool_names: List[str], base_name: str = 'tools') -> List[ast.Attribute]:
     """Create AST nodes for multiple tool attributes"""
     return [_create_tool_attribute(name, base_name) for name in tool_names]
 
@@ -266,16 +250,12 @@ def _create_tool_nodes(
 ) -> List[Union[ast.Attribute, ast.Starred]]:
     """Create AST nodes for multiple tool attributes"""
     return [
-        _create_starred_tool(name, base_name)
-        if is_bundled
-        else _create_tool_attribute(name, base_name)
+        _create_starred_tool(name, base_name) if is_bundled else _create_tool_attribute(name, base_name)
         for name in tool_names
     ]
 
 
-def _is_tool_node_match(
-    node: ast.AST, tool_name: str, base_name: str = 'tools'
-) -> bool:
+def _is_tool_node_match(node: ast.AST, tool_name: str, base_name: str = 'tools') -> bool:
     """
     Check if an AST node matches a tool reference, regardless of whether it's starred
 
@@ -318,9 +298,7 @@ def _process_tools_list(
     if operation == 'add':
         new_tools = current_tools.copy()
         # Add new tools with bundling if specified
-        new_tools.extend(
-            _create_tool_nodes(tool_data.tools, tool_data.tools_bundled, base_name)
-        )
+        new_tools.extend(_create_tool_nodes(tool_data.tools, tool_data.tools_bundled, base_name))
         return new_tools
 
     elif operation == 'remove':
@@ -328,9 +306,7 @@ def _process_tools_list(
         return [
             tool
             for tool in current_tools
-            if not any(
-                _is_tool_node_match(tool, name, base_name) for name in tool_data.tools
-            )
+            if not any(_is_tool_node_match(tool, name, base_name) for name in tool_data.tools)
         ]
 
     raise ValueError(f"Unsupported operation: {operation}")
@@ -359,9 +335,7 @@ def _modify_agent_tools(
             return node
 
     # Check if this is an agent-decorated function
-    if not any(
-        isinstance(d, ast.Name) and d.id == 'agent' for d in node.decorator_list
-    ):
+    if not any(isinstance(d, ast.Name) and d.id == 'agent' for d in node.decorator_list):
         return node
 
     # Find the Return statement and modify tools
@@ -373,9 +347,7 @@ def _modify_agent_tools(
                     if kw.arg == 'tools':
                         if isinstance(kw.value, ast.List):
                             # Process the tools list
-                            new_tools = _process_tools_list(
-                                kw.value.elts, tool_data, operation, base_name
-                            )
+                            new_tools = _process_tools_list(kw.value.elts, tool_data, operation, base_name)
 
                             # Replace with new list
                             kw.value = ast.List(elts=new_tools, ctx=ast.Load())

@@ -60,14 +60,8 @@ def generate_crew_task(
         data = {}
 
     # Handle None values
-    description_str = (
-        FoldedScalarString(description) if description else FoldedScalarString('')
-    )
-    expected_output_str = (
-        FoldedScalarString(expected_output)
-        if expected_output
-        else FoldedScalarString('')
-    )
+    description_str = FoldedScalarString(description) if description else FoldedScalarString('')
+    expected_output_str = FoldedScalarString(expected_output) if expected_output else FoldedScalarString('')
     agent_str = FoldedScalarString(agent) if agent else FoldedScalarString('')
 
     # Add new agent details

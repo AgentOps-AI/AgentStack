@@ -115,16 +115,10 @@ def init_project_builder(
 
         tools = []
 
-    log.debug(
-        f"project_details: {project_details}"
-        f"framework: {framework}"
-        f"design: {design}"
-    )
+    log.debug(f"project_details: {project_details}" f"framework: {framework}" f"design: {design}")
     insert_template(project_details, framework, design, template_data)
     for tool_data in tools:
-        generation.add_tool(
-            tool_data['name'], agents=tool_data['agents'], path=project_details['name']
-        )
+        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
 
     try:
         packaging.install(f'{AGENTSTACK_PACKAGE}[{framework}]', path=slug_name)
@@ -164,9 +158,7 @@ def configure_default_model(path: Optional[str] = None):
     )
 
     if model == other_msg:  # If the user selects "Other", prompt for a model name
-        print(
-            f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"'
-        )
+        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
         model = inquirer.text(message="Enter the model name")
 
     with ConfigFile(path) as agentstack_config:
@@ -194,9 +186,7 @@ def ask_framework() -> str:
     #         choices=["CrewAI", "Autogen", "LiteLLM"],
     #     )
 
-    print(
-        "Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n"
-    )
+    print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
 
     return framework
 
@@ -231,9 +221,7 @@ First we need to create the agents that will work together to accomplish tasks:
         while agent_incomplete:
             agent = inquirer.prompt(
                 [
-                    inquirer.Text(
-                        "name", message="What's the name of this agent? (snake_case)"
-                    ),
+                    inquirer.Text("name", message="What's the name of this agent? (snake_case)"),
                     inquirer.Text("role", message="What role does this agent have?"),
                     inquirer.Text("goal", message="What is the goal of the agent?"),
                     inquirer.Text("backstory", message="Give your agent a backstory"),
@@ -254,11 +242,7 @@ First we need to create the agents that will work together to accomplish tasks:
                 print(term_color("Error: Agent name is required - Try again", 'red'))
                 agent_incomplete = True
             elif not is_snake_case(agent['name']):
-                print(
-                    term_color(
-                        "Error: Agent name must be snake case - Try again", 'red'
-                    )
-                )
+                print(term_color("Error: Agent name must be snake case - Try again", 'red'))
             else:
                 agent_incomplete = False
 
@@ -286,12 +270,8 @@ First we need to create the agents that will work together to accomplish tasks:
         while task_incomplete:
             task = inquirer.prompt(
                 [
-                    inquirer.Text(
-                        "name", message="What's the name of this task? (snake_case)"
-                    ),
-                    inquirer.Text(
-                        "description", message="Describe the task in more detail"
-                    ),
+                    inquirer.Text("name", message="What's the name of this task? (snake_case)"),
+                    inquirer.Text("description", message="Describe the task in more detail"),
                     inquirer.Text(
                         "expected_output",
                         message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)",
@@ -307,9 +287,7 @@ First we need to create the agents that will work together to accomplish tasks:
             if not task['name'] or task['name'] == '':
                 print(term_color("Error: Task name is required - Try again", 'red'))
             elif not is_snake_case(task['name']):
-                print(
-                    term_color("Error: Task name must be snake case - Try again", 'red')
-                )
+                print(term_color("Error: Task name must be snake case - Try again", 'red'))
             else:
                 task_incomplete = False
 
@@ -348,14 +326,8 @@ def ask_tools() -> list:
             choices=list(tools_data.keys()) + ["~~ Stop adding tools ~~"],
         )
 
-        tools_in_cat = [
-            f"{t['name']} - {t['url']}"
-            for t in tools_data[tool_type]
-            if t not in tools_to_add
-        ]
-        tool_selection = inquirer.list_input(
-            message="Select your tool", choices=tools_in_cat
-        )
+        tools_in_cat = [f"{t['name']} - {t['url']}" for t in tools_data[tool_type] if t not in tools_to_add]
+        tool_selection = inquirer.list_input(message="Select your tool", choices=tools_in_cat)
 
         tools_to_add.append(tool_selection.split(' - ')[0])
 
@@ -369,9 +341,7 @@ def ask_tools() -> list:
 
 
 def ask_project_details(slug_name: Optional[str] = None) -> dict:
-    name = inquirer.text(
-        message="What's the name of your project (snake_case)", default=slug_name or ''
-    )
+    name = inquirer.text(message="What's the name of your project (snake_case)", default=slug_name or '')
 
     if not is_snake_case(name):
         print(term_color("Project name must be snake case", 'red'))
@@ -379,12 +349,8 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
 
     questions = inquirer.prompt(
         [
-            inquirer.Text(
-                "version", message="What's the initial version", default="0.1.0"
-            ),
-            inquirer.Text(
-                "description", message="Enter a description for your project"
-            ),
+            inquirer.Text("version", message="What's the initial version", default="0.1.0"),
+            inquirer.Text("description", message="Enter a description for your project"),
             inquirer.Text("author", message="Who's the author (your name)?"),
         ]
     )
@@ -452,9 +418,7 @@ def insert_template(
         # subprocess.check_output(["git", "init"])
         # subprocess.check_output(["git", "add", "."])
     except:
-        print(
-            "Failed to initialize git repository. Maybe you're already in one? Do this with: git init"
-        )
+        print("Failed to initialize git repository. Maybe you're already in one? Do this with: git init")
 
     # TODO: check if poetry is installed and if so, run poetry install in the new directory
     # os.system("poetry install")
