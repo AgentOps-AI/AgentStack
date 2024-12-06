@@ -18,8 +18,10 @@ def insert_code_after_tag(file_path, tag, code_to_insert, next_line=False):
     for index, line in enumerate(lines):
         if tag in line:
             # Insert the code block after the tag
-            indented_code = [(line[:len(line)-len(line.lstrip())] + code_line + '\n') for code_line in code_to_insert]
-            lines[index+1:index+1] = indented_code
+            indented_code = [
+                (line[: len(line) - len(line.lstrip())] + code_line + '\n') for code_line in code_to_insert
+            ]
+            lines[index + 1 : index + 1] = indented_code
             break
     else:
         raise ValueError(f"Tag '{tag}' not found in the file.")
@@ -38,8 +40,9 @@ def insert_after_tasks(file_path, code_to_insert):
     last_task_end = None
     last_task_start = None
     for node in ast.walk(module):
-        if isinstance(node, ast.FunctionDef) and \
-                any(isinstance(deco, ast.Name) and deco.id == 'task' for deco in node.decorator_list):
+        if isinstance(node, ast.FunctionDef) and any(
+            isinstance(deco, ast.Name) and deco.id == 'task' for deco in node.decorator_list
+        ):
             last_task_end = node.end_lineno
             last_task_start = node.lineno
 
@@ -80,9 +83,9 @@ class CrewComponent(str, Enum):
 
 
 def get_crew_components(
-        framework: str = 'crewai',
-        component_type: Optional[Union[CrewComponent, List[CrewComponent]]] = None,
-        path: str = ''
+    framework: str = 'crewai',
+    component_type: Optional[Union[CrewComponent, List[CrewComponent]]] = None,
+    path: str = '',
 ) -> dict[str, List[str]]:
     """
     Get names of components (agents and/or tasks) defined in a crew file.
@@ -98,7 +101,7 @@ def get_crew_components(
         Dictionary with 'agents' and 'tasks' keys containing lists of names
     """
     path = Path(path)
-    filename = path/frameworks.get_entrypoint_path(framework)
+    filename = path / frameworks.get_entrypoint_path(framework)
 
     # Convert single component type to list for consistent handling
     if isinstance(component_type, CrewComponent):
@@ -111,10 +114,7 @@ def get_crew_components(
     # Parse the source into an AST
     tree = ast.parse(source)
 
-    components = {
-        'agents': [],
-        'tasks': []
-    }
+    components = {'agents': [], 'tasks': []}
 
     # Find all function definitions with relevant decorators
     for node in ast.walk(tree):
@@ -122,16 +122,17 @@ def get_crew_components(
             # Check decorators
             for decorator in node.decorator_list:
                 if isinstance(decorator, ast.Name):
-                    if (component_type is None or CrewComponent.AGENT in component_type) \
-                            and decorator.id == 'agent':
+                    if (
+                        component_type is None or CrewComponent.AGENT in component_type
+                    ) and decorator.id == 'agent':
                         components['agents'].append(node.name)
-                    elif (component_type is None or CrewComponent.TASK in component_type) \
-                            and decorator.id == 'task':
+                    elif (
+                        component_type is None or CrewComponent.TASK in component_type
+                    ) and decorator.id == 'task':
                         components['tasks'].append(node.name)
 
     # If specific types were requested, only return those
     if component_type:
-        return {k: v for k, v in components.items()
-                if CrewComponent(k[:-1]) in component_type}
+        return {k: v for k, v in components.items() if CrewComponent(k[:-1]) in component_type}
 
     return components

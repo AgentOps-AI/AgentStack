@@ -10,6 +10,7 @@ from agentstack.update import check_for_updates
 
 import webbrowser
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="AgentStack CLI - The easiest way to build an agent application"
@@ -42,7 +43,9 @@ def main():
     generate_parser = subparsers.add_parser('generate', aliases=['g'], help='Generate agents or tasks')
 
     # Subparsers under 'generate'
-    generate_subparsers = generate_parser.add_subparsers(dest='generate_command', help='Generate agents or tasks')
+    generate_subparsers = generate_parser.add_subparsers(
+        dest='generate_command', help='Generate agents or tasks'
+    )
 
     # 'agent' command under 'generate'
     agent_parser = generate_subparsers.add_parser('agent', aliases=['a'], help='Generate an agent')
@@ -71,7 +74,9 @@ def main():
     # 'add' command under 'tools'
     tools_add_parser = tools_subparsers.add_parser('add', aliases=['a'], help='Add a new tool')
     tools_add_parser.add_argument('name', help='Name of the tool to add')
-    tools_add_parser.add_argument('--agents', '-a', help='Name of agents to add this tool to, comma separated')
+    tools_add_parser.add_argument(
+        '--agents', '-a', help='Name of agents to add this tool to, comma separated'
+    )
     tools_add_parser.add_argument('--agent', help='Name of agent to add this tool to')
 
     # 'remove' command under 'tools'
@@ -124,7 +129,7 @@ def main():
         else:
             tools_parser.print_help()
     elif args.command in ['update', 'u']:
-        pass # Update check already done
+        pass  # Update check already done
     else:
         parser.print_help()
 

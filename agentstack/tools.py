@@ -10,6 +10,7 @@ class ToolConfig(pydantic.BaseModel):
     This represents the configuration data for a tool.
     It parses and validates the `config.json` file for a tool.
     """
+
     name: str
     category: str
     tools: list[str]
@@ -24,7 +25,7 @@ class ToolConfig(pydantic.BaseModel):
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
         path = get_package_path() / f'tools/{name}.json'
-        if not os.path.exists(path): # TODO raise exceptions and handle message/exit in cli
+        if not os.path.exists(path):  # TODO raise exceptions and handle message/exit in cli
             print(term_color(f'No known agentstack tool: {name}', 'red'))
             sys.exit(1)
         return cls.from_json(path)
@@ -49,19 +50,21 @@ class ToolConfig(pydantic.BaseModel):
         return f"from .{self.module_name} import {', '.join(self.tools)}"
 
     def get_impl_file_path(self, framework: str) -> Path:
-        return get_package_path()/f'templates/{framework}/tools/{self.module_name}.py'
+        return get_package_path() / f'templates/{framework}/tools/{self.module_name}.py'
+
 
 def get_all_tool_paths() -> list[Path]:
     paths = []
-    tools_dir = get_package_path()/'tools'
+    tools_dir = get_package_path() / 'tools'
     for file in tools_dir.iterdir():
         if file.is_file() and file.suffix == '.json':
             paths.append(file)
     return paths
 
+
 def get_all_tool_names() -> list[str]:
     return [path.stem for path in get_all_tool_paths()]
 
+
 def get_all_tools() -> list[ToolConfig]:
     return [ToolConfig.from_json(path) for path in get_all_tool_paths()]
-

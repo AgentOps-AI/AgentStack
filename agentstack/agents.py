@@ -12,18 +12,19 @@ AGENTS_FILENAME: Path = Path("src/config/agents.yaml")
 yaml = YAML()
 yaml.preserve_quotes = True  # Preserve quotes in existing data
 
+
 class AgentConfig(pydantic.BaseModel):
     """
     Interface for interacting with an agent configuration.
-    
-    Multiple agents are stored in a single YAML file, so we always look up the 
+
+    Multiple agents are stored in a single YAML file, so we always look up the
     requested agent by `name`.
-    
+
     Use it as a context manager to make and save edits:
     ```python
     with AgentConfig('agent_name') as config:
         config.llm = "openai/gpt-4o"
-    
+
     Config Schema
     -------------
     name: str
@@ -38,6 +39,7 @@ class AgentConfig(pydantic.BaseModel):
         The model this agent should use.
         Adheres to the format set by the framework.
     """
+
     name: str
     role: Optional[str] = ""
     goal: Optional[str] = ""
@@ -45,14 +47,15 @@ class AgentConfig(pydantic.BaseModel):
     llm: Optional[str] = ""
 
     def __init__(self, name: str, path: Optional[Path] = None):
-        if not path: path = Path()
-        
-        if not os.path.exists(path/AGENTS_FILENAME):
-            os.makedirs((path/AGENTS_FILENAME).parent, exist_ok=True)
-            (path/AGENTS_FILENAME).touch()
-        
+        if not path:
+            path = Path()
+
+        if not os.path.exists(path / AGENTS_FILENAME):
+            os.makedirs((path / AGENTS_FILENAME).parent, exist_ok=True)
+            (path / AGENTS_FILENAME).touch()
+
         try:
-            with open(path/AGENTS_FILENAME, 'r') as f:
+            with open(path / AGENTS_FILENAME, 'r') as f:
                 data = yaml.load(f) or {}
             data = data.get(name, {}) or {}
             super().__init__(**{**{'name': name}, **data})
@@ -64,26 +67,29 @@ class AgentConfig(pydantic.BaseModel):
             for error in e.errors():
                 error_str += f"{' '.join(error['loc'])}: {error['msg']}\n"
             raise ValidationError(f"Error loading agent {name} from {filename}.\n{error_str}")
-        
+
         # store the path *after* loading data
         self._path = path
 
     def model_dump(self, *args, **kwargs) -> dict:
         dump = super().model_dump(*args, **kwargs)
-        dump.pop('name') # name is the key, so keep it out of the data
+        dump.pop('name')  # name is the key, so keep it out of the data
         # format these as FoldedScalarStrings
         for key in ('role', 'goal', 'backstory'):
             dump[key] = FoldedScalarString(dump.get(key) or "")
         return {self.name: dump}
 
     def write(self):
-        with open(self._path/AGENTS_FILENAME, 'r') as f:
+        with open(self._path / AGENTS_FILENAME, 'r') as f:
             data = yaml.load(f) or {}
-        
+
         data.update(self.model_dump())
-        
-        with open(self._path/AGENTS_FILENAME, 'w') as f:
+
+        with open(self._path / AGENTS_FILENAME, 'w') as f:
             yaml.dump(data, f)
-    
-    def __enter__(self) -> 'AgentConfig': return self
-    def __exit__(self, *args): self.write()
+
+    def __enter__(self) -> 'AgentConfig':
+        return self
+
+    def __exit__(self, *args):
+        self.write()
