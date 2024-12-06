@@ -283,7 +283,7 @@ def _process_tools_list(
     tool_data: ToolConfig,
     operation: str,
     base_name: str = 'tools',
-) -> List[ast.AST]:  # type: ignore[return-value]
+) -> List[ast.AST]:  # type: ignore[return-type,arg-type]
     """
     Process a tools list according to the specified operation.
 
@@ -345,8 +345,7 @@ def _modify_agent_tools(
                     if kw.arg == 'tools':
                         if isinstance(kw.value, ast.List):
                             # Process the tools list
-                            new_tools = _process_tools_list(kw.value.elts, tool_data, operation, base_name)
-
+                            new_tools = _process_tools_list(kw.value.elts, tool_data, operation, base_name)  # type: ignore
                             # Replace with new list
                             kw.value = ast.List(elts=new_tools, ctx=ast.Load())  # type: ignore
 

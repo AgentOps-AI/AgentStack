@@ -13,7 +13,7 @@ The best place to engage in conversation about your contribution is in the Issue
 
 1. Clone the repo
 2. `poetry install`
-3. `pip install -e .`
+3. `pip install -e .[dev,test]`
    - This will install the CLI locally and in editable mode so you can use `agentstack <command>` to test your latest changes
 
 ## Project Structure
@@ -44,6 +44,18 @@ AgentStack uses Ruff formatter for consistent code formatting. To format your co
 ```bash
 pip install ruff
 ruff format .
+```
+
+### Type Checking
+AgentStack uses MyPy for type checking. To check types, run:
+```bash
+mypy agentstack
+```
+
+### Pre-Commit Hooks
+Ruff and MyPy can be run as pre-commit hooks. To enable these hooks, run:
+```bash
+pre-commit install
 ```
 
 ## Tests
