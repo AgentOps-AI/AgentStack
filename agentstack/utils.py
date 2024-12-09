@@ -62,7 +62,7 @@ def get_telemetry_opt_out(path: Optional[str] = None) -> bool:
     from agentstack.generation import ConfigFile
 
     try:
-        return os.environ['AGENTSTACK_TELEMETRY_OPT_OUT']
+        return bool(os.environ['AGENTSTACK_TELEMETRY_OPT_OUT'])
     except KeyError:
         agentstack_config = ConfigFile(path)
         return bool(agentstack_config.telemetry_opt_out)
