@@ -1,94 +1,36 @@
-from typing import Optional, List
+import sys
+from typing import Optional
+from pathlib import Path
+from agentstack import ValidationError
+from agentstack import frameworks
+from agentstack.utils import verify_agentstack_project
+from agentstack.tasks import TaskConfig, TASKS_FILENAME
+from agentstack.generation.files import ConfigFile
 
-from .gen_utils import insert_after_tasks, get_crew_components, CrewComponent
-from ..utils import verify_agentstack_project, get_framework
-import os
-from ruamel.yaml import YAML
-from ruamel.yaml.scalarstring import FoldedScalarString
 
-
-def generate_task(
-    name,
-    description: Optional[str],
-    expected_output: Optional[str],
-    agent: Optional[str],
+def add_task(
+    task_name: str,
+    description: Optional[str] = None,
+    expected_output: Optional[str] = None,
+    agent: Optional[str] = None,
+    path: Optional[Path] = None,
 ):
-    if not description:
-        description = 'Add your description here'
-    if not expected_output:
-        expected_output = 'Add your expected_output here'
-    if not agent:
-        agent = 'default_agent'
+    if path is None:
+        path = Path()
+    verify_agentstack_project(path)
+    agentstack_config = ConfigFile(path)
+    framework = agentstack_config.framework
 
-    verify_agentstack_project()
+    task = TaskConfig(task_name, path)
+    with task as config:
+        config.description = description or "Add your description here"
+        config.expected_output = expected_output or "Add your expected_output here"
+        config.agent = agent or "agent_name"
 
-    framework = get_framework()
-
-    if framework == 'crewai':
-        generate_crew_task(name, description, expected_output, agent)
-        print("    > Added to src/config/tasks.yaml")
-    else:
-        print(f"This function is not yet implemented for {framework}")
-        return
-
-    print(f"Added task \"{name}\" to your AgentStack project successfully!")
-
-
-def generate_crew_task(
-    name,
-    description: Optional[str],
-    expected_output: Optional[str],
-    agent: Optional[str],
-):
-    config_path = os.path.join('src', 'config', 'tasks.yaml')
-
-    # Ensure the directory exists
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
-
-    yaml = YAML()
-    yaml.preserve_quotes = True  # Preserve quotes in existing data
-
-    # Read existing data
-    if os.path.exists(config_path):
-        with open(config_path, 'r') as file:
-            try:
-                data = yaml.load(file) or {}
-            except Exception as exc:
-                print(f"Error parsing YAML file: {exc}")
-                data = {}
-    else:
-        data = {}
-
-    # Handle None values
-    description_str = FoldedScalarString(description) if description else FoldedScalarString('')
-    expected_output_str = FoldedScalarString(expected_output) if expected_output else FoldedScalarString('')
-    agent_str = FoldedScalarString(agent) if agent else FoldedScalarString('')
-
-    # Add new agent details
-    data[name] = {
-        'description': description_str,
-        'expected_output': expected_output_str,
-        'agent': agent_str,
-    }
-
-    # Write back to the file without altering existing content
-    with open(config_path, 'w') as file:
-        yaml.dump(data, file)
-
-    # Add task to crew.py
-    file_path = 'src/crew.py'
-    code_to_insert = [
-        "@task",
-        f"def {name}(self) -> Task:",
-        "    return Task(",
-        f"        config=self.tasks_config['{name}'],",
-        "    )",
-        "",
-    ]
-
-    insert_after_tasks(file_path, code_to_insert)
-
-
-def get_task_names(framework: str, path: str = '') -> List[str]:
-    """Get only task names from the crew file"""
-    return get_crew_components(framework, CrewComponent.TASK, path)['tasks']
+    try:
+        frameworks.add_task(framework, task, path)
+        print(f"    > Added to {TASKS_FILENAME}")
+    except ValidationError as e:
+        print(f"Error adding task to project:\n{e}")
+        sys.exit(1)
+    print(f"Added task \"{task_name}\" to your AgentStack project successfully!")
