@@ -3,6 +3,7 @@ import os
 import json
 from pathlib import Path
 from pydantic import BaseModel
+from agentstack.utils import get_version
 
 
 DEFAULT_FRAMEWORK = "crewai"
@@ -34,12 +35,21 @@ class ConfigFile(BaseModel):
         Whether the user has opted out of telemetry.
     default_model: Optional[str]
         The default model to use when generating agent configurations.
+    agentstack_version: Optional[str]
+        The version of agentstack used to generate the project.
+    template: Optional[str]
+        The template used to generate the project.
+    template_version: Optional[str]
+        The version of the template system used to generate the project.
     """
 
     framework: str = DEFAULT_FRAMEWORK
     tools: list[str] = []
     telemetry_opt_out: Optional[bool] = None
     default_model: Optional[str] = None
+    agentstack_version: Optional[str] = get_version()
+    template: Optional[str] = None
+    template_version: Optional[str] = None
 
     def __init__(self, path: Union[str, Path, None] = None):
         path = Path(path) if path else Path.cwd()

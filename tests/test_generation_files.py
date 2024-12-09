@@ -7,6 +7,7 @@ from agentstack.utils import (
     verify_agentstack_project,
     get_framework,
     get_telemetry_opt_out,
+    get_version,
 )
 
 BASE_PATH = Path(__file__).parent
@@ -19,6 +20,9 @@ class GenerationFilesTest(unittest.TestCase):
         assert config.tools == []
         assert config.telemetry_opt_out is None
         assert config.default_model is None
+        assert config.agentstack_version == get_version()
+        assert config.template is None
+        assert config.template_version is None
 
     def test_write_config(self):
         try:
@@ -30,6 +34,9 @@ class GenerationFilesTest(unittest.TestCase):
                 config.tools = ["tool1", "tool2"]
                 config.telemetry_opt_out = True
                 config.default_model = "openai/gpt-4o"
+                config.agentstack_version = "0.2.1"
+                config.template = "default"
+                config.template_version = "1"
 
             tmp_data = open(BASE_PATH / "tmp/agentstack.json").read()
             assert (
@@ -41,7 +48,10 @@ class GenerationFilesTest(unittest.TestCase):
         "tool2"
     ],
     "telemetry_opt_out": true,
-    "default_model": "openai/gpt-4o"
+    "default_model": "openai/gpt-4o",
+    "agentstack_version": "0.2.1",
+    "template": "default",
+    "template_version": "1"
 }"""
             )
         except Exception as e:

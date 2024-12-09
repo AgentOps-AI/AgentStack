@@ -58,6 +58,7 @@ def get_telemetry_opt_out(path: Optional[str] = None) -> bool:
     Gets the telemetry opt out setting.
     First checks the environment variable AGENTSTACK_TELEMETRY_OPT_OUT.
     If that is not set, it checks the agentstack.json file.
+    Otherwise we can assume the user has not opted out.
     """
     from agentstack.generation import ConfigFile
 
@@ -67,8 +68,7 @@ def get_telemetry_opt_out(path: Optional[str] = None) -> bool:
         agentstack_config = ConfigFile(path)
         return bool(agentstack_config.telemetry_opt_out)
     except FileNotFoundError:
-        print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
-        sys.exit(1)
+        return False
 
 
 def camel_to_snake(name):
