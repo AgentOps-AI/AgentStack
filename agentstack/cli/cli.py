@@ -13,6 +13,8 @@ import inquirer
 import os
 import importlib.resources
 from cookiecutter.main import cookiecutter
+from dotenv import load_dotenv
+import subprocess
 
 from .agentstack_data import (
     FrameworkData,
@@ -184,8 +186,9 @@ def run_project(framework: str, path: str = ''):
         print(e)
         sys.exit(1)
 
+    load_dotenv(_path / '.env')  # explicitly load the project's .env file
     entrypoint = _path / frameworks.get_entrypoint_path(framework)
-    os.system(f'python {entrypoint}')
+    subprocess.run(['python', entrypoint], env=os.environ)
 
 
 def ask_framework() -> str:

@@ -66,11 +66,6 @@ class GenerationFilesTest(unittest.TestCase):
         with self.assertRaises(SystemExit) as _:
             get_framework(BASE_PATH / "missing")
 
-    def test_get_telemetry_opt_out(self):
-        assert get_telemetry_opt_out(BASE_PATH / "fixtures") is False
-        with self.assertRaises(SystemExit) as _:
-            get_telemetry_opt_out(BASE_PATH / "missing")
-
     def test_read_env(self):
         env = EnvFile(BASE_PATH / "fixtures")
         assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2"}

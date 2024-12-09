@@ -1,5 +1,5 @@
 from typing import Optional
-import sys
+import os, sys
 import json
 from ruamel.yaml import YAML
 import re
@@ -54,9 +54,16 @@ def get_framework(path: Optional[str] = None) -> str:
 
 
 def get_telemetry_opt_out(path: Optional[str] = None) -> bool:
+    """
+    Gets the telemetry opt out setting.
+    First checks the environment variable AGENTSTACK_TELEMETRY_OPT_OUT.
+    If that is not set, it checks the agentstack.json file.
+    """
     from agentstack.generation import ConfigFile
 
     try:
+        return bool(os.environ['AGENTSTACK_TELEMETRY_OPT_OUT'])
+    except KeyError:
         agentstack_config = ConfigFile(path)
         return bool(agentstack_config.telemetry_opt_out)
     except FileNotFoundError:
