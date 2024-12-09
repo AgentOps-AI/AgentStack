@@ -1,5 +1,5 @@
 {
-  "name": "content_creation",
+  "name": "content_creator",
   "description": "Multi-agent system for creating high-quality content",
   "template_version": 1,
   "framework": "crewai",
