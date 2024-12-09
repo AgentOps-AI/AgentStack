@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional
 
 from agentstack.utils import clean_input, get_version
 from agentstack.logger import log
