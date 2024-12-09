@@ -113,18 +113,9 @@ def init_project_builder(
 
     log.debug(f"project_details: {project_details}" f"framework: {framework}" f"design: {design}")
     insert_template(project_details, framework, design, template_data)
+    path = Path(project_details['name'])
     for tool_data in tools:
-        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
-
-    try:
-        packaging.install(f'{AGENTSTACK_PACKAGE}[{framework}]', path=slug_name)
-    except Exception:
-        print(
-            term_color(
-                f"Failed to install dependencies for {slug_name}. Please try again by running `agentstack update`",
-                'red',
-            )
-        )
+        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=path)
 
 
 def welcome_message():
@@ -382,7 +373,9 @@ def insert_template(
     design: dict,
     template_data: Optional[TemplateConfig] = None,
 ):
-    framework = FrameworkData(framework_name.lower())
+    framework = FrameworkData(
+        name=framework_name.lower(),
+    )
     project_metadata = ProjectMetadata(
         project_name=project_details["name"],
         description=project_details["description"],
@@ -422,7 +415,7 @@ def insert_template(
                 "red",
             )
         )
-        return
+        sys.exit(1)
 
     cookiecutter(str(template_path), no_input=True, extra_context=None)
 
@@ -445,10 +438,13 @@ def insert_template(
         "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
         "  Next, run:\n"
         f"    cd {project_metadata.project_slug}\n"
-        "    poetry install\n"
-        "    agentstack run\n\n"
+        "    python -m venv .venv\n"
+        "    source .venv/bin/activate\n"
+        "    poetry install\n\n"
         "  Add agents and tasks with:\n"
         "    `agentstack generate agent/task <name>`\n\n"
+        "  Run your agent with:\n"
+        "    agentstack run\n\n"
         "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
     )
 
