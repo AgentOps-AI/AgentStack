@@ -54,7 +54,7 @@ class TemplateConfig(pydantic.BaseModel):
         return cls.from_json(path)
 
     @classmethod
-    def from_json(cls, path: Path) -> 'ToolConfig':
+    def from_json(cls, path: Path) -> 'TemplateConfig':
         data = open_json_file(path)
         try:
             return cls(**data)

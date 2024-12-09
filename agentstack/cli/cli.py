@@ -384,7 +384,7 @@ def insert_template(
         license="MIT",
         year=datetime.now().year,
         template=template_data.name if template_data else 'none',
-        template_version=template_data.template_version if template_data else '0',
+        template_version=template_data.template_version if template_data else 0,
     )
 
     project_structure = ProjectStructure()
