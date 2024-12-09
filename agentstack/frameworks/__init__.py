@@ -1,32 +1,3 @@
-"""
-Methods for interacting with framework-specific features.
-
-Each framework should have a module in the `frameworks` package which defines the 
-following methods:
-
-`ENTRYPOINT`: Path: 
-    Relative path to the entrypoint file for the framework in the user's project.
-    ie. `src/crewai.py`
-
-`validate_project(path: Optional[Path] = None) -> None`:
-    Validate that a user's project is ready to run.
-    Raises a `ValidationError` if the project is not valid.
-
-`add_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None`:
-    Add a tool to an agent in the user's project.
-
-`remove_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None`:
-    Remove a tool from an agent in user's project.
-
-`get_agent_names(path: Optional[Path] = None) -> list[str]`:
-    Get a list of agent names in the user's project.
-
-`add_agent(agent: AgentConfig, path: Optional[Path] = None) -> None`:
-    Add an agent to the user's project.
-
-`add_task(task: TaskConfig, path: Optional[Path] = None) -> None`:
-    Add a task to the user's project.
-"""
 from typing import Optional, Protocol
 from types import ModuleType
 from importlib import import_module
@@ -41,24 +12,50 @@ CREWAI = 'crewai'
 SUPPORTED_FRAMEWORKS = [CREWAI, ]
 
 class FrameworkModule(Protocol):
+    """
+    Protocol spec for a framework implementation module.
+    """
     ENTRYPOINT: Path
+    """
+    Relative path to the entrypoint file for the framework in the user's project.
+    ie. `src/crewai.py`
+    """
 
     def validate_project(self, path: Optional[Path] = None) -> None:
+        """
+        Validate that a user's project is ready to run.
+        Raises a `ValidationError` if the project is not valid.
+        """
         ...
 
     def add_tool(self, tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None:
+        """
+        Add a tool to an agent in the user's project.
+        """
         ...
 
     def remove_tool(self, tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None:
+        """
+        Remove a tool from an agent in user's project.
+        """
         ...
 
     def get_agent_names(self, path: Optional[Path] = None) -> list[str]:
+        """
+        Get a list of agent names in the user's project.
+        """
         ...
 
     def add_agent(self, agent: AgentConfig, path: Optional[Path] = None) -> None:
+        """
+        Add an agent to the user's project.
+        """
         ...
 
     def add_task(self, task: TaskConfig, path: Optional[Path] = None) -> None:
+        """
+        Add a task to the user's project.
+        """
         ...
 
 
