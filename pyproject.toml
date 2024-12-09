@@ -28,6 +28,7 @@ dependencies = [
     "packaging==23.2",
     "requests>=2.32",
     "appdirs>=1.4.4",
+    "python-dotenv>=1.0.1",
 ]
 
 [project.optional-dependencies]
