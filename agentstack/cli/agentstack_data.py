@@ -17,7 +17,7 @@ class ProjectMetadata:
         license: str = "",
         year: int = datetime.now().year,
         template: str = "none",
-        template_version: str = "0",
+        template_version: int = 0,
     ):
         self.project_name = clean_input(project_name) if project_name else "myagent"
         self.project_slug = clean_input(project_slug) if project_slug else self.project_name

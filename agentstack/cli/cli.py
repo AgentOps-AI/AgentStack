@@ -31,6 +31,7 @@ from agentstack import packaging
 from agentstack import generation
 from agentstack.utils import open_json_file, term_color, is_snake_case
 from agentstack.update import AGENTSTACK_PACKAGE
+from agentstack.proj_templates import TemplateConfig
 
 
 PREFERRED_MODELS = [
@@ -57,45 +58,34 @@ def init_project_builder(
 
     template_data = None
     if template is not None:
-        url_start = "https://"
-        if template[: len(url_start)] == url_start:
-            # template is a url
-            response = requests.get(template)
-            if response.status_code == 200:
-                template_data = response.json()
-            else:
-                print(
-                    term_color(
-                        f"Failed to fetch template data from {template}. Status code: {response.status_code}",
-                        'red',
-                    )
-                )
+        if template.startswith("https://"):
+            try:
+                template_data = TemplateConfig.from_url(template)
+            except Exception as e:
+                print(term_color(f"Failed to fetch template data from {template}", 'red'))
                 sys.exit(1)
         else:
-            with importlib.resources.path(
-                'agentstack.templates.proj_templates', f'{template}.json'
-            ) as template_path:
-                if template_path is None:
-                    print(term_color(f"No such template {template} found", 'red'))
-                    sys.exit(1)
-                template_data = open_json_file(template_path)
+            try:
+                template_data = TemplateConfig.from_template_name(template)
+            except Exception as e:
+                print(term_color(f"Failed to load template {template}", 'red'))
+                sys.exit(1)
 
     if template_data:
         project_details = {
-            "name": slug_name or template_data['name'],
+            "name": slug_name or template_data.name,
             "version": "0.0.1",
-            "description": template_data['description'],
+            "description": template_data.description,
             "author": "Name <Email>",
             "license": "MIT",
         }
-        framework = template_data['framework']
+        framework = template_data.framework
         design = {
-            'agents': template_data['agents'],
-            'tasks': template_data['tasks'],
-            'inputs': template_data['inputs'],
+            'agents': template_data.agents,
+            'tasks': template_data.tasks,
+            'inputs': template_data.inputs,
         }
-
-        tools = template_data['tools']
+        tools = template_data.tools
 
     elif use_wizard:
         welcome_message()
@@ -381,7 +371,7 @@ def insert_template(
     project_details: dict,
     framework_name: str,
     design: dict,
-    template_data: Optional[dict] = None,
+    template_data: Optional[TemplateConfig] = None,
 ):
     framework = FrameworkData(
         name=framework_name.lower(),
@@ -393,8 +383,8 @@ def insert_template(
         version="0.0.1",
         license="MIT",
         year=datetime.now().year,
-        template=template_data['name'] if template_data else 'none',
-        template_version=template_data['template_version'] if template_data else '0',
+        template=template_data.name if template_data else 'none',
+        template_version=template_data.template_version if template_data else 0,
     )
 
     project_structure = ProjectStructure()
