@@ -19,7 +19,7 @@ class TemplateConfig(pydantic.BaseModel):
         The name of the project.
     description: str
         A description of the template.
-    template_version: str
+    template_version: int
         The version of the template.
     framework: str
         The framework the template is for.
@@ -35,15 +35,36 @@ class TemplateConfig(pydantic.BaseModel):
         A list of inputs used by the project.
     """
 
+    class Agent(pydantic.BaseModel):
+        name: str
+        role: str
+        goal: str
+        backstory: str
+        model: str
+
+    class Task(pydantic.BaseModel):
+        name: str
+        description: str
+        expected_output: str
+        agent: str
+
+    class Tool(pydantic.BaseModel):
+        name: str
+        agents: list[str]
+
     name: str
     description: str
-    template_version: int
+    template_version: int = 1
     framework: str
-    method: str
-    agents: list[dict]
-    tasks: list[dict]
-    tools: list[dict]
+    method: str = "sequential"
+    agents: list[Agent]
+    tasks: list[Task]
+    tools: list[Tool]
     inputs: list[str]
+
+    def write_to_file(self, filename: Path):
+        with open(filename, 'w') as f:
+            f.write(self.model_dump_json(indent=4))
 
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':

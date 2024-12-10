@@ -15,6 +15,7 @@ import importlib.resources
 from cookiecutter.main import cookiecutter
 from dotenv import load_dotenv
 import subprocess
+from packaging.metadata import Metadata
 
 from .agentstack_data import (
     FrameworkData,
@@ -25,11 +26,13 @@ from .agentstack_data import (
 from agentstack.logger import log
 from agentstack.utils import get_package_path
 from agentstack.tools import get_all_tools
-from agentstack.generation.files import ConfigFile
+from agentstack.generation.files import ConfigFile, ProjectFile
 from agentstack import frameworks
 from agentstack import packaging
 from agentstack import generation
-from agentstack.utils import open_json_file, term_color, is_snake_case
+from agentstack.agents import get_all_agents
+from agentstack.tasks import get_all_tasks
+from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework
 from agentstack.update import AGENTSTACK_PACKAGE
 from agentstack.proj_templates import TemplateConfig
 
@@ -115,7 +118,7 @@ def init_project_builder(
     insert_template(project_details, framework, design, template_data)
     path = Path(project_details['name'])
     for tool_data in tools:
-        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=path)
+        generation.add_tool(tool_data.name, agents=tool_data.agents, path=path)
 
 
 def welcome_message():
@@ -466,3 +469,82 @@ def list_tools():
 
     print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
     print("   https://docs.agentstack.sh/tools/core")
+
+
+def export_template(output_filename: str, path: str = ''):
+    """
+    Export the current project as a template.
+    """
+    _path = Path(path)
+    framework = get_framework(_path)
+
+    try:
+        metadata = ProjectFile(_path)
+    except Exception as e:
+        print(term_color(f"Failed to load project metadata: {e}", 'red'))
+        sys.exit(1)
+
+    # Read all the agents from the project's agents.yaml file
+    agents: list[TemplateConfig.Agent] = []
+    for agent in get_all_agents(_path):
+        agents.append(
+            TemplateConfig.Agent(
+                name=agent.name,
+                role=agent.role,
+                goal=agent.goal,
+                backstory=agent.backstory,
+                model=agent.llm,  # TODO consistent naming (llm -> model)
+            )
+        )
+
+    # Read all the tasks from the project's tasks.yaml file
+    tasks: list[TemplateConfig.Task] = []
+    for task in get_all_tasks(_path):
+        tasks.append(
+            TemplateConfig.Task(
+                name=task.name,
+                description=task.description,
+                expected_output=task.expected_output,
+                agent=task.agent,
+            )
+        )
+
+    # Export all of the configured tools from the project
+    tools_agents: dict[str, list[str]] = {}
+    for agent_name in frameworks.get_agent_names(framework, _path):
+        for tool_name in frameworks.get_agent_tool_names(framework, agent_name, _path):
+            if tool_name not in tools_agents:
+                tools_agents[tool_name] = []
+            tools_agents[tool_name].append(agent_name)
+
+    tools: list[TemplateConfig.Tool] = []
+    for tool_name, agent_names in tools_agents.items():
+        tools.append(
+            TemplateConfig.Tool(
+                name=tool_name,
+                agents=agent_names,
+            )
+        )
+
+    inputs: list[str] = []
+    # TODO extract inputs from project
+    # for input in frameworks.get_input_names():
+    #     inputs.append(input)
+
+    template = TemplateConfig(
+        name=metadata.project_name,
+        description=metadata.project_description,
+        framework=framework,
+        # method="sequential",  # TODO this needs to be stored in the project somewhere
+        agents=agents,
+        tasks=tasks,
+        tools=tools,
+        inputs=inputs,
+    )
+
+    try:
+        template.write_to_file(_path / output_filename)
+        print(term_color(f"Template saved to: {_path / output_filename}", 'green'))
+    except Exception as e:
+        print(term_color(f"Failed to write template to file: {e}", 'red'))
+        sys.exit(1)
