@@ -19,6 +19,15 @@ class CrewFile(asttools.File):
 
     _base_class: Optional[ast.ClassDef] = None
 
+    def write(self):
+        """
+        Early versions of the crew entrypoint file used tabs instead of spaces.
+        This method replaces all tabs with 4 spaces before writing the file to
+        avoid SyntaxErrors.
+        """
+        self.source = self.source.replace('\t', '    ')
+        super().write()
+
     def get_base_class(self) -> ast.ClassDef:
         """A base class is a class decorated with `@CrewBase`."""
         if self._base_class is None:  # Gets cached to save repeat iteration
