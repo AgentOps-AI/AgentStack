@@ -34,14 +34,13 @@ class CLIToolsTest(unittest.TestCase):
         """Test the adding every tool to a project."""
         result = self._run_cli('init', f"{tool_name}_project")
         self.assertEqual(result.returncode, 0)
-        os.chdir(self.project_dir/f"{tool_name}_project")
+        os.chdir(self.project_dir / f"{tool_name}_project")
         result = self._run_cli('generate', 'agent', 'test_agent', '--llm', 'opeenai/gpt-4o')
         self.assertEqual(result.returncode, 0)
         result = self._run_cli('generate', 'task', 'test_task')
         self.assertEqual(result.returncode, 0)
-        
+
         result = self._run_cli('tools', 'add', tool_name)
         print(result.stdout)
         self.assertEqual(result.returncode, 0)
         self.assertTrue(self.project_dir.exists())
-
