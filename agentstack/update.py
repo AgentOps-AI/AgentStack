@@ -68,6 +68,10 @@ def load_update_data():
 
 def should_update() -> bool:
     """Has it been longer than CHECK_EVERY since the last update check?"""
+    # Allow disabling update checks with an environment variable
+    if 'AGENTSTACK_UPDATE_DISABLE' in os.environ:
+        return False
+
     # Always check for updates in CI
     if _is_ci_environment():
         return True

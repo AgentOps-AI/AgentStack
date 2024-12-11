@@ -171,8 +171,7 @@ def run_project(framework: str, path: str = ''):
         sys.exit(1)
 
     load_dotenv(_path / '.env')  # explicitly load the project's .env file
-    entrypoint = _path / frameworks.get_entrypoint_path(framework)
-    subprocess.run(['python', entrypoint], env=os.environ)
+    subprocess.run(['python', 'src/main.py'], env=os.environ)
 
 
 def ask_framework() -> str:
