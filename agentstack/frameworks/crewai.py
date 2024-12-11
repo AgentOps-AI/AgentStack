@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from pathlib import Path
 import ast
 from agentstack import ValidationError
@@ -257,6 +257,18 @@ def get_agent_names(path: Optional[Path] = None) -> list[str]:
         path = Path()
     crew_file = CrewFile(path / ENTRYPOINT)
     return [method.name for method in crew_file.get_agent_methods()]
+
+
+def get_agent_tool_names(agent_name: str, path: Optional[Path] = None) -> list[Any]:
+    """
+    Get a list of tools used by an agent.
+    """
+    if path is None:
+        path = Path()
+    with CrewFile(path / ENTRYPOINT) as crew_file:
+        tools = crew_file.get_agent_tools(agent_name)
+    print([node for node in tools.elts])
+    return [asttools.get_node_value(node) for node in tools.elts]
 
 
 def add_agent(agent: AgentConfig, path: Optional[Path] = None) -> None:

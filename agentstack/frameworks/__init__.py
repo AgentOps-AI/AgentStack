@@ -28,6 +28,12 @@ class FrameworkModule(Protocol):
         """
         ...
 
+    def get_tool_names(self, path: Optional[Path] = None) -> list[str]:
+        """
+        Get a list of tool names in the user's project.
+        """
+        ...
+
     def add_tool(self, tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None:
         """
         Add a tool to an agent in the user's project.
@@ -43,6 +49,12 @@ class FrameworkModule(Protocol):
     def get_agent_names(self, path: Optional[Path] = None) -> list[str]:
         """
         Get a list of agent names in the user's project.
+        """
+        ...
+
+    def get_agent_tool_names(self, agent_name: str, path: Optional[Path] = None) -> list[str]:
+        """
+        Get a list of tool names in an agent in the user's project.
         """
         ...
 
@@ -101,6 +113,12 @@ def get_agent_names(framework: str, path: Optional[Path] = None) -> list[str]:
     Get a list of agent names in the user's project.
     """
     return get_framework_module(framework).get_agent_names(path)
+
+def get_agent_tool_names(framework: str, agent_name: str, path: Optional[Path] = None) -> list[str]:
+    """
+    Get a list of tool names in the user's project.
+    """
+    return get_framework_module(framework).get_agent_tool_names(agent_name, path)
 
 def add_agent(framework: str, agent: AgentConfig, path: Optional[Path] = None):
     """
