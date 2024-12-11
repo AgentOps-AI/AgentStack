@@ -2,7 +2,13 @@ import argparse
 import os
 import sys
 
-from agentstack.cli import init_project_builder, list_tools, configure_default_model, run_project
+from agentstack.cli import (
+    init_project_builder,
+    list_tools,
+    configure_default_model,
+    run_project,
+    export_template,
+)
 from agentstack.telemetry import track_cli_command
 from agentstack.utils import get_version, get_framework
 from agentstack import generation
@@ -83,6 +89,9 @@ def main():
     tools_remove_parser = tools_subparsers.add_parser("remove", aliases=["r"], help="Remove a tool")
     tools_remove_parser.add_argument("name", help="Name of the tool to remove")
 
+    export = subparsers.add_parser('export', aliases=['e'], help='Export your agent as a template')
+    export.add_argument('filename', help='The name of the file to export to')
+
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates')
 
     # Parse arguments
@@ -128,6 +137,8 @@ def main():
             generation.remove_tool(args.name)
         else:
             tools_parser.print_help()
+    elif args.command in ['export', 'e']:
+        export_template(args.filename)
     elif args.command in ['update', 'u']:
         pass  # Update check already done
     else:

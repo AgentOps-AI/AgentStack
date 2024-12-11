@@ -29,18 +29,18 @@ class TaskConfig(pydantic.BaseModel):
     -------------
     name: str
         The name of the agent; used for lookup.
-    description: Optional[str]
+    description: str
         The description of the task.
-    expected_output: Optional[str]
+    expected_output: str
         The expected output of the task.
-    agent: Optional[str]
+    agent: str
         The agent to use for the task.
     """
 
     name: str
-    description: Optional[str] = ""
-    expected_output: Optional[str] = ""
-    agent: Optional[str] = ""
+    description: str = ""
+    expected_output: str = ""
+    agent: str = ""
 
     def __init__(self, name: str, path: Optional[Path] = None):
         if not path:
@@ -92,3 +92,18 @@ class TaskConfig(pydantic.BaseModel):
 
     def __exit__(self, *args):
         self.write()
+
+
+def get_all_task_names(path: Optional[Path] = None) -> list[str]:
+    if not path:
+        path = Path()
+    filename = path / TASKS_FILENAME
+    if not os.path.exists(filename):
+        return []
+    with open(filename, 'r') as f:
+        data = yaml.load(f) or {}
+    return list(data.keys())
+
+
+def get_all_tasks(path: Optional[Path] = None) -> list[TaskConfig]:
+    return [TaskConfig(name, path) for name in get_all_task_names(path)]

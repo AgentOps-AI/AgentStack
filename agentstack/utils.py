@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 import os, sys
 import json
 from ruamel.yaml import YAML
@@ -37,7 +37,7 @@ def get_package_path() -> Path:
     return importlib.resources.files('agentstack')  # type: ignore[return-value]
 
 
-def get_framework(path: Optional[str] = None) -> str:
+def get_framework(path: Union[str, Path, None] = None) -> str:
     from agentstack.generation import ConfigFile
 
     try:

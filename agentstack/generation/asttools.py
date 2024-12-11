@@ -9,7 +9,7 @@ unwieldy, but since our use-cases are well-defined, we can provide a set of
 functions that are useful for the specific tasks we need to accomplish.
 """
 
-from typing import TypeVar, Optional, Union, Iterable
+from typing import TypeVar, Optional, Union, Iterable, Any
 from pathlib import Path
 import ast
 import astor
@@ -175,3 +175,10 @@ def find_decorated_method_in_class(classdef: ast.ClassDef, decorator_name: str) 
 def create_attribute(base_name: str, attr_name: str) -> ast.Attribute:
     """Create an AST node for an attribute"""
     return ast.Attribute(value=ast.Name(id=base_name, ctx=ast.Load()), attr=attr_name, ctx=ast.Load())
+
+
+def get_node_value(node: Union[ast.expr, ast.Constant, ast.Str, ast.Num]) -> Any:
+    if isinstance(node, ast.Constant):
+        return node.value
+    else:
+        return None

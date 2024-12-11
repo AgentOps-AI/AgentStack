@@ -27,7 +27,7 @@ def add_agent(
         config.role = role or "Add your role here"
         config.goal = goal or "Add your goal here"
         config.backstory = backstory or "Add your backstory here"
-        config.llm = llm or agentstack_config.default_model
+        config.llm = llm or agentstack_config.default_model or ""
 
     try:
         frameworks.add_agent(framework, agent, path)

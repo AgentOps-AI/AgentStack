@@ -29,22 +29,22 @@ class AgentConfig(pydantic.BaseModel):
     -------------
     name: str
         The name of the agent; used for lookup.
-    role: Optional[str]
+    role: str
         The role of the agent.
-    goal: Optional[str]
+    goal: str
         The goal of the agent.
-    backstory: Optional[str]
+    backstory: str
         The backstory of the agent.
-    llm: Optional[str]
+    llm: str
         The model this agent should use.
         Adheres to the format set by the framework.
     """
 
     name: str
-    role: Optional[str] = ""
-    goal: Optional[str] = ""
-    backstory: Optional[str] = ""
-    llm: Optional[str] = ""
+    role: str = ""
+    goal: str = ""
+    backstory: str = ""
+    llm: str = ""
 
     def __init__(self, name: str, path: Optional[Path] = None):
         if not path:
@@ -96,3 +96,18 @@ class AgentConfig(pydantic.BaseModel):
 
     def __exit__(self, *args):
         self.write()
+
+
+def get_all_agent_names(path: Optional[Path] = None) -> list[str]:
+    if not path:
+        path = Path()
+    filename = path / AGENTS_FILENAME
+    if not os.path.exists(filename):
+        return []
+    with open(filename, 'r') as f:
+        data = yaml.load(f) or {}
+    return list(data.keys())
+
+
+def get_all_agents(path: Optional[Path] = None) -> list[AgentConfig]:
+    return [AgentConfig(name, path) for name in get_all_agent_names(path)]

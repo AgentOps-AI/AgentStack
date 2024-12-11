@@ -1,14 +1,20 @@
 from typing import Optional, Union
-import os
+import os, sys
 import json
 from pathlib import Path
 from pydantic import BaseModel
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 from agentstack.utils import get_version
 
 
 DEFAULT_FRAMEWORK = "crewai"
 CONFIG_FILENAME = "agentstack.json"
 ENV_FILEMANE = ".env"
+PYPROJECT_FILENAME = "pyproject.toml"
 
 
 class ConfigFile(BaseModel):
@@ -140,3 +146,45 @@ class EnvFile:
 
     def __exit__(self, *args):
         self.write()
+
+
+class ProjectFile:
+    """
+    Interface for interacting with pyproject.toml files inside of a project directory.
+    This class is read-only and does not support writing changes back to the file.
+    We expose project metadata as properties to support migration to other formats
+    in the future.
+    """
+
+    _data: dict
+
+    def __init__(self, path: Union[str, Path, None] = None, filename: str = PYPROJECT_FILENAME):
+        self._path = Path(path) if path else Path.cwd()
+        self._filename = filename
+        self.read()
+
+    @property
+    def project_metadata(self) -> dict:
+        try:
+            return self._data['tool']['poetry']
+        except KeyError:
+            raise KeyError("No poetry metadata found in pyproject.toml.")
+
+    @property
+    def project_name(self) -> str:
+        return self.project_metadata.get('name', '')
+
+    @property
+    def project_version(self) -> str:
+        return self.project_metadata.get('version', '')
+
+    @property
+    def project_description(self) -> str:
+        return self.project_metadata.get('description', '')
+
+    def read(self):
+        if os.path.exists(self._path / self._filename):
+            with open(self._path / self._filename, 'r') as f:
+                self._data = tomllib.load(f)
+        else:
+            raise FileNotFoundError(f"File {self._path / self._filename} does not exist.")
