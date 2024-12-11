@@ -47,9 +47,24 @@ class TemplateConfig(pydantic.BaseModel):
 
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':
+        if name.startswith('https://'):
+            return cls.from_url(name)
+        if name.endswith('.json'):
+            path = os.getcwd() / Path(name)
+            if not path.exists():
+                print(term_color(f'Template file does not exist: {path}', 'red'))
+                sys.exit(1)
+            return cls.from_json(path)
         path = get_package_path() / f'templates/proj_templates/{name}.json'
-        if not os.path.exists(path):  # TODO raise exceptions and handle message/exit in cli
-            print(term_color(f'No known agentstack tool: {name}', 'red'))
+        if not os.path.exists(path):
+            print(term_color(f'No known built-in template: {name}', 'red'))
+            template_names = get_all_template_names()
+            if not template_names:
+                print(term_color(f'No built-in templates found at {path}', 'red'))
+            else:
+                print(term_color('Available built-in templates:', 'green'))
+                for template in template_names:
+                    print(term_color(f'    {template}', 'green'))
             sys.exit(1)
         return cls.from_json(path)
 
