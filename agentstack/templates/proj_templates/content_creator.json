@@ -46,5 +46,9 @@
     "agents": ["researcher"]
   }],
   "method": "sequential",
-  "inputs": ["topic", "audience", "content_type"]
+  "inputs": {
+    "topic": "", 
+    "audience": "", 
+    "content_type": ""
+  }
 }

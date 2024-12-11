@@ -43,7 +43,7 @@ class TemplateConfig(pydantic.BaseModel):
     agents: list[dict]
     tasks: list[dict]
     tools: list[dict]
-    inputs: list[str]
+    inputs: dict[str, str]
 
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':
