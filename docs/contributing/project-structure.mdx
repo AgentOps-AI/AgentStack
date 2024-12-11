@@ -1,0 +1,205 @@
+---
+title: 'Project Structure'
+description: 'Concepts and Structure of AgentStack'
+---
+
+> This document is a work-in-progress as we build to version 0.3 and helps
+define the structure of the project that we are aiming to create. 
+
+AgentStack is a framework-agnostic toolkit for bootstrapping and managing
+AI agents. Out of the box it has support for a number of tools and generates
+code to get your project off the ground and deployed to a production environment. 
+It also aims to provide robust tooling for running and managing agents including
+logging, debugging, deployment, and observability via [AgentOps](https://www.agentops.ai/).
+
+Developers with limited agent experience should be able to get an agentic 
+workflow up and running in a matter of minutes. Developers with more experience
+should be able to leverage the tools provided by AgentStack to create more
+complex workflows and deploy them to production with ease.
+
+# Concepts
+
+## Projects
+A project is a user's implementation of AgentStack that is used to implement
+and agentic workflow. This is a directory the `agentstack` shell command is 
+executed from. 
+
+## Frameworks
+Frameworks are the target platforms that `agentstack` can generate code for.
+We don't implement all of the functionality provided by a framework, but instead
+leverage them to create agentic workflows and provide tooling to aid in their
+creation and operation. [Documented in Frameworks](#frameworks-1)
+
+
+# Public API
+The public API is available inside of a project after declaring `import agentstack`
+
+## `agentstack.PATH`
+`<pathlib.Path>` This is the path to the current project directory.
+
+> TODO: The current project `Path` can be accessed throughout the application
+with `agentstack.PATH`.
+
+## `agentstack.FRAMEWORK`
+`<Optional[str]>` This is the name of the current framework. If the application 
+is not being run from a project directory, this will be `None`.
+
+> TODO: The current framework name can be accessed throughout the application, 
+if it is being executed within a project directory, with `agentstack.FRAMEWORK`.
+If not inside a project directory, the framework will be `None`; this can be used
+to determine if the application has a project available.
+
+## `agentstack.get_inputs()`
+`<dict[str, str]>` This function returns the inputs for a project. These are the 
+variables that can be used to configure tasks in the project and are stored in the 
+`inputs.yaml` file inside the project directory.
+
+
+# Core
+These namespaces occupy the root of `agentstack` and are shared across all
+project & frameworks. Methods from these products are generally candidates for 
+availability in the public API for use within a project. 
+
+## `agents`
+Agents are the actual personalities that accomplish work. We provide tools for
+interacting with the `agents.yaml` configuration file in this package. 
+
+## `tasks`
+Tasks are the individual units of work that an Agent can perform. `agents` will
+use the `tools` they have available to accomplish `tasks`. We provide tools for
+interacting with the `tasks.yaml` configuration file in this package.
+
+## `inputs`
+Inputs are variable data that can be used to configure `tasks`. Behind the scenes
+`inputs` are interpolated into `task` prompts to determine their specialization. 
+We provide tools for interacting with the `inputs.yaml` configuration file in this
+package. 
+
+> TODO: Command line argument parsing to select which `inputs` to use or provide overrides. 
+> TODO: Iterable inputs that can be used to generate `tasks` for multiple sequential runs. 
+
+## `tools`
+Tools are implementations from useful third party libraries that are provided 
+to Agents in the user's project. Configuration, dependency management, and wrapper 
+implementations are provided by AgentStack. Tools implemented at this level are 
+framework-agnostic and expose useful implementations as `callable`s for agents to use. 
+
+Details of tool implementations are documented in the [Tools](#tools-1) section.
+
+> TODO: Some frameworks use decorators to prepare tools for use by agents. Determine
+what that actually does and if we can do it in an agnostic way that avoids the
+need for decorators. Fundamentally a tool is just a `callable` to so we should
+be able to keep this simple. 
+
+## `templates`
+Templates are configuration data stored in a JSON file that can be used to 
+generate an entire project. This is useful for bootstrapping a new project
+which adheres to a common pattern or exporting your project to share. 
+
+> TODO: Templates are currently identified as `proj_templates` since they conflict
+with the templates used by `generation`. Move existing templates to be part of
+the generation package. 
+
+## `log`
+AgentStack provides a robust logging interface for tracking and debugging 
+agentic workflows. Runs are separated into separate named files for easy tracking
+and have standard conventions for outputs from different parts of the system
+for parsing. 
+
+> TODO: Logging is not yet this robust. 
+> TODO: Rename `logging` to `log` for brevity.
+
+## `serve`
+Completed agents can be deployed to the AgentStack cloud service with a single
+command. This provides a fast, secure, and publicly available interface for your
+agentic workflows.
+
+> TODO: This is under development. 
+
+## `cli`
+The command line interface for `agentstack` is provided in this package. Outside
+of `main.py` all logic relating to the command line interface resides here. 
+
+> TODO: Code from other parts of the application should always throw exceptions
+and leave the CLI to handle error messaging and control flow. 
+
+## `packaging`
+We manage dependencies for tools that are added to the project, in addition
+to keeping AgentStack up-to-date. 
+
+> TODO: Migrate packaging to use `uv` exclusively.
+
+## `update`
+Auto-updates for AgentStack. 
+
+
+# Tools
+> TODO: Tools should be documented here, or in sub-pages of documentation for
+an overview of their usage.
+
+# Generation
+AgentStack generates code for a number of frameworks. The generated code is
+a starting point for a user's project and is meant to be modified and extended
+to suit the user's needs.
+
+## `generation.agents`
+This is code that creates and modifies the `agents` in a user's project. Agents
+include code that is part of a framework-specific entrypoint file.
+
+> TODO: Rename `generation.agent_generation` to `generation.agents`.
+
+## `generation.tasks`
+This is code that creates and modifies the `tasks` in a user's project. Tasks
+include code that is part of a framework-specific entrypoint file.
+
+> TODO: Rename `generation.task_generation` to `generation.tasks`.
+
+## `generation.tools`
+This is code that creates and modifies the `tools` in a user's project. Tools
+are imported into the project and available for use by `agents`.
+
+> TODO: Rename `generation.tool_generation` to `generation.tools`.
+
+## `generation.files`
+This is code that creates and modifies the `files` in a user's project.
+
+### `agentstack.json`
+This is the configuration file for a user's project. It contains the project's
+configuration and metadata.
+
+> TODO This could be moved from `generation.files` to `agentstack.config` since 
+it's technically a global concept. 
+
+### `.env`
+This is the environment file for a user's project. It contains the project's
+environment variables. We dynamically modify this file to include relevant
+variables to support `tools` that are used in the project.
+
+## `generation.asttools`
+Since we're interacting with generated code, we provide a shared toolkit for
+common AST operations. 
+
+
+# Frameworks
+AgentStack generates code for a number of frameworks. The generated code is
+a starting point for a user's project and is meant to be modified and extended
+to suit the user's needs. The `frameworks` package contains code that adapts
+general interactions with a framework into a specific implementation.
+
+## `frameworks.FrameworkModule`
+This is the base protocol for all framework implementations– all implementations
+must implement this protocol.
+
+## `frameworks.crewai`
+This is the implementation for the CrewAI framework. CrewAI is a framework for
+creating and managing AI agents. All code related specifically to CrewAI is
+contained in this package.
+
+## `frameworks.openai_swarms`
+> TODO: Add OpenAI Swarms as a framework.
+
+## `frameworks.agency_swarm`
+> TODO: Add [VRSEN Agency Swarm](https://github.com/VRSEN/agency-swarm?tab=readme-ov-file) as a framework.
+
+## `frameworks.langgraph`
+> TODO Add [LangGraph](https://langchain-ai.github.io/langgraph/) as a framework.
