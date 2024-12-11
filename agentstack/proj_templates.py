@@ -3,8 +3,9 @@ import os, sys
 from pathlib import Path
 import pydantic
 import requests
+import json
 from agentstack import ValidationError
-from agentstack.utils import get_package_path, open_json_file, term_color
+from agentstack.utils import get_package_path
 
 
 class TemplateConfig_v1(pydantic.BaseModel):
@@ -50,37 +51,64 @@ class TemplateConfig(pydantic.BaseModel):
         The framework the template is for.
     method: str
         The method used by the project. ie. "sequential"
-    agents: list[dict]
-        A list of agents used by the project. TODO vaidate this against an agent schema
-    tasks: list[dict]
-        A list of tasks used by the project. TODO validate this against a task schema
-    tools: list[dict]
-        A list of tools used by the project. TODO validate this against a tool schema
-    inputs: dict[str, str]
-        A list of inputs and values used by the project.
+    agents: list[TemplateConfig.Agent]
+        A list of agents used by the project.
+    tasks: list[TemplateConfig.Task]
+        A list of tasks used by the project.
+    tools: list[TemplateConfig.Tool]
+        A list of tools used by the project.
+    inputs: list[str]
+        A list of inputs used by the project.
     """
+
+    class Agent(pydantic.BaseModel):
+        name: str
+        role: str
+        goal: str
+        backstory: str
+        model: str
+
+    class Task(pydantic.BaseModel):
+        name: str
+        description: str
+        expected_output: str
+        agent: str
+
+    class Tool(pydantic.BaseModel):
+        name: str
+        agents: list[str]
 
     name: str
     description: str
     template_version: Literal[2]
     framework: str
     method: str
-    agents: list[dict]
-    tasks: list[dict]
-    tools: list[dict]
+    agents: list[Agent]
+    tasks: list[Task]
+    tools: list[Tool]
     inputs: dict[str, str]
+
+    def write_to_file(self, filename: Path):
+        if not filename.suffix == '.json':
+            filename = filename.with_suffix('.json')
+
+        with open(filename, 'w') as f:
+            model_dump = self.model_dump()
+            f.write(json.dumps(model_dump, indent=4))
 
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':
         path = get_package_path() / f'templates/proj_templates/{name}.json'
-        if not os.path.exists(path):  # TODO raise exceptions and handle message/exit in cli
-            print(term_color(f'No known agentstack tool: {name}', 'red'))
-            sys.exit(1)
+        if not os.path.exists(path):
+            raise ValidationError(f"Template {name} not found.")
         return cls.from_file(path)
 
     @classmethod
     def from_file(cls, path: Path) -> 'TemplateConfig':
-        return cls.from_json(open_json_file(path))
+        if not os.path.exists(path):
+            raise ValidationError(f"Template {name} not found.")
+        with open(path, 'r') as f:
+            return cls.from_json(json.load(f))
 
     @classmethod
     def from_url(cls, url: str) -> 'TemplateConfig':
@@ -102,11 +130,12 @@ class TemplateConfig(pydantic.BaseModel):
                 case _:
                     raise ValidationError(f"Unsupported template version: {data.get('template_version')}")
         except pydantic.ValidationError as e:
-            # TODO raise exceptions and handle message/exit in cli
-            print(term_color(f"Error validating template config JSON: \n{path}", 'red'))
+            err_msg = "Error validating template config JSON: \n    {path}\n\n"
             for error in e.errors():
-                print(f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}")
-            sys.exit(1)
+                err_msg += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
+            raise ValidationError(err_msg)
+        except json.JSONDecodeError as e:
+            raise ValidationError(f"Error decoding template JSON from URL:\n    {url}\n\n{e}")
 
 
 def get_all_template_paths() -> list[Path]:
