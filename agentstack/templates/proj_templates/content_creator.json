@@ -1,7 +1,7 @@
 {
   "name": "content_creator",
   "description": "Multi-agent system for creating high-quality content",
-  "template_version": 1,
+  "template_version": 2,
   "framework": "crewai",
   "agents": [{
     "name": "researcher",

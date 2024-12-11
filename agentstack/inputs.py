@@ -29,7 +29,7 @@ class InputsConfig:
     def __init__(self, path: Optional[Path] = None):
         self.path = path if path else Path()
         filename = self.path / INPUTS_FILENAME
-        
+
         if not os.path.exists(filename):
             os.makedirs(filename.parent, exist_ok=True)
             filename.touch()

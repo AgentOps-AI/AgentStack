@@ -15,6 +15,6 @@ class TemplateConfigTest(unittest.TestCase):
 
     def test_all_configs_from_template_path(self):
         for path in get_all_template_paths():
-            config = TemplateConfig.from_json(path)
+            config = TemplateConfig.from_file(path)
             assert config.name == path.stem
             # We can assume that pydantic validation caught any other issues

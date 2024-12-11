@@ -6,12 +6,13 @@ import agentops
 
 agentops.init(default_tags=['crewai', 'agentstack'])
 
+instance = {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew()
 
 def run():
     """
     Run the crew.
     """
-    {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().kickoff(inputs=agentstack.get_inputs())
+    instance.kickoff(inputs=agentstack.get_inputs())
 
 
 def train():
@@ -19,8 +20,11 @@ def train():
     Train the crew for a given number of iterations.
     """
     try:
-        {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=agentstack.get_inputs())
-
+        instance.train(
+            n_iterations=int(sys.argv[1]), 
+            filename=sys.argv[2], 
+            inputs=agentstack.get_inputs(), 
+        )
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
 
@@ -30,8 +34,7 @@ def replay():
     Replay the crew execution from a specific task.
     """
     try:
-        {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().replay(task_id=sys.argv[1])
-
+        instance.replay(task_id=sys.argv[1])
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
@@ -41,8 +44,11 @@ def test():
     Test the crew execution and returns the results.
     """
     try:
-        {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=agentstack.get_inputs())
-
+        instance.test(
+            n_iterations=int(sys.argv[1]), 
+            openai_model_name=sys.argv[2], 
+            inputs=agentstack.get_inputs(), 
+        )
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
