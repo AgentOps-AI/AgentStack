@@ -517,7 +517,7 @@ def export_template(output_filename: str, path: str = ''):
             if tool_name not in tools_agents:
                 tools_agents[tool_name] = []
             tools_agents[tool_name].append(agent_name)
-    
+
     tools: list[TemplateConfig.Tool] = []
     for tool_name, agent_names in tools_agents.items():
         tools.append(
