@@ -1,4 +1,5 @@
 import os
+import requests
 
 from pydantic import BaseModel, Field
 from typing import Optional, Type
@@ -8,16 +9,45 @@ from crewai_tools import BaseTool
 from dotenv import load_dotenv
 load_dotenv()
 
-QUERY_DATA_ENDPOINT = "http://0.0.0.0:8080/v1/query-data"
+QUERY_DATA_ENDPOINT = "https://api.agentql.com/v1/query-data"
 api_key = os.getenv("AGENTQL_API_KEY")
 
 class AgentQLQueryDataSchema(BaseModel):
     url: str = Field(description="Website URL")
     query: Optional[str] = Field(
         default=None,
-        description="AgentQL query to scrape the url"
+        description="""
+AgentQL query to scrape the url.
+
+Here is a guide on AgentQL query syntax:
+
+Enclose all AgentQL query terms within curly braces `{}`. The following query structure isn't valid because the term "social\_media\_links" is wrongly enclosed within parenthesis `()`.
+
+```
+( # Should be {
+    social_media_links(The icons that lead to Facebook, Snapchat, etc.)[]
+) # Should be }
+```
+
+The following query is also invalid since its missing the curly braces `{}`
+
+```
+# should include {
+social_media_links(The icons that lead to Facebook, Snapchat, etc.)[]
+# should include }
+```
+
+You can't include new lines in your semantic context. The following query structure isn't valid because the semantic context isn't contained within one line.
+
+```
+{
+    social_media_links(The icons that lead
+        to Facebook, Snapchat, etc.)[]
+}
+```
+"""
     )
-    description: Optional[str] = Field(
+    prompt: Optional[str] = Field(
         default=None,
         description="Natural language description of the data you want to scrape"
     )
@@ -34,14 +64,25 @@ class AgentQLQueryDataTool(BaseTool):
         self,
         url: str,
         query: Optional[str] = None,
-        description: Optional[str] = None
+        prompt: Optional[str] = None
     ) -> dict:
-        if query: 
-            return {"data": [{"name": "T-Shirt", "price": 100}, {"name": "Pants", "price": 200}]}
-        elif description:
-            return {"data": [{"name": "Coat", "price": 300}, {"name": "Shoes", "price": 400}]}
+        payload = {
+            "url": url,
+            "query": query,
+            "prompt": prompt
+        }
+
+        headers = {
+            "X-API-Key": f"{api_key}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(QUERY_DATA_ENDPOINT, headers=headers, json=payload)
+        if response.status_code == 200 and response.text:
+            return response.text
         else:
-            return {"error": "No query or description provided"}
+            print(f"{response.status_code} - {response.text}")
+            return "Failed to query AgentQL"
         
 def createTool(func):
     def wrapper(*args, **kwargs):
