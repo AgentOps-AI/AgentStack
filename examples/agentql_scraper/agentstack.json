@@ -1,6 +1,0 @@
-{
-    "framework": "crewai",
-    "tools": [
-        "agentql"
-    ]
-}
