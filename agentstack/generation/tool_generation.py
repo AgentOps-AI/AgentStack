@@ -1,141 +1,172 @@
-import importlib.resources
-import json
+import os
 import sys
 from typing import Optional
-
-from .gen_utils import insert_code_after_tag, string_in_file
-from ..utils import open_json_file, get_framework, term_color
-import os
+from pathlib import Path
 import shutil
-import fileinput
+import ast
 
-TOOL_INIT_FILENAME = "src/tools/__init__.py"
-AGENTSTACK_JSON_FILENAME = "agentstack.json"
-
-
-def add_tool(tool_name: str, path: Optional[str] = None):
-    if path:
-        path = path.endswith('/') and path or path + '/'
-    else:
-        path = './'
-    with importlib.resources.path(f'agentstack.tools', 'tools.json') as tools_data_path:
-        tools = open_json_file(tools_data_path)
-        framework = get_framework(path)
-        assert_tool_exists(tool_name, tools)
-        agentstack_json = open_json_file(f'{path}{AGENTSTACK_JSON_FILENAME}')
-        
-        if tool_name in agentstack_json.get('tools', []):
-            print(term_color(f'Tool {tool_name} is already installed', 'red'))
-            sys.exit(1)
-
-        with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
-            tool_data = open_json_file(tool_data_path)
-
-            with importlib.resources.path(f'agentstack.templates.{framework}.tools', f"{tool_name}_tool.py") as tool_file_path:
-                if tool_data.get('packages'):
-                    os.system(f"poetry add {' '.join(tool_data['packages'])}")  # Install packages
-                shutil.copy(tool_file_path, f'{path}src/tools/{tool_name}_tool.py')  # Move tool from package to project
-                add_tool_to_tools_init(tool_data, path)  # Export tool from tools dir
-                add_tool_to_agent_definition(framework, tool_data, path)  # Add tool to agent definition
-                if tool_data.get('env'): # if the env vars aren't in the .env files, add them
-                    first_var_name = tool_data['env'].split('=')[0]
-                    if not string_in_file(f'{path}.env', first_var_name):
-                        insert_code_after_tag(f'{path}.env', '# Tools', [tool_data['env']], next_line=True)  # Add env var
-                    if not string_in_file(f'{path}.env.example', first_var_name):
-                        insert_code_after_tag(f'{path}.env.example', '# Tools', [tool_data['env']], next_line=True)  # Add env var
-                
-                if not agentstack_json.get('tools'):
-                    agentstack_json['tools'] = []
-                agentstack_json['tools'].append(tool_name)
-
-                with open(f'{path}{AGENTSTACK_JSON_FILENAME}', 'w') as f:
-                    json.dump(agentstack_json, f, indent=4)
-
-                print(term_color(f'🔨 Tool {tool_name} added to agentstack project successfully', 'green'))
-                if tool_data.get('cta'):
-                    print(term_color(f'🪩 {tool_data["cta"]}', 'blue'))
+from agentstack import frameworks
+from agentstack import packaging
+from agentstack import ValidationError
+from agentstack.utils import term_color
+from agentstack.tools import ToolConfig
+from agentstack.generation import asttools
+from agentstack.generation.files import ConfigFile, EnvFile
 
 
-def remove_tool(tool_name: str, path: Optional[str] = None):
-    if path:
-        path = path.endswith('/') and path or path + '/'
-    else:
-        path = './'
-    with importlib.resources.path(f'agentstack.tools', 'tools.json') as tools_data_path:
-        tools = open_json_file(tools_data_path)
-        framework = get_framework()
-        assert_tool_exists(tool_name, tools)
-        agentstack_json = open_json_file(f'{path}{AGENTSTACK_JSON_FILENAME}')
-        
-        if not tool_name in agentstack_json.get('tools', []):
-            print(term_color(f'Tool {tool_name} is not installed', 'red'))
-            sys.exit(1)
-
-        with importlib.resources.path(f'agentstack.tools', f"{tool_name}.json") as tool_data_path:
-            tool_data = open_json_file(tool_data_path)
-            if tool_data.get('packages'):
-                os.system(f"poetry remove {' '.join(tool_data['packages'])}") # Uninstall packages
-            os.remove(f'{path}src/tools/{tool_name}_tool.py')
-            remove_tool_from_tools_init(tool_data, path)
-            remove_tool_from_agent_definition(framework, tool_data, path)
-            # We don't remove the .env variables to preserve user data.
-            
-            agentstack_json['tools'].remove(tool_name)
-            with open(f'{path}{AGENTSTACK_JSON_FILENAME}', 'w') as f:
-                json.dump(agentstack_json, f, indent=4)
-            
-            print(term_color(f'🔨 Tool {tool_name}', 'green'), term_color('removed', 'red'), term_color('from agentstack project successfully', 'green'))
+# This is the filename of the location of tool imports in the user's project.
+TOOLS_INIT_FILENAME: Path = Path("src/tools/__init__.py")
 
 
-def _format_tool_import_statement(tool_data: dict):
-    return f"from .{tool_data['name']}_tool import {', '.join([tool_name for tool_name in tool_data['tools']])}"
+class ToolsInitFile(asttools.File):
+    """
+    Modifiable AST representation of the tools init file.
+
+    Use it as a context manager to make and save edits:
+    ```python
+    with ToolsInitFile(filename) as tools_init:
+        tools_init.add_import_for_tool(...)
+    ```
+    """
+
+    def get_import_for_tool(self, tool: ToolConfig) -> Optional[ast.ImportFrom]:
+        """
+        Get the import statement for a tool.
+        raises a ValidationError if the tool is imported multiple times.
+        """
+        all_imports = asttools.get_all_imports(self.tree)
+        tool_imports = [i for i in all_imports if tool.module_name == i.module]
+
+        if len(tool_imports) > 1:
+            raise ValidationError(f"Multiple imports for tool {tool.name} found in {self.filename}")
+
+        try:
+            return tool_imports[0]
+        except IndexError:
+            return None
+
+    def add_import_for_tool(self, framework: str, tool: ToolConfig):
+        """
+        Add an import for a tool.
+        raises a ValidationError if the tool is already imported.
+        """
+        tool_import = self.get_import_for_tool(tool)
+        if tool_import:
+            raise ValidationError(f"Tool {tool.name} already imported in {self.filename}")
+
+        try:
+            last_import = asttools.get_all_imports(self.tree)[-1]
+            start, end = self.get_node_range(last_import)
+        except IndexError:
+            start, end = 0, 0  # No imports in the file
+
+        import_statement = tool.get_import_statement(framework)
+        self.edit_node_range(end, end, f"\n{import_statement}")
+
+    def remove_import_for_tool(self, framework: str, tool: ToolConfig):
+        """
+        Remove an import for a tool.
+        raises a ValidationError if the tool is not imported.
+        """
+        tool_import = self.get_import_for_tool(tool)
+        if not tool_import:
+            raise ValidationError(f"Tool {tool.name} not imported in {self.filename}")
+
+        start, end = self.get_node_range(tool_import)
+        self.edit_node_range(start, end, "")
 
 
-def add_tool_to_tools_init(tool_data: dict, path: str = ''):
-    file_path = f'{path}{TOOL_INIT_FILENAME}'
-    tag = '# tool import'
-    code_to_insert = [_format_tool_import_statement(tool_data), ]
-    insert_code_after_tag(file_path, tag, code_to_insert, next_line=True)
+def add_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional[Path] = None):
+    if path is None:
+        path = Path()
+    agentstack_config = ConfigFile(path)
+    framework = agentstack_config.framework
+
+    if tool_name in agentstack_config.tools:
+        print(term_color(f'Tool {tool_name} is already installed', 'red'))
+        sys.exit(1)
+
+    tool = ToolConfig.from_tool_name(tool_name)
+    tool_file_path = tool.get_impl_file_path(framework)
+
+    if tool.packages:
+        packaging.install(' '.join(tool.packages))
+
+    # Move tool from package to project
+    shutil.copy(tool_file_path, path / f'src/tools/{tool.module_name}.py')
+
+    try:  # Edit the user's project tool init file to include the tool
+        with ToolsInitFile(path / TOOLS_INIT_FILENAME) as tools_init:
+            tools_init.add_import_for_tool(framework, tool)
+    except ValidationError as e:
+        print(term_color(f"Error adding tool:\n{e}", 'red'))
+
+    # Edit the framework entrypoint file to include the tool in the agent definition
+    if not agents:  # If no agents are specified, add the tool to all agents
+        agents = frameworks.get_agent_names(framework, path)
+    for agent_name in agents:
+        frameworks.add_tool(framework, tool, agent_name, path)
+
+    if tool.env:  # add environment variables which don't exist
+        with EnvFile(path) as env:
+            for var, value in tool.env.items():
+                env.append_if_new(var, value)
+        with EnvFile(path, filename=".env.example") as env:
+            for var, value in tool.env.items():
+                env.append_if_new(var, value)
+
+    if tool.post_install:
+        os.system(tool.post_install)
+
+    with agentstack_config as config:
+        config.tools.append(tool.name)
+
+    print(term_color(f'🔨 Tool {tool.name} added to agentstack project successfully', 'green'))
+    if tool.cta:
+        print(term_color(f'🪩  {tool.cta}', 'blue'))
 
 
-def remove_tool_from_tools_init(tool_data: dict, path: str = ''):
-    """Search for the import statement in the init and remove it."""
-    file_path = f'{path}{TOOL_INIT_FILENAME}'
-    import_statement = _format_tool_import_statement(tool_data)
-    with fileinput.input(files=file_path, inplace=True) as f:
-        for line in f:
-            if line.strip() != import_statement:
-                print(line, end='')
+def remove_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional[Path] = None):
+    if path is None:
+        path = Path()
+    agentstack_config = ConfigFile(path)
+    framework = agentstack_config.framework
 
+    if tool_name not in agentstack_config.tools:
+        print(term_color(f'Tool {tool_name} is not installed', 'red'))
+        sys.exit(1)
 
-def _framework_filename(framework: str, path: str = ''):
-    if framework == 'crewai':
-        return f'{path}src/crew.py'
+    tool = ToolConfig.from_tool_name(tool_name)
+    if tool.packages:
+        packaging.remove(' '.join(tool.packages))
 
-    print(term_color(f'Unknown framework: {framework}', 'red'))
-    sys.exit(1)
+    # TODO ensure that other agents in the project are not using the tool.
+    try:
+        os.remove(path / f'src/tools/{tool.module_name}.py')
+    except FileNotFoundError:
+        print(f'"src/tools/{tool.module_name}.py" not found')
 
+    try:  # Edit the user's project tool init file to exclude the tool
+        with ToolsInitFile(path / TOOLS_INIT_FILENAME) as tools_init:
+            tools_init.remove_import_for_tool(framework, tool)
+    except ValidationError as e:
+        print(term_color(f"Error removing tool:\n{e}", 'red'))
 
-def add_tool_to_agent_definition(framework: str, tool_data: dict, path: str = ''):
-    filename = _framework_filename(framework, path)
-    with fileinput.input(files=filename, inplace=True) as f:
-        for line in f:
-            print(line.replace('tools=[', f'tools=[{"*" if tool_data.get("tools_bundled") else ""}tools.{", tools.".join([tool_name for tool_name in tool_data["tools"]])}, '), end='')
+    # Edit the framework entrypoint file to exclude the tool in the agent definition
+    if not agents:  # If no agents are specified, remove the tool from all agents
+        agents = frameworks.get_agent_names(framework, path)
+    for agent_name in agents:
+        frameworks.remove_tool(framework, tool, agent_name, path)
 
+    if tool.post_remove:
+        os.system(tool.post_remove)
+    # We don't remove the .env variables to preserve user data.
 
-def remove_tool_from_agent_definition(framework: str, tool_data: dict, path: str = ''):
-    filename = _framework_filename(framework, path)
-    with fileinput.input(files=filename, inplace=True) as f:
-        for line in f:
-            print(line.replace(f'{", ".join([f"tools.{tool_name}" for tool_name in tool_data["tools"]])}, ', ''), end='')
+    with agentstack_config as config:
+        config.tools.remove(tool.name)
 
-
-def assert_tool_exists(tool_name: str, tools: dict):
-    for cat in tools.keys():
-        for tool_dict in tools[cat]:
-            if tool_dict['name'] == tool_name:
-                return
-
-    print(term_color(f'No known agentstack tool: {tool_name}', 'red'))
-    sys.exit(1)
-
+    print(
+        term_color(f'🔨 Tool {tool_name}', 'green'),
+        term_color('removed', 'red'),
+        term_color('from agentstack project successfully', 'green'),
+    )

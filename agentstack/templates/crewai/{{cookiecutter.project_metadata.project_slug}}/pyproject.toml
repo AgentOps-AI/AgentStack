@@ -4,13 +4,11 @@ version = "{{cookiecutter.project_metadata.version}}"
 description = "{{cookiecutter.project_metadata.description}}"
 authors = ["{{cookiecutter.project_metadata.author_name}}"]
 license = "{{cookiecutter.project_metadata.license}}"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10,<=3.13"
-agentops = "^0.3.12"
-crewai = "^0.63.6"
-crewai-tools= "0.12.1"
-python-dotenv="1.0.1"
+agentstack = {extras = ["{{cookiecutter.framework}}"], version="{{cookiecutter.project_metadata.agentstack_version}}"}
 
 [project.scripts]
 {{cookiecutter.project_metadata.project_name}} = "{{cookiecutter.project_metadata.project_name}}.main:run"

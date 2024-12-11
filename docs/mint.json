@@ -1,0 +1,84 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "AgentStack",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/logo/favicon.svg",
+  "colors": {
+    "primary": "#0D4A93",
+    "light": "#07A8C9",
+    "dark": "#0D4A93",
+    "anchors": {
+      "from": "#0D4A93",
+      "to": "#07A8C9"
+    }
+  },
+  "topbarLinks": [
+
+  ],
+  "tabs": [
+
+  ],
+  "anchors": [
+    {
+      "name": "Community",
+      "icon": "discord",
+      "url": "https://discord.gg/JdWkh9tgTQ"
+    }, {
+      "name": "CrewAI Docs",
+      "icon": "ship",
+      "url": "https://docs.crewai.com/introduction"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "introduction",
+        "installation",
+        "quickstart"
+      ]
+    },
+    {
+      "group": "Basics",
+      "pages": [
+        "essentials/generating-agents",
+        "essentials/generating-tasks",
+        "essentials/agentops"
+      ]
+    },
+    {
+      "group": "CLI Reference",
+      "pages": [
+        "cli-reference/cli"
+      ]
+    },
+    {
+      "group": "Tools",
+      "pages": [
+        "tools/core",
+        "tools/community"
+      ]
+    },
+    {
+      "group": "Templating",
+      "pages": [
+        "templates/templates",
+        "templates/community"
+      ]
+    },
+    {
+      "group": "Contributing",
+      "pages": [
+        "contributing/how-to-contribute",
+        "contributing/adding-tools"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "x": "https://x.com/braelyn_ai",
+    "github": "https://github.com/bboynton97"
+  }
+}

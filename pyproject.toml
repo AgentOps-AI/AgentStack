@@ -4,23 +4,47 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentstack"
-version = "0.1.9"
+version = "0.2.2.1"
 description = "The fastest way to build robust AI agents"
 authors = [
     { name="Braelyn Boynton", email="bboynton97@gmail.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
+    "agentops>=0.3.18",
     "typer>=0.12.5",
     "inquirer>=3.4.0",
     "art>=6.3",
     "toml>=0.10.2",
     "ruamel.yaml.base>=0.3.2",
-    "cookiecutter==2.6.0"
+    "cookiecutter==2.6.0",
+    "psutil==5.9.8",
+    "astor==0.8.1",
+    "asttokens",
+    "pydantic>=2.10",
+    "packaging==23.2",
+    "requests>=2.32",
+    "appdirs>=1.4.4",
+    "python-dotenv>=1.0.1",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.1",
+    "ruff>=0.8.2",
+]
+test = [
+    "tox",
+]
+crewai = [
+    "crewai==0.83.0",
+    "crewai-tools==0.14.0",
+]
+
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
@@ -28,3 +52,32 @@ agentstack = ["templates/**/*"]
 
 [project.scripts]
 agentstack = "agentstack.main:main"
+
+[tool.ruff]
+exclude = [
+    ".git",
+    ".env",
+    ".venv",
+    "venv",
+    "env",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    "agentstack/templates/",
+    "examples",
+    "__init__.py"
+]
+line-length = 110
+
+[tool.ruff.format]
+quote-style = "preserve"
+
+[tool.mypy]
+exclude = [
+    "templates/.*" # cookiecutter paths are not compatible
+]
+allow_untyped_defs = true
+disable_error_code = ["var-annotated", "import-untyped"]
+ignore_missing_imports = true
+

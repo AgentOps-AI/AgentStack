@@ -11,7 +11,7 @@ AgentStack works on macOS, Windows, and Linux.<br>
 If something doesn't work, please [file an issue](https://github.com/agentops-ai/agentstack/issues/new).<br>
 If you have questions or need help, please ask in our [Discord community](https://discord.gg/JdWkh9tgTQ).
 
-> 🛠️🚨 AgentStack is in open preview. We're building in public, use at your own risk but have fun :)
+> 🛠️🏃🏼‍♀️ The quickest way to build your powerful agent project
 
 AgentStack serves as a great tool for starting your agent project and offers many CLI utilities for easy code-gen throughout the development process.
 
@@ -38,13 +38,13 @@ Create a project, and you're good to go.
 
 ## Creating an Agent Project
 
-**You'll need to have Python 3.10+ on your local development machine** (but it's not required on the server). We recommend using the latest version. You can use [pyenv](https://github.com/pyenv/pyenv) to switch Python versions between different projects.
+**You'll need to have Python 3.10+ on your local development machine**. We recommend using the latest version. You can use [pyenv](https://github.com/pyenv/pyenv) to switch Python versions between different projects.
 
 To create a new agent project, run:
 
 ```sh
 pip install agentstack
-agentstack init
+agentstack init <project_name>
 ```
 
 It will create a directory with your project name inside the current folder.<br>
@@ -54,8 +54,11 @@ No configuration or complicated folder structures, only the files you need to bu
 Once the initialization is done, you can open your project folder:
 
 ```sh
-cd my-agent-project
+cd <your_agent_project>
 ```
+
+### Templates
+Additionally, pre-built templates are available as a shortcut to building your project. [View the available templates]().
 
 ## Building Agent Functionality
 
@@ -83,7 +86,7 @@ agentstack tools add <tool_name>
 
 ## Running Your Agent
 
-`python src/main.py`
+`agentstack run`
 
 Runs the agent project in development mode.<br>
 
@@ -101,13 +104,9 @@ AgentStack is not designed to be a low-code solution to building agents. Instead
 
 ## Roadmap
 
-### Frameworks
+### Framework Agnosticism
 
-#### CrewAI
-Development of AgentStack is being done primarily on [CrewAI](https://crewai.com).
-
-#### AutoGen
-Some work has been done to add Microsoft's [AutoGen](https://microsoft.github.io/autogen/0.2/), although these efforts have been paused. AutoGen is currently in the process of making [large design decisions](https://microsoft.github.io/autogen/dev/) that will effect the integration with AgentStack.
+Development of AgentStack is being done primarily on [CrewAI](https://crewai.com). We will soon be working to make AgentStack fully framework-agnostic, meaning that any supported multi-agent framework can be used for your project. 
 
 ### Tools
 - Core Tools built by AgentStack
@@ -121,8 +120,6 @@ Some work has been done to add Microsoft's [AutoGen](https://microsoft.github.io
 - A fast interactive test runner with built-in support for coverage reporting.
 - A live development server that warns about common mistakes.
 - A build script to bundle your project for production.
-- Integration with [AgentOps](https://agentops.ai) for AI agent observability.
-- Hassle-free updates for the above tools with a single dependency.
 
 ## License
 

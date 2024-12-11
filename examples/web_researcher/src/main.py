@@ -1,25 +1,28 @@
 #!/usr/bin/env python
+import json
 import sys
+from typing import Optional
+
 from crew import WebresearcherCrew
 import agentops
 from dotenv import load_dotenv
 load_dotenv()
 
-agentops.init()
+agentops.init(default_tags=['web_researcher', 'agentstack'])
 
-# This main file is intended to be a way for your to run your
-# crew locally, so refrain from adding necessary logic into this file.
-# Replace with inputs you want to test with, it will automatically
-# interpolate any tasks and agents information
 
-def run():
+def run(inputs: Optional[dict] = None):
     """
     Run the crew.
     """
-    inputs = {
-        'topic': 'AI LLMs'
-    }
-    WebresearcherCrew().crew().kickoff(inputs=inputs)
+
+    print(inputs)
+
+    if not inputs:
+        inputs = {
+            'url': 'https://github.com/AgentOps-AI/AgentStack/tree/main'
+        }
+    return WebresearcherCrew().crew().kickoff(inputs=inputs)
 
 
 def train():
@@ -62,4 +65,8 @@ def test():
 
 
 if __name__ == '__main__':
-    run()
+    data = None
+    if len(sys.argv) > 1:
+        data_str = sys.argv[1]
+        data = json.loads(data_str)
+    run(data)

@@ -11,8 +11,10 @@ def insert_code_after_tag(file_path, tag, code_to_insert, next_line=False):
     for index, line in enumerate(lines):
         if tag in line:
             # Insert the code block after the tag
-            indented_code = [(line[:len(line)-len(line.lstrip())] + code_line + '\n') for code_line in code_to_insert]
-            lines[index+1:index+1] = indented_code
+            indented_code = [
+                (line[: len(line) - len(line.lstrip())] + code_line + '\n') for code_line in code_to_insert
+            ]
+            lines[index + 1 : index + 1] = indented_code
             break
     else:
         raise ValueError(f"Tag '{tag}' not found in the file.")
@@ -31,8 +33,9 @@ def insert_after_tasks(file_path, code_to_insert):
     last_task_end = None
     last_task_start = None
     for node in ast.walk(module):
-        if isinstance(node, ast.FunctionDef) and \
-                any(isinstance(deco, ast.Name) and deco.id == 'task' for deco in node.decorator_list):
+        if isinstance(node, ast.FunctionDef) and any(
+            isinstance(deco, ast.Name) and deco.id == 'task' for deco in node.decorator_list
+        ):
             last_task_end = node.end_lineno
             last_task_start = node.lineno
 
@@ -57,11 +60,11 @@ def insert_after_tasks(file_path, code_to_insert):
         with open(file_path, 'w') as file:
             file.write(content)
         return True
-    return False
+    else:
+        insert_code_after_tag(file_path, '# Task definitions', code_to_insert)
 
 
 def string_in_file(file_path: str, str_to_match: str) -> bool:
     with open(file_path, 'r') as file:
         file_content = file.read()
         return str_to_match in file_content
-

@@ -2,22 +2,18 @@
 import sys
 from crew import {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew
 import agentops
-from dotenv import load_dotenv
-load_dotenv()
 
-agentops.init()
+agentops.init(default_tags=['crewai', 'agentstack'])
 
-# This main file is intended to be a way for your to run your
-# crew locally, so refrain from adding necessary logic into this file.
-# Replace with inputs you want to test with, it will automatically
-# interpolate any tasks and agents information
 
 def run():
     """
     Run the crew.
     """
     inputs = {
-        'topic': 'AI LLMs'
+{%- for input in cookiecutter.structure.inputs %}
+        "{{input}}": "",
+{%- endfor %}
     }
     {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().kickoff(inputs=inputs)
 
@@ -27,7 +23,9 @@ def train():
     Train the crew for a given number of iterations.
     """
     inputs = {
-        "topic": "AI LLMs"
+{%- for input in cookiecutter.structure.inputs %}
+        "{{input}}": "",
+{%- endfor %}
     }
     try:
         {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
@@ -52,7 +50,9 @@ def test():
     Test the crew execution and returns the results.
     """
     inputs = {
-        "topic": "AI LLMs"
+{%- for input in cookiecutter.structure.inputs %}
+        "{{input}}": "",
+{%- endfor %}
     }
     try:
         {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)

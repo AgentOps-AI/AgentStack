@@ -1,0 +1,55 @@
+---
+title: 'Quickstart'
+description: 'Start building AI agents in under 5 minutes'
+icon: 'circle-play'
+---
+
+## Initialize a new project
+
+AgentStack's greatest ability is that of quickly scaffolding agent projects
+
+To start, ensure you have AgentStack [installed](/installation) and run:
+```bash
+agentstack init <project_name>
+```
+
+
+**With the Wizard**
+
+Optionally, if you're a little overwhelmed with the code generated, you can use our Wizard to help guide you through some core setup!
+```bash
+agentstack init <project_name> --wizard
+```
+
+**With a Template**
+
+By default, your project will contain no agents or tasks.
+
+If you find it easier to start with a complete project and edit it to fit your use-case, you can use [Templates](/templates/templates)
+
+```bash
+agentstack init --template=<template_name/url>
+```
+
+## Building your project
+
+AgentStack 0.2 is built on top of [CrewAI](https://docs.crewai.com/introduction). The majority of your development experience will be with Crew.
+
+When working with your Crew project, AgentStack makes generating new agents and tasks easy.
+
+### Agents
+
+To generate a new agent, run `agentstack generate agent <agent_name>` - [More Info](/essentials/generating-agents)
+
+### Tasks
+
+To generate a new task, run `agentstack generate task <task_name>` - [More Info](/essentials/generating-tasks)
+
+
+## Quickstart Tutorial
+<CardGroup cols={1}>
+    <Card title="Tutorial" icon="person-carry-box" href="https://www.loom.com/share/68d796b13cd94647bd1d7fae12b2358e?sid=7fdf595b-de84-4d51-9a81-ef1e9c8ac71c" target="_blank">
+      Build a simple web scraper agent
+      ![thumbnail](https://cdn.loom.com/sessions/thumbnails/68d796b13cd94647bd1d7fae12b2358e-5d62273c24a53191-full-play.gif)
+    </Card>
+</CardGroup>

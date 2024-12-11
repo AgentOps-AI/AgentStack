@@ -1,0 +1,31 @@
+---
+title: 'Generating Agents'
+description: 'CLI command to add an agent to your project'
+---
+
+To generate a new agent for your project, run:
+
+```bash
+agentstack generate agent <agent_name>
+```
+
+This command will modify two files, `crew.py` and `agents.yaml`.
+
+## crew.py
+
+This is the file that declares each of your agents and tasks. It's the core of your AgentStack project with Crew.
+
+
+## agents.yaml
+
+This is your prompt file. Any prompt engineering is abstracted to here for non-technical ease.
+
+Each agent has three prompt params:
+- Role
+- Goal
+- Backstory
+
+And one configuration param:
+- LLM - This value tells crew which model to use for this specific agent. It must be in `<provider>/<model>` format
+
+    Ex: `openai/gpt-4o`

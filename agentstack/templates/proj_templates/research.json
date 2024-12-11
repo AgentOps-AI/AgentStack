@@ -1,0 +1,36 @@
+{
+  "name": "research",
+  "description": "Starter project research agent",
+  "template_version": 1,
+  "framework": "crewai",
+  "agents": [{
+    "name": "researcher",
+    "role": "Gather data using research tools.",
+    "goal": "Collect all relevant information asked for using the tools available to you. The data will be analyzed later, compile a result of all data that you believe to be relevant to the query.",
+    "backstory": "You are an expert researcher. You are given a query and are tasked with providing as much relevant data in a concise manner.",
+    "model": "openai/gpt-4o"
+  },{
+    "name": "analyst",
+    "role": "Analyze gathered data.",
+    "goal": "Analyze and consolidate the data gathered from research to adequately answer the query provided in the task.",
+    "backstory": "You are an expert analyst. You are given a collection of research results and should use your knowledge to make conclusions on the data without making any assumptions that are not specifically supported by the data.",
+    "model": "openai/gpt-4o"
+  }],
+  "tasks": [{
+    "name": "research",
+    "description": "use the tools at your disposal to thoroughly research the query: {query}",
+    "expected_output": "text output describing what what information was discovered, with labels defining where it was found. only output content found directly through research, do not modify those results in any way. Cite sources in the result.",
+    "agent": "researcher"
+  },{
+    "name": "analyze",
+    "description": "Using the data gathered by the researcher, analyze the data and form a conclusion that reports key insights on that data pertaining to the query: {query}",
+    "expected_output": "A report in markdown format outlining the key insights of the research and accurately answering the query.",
+    "agent": "analyst"
+  }],
+  "tools": [{
+    "name": "perplexity",
+    "agents": ["researcher"]
+  }],
+  "method": "sequential",
+  "inputs": ["query"]
+}

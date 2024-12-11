@@ -13,7 +13,7 @@ The best place to engage in conversation about your contribution is in the Issue
 
 1. Clone the repo
 2. `poetry install`
-3. `pip install -e .`
+3. `pip install -e .[dev,test]`
    - This will install the CLI locally and in editable mode so you can use `agentstack <command>` to test your latest changes
 
 ## Project Structure
@@ -34,6 +34,29 @@ Adding tools is easy once you understand the project structure. A few things nee
    - Build your tool implementation for that framework. This file will be inserted in the user's project.
    - The tools that are exported from this file should be listed in the tool's config json.
 4. Manually test your tool integration by running `agentstack tools add <your_tool>` and ensure it behaves as expected.
+
+## Before creating your PR
+Be sure that you are opening a PR using a branch other than `main` on your fork. This enables us
+to pull your branch and make modifications to the PR with your permission that may be helpful.
+
+### Formatting
+AgentStack uses Ruff formatter for consistent code formatting. To format your code, run:
+```bash
+pip install ruff
+ruff format .
+```
+
+### Type Checking
+AgentStack uses MyPy for type checking. To check types, run:
+```bash
+mypy agentstack
+```
+
+### Pre-Commit Hooks
+Ruff and MyPy can be run as pre-commit hooks. To enable these hooks, run:
+```bash
+pre-commit install
+```
 
 ## Tests
 HAHAHAHAHAHAHA good one
