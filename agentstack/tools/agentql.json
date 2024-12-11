@@ -2,6 +2,6 @@
     "name": "agentql",
     "packages": [],
     "env": "AGENTQL_API_KEY=...",
-    "tools": ["query_agentql"],
+    "tools": ["query_data"],
     "cta": "Create your AgentQL API key at https://agentql.com/"
 }
