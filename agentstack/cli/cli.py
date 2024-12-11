@@ -389,7 +389,7 @@ def insert_template(
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
-    project_structure.set_inputs(design["inputs"])
+    project_structure.inputs = design["inputs"]
 
     cookiecutter_data = CookiecutterData(
         project_metadata=project_metadata,
