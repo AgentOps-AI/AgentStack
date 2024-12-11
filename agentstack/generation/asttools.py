@@ -177,8 +177,14 @@ def create_attribute(base_name: str, attr_name: str) -> ast.Attribute:
     return ast.Attribute(value=ast.Name(id=base_name, ctx=ast.Load()), attr=attr_name, ctx=ast.Load())
 
 
-def get_node_value(node: Union[ast.expr, ast.Constant, ast.Str, ast.Num]) -> Any:
+def get_node_value(node: Union[ast.expr, ast.Attribute, ast.Constant, ast.Str, ast.Num]) -> Any:
     if isinstance(node, ast.Constant):
         return node.value
+    elif isinstance(node, ast.Attribute):
+        prefix = get_node_value(node.value)
+        if prefix:
+            return '.'.join([prefix, node.attr])
+        else:
+            return node.attr
     else:
         return None

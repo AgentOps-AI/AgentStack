@@ -65,13 +65,13 @@ def init_project_builder(
             try:
                 template_data = TemplateConfig.from_url(template)
             except Exception as e:
-                print(term_color(f"Failed to fetch template data from {template}", 'red'))
+                print(term_color(f"Failed to fetch template data from {template}.\n{e}", 'red'))
                 sys.exit(1)
         else:
             try:
                 template_data = TemplateConfig.from_template_name(template)
             except Exception as e:
-                print(term_color(f"Failed to load template {template}", 'red'))
+                print(term_color(f"Failed to load template {template}.\n{e}", 'red'))
                 sys.exit(1)
 
     if template_data:
@@ -84,11 +84,11 @@ def init_project_builder(
         }
         framework = template_data.framework
         design = {
-            'agents': template_data.agents,
-            'tasks': template_data.tasks,
+            'agents': [agent.model_dump() for agent in template_data.agents],
+            'tasks': [task.model_dump() for task in template_data.tasks],
             'inputs': template_data.inputs,
         }
-        tools = template_data.tools
+        tools = [tools.model_dump() for tools in template_data.tools]
 
     elif use_wizard:
         welcome_message()
@@ -118,7 +118,7 @@ def init_project_builder(
     insert_template(project_details, framework, design, template_data)
     path = Path(project_details['name'])
     for tool_data in tools:
-        generation.add_tool(tool_data.name, agents=tool_data.agents, path=path)
+        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=path)
 
 
 def welcome_message():
@@ -512,10 +512,12 @@ def export_template(output_filename: str, path: str = ''):
     tools_agents: dict[str, list[str]] = {}
     for agent_name in frameworks.get_agent_names(framework, _path):
         for tool_name in frameworks.get_agent_tool_names(framework, agent_name, _path):
+            if not tool_name:
+                continue
             if tool_name not in tools_agents:
                 tools_agents[tool_name] = []
             tools_agents[tool_name].append(agent_name)
-
+    print(tools_agents)
     tools: list[TemplateConfig.Tool] = []
     for tool_name, agent_names in tools_agents.items():
         tools.append(
@@ -531,10 +533,11 @@ def export_template(output_filename: str, path: str = ''):
     #     inputs.append(input)
 
     template = TemplateConfig(
+        template_version=1,
         name=metadata.project_name,
         description=metadata.project_description,
         framework=framework,
-        # method="sequential",  # TODO this needs to be stored in the project somewhere
+        method="sequential",  # TODO this needs to be stored in the project somewhere
         agents=agents,
         tasks=tasks,
         tools=tools,

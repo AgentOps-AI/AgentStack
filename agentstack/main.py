@@ -89,8 +89,8 @@ def main():
     tools_remove_parser = tools_subparsers.add_parser("remove", aliases=["r"], help="Remove a tool")
     tools_remove_parser.add_argument("name", help="Name of the tool to remove")
 
-    export = subparsers.add_parser('export', aliases=['e'], help='Export your agent as a template')
-    export.add_argument('filename', help='The name of the file to export to')
+    export_parser = subparsers.add_parser('export', aliases=['e'], help='Export your agent as a template')
+    export_parser.add_argument('filename', help='The name of the file to export to')
 
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates')
 

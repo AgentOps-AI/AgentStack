@@ -267,6 +267,7 @@ def get_agent_tool_names(agent_name: str, path: Optional[Path] = None) -> list[A
         path = Path()
     with CrewFile(path / ENTRYPOINT) as crew_file:
         tools = crew_file.get_agent_tools(agent_name)
+    print([node for node in tools.elts])
     return [asttools.get_node_value(node) for node in tools.elts]
 
 

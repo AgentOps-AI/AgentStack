@@ -184,7 +184,7 @@ class ProjectFile:
 
     def read(self):
         if os.path.exists(self._path / self._filename):
-            with open(self._path / self._filename, 'r') as f:
+            with open(self._path / self._filename, 'rb') as f:
                 self._data = tomllib.load(f)
         else:
             raise FileNotFoundError(f"File {self._path / self._filename} does not exist.")

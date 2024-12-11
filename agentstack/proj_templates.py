@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional, Literal
 import os, sys
 from pathlib import Path
 import pydantic
 import requests
+import json
 from agentstack import ValidationError
 from agentstack.utils import get_package_path, open_json_file, term_color
 
@@ -26,11 +27,11 @@ class TemplateConfig(pydantic.BaseModel):
     method: str
         The method used by the project. ie. "sequential"
     agents: list[dict]
-        A list of agents used by the project. TODO vaidate this against an agent schema
+        A list of agents used by the project.
     tasks: list[dict]
-        A list of tasks used by the project. TODO validate this against a task schema
+        A list of tasks used by the project.
     tools: list[dict]
-        A list of tools used by the project. TODO validate this against a tool schema
+        A list of tools used by the project.
     inputs: list[str]
         A list of inputs used by the project.
     """
@@ -54,24 +55,27 @@ class TemplateConfig(pydantic.BaseModel):
 
     name: str
     description: str
-    template_version: int = 1
+    template_version: Literal[1]
     framework: str
-    method: str = "sequential"
+    method: str
     agents: list[Agent]
     tasks: list[Task]
     tools: list[Tool]
     inputs: list[str]
 
     def write_to_file(self, filename: Path):
+        if not filename.suffix == '.json':
+            filename = filename.with_suffix('.json')
+
         with open(filename, 'w') as f:
-            f.write(self.model_dump_json(indent=4))
+            model_dump = self.model_dump()
+            f.write(json.dumps(model_dump, indent=4))
 
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':
         path = get_package_path() / f'templates/proj_templates/{name}.json'
-        if not os.path.exists(path):  # TODO raise exceptions and handle message/exit in cli
-            print(term_color(f'No known agentstack tool: {name}', 'red'))
-            sys.exit(1)
+        if not os.path.exists(path):
+            raise ValidationError(f"Template {name} not found.")
         return cls.from_json(path)
 
     @classmethod
@@ -80,11 +84,10 @@ class TemplateConfig(pydantic.BaseModel):
         try:
             return cls(**data)
         except pydantic.ValidationError as e:
-            # TODO raise exceptions and handle message/exit in cli
-            print(term_color(f"Error validating template config JSON: \n{path}", 'red'))
+            err_msg = "Error validating template config JSON: \n    {path}\n\n"
             for error in e.errors():
-                print(f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}")
-            sys.exit(1)
+                err_msg += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
+            raise ValidationError(err_msg)
 
     @classmethod
     def from_url(cls, url: str) -> 'TemplateConfig':
@@ -92,8 +95,11 @@ class TemplateConfig(pydantic.BaseModel):
             raise ValidationError(f"Invalid URL: {url}")
         response = requests.get(url)
         if response.status_code != 200:
-            raise ValidationError(f"Failed to fetch template from {url}")
-        return cls(**response.json())
+            raise ValidationError(f"Failed to fetch template from URL:\n    {url}")
+        try:
+            return cls(**response.json())
+        except json.JSONDecodeError as e:
+            raise ValidationError(f"Error decoding template JSON from URL:\n    {url}\n\n{e}")
 
 
 def get_all_template_paths() -> list[Path]:
