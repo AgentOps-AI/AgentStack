@@ -20,6 +20,9 @@ class ProjectRunTest(unittest.TestCase):
         os.makedirs(self.project_dir / 'src')
         (self.project_dir / 'src' / '__init__.py').touch()
 
+        with open(self.project_dir / 'src' / 'main.py', 'w') as f:
+            f.write('def run(): pass')
+
         # set the framework in agentstack.json
         shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')
         with ConfigFile(self.project_dir) as config:
@@ -36,11 +39,11 @@ class ProjectRunTest(unittest.TestCase):
         shutil.rmtree(self.project_dir)
 
     def test_run_project(self):
-        run_project(self.framework, self.project_dir)
+        run_project(self.project_dir)
 
     def test_env_is_set(self):
         """
         After running a project, the environment variables should be set from project_dir/.env.
         """
-        run_project(self.framework, self.project_dir)
+        run_project(self.project_dir)
         assert os.getenv('ENV_VAR1') == 'value1'

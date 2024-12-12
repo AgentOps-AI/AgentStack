@@ -12,10 +12,12 @@ from art import text2art
 import inquirer
 import os
 import importlib.resources
+import importlib.util
+from importlib import import_module
 from cookiecutter.main import cookiecutter
 from dotenv import load_dotenv
 import subprocess
-from packaging.metadata import Metadata
+
 
 from .agentstack_data import (
     FrameworkData,
@@ -30,6 +32,7 @@ from agentstack.generation.files import ConfigFile, ProjectFile
 from agentstack import frameworks
 from agentstack import packaging
 from agentstack import generation
+from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
 from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework
@@ -110,7 +113,7 @@ def init_project_builder(
 
         framework = "crewai"  # TODO: if --no-wizard, require a framework flag
 
-        design = {'agents': [], 'tasks': [], 'inputs': []}
+        design = {'agents': [], 'tasks': [], 'inputs': {}}
 
         tools = []
 
@@ -155,13 +158,14 @@ def configure_default_model(path: Optional[str] = None):
         agentstack_config.default_model = model
 
 
-def run_project(framework: str, path: str = ''):
+def run_project(path: Optional[str] = None, cli_args: Optional[str] = None):
     """Validate that the project is ready to run and then run it."""
+    _path = Path(path) if path else Path.cwd()
+    framework = get_framework(_path)
+
     if framework not in frameworks.SUPPORTED_FRAMEWORKS:
         print(term_color(f"Framework {framework} is not supported by agentstack.", 'red'))
         sys.exit(1)
-
-    _path = Path(path)
 
     try:
         frameworks.validate_project(framework, _path)
@@ -170,8 +174,32 @@ def run_project(framework: str, path: str = ''):
         print(e)
         sys.exit(1)
 
-    load_dotenv(_path / '.env')  # explicitly load the project's .env file
-    subprocess.run(['python', 'src/main.py'], env=os.environ)
+    # Parse extra --input-* arguments for runtime overrides of the project's inputs
+    if cli_args:
+        for arg in cli_args:
+            if not arg.startswith('--input-'):
+                continue
+            key, value = arg[len('--input-') :].split('=')
+            inputs.add_input_for_run(key, value)
+
+    # explicitly load the project's .env file
+    load_dotenv(_path / '.env')
+
+    # import src/main.py from the project path
+    try:
+        spec = importlib.util.spec_from_file_location("main", str(_path / "src/main.py"))
+        assert spec is not None  # appease type checker
+        assert spec.loader is not None  # appease type checker
+        project_entrypoint = importlib.util.module_from_spec(spec)
+        sys.path.append(str(_path / "src"))
+        spec.loader.exec_module(project_entrypoint)
+    except ImportError as e:
+        print(term_color(f"Failed to import project. Does 'src/main.py' exist?:\n{e}", 'red'))
+        sys.exit(1)
+
+    # run the project's main function
+    # TODO try/except this and print detailed information with a --debug flag
+    project_entrypoint.run()
 
 
 def ask_framework() -> str:
@@ -527,13 +555,8 @@ def export_template(output_filename: str, path: str = ''):
             )
         )
 
-    inputs: list[str] = []
-    # TODO extract inputs from project
-    # for input in frameworks.get_input_names():
-    #     inputs.append(input)
-
     template = TemplateConfig(
-        template_version=1,
+        template_version=2,
         name=metadata.project_name,
         description=metadata.project_description,
         framework=framework,
@@ -541,7 +564,7 @@ def export_template(output_filename: str, path: str = ''):
         agents=agents,
         tasks=tasks,
         tools=tools,
-        inputs=inputs,
+        inputs=inputs.get_inputs(),
     )
 
     try:

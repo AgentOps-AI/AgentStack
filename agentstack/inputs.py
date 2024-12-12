@@ -12,6 +12,9 @@ INPUTS_FILENAME: Path = Path("src/config/inputs.yaml")
 yaml = YAML()
 yaml.preserve_quotes = True  # Preserve quotes in existing data
 
+# run_inputs are set at the beginning of the run and are not saved
+run_inputs: dict[str, str] = {}
+
 
 class InputsConfig:
     """
@@ -71,6 +74,20 @@ class InputsConfig:
 
 
 def get_inputs(path: Optional[Path] = None) -> dict:
+    """
+    Get the inputs configuration file and override with run_inputs.
+    """
     path = path if path else Path()
-    config = InputsConfig(path)
-    return config.to_dict()
+    config = InputsConfig(path).to_dict()
+    # run_inputs override saved inputs
+    for key, value in run_inputs.items():
+        config[key] = value
+    return config
+
+
+def add_input_for_run(key: str, value: str):
+    """
+    Add an input override for the current run.
+    This is used by the CLI to allow inputs to be set at runtime.
+    """
+    run_inputs[key] = value

@@ -26,9 +26,9 @@ class TemplateConfig_v1(pydantic.BaseModel):
             template_version=2,
             framework=self.framework,
             method=self.method,
-            agents=self.agents,
-            tasks=self.tasks,
-            tools=self.tools,
+            agents=[TemplateConfig.Agent(**agent) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool) for tool in self.tools],
             inputs={key: "" for key in self.inputs},
         )
 
@@ -99,14 +99,14 @@ class TemplateConfig(pydantic.BaseModel):
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':
         path = get_package_path() / f'templates/proj_templates/{name}.json'
-        if not os.path.exists(path):
-            raise ValidationError(f"Template {name} not found.")
+        if not name in get_all_template_names():
+            raise ValidationError(f"Template {name} not bundled with agentstack.")
         return cls.from_file(path)
 
     @classmethod
     def from_file(cls, path: Path) -> 'TemplateConfig':
         if not os.path.exists(path):
-            raise ValidationError(f"Template {name} not found.")
+            raise ValidationError(f"Template {path} not found.")
         with open(path, 'r') as f:
             return cls.from_json(json.load(f))
 
@@ -130,12 +130,12 @@ class TemplateConfig(pydantic.BaseModel):
                 case _:
                     raise ValidationError(f"Unsupported template version: {data.get('template_version')}")
         except pydantic.ValidationError as e:
-            err_msg = "Error validating template config JSON: \n    {path}\n\n"
+            err_msg = "Error validating template config JSON:\n"
             for error in e.errors():
                 err_msg += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(err_msg)
         except json.JSONDecodeError as e:
-            raise ValidationError(f"Error decoding template JSON from URL:\n    {url}\n\n{e}")
+            raise ValidationError(f"Error decoding template JSON.\n{e}")
 
 
 def get_all_template_paths() -> list[Path]:

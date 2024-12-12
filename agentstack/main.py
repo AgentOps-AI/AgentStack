@@ -43,7 +43,20 @@ def main():
     init_parser.add_argument("--template", "-t", help="Agent template to use")
 
     # 'run' command
-    _ = subparsers.add_parser("run", aliases=["r"], help="Run your agent")
+    run_parser = subparsers.add_parser(
+        "run",
+        aliases=["r"],
+        help="Run your agent",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+  --input-<key>=VALUE   Specify inputs to be passed to the run. 
+                        These will override the inputs in the project's inputs.yaml file.
+                        Examples: --input-topic=Sports --input-content-type=News
+    ''',
+    )
+    run_parser.add_argument(
+        "--path", "-p", help="Path to the project directory, defaults to current directory"
+    )
 
     # 'generate' command
     generate_parser = subparsers.add_parser("generate", aliases=["g"], help="Generate agents or tasks")
@@ -94,8 +107,8 @@ def main():
 
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates')
 
-    # Parse arguments
-    args = parser.parse_args()
+    # Parse known args and store unknown args in extras; some commands use them later on
+    args, extra_args = parser.parse_known_args()
 
     # Handle version
     if args.version:
@@ -115,8 +128,7 @@ def main():
     elif args.command in ["init", "i"]:
         init_project_builder(args.slug_name, args.template, args.wizard)
     elif args.command in ["run", "r"]:
-        framework = get_framework()
-        run_project(framework)
+        run_project(args.path, cli_args=extra_args)
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             if not args.llm:
