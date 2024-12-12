@@ -1,5 +1,4 @@
 import argparse
-import os
 import sys
 
 from agentstack.cli import (
@@ -10,7 +9,7 @@ from agentstack.cli import (
     export_template,
 )
 from agentstack.telemetry import track_cli_command
-from agentstack.utils import get_version, get_framework
+from agentstack.utils import get_version
 from agentstack import generation
 from agentstack.update import check_for_updates
 

@@ -6,7 +6,6 @@ from pathlib import Path
 
 import json
 import shutil
-import requests
 import itertools
 
 from art import text2art
@@ -24,13 +23,11 @@ from agentstack.utils import get_package_path
 from agentstack.tools import get_all_tools
 from agentstack.generation.files import ConfigFile, ProjectFile
 from agentstack import frameworks
-from agentstack import packaging
 from agentstack import generation
 from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
 from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework
-from agentstack.update import AGENTSTACK_PACKAGE
 from agentstack.proj_templates import TemplateConfig
 
 

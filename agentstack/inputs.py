@@ -1,7 +1,6 @@
 from typing import Optional
 import os
 from pathlib import Path
-import pydantic
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
 from agentstack import ValidationError

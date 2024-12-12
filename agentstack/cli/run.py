@@ -1,10 +1,7 @@
 from typing import Optional
-import os, sys
+import sys
 from pathlib import Path
-import importlib.resources
 import importlib.util
-from importlib import import_module
-from cookiecutter.main import cookiecutter
 from dotenv import load_dotenv
 
 from agentstack import ValidationError
@@ -17,7 +14,12 @@ MAIN_MODULE_NAME = "main"
 
 
 def _import_project_module(path: Path):
-    """Import `main` from the project path."""
+    """
+    Import `main` from the project path.
+
+    We do it this way instead of spawning a subprocess so that we can share
+    state with the user's project.
+    """
     spec = importlib.util.spec_from_file_location(MAIN_MODULE_NAME, str(path / MAIN_FILENAME))
 
     assert spec is not None  # appease type checker
@@ -41,8 +43,7 @@ def run_project(command: str = 'run', path: Optional[str] = None, cli_args: Opti
     try:
         frameworks.validate_project(framework, _path)
     except ValidationError as e:
-        print(term_color("Project validation failed:", 'red'))
-        print(e)
+        print(term_color(f"Project validation failed:\n{e}", 'red'))
         sys.exit(1)
 
     # Parse extra --input-* arguments for runtime overrides of the project's inputs
