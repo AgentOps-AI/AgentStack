@@ -55,7 +55,17 @@ def main():
     ''',
     )
     run_parser.add_argument(
-        "--path", "-p", help="Path to the project directory, defaults to current directory"
+        "--function",
+        "-f",
+        help="Function to call in main.py, defaults to 'run'",
+        default="run",
+        dest="function",
+    )
+    run_parser.add_argument(
+        "--path",
+        "-p",
+        help="Path to the project directory, defaults to current working directory",
+        dest="path",
     )
 
     # 'generate' command
@@ -128,7 +138,7 @@ def main():
     elif args.command in ["init", "i"]:
         init_project_builder(args.slug_name, args.template, args.wizard)
     elif args.command in ["run", "r"]:
-        run_project(args.path, cli_args=extra_args)
+        run_project(command=args.function, path=args.path, cli_args=extra_args)
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             if not args.llm:

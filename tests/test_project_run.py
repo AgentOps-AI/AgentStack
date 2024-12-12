@@ -39,11 +39,11 @@ class ProjectRunTest(unittest.TestCase):
         shutil.rmtree(self.project_dir)
 
     def test_run_project(self):
-        run_project(self.project_dir)
+        run_project(path=self.project_dir)
 
     def test_env_is_set(self):
         """
         After running a project, the environment variables should be set from project_dir/.env.
         """
-        run_project(self.project_dir)
+        run_project(path=self.project_dir)
         assert os.getenv('ENV_VAR1') == 'value1'

@@ -1,23 +1,17 @@
-import json
-import shutil
-import sys
+from typing import Optional
+import os, sys
 import time
 from datetime import datetime
-from typing import Optional
 from pathlib import Path
+
+import json
+import shutil
 import requests
 import itertools
 
 from art import text2art
 import inquirer
-import os
-import importlib.resources
-import importlib.util
-from importlib import import_module
 from cookiecutter.main import cookiecutter
-from dotenv import load_dotenv
-import subprocess
-
 
 from .agentstack_data import (
     FrameworkData,
@@ -156,50 +150,6 @@ def configure_default_model(path: Optional[str] = None):
 
     with ConfigFile(path) as agentstack_config:
         agentstack_config.default_model = model
-
-
-def run_project(path: Optional[str] = None, cli_args: Optional[str] = None):
-    """Validate that the project is ready to run and then run it."""
-    _path = Path(path) if path else Path.cwd()
-    framework = get_framework(_path)
-
-    if framework not in frameworks.SUPPORTED_FRAMEWORKS:
-        print(term_color(f"Framework {framework} is not supported by agentstack.", 'red'))
-        sys.exit(1)
-
-    try:
-        frameworks.validate_project(framework, _path)
-    except frameworks.ValidationError as e:
-        print(term_color("Project validation failed:", 'red'))
-        print(e)
-        sys.exit(1)
-
-    # Parse extra --input-* arguments for runtime overrides of the project's inputs
-    if cli_args:
-        for arg in cli_args:
-            if not arg.startswith('--input-'):
-                continue
-            key, value = arg[len('--input-') :].split('=')
-            inputs.add_input_for_run(key, value)
-
-    # explicitly load the project's .env file
-    load_dotenv(_path / '.env')
-
-    # import src/main.py from the project path
-    try:
-        spec = importlib.util.spec_from_file_location("main", str(_path / "src/main.py"))
-        assert spec is not None  # appease type checker
-        assert spec.loader is not None  # appease type checker
-        project_entrypoint = importlib.util.module_from_spec(spec)
-        sys.path.append(str(_path / "src"))
-        spec.loader.exec_module(project_entrypoint)
-    except ImportError as e:
-        print(term_color(f"Failed to import project. Does 'src/main.py' exist?:\n{e}", 'red'))
-        sys.exit(1)
-
-    # run the project's main function
-    # TODO try/except this and print detailed information with a --debug flag
-    project_entrypoint.run()
 
 
 def ask_framework() -> str:
