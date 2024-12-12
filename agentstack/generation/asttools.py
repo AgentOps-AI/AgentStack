@@ -14,7 +14,7 @@ from pathlib import Path
 import ast
 import astor
 import asttokens
-from agentstack import ValidationError
+from agentstack.exceptions import ValidationError
 
 
 FileT = TypeVar('FileT', bound='File')

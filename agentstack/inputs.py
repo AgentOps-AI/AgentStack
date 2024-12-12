@@ -3,7 +3,8 @@ import os
 from pathlib import Path
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
-from agentstack import ValidationError
+from agentstack import conf
+from agentstack.exceptions import ValidationError
 
 
 INPUTS_FILENAME: Path = Path("src/config/inputs.yaml")
@@ -28,9 +29,8 @@ class InputsConfig:
 
     _attributes: dict[str, str]
 
-    def __init__(self, path: Optional[Path] = None):
-        self.path = path if path else Path()
-        filename = self.path / INPUTS_FILENAME
+    def __init__(self):
+        filename = conf.PATH / INPUTS_FILENAME
 
         if not os.path.exists(filename):
             os.makedirs(filename.parent, exist_ok=True)
@@ -62,7 +62,7 @@ class InputsConfig:
         return dump
 
     def write(self):
-        with open(self.path / INPUTS_FILENAME, 'w') as f:
+        with open(conf.PATH / INPUTS_FILENAME, 'w') as f:
             yaml.dump(self.model_dump(), f)
 
     def __enter__(self) -> 'InputsConfig':
@@ -72,12 +72,11 @@ class InputsConfig:
         self.write()
 
 
-def get_inputs(path: Optional[Path] = None) -> dict:
+def get_inputs() -> dict:
     """
     Get the inputs configuration file and override with run_inputs.
     """
-    path = path if path else Path()
-    config = InputsConfig(path).to_dict()
+    config = InputsConfig().to_dict()
     # run_inputs override saved inputs
     for key, value in run_inputs.items():
         config[key] = value

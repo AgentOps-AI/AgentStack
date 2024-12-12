@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 import unittest
 from parameterized import parameterized
-from agentstack import ValidationError
+from agentstack.exceptions import ValidationError
 from agentstack.proj_templates import TemplateConfig, get_all_template_names, get_all_template_paths
 
 BASE_PATH = Path(__file__).parent
