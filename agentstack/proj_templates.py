@@ -91,7 +91,7 @@ class TemplateConfig(pydantic.BaseModel):
                 print(term_color('Available built-in templates:', 'green'))
                 for template in template_names:
                     print(term_color(f'    {template}', 'green'))
-            sys.exit(1)
+            raise ValidationError(f"Template {name} not found.")
         return cls.from_json(path)
 
     @classmethod
