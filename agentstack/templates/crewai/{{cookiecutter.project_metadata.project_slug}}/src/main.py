@@ -4,7 +4,7 @@ from crew import {{cookiecutter.project_metadata.project_name|replace('-', '')|r
 import agentstack
 import agentops
 
-agentops.init(default_tags=['crewai', 'agentstack'])
+agentops.init(default_tags=agentstack.get_tags())
 
 instance = {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew().crew()
 

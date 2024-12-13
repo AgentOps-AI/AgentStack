@@ -23,10 +23,19 @@ def get_framework() -> Optional[str]:
     and if we are inside a project directory.
     """
     try:
-        config = ConfigFile()
-        return config.framework
+        return ConfigFile().framework
     except FileNotFoundError:
         return None  # not in a project directory; that's okay
+
+
+def get_installed_tools() -> list[str]:
+    """The tools used in the project. Will be available after PATH has been set
+    and if we are inside a project directory.
+    """
+    try:
+        return ConfigFile().tools
+    except FileNotFoundError:
+        return []
 
 
 class ConfigFile(BaseModel):
