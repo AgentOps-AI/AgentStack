@@ -54,7 +54,7 @@ class ProjectStructure:
     def __init__(self):
         self.agents = []
         self.tasks = []
-        self.inputs = []
+        self.inputs = {}
 
     def add_agent(self, agent):
         self.agents.append(agent)

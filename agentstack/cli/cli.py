@@ -1,21 +1,16 @@
-import json
-import shutil
-import sys
+from typing import Optional
+import os, sys
 import time
 from datetime import datetime
-from typing import Optional
 from pathlib import Path
-import requests
+
+import json
+import shutil
 import itertools
 
 from art import text2art
 import inquirer
-import os
-import importlib.resources
 from cookiecutter.main import cookiecutter
-from dotenv import load_dotenv
-import subprocess
-from packaging.metadata import Metadata
 
 from .agentstack_data import (
     FrameworkData,
@@ -28,12 +23,11 @@ from agentstack.utils import get_package_path
 from agentstack.tools import get_all_tools
 from agentstack.generation.files import ConfigFile, ProjectFile
 from agentstack import frameworks
-from agentstack import packaging
 from agentstack import generation
+from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
 from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework
-from agentstack.update import AGENTSTACK_PACKAGE
 from agentstack.proj_templates import TemplateConfig
 
 
@@ -160,27 +154,6 @@ def configure_default_model(path: Optional[str] = None):
 
     with ConfigFile(path) as agentstack_config:
         agentstack_config.default_model = model
-
-
-def run_project(framework: str, path: str = ''):
-    """Validate that the project is ready to run and then run it."""
-    if framework not in frameworks.SUPPORTED_FRAMEWORKS:
-        print(term_color(f"Framework {framework} is not supported by agentstack.", 'red'))
-        sys.exit(1)
-
-    _path = Path(path)
-
-    try:
-        frameworks.validate_project(framework, _path)
-    except frameworks.ValidationError as e:
-        print(term_color("Project validation failed:", 'red'))
-        print(e)
-        sys.exit(1)
-
-    load_dotenv(Path.home() / '.env')  # load the user's .env file
-    load_dotenv(_path / '.env', override=True)  # load the project's .env file
-    print("Running your agent...")
-    subprocess.run(['python', 'src/main.py'], env=os.environ)
 
 
 def ask_framework() -> str:
@@ -401,7 +374,7 @@ def insert_template(
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
-    project_structure.set_inputs(design["inputs"])
+    project_structure.inputs = design["inputs"]
 
     cookiecutter_data = CookiecutterData(
         project_metadata=project_metadata,
@@ -537,13 +510,8 @@ def export_template(output_filename: str, path: str = ''):
             )
         )
 
-    inputs: list[str] = []
-    # TODO extract inputs from project
-    # for input in frameworks.get_input_names():
-    #     inputs.append(input)
-
     template = TemplateConfig(
-        template_version=1,
+        template_version=2,
         name=metadata.project_name,
         description=metadata.project_description,
         framework=framework,
@@ -551,7 +519,7 @@ def export_template(output_filename: str, path: str = ''):
         agents=agents,
         tasks=tasks,
         tools=tools,
-        inputs=inputs,
+        inputs=inputs.get_inputs(),
     )
 
     try:

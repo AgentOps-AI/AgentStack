@@ -47,6 +47,8 @@ class CLITemplatesTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
 
         result = self._run_cli('export', 'test_template.json')
+        print(result.stdout)
+        print(result.stderr)
         self.assertEqual(result.returncode, 0)
         self.assertTrue((self.project_dir / 'test_project/test_template.json').exists())
         template_str = (self.project_dir / 'test_project/test_template.json').read_text()
@@ -56,7 +58,7 @@ class CLITemplatesTest(unittest.TestCase):
             """{
     "name": "test_project",
     "description": "New agentstack project",
-    "template_version": 1,
+    "template_version": 2,
     "framework": "crewai",
     "method": "sequential",
     "agents": [
@@ -84,6 +86,6 @@ class CLITemplatesTest(unittest.TestCase):
             ]
         }
     ],
-    "inputs": []
+    "inputs": {}
 }""",
         )
