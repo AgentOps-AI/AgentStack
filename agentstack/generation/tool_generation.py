@@ -80,45 +80,45 @@ class ToolsInitFile(asttools.File):
 
 def add_tool(tool_name: str, agents: Optional[list[str]] = []):
     agentstack_config = ConfigFile()
+    tool = ToolConfig.from_tool_name(tool_name)
 
     if tool_name in agentstack_config.tools:
-        print(term_color(f'Tool {tool_name} is already installed', 'red'))
-        sys.exit(1)
+        print(term_color(f'Tool {tool_name} is already installed', 'blue'))
+    else:  # handle install
+        tool_file_path = tool.get_impl_file_path(agentstack_config.framework)
 
-    tool = ToolConfig.from_tool_name(tool_name)
-    tool_file_path = tool.get_impl_file_path(agentstack_config.framework)
+        if tool.packages:
+            packaging.install(' '.join(tool.packages))
 
-    if tool.packages:
-        packaging.install(' '.join(tool.packages))
+        # Move tool from package to project
+        shutil.copy(tool_file_path, conf.PATH / f'src/tools/{tool.module_name}.py')
 
-    # Move tool from package to project
-    shutil.copy(tool_file_path, conf.PATH / f'src/tools/{tool.module_name}.py')
+        try:  # Edit the user's project tool init file to include the tool
+            with ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME) as tools_init:
+                tools_init.add_import_for_tool(tool, agentstack_config.framework)
+        except ValidationError as e:
+            print(term_color(f"Error adding tool:\n{e}", 'red'))
 
-    try:  # Edit the user's project tool init file to include the tool
-        with ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME) as tools_init:
-            tools_init.add_import_for_tool(tool, agentstack_config.framework)
-    except ValidationError as e:
-        print(term_color(f"Error adding tool:\n{e}", 'red'))
+        if tool.env:  # add environment variables which don't exist
+            with EnvFile() as env:
+                for var, value in tool.env.items():
+                    env.append_if_new(var, value)
+            with EnvFile(".env.example") as env:
+                for var, value in tool.env.items():
+                    env.append_if_new(var, value)
+
+        if tool.post_install:
+            os.system(tool.post_install)
+
+        with agentstack_config as config:
+            config.tools.append(tool.name)
 
     # Edit the framework entrypoint file to include the tool in the agent definition
     if not agents:  # If no agents are specified, add the tool to all agents
         agents = frameworks.get_agent_names()
     for agent_name in agents:
+        print(f'Adding tool {tool.name} to agent {agent_name}')
         frameworks.add_tool(tool, agent_name)
-
-    if tool.env:  # add environment variables which don't exist
-        with EnvFile() as env:
-            for var, value in tool.env.items():
-                env.append_if_new(var, value)
-        with EnvFile(".env.example") as env:
-            for var, value in tool.env.items():
-                env.append_if_new(var, value)
-
-    if tool.post_install:
-        os.system(tool.post_install)
-
-    with agentstack_config as config:
-        config.tools.append(tool.name)
 
     print(term_color(f'🔨 Tool {tool.name} added to agentstack project successfully', 'green'))
     if tool.cta:

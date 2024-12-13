@@ -152,17 +152,27 @@ class CrewFile(asttools.File):
         if method is None:
             raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
 
-        new_tool_nodes: set[ast.expr] = set()
-        for tool_name in tool.tools:
-            # This prefixes the tool name with the 'tools' module
-            node: ast.expr = asttools.create_attribute('tools', tool_name)
-            if tool.tools_bundled:  # Splat the variable if it's bundled
-                node = ast.Starred(value=node, ctx=ast.Load())
-            new_tool_nodes.add(node)
-
         existing_node: ast.List = self.get_agent_tools(agent_name)
-        elts: set[ast.expr] = set(existing_node.elts) | new_tool_nodes
-        new_node = ast.List(elts=list(elts), ctx=ast.Load())
+        existing_elts: list[ast.expr] = existing_node.elts
+
+        new_tool_nodes: list[ast.expr] = []
+        for tool_name in tool.tools:
+            # TODO there is definitely a better way to do this. We can't use
+            # a `set` becasue the ast nodes are unique objects.
+            _found = False
+            for elt in existing_elts:
+                if str(asttools.get_node_value(elt)) == tool_name:
+                    _found = True
+                    break  # skip if the tool is already in the list
+
+            if not _found:
+                # This prefixes the tool name with the 'tools' module
+                node: ast.expr = asttools.create_attribute('tools', tool_name)
+                if tool.tools_bundled:  # Splat the variable if it's bundled
+                    node = ast.Starred(value=node, ctx=ast.Load())
+                existing_elts.append(node)
+
+        new_node = ast.List(elts=existing_elts, ctx=ast.Load())
         start, end = self.get_node_range(existing_node)
         self.edit_node_range(start, end, new_node)
 

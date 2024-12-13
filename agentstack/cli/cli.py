@@ -6,8 +6,6 @@ from pathlib import Path
 
 import json
 import shutil
-import itertools
-
 from art import text2art
 import inquirer
 from cookiecutter.main import cookiecutter
@@ -22,7 +20,6 @@ from agentstack.logger import log
 from agentstack import conf
 from agentstack.conf import ConfigFile
 from agentstack.utils import get_package_path
-from agentstack.tools import get_all_tools
 from agentstack.generation.files import ProjectFile
 from agentstack import frameworks
 from agentstack import generation
@@ -438,25 +435,6 @@ def insert_template(
         "    agentstack run\n\n"
         "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
     )
-
-
-def list_tools():
-    # Display the tools
-    tools = get_all_tools()
-    curr_category = None
-
-    print("\n\nAvailable AgentStack Tools:")
-    for category, tools in itertools.groupby(tools, lambda x: x.category):
-        if curr_category != category:
-            print(f"\n{category}:")
-            curr_category = category
-        for tool in tools:
-            print("  - ", end='')
-            print(term_color(f"{tool.name}", 'blue'), end='')
-            print(f": {tool.url if tool.url else 'AgentStack default tool'}")
-
-    print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
-    print("   https://docs.agentstack.sh/tools/core")
 
 
 def export_template(output_filename: str):
