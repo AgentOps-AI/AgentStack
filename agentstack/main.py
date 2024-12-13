@@ -5,6 +5,7 @@ import webbrowser
 from agentstack import conf
 from agentstack.cli import (
     init_project_builder,
+    add_tool,
     list_tools,
     configure_default_model,
     run_project,
@@ -120,7 +121,7 @@ def main():
     tools_add_parser = tools_subparsers.add_parser(
         "add", aliases=["a"], help="Add a new tool", parents=[global_parser]
     )
-    tools_add_parser.add_argument("name", help="Name of the tool to add")
+    tools_add_parser.add_argument("name", help="Name of the tool to add", nargs="?")
     tools_add_parser.add_argument(
         "--agents", "-a", help="Name of agents to add this tool to, comma separated"
     )
@@ -179,7 +180,7 @@ def main():
         elif args.tools_command in ["add", "a"]:
             agents = [args.agent] if args.agent else None
             agents = args.agents.split(",") if args.agents else agents
-            generation.add_tool(args.name, agents=agents)
+            add_tool(args.name, agents)
         elif args.tools_command in ["remove", "r"]:
             generation.remove_tool(args.name)
         else:
