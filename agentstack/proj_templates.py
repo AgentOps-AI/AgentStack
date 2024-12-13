@@ -4,7 +4,7 @@ from pathlib import Path
 import pydantic
 import requests
 import json
-from agentstack import ValidationError
+from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path
 
 

@@ -22,6 +22,9 @@ class TestAgentStackCLI(unittest.TestCase):
     def test_version(self):
         """Test the --version command."""
         result = self.run_cli("--version")
+        print(result.stdout)
+        print(result.stderr)
+        print(result.returncode)
         self.assertEqual(result.returncode, 0)
         self.assertIn("AgentStack CLI version:", result.stdout)
 

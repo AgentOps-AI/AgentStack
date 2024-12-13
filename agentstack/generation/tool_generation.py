@@ -5,13 +5,15 @@ from pathlib import Path
 import shutil
 import ast
 
+from agentstack import conf
+from agentstack.conf import ConfigFile
+from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack import packaging
-from agentstack import ValidationError
 from agentstack.utils import term_color
 from agentstack.tools import ToolConfig
 from agentstack.generation import asttools
-from agentstack.generation.files import ConfigFile, EnvFile
+from agentstack.generation.files import EnvFile
 
 
 # This is the filename of the location of tool imports in the user's project.
@@ -45,7 +47,7 @@ class ToolsInitFile(asttools.File):
         except IndexError:
             return None
 
-    def add_import_for_tool(self, framework: str, tool: ToolConfig):
+    def add_import_for_tool(self, tool: ToolConfig, framework: str):
         """
         Add an import for a tool.
         raises a ValidationError if the tool is already imported.
@@ -63,7 +65,7 @@ class ToolsInitFile(asttools.File):
         import_statement = tool.get_import_statement(framework)
         self.edit_node_range(end, end, f"\n{import_statement}")
 
-    def remove_import_for_tool(self, framework: str, tool: ToolConfig):
+    def remove_import_for_tool(self, tool: ToolConfig, framework: str):
         """
         Remove an import for a tool.
         raises a ValidationError if the tool is not imported.
@@ -76,42 +78,39 @@ class ToolsInitFile(asttools.File):
         self.edit_node_range(start, end, "")
 
 
-def add_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional[Path] = None):
-    if path is None:
-        path = Path()
-    agentstack_config = ConfigFile(path)
-    framework = agentstack_config.framework
+def add_tool(tool_name: str, agents: Optional[list[str]] = []):
+    agentstack_config = ConfigFile()
 
     if tool_name in agentstack_config.tools:
         print(term_color(f'Tool {tool_name} is already installed', 'red'))
         sys.exit(1)
 
     tool = ToolConfig.from_tool_name(tool_name)
-    tool_file_path = tool.get_impl_file_path(framework)
+    tool_file_path = tool.get_impl_file_path(agentstack_config.framework)
 
     if tool.packages:
         packaging.install(' '.join(tool.packages))
 
     # Move tool from package to project
-    shutil.copy(tool_file_path, path / f'src/tools/{tool.module_name}.py')
+    shutil.copy(tool_file_path, conf.PATH / f'src/tools/{tool.module_name}.py')
 
     try:  # Edit the user's project tool init file to include the tool
-        with ToolsInitFile(path / TOOLS_INIT_FILENAME) as tools_init:
-            tools_init.add_import_for_tool(framework, tool)
+        with ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME) as tools_init:
+            tools_init.add_import_for_tool(tool, agentstack_config.framework)
     except ValidationError as e:
         print(term_color(f"Error adding tool:\n{e}", 'red'))
 
     # Edit the framework entrypoint file to include the tool in the agent definition
     if not agents:  # If no agents are specified, add the tool to all agents
-        agents = frameworks.get_agent_names(framework, path)
+        agents = frameworks.get_agent_names()
     for agent_name in agents:
-        frameworks.add_tool(framework, tool, agent_name, path)
+        frameworks.add_tool(tool, agent_name)
 
     if tool.env:  # add environment variables which don't exist
-        with EnvFile(path) as env:
+        with EnvFile() as env:
             for var, value in tool.env.items():
                 env.append_if_new(var, value)
-        with EnvFile(path, filename=".env.example") as env:
+        with EnvFile(".env.example") as env:
             for var, value in tool.env.items():
                 env.append_if_new(var, value)
 
@@ -126,11 +125,8 @@ def add_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional[Pa
         print(term_color(f'🪩  {tool.cta}', 'blue'))
 
 
-def remove_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional[Path] = None):
-    if path is None:
-        path = Path()
-    agentstack_config = ConfigFile(path)
-    framework = agentstack_config.framework
+def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
+    agentstack_config = ConfigFile()
 
     if tool_name not in agentstack_config.tools:
         print(term_color(f'Tool {tool_name} is not installed', 'red'))
@@ -142,21 +138,21 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = [], path: Optional
 
     # TODO ensure that other agents in the project are not using the tool.
     try:
-        os.remove(path / f'src/tools/{tool.module_name}.py')
+        os.remove(conf.PATH / f'src/tools/{tool.module_name}.py')
     except FileNotFoundError:
         print(f'"src/tools/{tool.module_name}.py" not found')
 
     try:  # Edit the user's project tool init file to exclude the tool
-        with ToolsInitFile(path / TOOLS_INIT_FILENAME) as tools_init:
-            tools_init.remove_import_for_tool(framework, tool)
+        with ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME) as tools_init:
+            tools_init.remove_import_for_tool(tool, agentstack_config.framework)
     except ValidationError as e:
         print(term_color(f"Error removing tool:\n{e}", 'red'))
 
     # Edit the framework entrypoint file to exclude the tool in the agent definition
     if not agents:  # If no agents are specified, remove the tool from all agents
-        agents = frameworks.get_agent_names(framework, path)
+        agents = frameworks.get_agent_names()
     for agent_name in agents:
-        frameworks.remove_tool(framework, tool, agent_name, path)
+        frameworks.remove_tool(tool, agent_name)
 
     if tool.post_remove:
         os.system(tool.post_remove)

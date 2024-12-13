@@ -28,6 +28,7 @@ import platform
 import socket
 import psutil
 import requests
+from agentstack import conf
 from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 
 TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
@@ -48,7 +49,7 @@ def collect_machine_telemetry(command: str):
     }
 
     if command != "init":
-        telemetry_data['framework'] = get_framework()
+        telemetry_data['framework'] = conf.get_framework()
     else:
         telemetry_data['framework'] = "n/a"
 

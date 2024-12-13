@@ -1,11 +1,11 @@
 import sys
 from typing import Optional
 from pathlib import Path
-from agentstack import ValidationError
+from agentstack.exceptions import ValidationError
+from agentstack.conf import ConfigFile
 from agentstack import frameworks
 from agentstack.utils import verify_agentstack_project
 from agentstack.agents import AgentConfig, AGENTS_FILENAME
-from agentstack.generation.files import ConfigFile
 
 
 def add_agent(
@@ -14,15 +14,11 @@ def add_agent(
     goal: Optional[str] = None,
     backstory: Optional[str] = None,
     llm: Optional[str] = None,
-    path: Optional[Path] = None,
 ):
-    if path is None:
-        path = Path()
-    verify_agentstack_project(path)
-    agentstack_config = ConfigFile(path)
-    framework = agentstack_config.framework
+    agentstack_config = ConfigFile()
+    verify_agentstack_project()
 
-    agent = AgentConfig(agent_name, path)
+    agent = AgentConfig(agent_name)
     with agent as config:
         config.role = role or "Add your role here"
         config.goal = goal or "Add your goal here"
@@ -30,7 +26,7 @@ def add_agent(
         config.llm = llm or agentstack_config.default_model or ""
 
     try:
-        frameworks.add_agent(framework, agent, path)
+        frameworks.add_agent(agent)
         print(f"    > Added to {AGENTS_FILENAME}")
     except ValidationError as e:
         print(f"Error adding agent to project:\n{e}")

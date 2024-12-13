@@ -5,8 +5,9 @@ import unittest
 from parameterized import parameterized_class
 import ast
 
-from agentstack import frameworks, ValidationError
-from agentstack.generation.files import ConfigFile
+from agentstack.conf import ConfigFile, set_path
+from agentstack.exceptions import ValidationError
+from agentstack import frameworks
 from agentstack.generation.task_generation import add_task
 
 BASE_PATH = Path(__file__).parent
@@ -22,14 +23,15 @@ class TestGenerationAgent(unittest.TestCase):
         os.makedirs(self.project_dir / 'src' / 'config')
         (self.project_dir / 'src' / '__init__.py').touch()
 
-        # populate the entrypoint
-        entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
-        shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
-
         # set the framework in agentstack.json
         shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')
-        with ConfigFile(self.project_dir) as config:
+        set_path(self.project_dir)
+        with ConfigFile() as config:
             config.framework = self.framework
+
+        # populate the entrypoint
+        entrypoint_path = frameworks.get_entrypoint_path(self.framework)
+        shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
 
     def tearDown(self):
         shutil.rmtree(self.project_dir)
@@ -40,10 +42,9 @@ class TestGenerationAgent(unittest.TestCase):
             description='description',
             expected_output='expected_output',
             agent='agent',
-            path=self.project_dir,
         )
 
-        entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
+        entrypoint_path = frameworks.get_entrypoint_path(self.framework)
         entrypoint_src = open(entrypoint_path).read()
         # agents.yaml is covered in test_agents_config.py
         # TODO framework-specific validation for code structure
@@ -58,5 +59,4 @@ class TestGenerationAgent(unittest.TestCase):
                 description='description',
                 expected_output='expected_output',
                 agent='agent',
-                path=self.project_dir,
             )

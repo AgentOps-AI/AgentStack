@@ -4,7 +4,8 @@ from pathlib import Path
 import importlib.util
 from dotenv import load_dotenv
 
-from agentstack import ValidationError
+from agentstack import conf
+from agentstack.exceptions import ValidationError
 from agentstack import inputs
 from agentstack import frameworks
 from agentstack.utils import term_color, get_framework
@@ -31,17 +32,14 @@ def _import_project_module(path: Path):
     return project_module
 
 
-def run_project(command: str = 'run', path: Optional[str] = None, cli_args: Optional[str] = None):
+def run_project(command: str = 'run', cli_args: Optional[str] = None):
     """Validate that the project is ready to run and then run it."""
-    _path = Path(path) if path else Path.cwd()
-    framework = get_framework(_path)
-
-    if framework not in frameworks.SUPPORTED_FRAMEWORKS:
-        print(term_color(f"Framework {framework} is not supported by agentstack.", 'red'))
+    if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
+        print(term_color(f"Framework {conf.get_framework()} is not supported by agentstack.", 'red'))
         sys.exit(1)
 
     try:
-        frameworks.validate_project(framework, _path)
+        frameworks.validate_project()
     except ValidationError as e:
         print(term_color(f"Project validation failed:\n{e}", 'red'))
         sys.exit(1)
@@ -55,11 +53,11 @@ def run_project(command: str = 'run', path: Optional[str] = None, cli_args: Opti
             inputs.add_input_for_run(key, value)
 
     load_dotenv(Path.home() / '.env')  # load the user's .env file
-    load_dotenv(_path / '.env', override=True)  # load the project's .env file
+    load_dotenv(conf.PATH / '.env', override=True)  # load the project's .env file
 
     # import src/main.py from the project path
     try:
-        project_main = _import_project_module(_path)
+        project_main = _import_project_module(conf.PATH)
     except ImportError as e:
         print(term_color(f"Failed to import project. Does '{MAIN_FILENAME}' exist?:\n{e}", 'red'))
         sys.exit(1)

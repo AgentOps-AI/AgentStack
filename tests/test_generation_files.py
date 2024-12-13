@@ -2,7 +2,9 @@ import os
 import unittest
 from pathlib import Path
 import shutil
-from agentstack.generation.files import ConfigFile, EnvFile
+from agentstack import conf
+from agentstack.conf import ConfigFile
+from agentstack.generation.files import EnvFile
 from agentstack.utils import (
     verify_agentstack_project,
     get_framework,
@@ -13,9 +15,20 @@ from agentstack.utils import (
 BASE_PATH = Path(__file__).parent
 
 
+# TODO copy files to working directory
 class GenerationFilesTest(unittest.TestCase):
+    def setUp(self):
+        self.project_dir = BASE_PATH / "tmp" / "generation_files"
+        os.makedirs(self.project_dir)
+
+        shutil.copy(BASE_PATH / "fixtures/agentstack.json", self.project_dir / "agentstack.json")
+        conf.set_path(self.project_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.project_dir)
+
     def test_read_config(self):
-        config = ConfigFile(BASE_PATH / "fixtures")  # + agentstack.json
+        config = ConfigFile()  # + agentstack.json
         assert config.framework == "crewai"
         assert config.tools == []
         assert config.telemetry_opt_out is None
@@ -25,23 +38,19 @@ class GenerationFilesTest(unittest.TestCase):
         assert config.template_version is None
 
     def test_write_config(self):
-        try:
-            os.makedirs(BASE_PATH / "tmp", exist_ok=True)
-            shutil.copy(BASE_PATH / "fixtures/agentstack.json", BASE_PATH / "tmp/agentstack.json")
+        with ConfigFile() as config:
+            config.framework = "crewai"
+            config.tools = ["tool1", "tool2"]
+            config.telemetry_opt_out = True
+            config.default_model = "openai/gpt-4o"
+            config.agentstack_version = "0.2.1"
+            config.template = "default"
+            config.template_version = "1"
 
-            with ConfigFile(BASE_PATH / "tmp") as config:
-                config.framework = "crewai"
-                config.tools = ["tool1", "tool2"]
-                config.telemetry_opt_out = True
-                config.default_model = "openai/gpt-4o"
-                config.agentstack_version = "0.2.1"
-                config.template = "default"
-                config.template_version = "1"
-
-            tmp_data = open(BASE_PATH / "tmp/agentstack.json").read()
-            assert (
-                tmp_data
-                == """{
+        tmp_data = open(self.project_dir / "agentstack.json").read()
+        assert (
+            tmp_data
+            == """{
     "framework": "crewai",
     "tools": [
         "tool1",
@@ -53,31 +62,33 @@ class GenerationFilesTest(unittest.TestCase):
     "template": "default",
     "template_version": "1"
 }"""
-            )
-        except Exception as e:
-            raise e
-        finally:
-            os.remove(BASE_PATH / "tmp/agentstack.json")
-            # os.rmdir(BASE_PATH / "tmp")
+        )
 
     def test_read_missing_config(self):
+        conf.set_path(BASE_PATH / "missing")
         with self.assertRaises(FileNotFoundError) as _:
-            _ = ConfigFile(BASE_PATH / "missing")
+            _ = ConfigFile()
 
     def test_verify_agentstack_project_valid(self):
-        verify_agentstack_project(BASE_PATH / "fixtures")
+        verify_agentstack_project()
 
     def test_verify_agentstack_project_invalid(self):
+        conf.set_path(BASE_PATH / "missing")
         with self.assertRaises(SystemExit) as _:
-            verify_agentstack_project(BASE_PATH / "missing")
+            verify_agentstack_project()
 
     def test_get_framework(self):
-        assert get_framework(BASE_PATH / "fixtures") == "crewai"
+        assert get_framework() == "crewai"
+
+    def test_get_framework_missing(self):
+        conf.set_path(BASE_PATH / "missing")
         with self.assertRaises(SystemExit) as _:
-            get_framework(BASE_PATH / "missing")
+            get_framework()
 
     def test_read_env(self):
-        env = EnvFile(BASE_PATH / "fixtures")
+        shutil.copy(BASE_PATH / "fixtures/.env", self.project_dir / ".env")
+
+        env = EnvFile()
         assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2"}
         assert env["ENV_VAR1"] == "value1"
         assert env["ENV_VAR2"] == "value2"
@@ -85,18 +96,11 @@ class GenerationFilesTest(unittest.TestCase):
             env["ENV_VAR3"]
 
     def test_write_env(self):
-        try:
-            os.makedirs(BASE_PATH / "tmp", exist_ok=True)
-            shutil.copy(BASE_PATH / "fixtures/.env", BASE_PATH / "tmp/.env")
+        shutil.copy(BASE_PATH / "fixtures/.env", self.project_dir / ".env")
 
-            with EnvFile(BASE_PATH / "tmp") as env:
-                env.append_if_new("ENV_VAR1", "value100")  # Should not be updated
-                env.append_if_new("ENV_VAR100", "value2")  # Should be added
+        with EnvFile() as env:
+            env.append_if_new("ENV_VAR1", "value100")  # Should not be updated
+            env.append_if_new("ENV_VAR100", "value2")  # Should be added
 
-            tmp_data = open(BASE_PATH / "tmp/.env").read()
-            assert tmp_data == """\nENV_VAR1=value1\nENV_VAR2=value2\nENV_VAR100=value2"""
-        except Exception as e:
-            raise e
-        finally:
-            os.remove(BASE_PATH / "tmp/.env")
-            # os.rmdir(BASE_PATH / "tmp")
+        tmp_data = open(self.project_dir / ".env").read()
+        assert tmp_data == """\nENV_VAR1=value1\nENV_VAR2=value2\nENV_VAR100=value2"""

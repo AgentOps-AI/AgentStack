@@ -1,7 +1,8 @@
 from typing import Optional, Any
 from pathlib import Path
 import ast
-from agentstack import ValidationError
+from agentstack import conf
+from agentstack.exceptions import ValidationError
 from agentstack.tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
@@ -190,15 +191,13 @@ class CrewFile(asttools.File):
         self.edit_node_range(start, end, existing_node)
 
 
-def validate_project(path: Optional[Path] = None) -> None:
+def validate_project() -> None:
     """
     Validate that a CrewAI project is ready to run.
     Raises an `agentstack.VaidationError` if the project is not valid.
     """
-    if path is None:
-        path = Path()
     try:
-        crew_file = CrewFile(path / ENTRYPOINT)
+        crew_file = CrewFile(conf.PATH / ENTRYPOINT)
     except ValidationError as e:
         raise e
 
@@ -229,74 +228,59 @@ def validate_project(path: Optional[Path] = None) -> None:
         )
 
 
-def get_task_names(path: Optional[Path] = None) -> list[str]:
+def get_task_names() -> list[str]:
     """
     Get a list of task names (methods with an @task decorator).
     """
-    if path is None:
-        path = Path()
-    crew_file = CrewFile(path / ENTRYPOINT)
+    crew_file = CrewFile(conf.PATH / ENTRYPOINT)
     return [method.name for method in crew_file.get_task_methods()]
 
 
-def add_task(task: TaskConfig, path: Optional[Path] = None) -> None:
+def add_task(task: TaskConfig) -> None:
     """
     Add a task method to the CrewAI entrypoint.
     """
-    if path is None:
-        path = Path()
-    with CrewFile(path / ENTRYPOINT) as crew_file:
+    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.add_task_method(task)
 
 
-def get_agent_names(path: Optional[Path] = None) -> list[str]:
+def get_agent_names() -> list[str]:
     """
     Get a list of agent names (methods with an @agent decorator).
     """
-    if path is None:
-        path = Path()
-    crew_file = CrewFile(path / ENTRYPOINT)
+    crew_file = CrewFile(conf.PATH / ENTRYPOINT)
     return [method.name for method in crew_file.get_agent_methods()]
 
 
-def get_agent_tool_names(agent_name: str, path: Optional[Path] = None) -> list[Any]:
+def get_agent_tool_names(agent_name: str) -> list[Any]:
     """
     Get a list of tools used by an agent.
     """
-    if path is None:
-        path = Path()
-    with CrewFile(path / ENTRYPOINT) as crew_file:
+    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         tools = crew_file.get_agent_tools(agent_name)
-    print([node for node in tools.elts])
     return [asttools.get_node_value(node) for node in tools.elts]
 
 
-def add_agent(agent: AgentConfig, path: Optional[Path] = None) -> None:
+def add_agent(agent: AgentConfig) -> None:
     """
     Add an agent method to the CrewAI entrypoint.
     """
-    if path is None:
-        path = Path()
-    with CrewFile(path / ENTRYPOINT) as crew_file:
+    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.add_agent_method(agent)
 
 
-def add_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
+def add_tool(tool: ToolConfig, agent_name: str):
     """
     Add a tool to the CrewAI entrypoint for the specified agent.
     The agent should already exist in the crew class and have a keyword argument `tools`.
     """
-    if path is None:
-        path = Path()
-    with CrewFile(path / ENTRYPOINT) as crew_file:
+    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.add_agent_tools(agent_name, tool)
 
 
-def remove_tool(tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
+def remove_tool(tool: ToolConfig, agent_name: str):
     """
     Remove a tool from the CrewAI framework for the specified agent.
     """
-    if path is None:
-        path = Path()
-    with CrewFile(path / ENTRYPOINT) as crew_file:
+    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.remove_agent_tools(agent_name, tool)
