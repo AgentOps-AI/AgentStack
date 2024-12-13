@@ -54,8 +54,8 @@ def run_project(command: str = 'run', path: Optional[str] = None, cli_args: Opti
             key, value = arg[len('--input-') :].split('=')
             inputs.add_input_for_run(key, value)
 
-    # explicitly load the project's .env file
-    load_dotenv(_path / '.env')
+    load_dotenv(Path.home() / '.env')  # load the user's .env file
+    load_dotenv(_path / '.env', override=True)  # load the project's .env file
 
     # import src/main.py from the project path
     try:
@@ -66,4 +66,5 @@ def run_project(command: str = 'run', path: Optional[str] = None, cli_args: Opti
 
     # run `command` from the project's main.py
     # TODO try/except this and print detailed information with a --debug flag
+    print("Running your agent...")
     return getattr(project_main, command)()
