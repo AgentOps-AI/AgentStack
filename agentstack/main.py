@@ -24,6 +24,12 @@ def main():
         help="Path to the project directory, defaults to current working directory",
         dest="project_path",
     )
+    global_parser.add_argument(
+        "--debug",
+        help="Print more information when an error occurs",
+        dest="debug",
+        action="store_true",
+    )
 
     parser = argparse.ArgumentParser(
         parents=[global_parser], description="AgentStack CLI - The easiest way to build an agent application"
@@ -157,7 +163,7 @@ def main():
     elif args.command in ["init", "i"]:
         init_project_builder(args.slug_name, args.template, args.wizard)
     elif args.command in ["run", "r"]:
-        run_project(command=args.function, cli_args=extra_args)
+        run_project(command=args.function, debug=args.debug, cli_args=extra_args)
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             if not args.llm:
