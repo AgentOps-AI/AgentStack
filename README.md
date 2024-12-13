@@ -81,7 +81,7 @@ A list of all tools can be found [on our docs](https://docs.agentstack.sh/tools/
 Adding tools is as simple as
 
 ```bash
-agentstack tools add <tool_name>
+agentstack tools add
 ```
 
 ## Running Your Agent

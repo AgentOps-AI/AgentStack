@@ -1,21 +1,14 @@
-import json
-import shutil
-import sys
+from typing import Optional
+import os, sys
 import time
 from datetime import datetime
-from typing import Optional
 from pathlib import Path
-import requests
-import itertools
 
+import json
+import shutil
 from art import text2art
 import inquirer
-import os
-import importlib.resources
 from cookiecutter.main import cookiecutter
-from dotenv import load_dotenv
-import subprocess
-from packaging.metadata import Metadata
 
 from .agentstack_data import (
     FrameworkData,
@@ -24,16 +17,16 @@ from .agentstack_data import (
     CookiecutterData,
 )
 from agentstack.logger import log
+from agentstack import conf
+from agentstack.conf import ConfigFile
 from agentstack.utils import get_package_path
-from agentstack.tools import get_all_tools
-from agentstack.generation.files import ConfigFile, ProjectFile
+from agentstack.generation.files import ProjectFile
 from agentstack import frameworks
-from agentstack import packaging
 from agentstack import generation
+from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
 from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework
-from agentstack.update import AGENTSTACK_PACKAGE
 from agentstack.proj_templates import TemplateConfig
 
 
@@ -51,6 +44,10 @@ def init_project_builder(
     template: Optional[str] = None,
     use_wizard: bool = False,
 ):
+    if not slug_name and not use_wizard:
+        print(term_color("Project name is required. Use `agentstack init <project_name>`", 'red'))
+        return
+
     if slug_name and not is_snake_case(slug_name):
         print(term_color("Project name must be snake case", 'red'))
         return
@@ -100,25 +97,31 @@ def init_project_builder(
 
     else:
         welcome_message()
+        # the user has started a new project; let's give them something to work with
+        default_project = TemplateConfig.from_template_name('hello_alex')
         project_details = {
-            "name": slug_name or "agentstack_project",
+            "name": slug_name or default_project.name,
             "version": "0.0.1",
-            "description": "New agentstack project",
+            "description": default_project.description,
             "author": "Name <Email>",
             "license": "MIT",
         }
-
-        framework = "crewai"  # TODO: if --no-wizard, require a framework flag
-
-        design = {'agents': [], 'tasks': [], 'inputs': []}
-
-        tools = []
+        framework = default_project.framework
+        design = {
+            'agents': [agent.model_dump() for agent in default_project.agents],
+            'tasks': [task.model_dump() for task in default_project.tasks],
+            'inputs': default_project.inputs,
+        }
+        tools = [tools.model_dump() for tools in default_project.tools]
 
     log.debug(f"project_details: {project_details}" f"framework: {framework}" f"design: {design}")
     insert_template(project_details, framework, design, template_data)
-    path = Path(project_details['name'])
+
+    # we have an agentstack.json file in the directory now
+    conf.set_path(project_details['name'])
+
     for tool_data in tools:
-        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=path)
+        generation.add_tool(tool_data['name'], agents=tool_data['agents'])
 
 
 def welcome_message():
@@ -134,9 +137,9 @@ def welcome_message():
     print(border)
 
 
-def configure_default_model(path: Optional[str] = None):
+def configure_default_model():
     """Set the default model"""
-    agentstack_config = ConfigFile(path)
+    agentstack_config = ConfigFile()
     if agentstack_config.default_model:
         return  # Default model already set
 
@@ -151,27 +154,8 @@ def configure_default_model(path: Optional[str] = None):
         print('A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
         model = inquirer.text(message="Enter the model name")
 
-    with ConfigFile(path) as agentstack_config:
+    with ConfigFile() as agentstack_config:
         agentstack_config.default_model = model
-
-
-def run_project(framework: str, path: str = ''):
-    """Validate that the project is ready to run and then run it."""
-    if framework not in frameworks.SUPPORTED_FRAMEWORKS:
-        print(term_color(f"Framework {framework} is not supported by agentstack.", 'red'))
-        sys.exit(1)
-
-    _path = Path(path)
-
-    try:
-        frameworks.validate_project(framework, _path)
-    except frameworks.ValidationError as e:
-        print(term_color("Project validation failed:", 'red'))
-        print(e)
-        sys.exit(1)
-
-    load_dotenv(_path / '.env')  # explicitly load the project's .env file
-    subprocess.run(['python', 'src/main.py'], env=os.environ)
 
 
 def ask_framework() -> str:
@@ -392,7 +376,7 @@ def insert_template(
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
-    project_structure.set_inputs(design["inputs"])
+    project_structure.inputs = design["inputs"]
 
     cookiecutter_data = CookiecutterData(
         project_metadata=project_metadata,
@@ -403,6 +387,7 @@ def insert_template(
     template_path = get_package_path() / f'templates/{framework.name}'
     with open(f"{template_path}/cookiecutter.json", "w") as json_file:
         json.dump(cookiecutter_data.to_dict(), json_file)
+        # TODO this should not be written to the package directory
 
     # copy .env.example to .env
     shutil.copy(
@@ -441,51 +426,30 @@ def insert_template(
         "  Next, run:\n"
         f"    cd {project_metadata.project_slug}\n"
         "    python -m venv .venv\n"
-        "    source .venv/bin/activate\n"
+        "    source .venv/bin/activate\n\n"
+        "  Make sure you have the latest version of poetry installed:\n"
+        "    pip install -U poetry\n\n"
+        "  You'll need to install the project's dependencies with:\n"
         "    poetry install\n\n"
-        "  Add agents and tasks with:\n"
-        "    `agentstack generate agent/task <name>`\n\n"
-        "  Run your agent with:\n"
+        "  Finally, try running your agent with:\n"
         "    agentstack run\n\n"
         "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
     )
 
 
-def list_tools():
-    # Display the tools
-    tools = get_all_tools()
-    curr_category = None
-
-    print("\n\nAvailable AgentStack Tools:")
-    for category, tools in itertools.groupby(tools, lambda x: x.category):
-        if curr_category != category:
-            print(f"\n{category}:")
-            curr_category = category
-        for tool in tools:
-            print("  - ", end='')
-            print(term_color(f"{tool.name}", 'blue'), end='')
-            print(f": {tool.url if tool.url else 'AgentStack default tool'}")
-
-    print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
-    print("   https://docs.agentstack.sh/tools/core")
-
-
-def export_template(output_filename: str, path: str = ''):
+def export_template(output_filename: str):
     """
     Export the current project as a template.
     """
-    _path = Path(path)
-    framework = get_framework(_path)
-
     try:
-        metadata = ProjectFile(_path)
+        metadata = ProjectFile()
     except Exception as e:
         print(term_color(f"Failed to load project metadata: {e}", 'red'))
         sys.exit(1)
 
     # Read all the agents from the project's agents.yaml file
     agents: list[TemplateConfig.Agent] = []
-    for agent in get_all_agents(_path):
+    for agent in get_all_agents():
         agents.append(
             TemplateConfig.Agent(
                 name=agent.name,
@@ -498,7 +462,7 @@ def export_template(output_filename: str, path: str = ''):
 
     # Read all the tasks from the project's tasks.yaml file
     tasks: list[TemplateConfig.Task] = []
-    for task in get_all_tasks(_path):
+    for task in get_all_tasks():
         tasks.append(
             TemplateConfig.Task(
                 name=task.name,
@@ -510,8 +474,8 @@ def export_template(output_filename: str, path: str = ''):
 
     # Export all of the configured tools from the project
     tools_agents: dict[str, list[str]] = {}
-    for agent_name in frameworks.get_agent_names(framework, _path):
-        for tool_name in frameworks.get_agent_tool_names(framework, agent_name, _path):
+    for agent_name in frameworks.get_agent_names():
+        for tool_name in frameworks.get_agent_tool_names(agent_name):
             if not tool_name:
                 continue
             if tool_name not in tools_agents:
@@ -527,26 +491,21 @@ def export_template(output_filename: str, path: str = ''):
             )
         )
 
-    inputs: list[str] = []
-    # TODO extract inputs from project
-    # for input in frameworks.get_input_names():
-    #     inputs.append(input)
-
     template = TemplateConfig(
-        template_version=1,
+        template_version=2,
         name=metadata.project_name,
         description=metadata.project_description,
-        framework=framework,
+        framework=get_framework(),
         method="sequential",  # TODO this needs to be stored in the project somewhere
         agents=agents,
         tasks=tasks,
         tools=tools,
-        inputs=inputs,
+        inputs=inputs.get_inputs(),
     )
 
     try:
-        template.write_to_file(_path / output_filename)
-        print(term_color(f"Template saved to: {_path / output_filename}", 'green'))
+        template.write_to_file(conf.PATH / output_filename)
+        print(term_color(f"Template saved to: {conf.PATH / output_filename}", 'green'))
     except Exception as e:
         print(term_color(f"Failed to write template to file: {e}", 'red'))
         sys.exit(1)

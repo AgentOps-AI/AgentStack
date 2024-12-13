@@ -1,25 +1,39 @@
-import argparse
-import os
 import sys
+import argparse
+import webbrowser
 
+from agentstack import conf
 from agentstack.cli import (
     init_project_builder,
+    add_tool,
     list_tools,
     configure_default_model,
     run_project,
     export_template,
 )
 from agentstack.telemetry import track_cli_command
-from agentstack.utils import get_version, get_framework
+from agentstack.utils import get_version
 from agentstack import generation
 from agentstack.update import check_for_updates
 
-import webbrowser
-
 
 def main():
+    global_parser = argparse.ArgumentParser(add_help=False)
+    global_parser.add_argument(
+        "--path",
+        "-p",
+        help="Path to the project directory, defaults to current working directory",
+        dest="project_path",
+    )
+    global_parser.add_argument(
+        "--debug",
+        help="Print more information when an error occurs",
+        dest="debug",
+        action="store_true",
+    )
+
     parser = argparse.ArgumentParser(
-        description="AgentStack CLI - The easiest way to build an agent application"
+        parents=[global_parser], description="AgentStack CLI - The easiest way to build an agent application"
     )
 
     parser.add_argument("-v", "--version", action="store_true", help="Show the version")
@@ -37,16 +51,38 @@ def main():
     subparsers.add_parser("templates", help="View Agentstack templates")
 
     # 'init' command
-    init_parser = subparsers.add_parser("init", aliases=["i"], help="Initialize a directory for the project")
+    init_parser = subparsers.add_parser(
+        "init", aliases=["i"], help="Initialize a directory for the project", parents=[global_parser]
+    )
     init_parser.add_argument("slug_name", nargs="?", help="The directory name to place the project in")
     init_parser.add_argument("--wizard", "-w", action="store_true", help="Use the setup wizard")
     init_parser.add_argument("--template", "-t", help="Agent template to use")
 
     # 'run' command
-    _ = subparsers.add_parser("run", aliases=["r"], help="Run your agent")
+    run_parser = subparsers.add_parser(
+        "run",
+        aliases=["r"],
+        help="Run your agent",
+        parents=[global_parser],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+  --input-<key>=VALUE   Specify inputs to be passed to the run. 
+                        These will override the inputs in the project's inputs.yaml file.
+                        Examples: --input-topic=Sports --input-content-type=News
+    ''',
+    )
+    run_parser.add_argument(
+        "--function",
+        "-f",
+        help="Function to call in main.py, defaults to 'run'",
+        default="run",
+        dest="function",
+    )
 
     # 'generate' command
-    generate_parser = subparsers.add_parser("generate", aliases=["g"], help="Generate agents or tasks")
+    generate_parser = subparsers.add_parser(
+        "generate", aliases=["g"], help="Generate agents or tasks", parents=[global_parser]
+    )
 
     # Subparsers under 'generate'
     generate_subparsers = generate_parser.add_subparsers(
@@ -54,7 +90,9 @@ def main():
     )
 
     # 'agent' command under 'generate'
-    agent_parser = generate_subparsers.add_parser("agent", aliases=["a"], help="Generate an agent")
+    agent_parser = generate_subparsers.add_parser(
+        "agent", aliases=["a"], help="Generate an agent", parents=[global_parser]
+    )
     agent_parser.add_argument("name", help="Name of the agent")
     agent_parser.add_argument("--role", "-r", help="Role of the agent")
     agent_parser.add_argument("--goal", "-g", help="Goal of the agent")
@@ -62,7 +100,9 @@ def main():
     agent_parser.add_argument("--llm", "-l", help="Language model to use")
 
     # 'task' command under 'generate'
-    task_parser = generate_subparsers.add_parser("task", aliases=["t"], help="Generate a task")
+    task_parser = generate_subparsers.add_parser(
+        "task", aliases=["t"], help="Generate a task", parents=[global_parser]
+    )
     task_parser.add_argument("name", help="Name of the task")
     task_parser.add_argument("--description", "-d", help="Description of the task")
     task_parser.add_argument("--expected_output", "-e", help="Expected output of the task")
@@ -78,29 +118,38 @@ def main():
     _ = tools_subparsers.add_parser("list", aliases=["l"], help="List tools")
 
     # 'add' command under 'tools'
-    tools_add_parser = tools_subparsers.add_parser("add", aliases=["a"], help="Add a new tool")
-    tools_add_parser.add_argument("name", help="Name of the tool to add")
+    tools_add_parser = tools_subparsers.add_parser(
+        "add", aliases=["a"], help="Add a new tool", parents=[global_parser]
+    )
+    tools_add_parser.add_argument("name", help="Name of the tool to add", nargs="?")
     tools_add_parser.add_argument(
         "--agents", "-a", help="Name of agents to add this tool to, comma separated"
     )
     tools_add_parser.add_argument("--agent", help="Name of agent to add this tool to")
 
     # 'remove' command under 'tools'
-    tools_remove_parser = tools_subparsers.add_parser("remove", aliases=["r"], help="Remove a tool")
+    tools_remove_parser = tools_subparsers.add_parser(
+        "remove", aliases=["r"], help="Remove a tool", parents=[global_parser]
+    )
     tools_remove_parser.add_argument("name", help="Name of the tool to remove")
 
-    export_parser = subparsers.add_parser('export', aliases=['e'], help='Export your agent as a template')
+    export_parser = subparsers.add_parser(
+        'export', aliases=['e'], help='Export your agent as a template', parents=[global_parser]
+    )
     export_parser.add_argument('filename', help='The name of the file to export to')
 
-    update = subparsers.add_parser('update', aliases=['u'], help='Check for updates')
+    update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
 
-    # Parse arguments
-    args = parser.parse_args()
+    # Parse known args and store unknown args in extras; some commands use them later on
+    args, extra_args = parser.parse_known_args()
+
+    # Set the project path from --path if it is provided in the global_parser
+    conf.set_path(args.project_path)
 
     # Handle version
     if args.version:
         print(f"AgentStack CLI version: {get_version()}")
-        return
+        sys.exit(0)
 
     track_cli_command(args.command)
     check_for_updates(update_requested=args.command in ('update', 'u'))
@@ -115,8 +164,7 @@ def main():
     elif args.command in ["init", "i"]:
         init_project_builder(args.slug_name, args.template, args.wizard)
     elif args.command in ["run", "r"]:
-        framework = get_framework()
-        run_project(framework)
+        run_project(command=args.function, debug=args.debug, cli_args=extra_args)
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             if not args.llm:
@@ -132,7 +180,7 @@ def main():
         elif args.tools_command in ["add", "a"]:
             agents = [args.agent] if args.agent else None
             agents = args.agents.split(",") if args.agents else agents
-            generation.add_tool(args.name, agents=agents)
+            add_tool(args.name, agents)
         elif args.tools_command in ["remove", "r"]:
             generation.remove_tool(args.name)
         else:
