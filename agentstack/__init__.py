@@ -10,6 +10,14 @@ from agentstack.inputs import get_inputs
 
 ___all___ = [
     "conf", 
+    "get_tags", 
     "get_inputs", 
 ]
+
+
+def get_tags() -> list[str]:
+    """
+    Get a list of tags relevant to the user's project.
+    """
+    return ['agentstack', conf.get_framework(), *conf.get_installed_tools()]
 
