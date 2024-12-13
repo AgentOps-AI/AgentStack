@@ -8,7 +8,9 @@ import ast
 from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
+from agentstack.tasks import TaskConfig
 from agentstack.generation.task_generation import add_task
+from agentstack.generation.agent_generation import add_agent
 
 BASE_PATH = Path(__file__).parent
 
@@ -60,3 +62,13 @@ class TestGenerationAgent(unittest.TestCase):
                 expected_output='expected_output',
                 agent='agent',
             )
+
+    def test_add_task_selects_single_agent(self):
+        add_task(
+            'task_test',
+            description='description',
+            expected_output='expected_output',
+        )
+
+        task_config = TaskConfig('task_test')
+        assert task_config.agent == 'test_agent'  # defined in entrypoint_max.py

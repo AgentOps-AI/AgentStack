@@ -15,6 +15,11 @@ def add_task(
 ):
     verify_agentstack_project()
 
+    agents = frameworks.get_agent_names()
+    if not agent and len(agents) == 1:
+        # if there's only one agent, use it by default
+        agent = agents[0]
+
     task = TaskConfig(task_name)
     with task as config:
         config.description = description or "Add your description here"

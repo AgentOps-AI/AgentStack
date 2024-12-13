@@ -72,6 +72,12 @@ class FrameworkModule(Protocol):
         """
         ...
 
+    def get_task_names(self) -> list[str]:
+        """
+        Get a list of task names in the user's project.
+        """
+        ...
+
 
 def get_framework_module(framework: str) -> FrameworkModule:
     """
@@ -131,4 +137,10 @@ def add_task(task: TaskConfig):
     Add a task to the user's project.
     """
     return get_framework_module(get_framework()).add_task(task)
+
+def get_task_names() -> list[str]:
+    """
+    Get a list of task names in the user's project.
+    """
+    return get_framework_module(get_framework()).get_task_names()
 
