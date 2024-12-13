@@ -47,25 +47,24 @@ def _format_friendy_error_message(exception: Exception):
                 "An invalid LLM was configured for an agent. "
                 "Ensure the 'llm' attribute of the agent in the agents.yaml file is in the format <provider>/<model>."
             )
-        # This happens when the user has not configured the correct agent name in
-        # the tasks.yaml file.
+        # The user has not configured the correct agent name in the tasks.yaml file.
         case ('KeyError', m, t) if 'self.tasks_config[task_name]["agent"]' in t[-2]:
             return (
                 f"The agent {message} is not defined in your agents file. "
-                "Ensure the 'agent' field in your tasks in tasks.yaml corresponds to an agent in the agents.yaml file."
+                "Ensure the 'agent' fields in your tasks.yaml correspond to an entry in the agents.yaml file."
             )
-        # This happens when the user does not have an agent defined in agents.yaml
-        # file, but it does exist in the entrypoint code.
+        # The user does not have an agent defined in agents.yaml file, but it does
+        # exist in the entrypoint code.
         case ('KeyError', m, t) if 'config=self.agents_config[' in t[-2]:
             return (
                 f"The agent {message} is not defined in your agents file. "
                 "Ensure all agents referenced in your code are defined in the agents.yaml file."
             )
-        # This happens when the user does not have a task defined in tasks.yaml
-        # file, but it does exist in the entrypoint code.
+        # The user does not have a task defined in tasks.yaml file, but it does
+        # exist in the entrypoint code.
         case ('KeyError', m, t) if 'config=self.tasks_config[' in t[-2]:
             return (
-                f"The task {message} is not defined in your tasks file. "
+                f"The task {message} is not defined in your tasks. "
                 "Ensure all tasks referenced in your code are defined in the tasks.yaml file."
             )
         case (_, _, _):
