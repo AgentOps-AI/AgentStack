@@ -47,6 +47,10 @@ def init_project_builder(
     template: Optional[str] = None,
     use_wizard: bool = False,
 ):
+    if not slug_name and not use_wizard:
+        print(term_color("Project name is required. Use `agentstack init <project_name>`", 'red'))
+        return
+
     if slug_name and not is_snake_case(slug_name):
         print(term_color("Project name must be snake case", 'red'))
         return
@@ -96,19 +100,22 @@ def init_project_builder(
 
     else:
         welcome_message()
+        # the user has started a new project; let's give them something to work with
+        default_project = TemplateConfig.from_template_name('hello_alex')
         project_details = {
-            "name": slug_name or "agentstack_project",
+            "name": slug_name or default_project.name,
             "version": "0.0.1",
-            "description": "New agentstack project",
+            "description": default_project.description,
             "author": "Name <Email>",
             "license": "MIT",
         }
-
-        framework = "crewai"  # TODO: if --no-wizard, require a framework flag
-
-        design = {'agents': [], 'tasks': [], 'inputs': {}}
-
-        tools = []
+        framework = default_project.framework
+        design = {
+            'agents': [agent.model_dump() for agent in default_project.agents],
+            'tasks': [task.model_dump() for task in default_project.tasks],
+            'inputs': default_project.inputs,
+        }
+        tools = [tools.model_dump() for tools in default_project.tools]
 
     log.debug(f"project_details: {project_details}" f"framework: {framework}" f"design: {design}")
     insert_template(project_details, framework, design, template_data)
@@ -422,11 +429,12 @@ def insert_template(
         "  Next, run:\n"
         f"    cd {project_metadata.project_slug}\n"
         "    python -m venv .venv\n"
-        "    source .venv/bin/activate\n"
+        "    source .venv/bin/activate\n\n"
+        "  Make sure you have the latest version of poetry installed:\n"
+        "    pip install -U poetry\n\n"
+        "  You'll need to install the project's dependencies with:\n"
         "    poetry install\n\n"
-        "  Add agents and tasks with:\n"
-        "    `agentstack generate agent/task <name>`\n\n"
-        "  Run your agent with:\n"
+        "  Finally, try running your agent with:\n"
         "    agentstack run\n\n"
         "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
     )
