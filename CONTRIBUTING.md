@@ -12,9 +12,11 @@ The best place to engage in conversation about your contribution is in the Issue
 ## Setup
 
 1. Clone the repo
-2. `poetry install`
-3. `pip install -e .[dev,test]`
-   - This will install the CLI locally and in editable mode so you can use `agentstack <command>` to test your latest changes
+   `git clone https://github.com/AgentOps-AI/AgentStack.git`
+   `cd AgentStack`
+2. Install agentstack as an edtiable project and set it up for development and testing
+   `pip install -e .[dev,test]`
+   This will install the CLI locally and in editable mode so you can use `agentstack <command>` to test your latest changes
 
 ## Project Structure
 TODO
