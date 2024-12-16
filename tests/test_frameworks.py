@@ -16,14 +16,20 @@ BASE_PATH = Path(__file__).parent
 class TestFrameworks(unittest.TestCase):
     def setUp(self):
         self.project_dir = BASE_PATH / 'tmp' / self.framework
+        self.src_dir = self.project_dir / 'src'
+        self.tools_dir = self.src_dir / 'tools'
 
-        os.makedirs(self.project_dir)
-        os.makedirs(self.project_dir / 'src')
-        os.makedirs(self.project_dir / 'src' / 'tools')
+        # Create project structure
+        os.makedirs(self.project_dir, exist_ok=True)
+        os.makedirs(self.src_dir, exist_ok=True)
+        os.makedirs(self.tools_dir, exist_ok=True)
 
-        (self.project_dir / 'src' / '__init__.py').touch()
-        (self.project_dir / 'src' / 'tools' / '__init__.py').touch()
+        # Create required files
+        (self.src_dir / '__init__.py').touch()
+        (self.tools_dir / '__init__.py').touch()
+        (self.src_dir / 'main.py').touch()
 
+        # Set up configuration
         shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')
         set_path(self.project_dir)
         with ConfigFile() as config:
