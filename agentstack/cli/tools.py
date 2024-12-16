@@ -1,31 +1,37 @@
 from typing import Optional
 import itertools
+import sys
 import inquirer
 from agentstack.utils import term_color
 from agentstack import generation
 from agentstack.tools import get_all_tools
 from agentstack.agents import get_all_agents
+from agentstack.exceptions import ToolError
 
 
 def list_tools():
     """
     List all available tools by category.
     """
-    tools = get_all_tools()
-    curr_category = None
+    try:
+        tools = get_all_tools()
+        curr_category = None
 
-    print("\n\nAvailable AgentStack Tools:")
-    for category, tools in itertools.groupby(tools, lambda x: x.category):
-        if curr_category != category:
-            print(f"\n{category}:")
-            curr_category = category
-        for tool in tools:
-            print("  - ", end='')
-            print(term_color(f"{tool.name}", 'blue'), end='')
-            print(f": {tool.url if tool.url else 'AgentStack default tool'}")
+        print("\n\nAvailable AgentStack Tools:")
+        for category, tools in itertools.groupby(tools, lambda x: x.category):
+            if curr_category != category:
+                print(f"\n{category}:")
+                curr_category = category
+            for tool in tools:
+                print("  - ", end='')
+                print(term_color(f"{tool.name}", 'blue'), end='')
+                print(f": {tool.url if tool.url else 'AgentStack default tool'}")
 
-    print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
-    print("   https://docs.agentstack.sh/tools/core")
+        print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
+        print("   https://docs.agentstack.sh/tools/core")
+    except ToolError as e:
+        print(term_color(f"Error listing tools: {str(e)}", 'red'))
+        sys.exit(1)
 
 
 def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
@@ -38,32 +44,45 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
         - add the tool to the user's project
         - add the tool to the specified agents or all agents if none are specified
     """
-    if not tool_name:
-        # ask the user for the tool name
-        tools_list = [
-            inquirer.List(
-                "tool_name",
-                message="Select a tool to add to your project",
-                choices=[tool.name for tool in get_all_tools()],
-            )
-        ]
-        try:
-            tool_name = inquirer.prompt(tools_list)['tool_name']
-        except TypeError:
-            return  # user cancelled the prompt
+    try:
+        if not tool_name:
+            # ask the user for the tool name
+            tools_list = [
+                inquirer.List(
+                    "tool_name",
+                    message="Select a tool to add to your project",
+                    choices=[tool.name for tool in get_all_tools()],
+                )
+            ]
+            try:
+                tool_name = inquirer.prompt(tools_list)['tool_name']
+            except TypeError:
+                return  # user cancelled the prompt
 
-        # ask the user for the agents to add the tool to
-        agents_list = [
-            inquirer.Checkbox(
-                "agents",
-                message="Select which agents to make the tool available to",
-                choices=[agent.name for agent in get_all_agents()],
-            )
-        ]
-        try:
-            agents = inquirer.prompt(agents_list)['agents']
-        except TypeError:
-            return  # user cancelled the prompt
+            # ask the user for the agents to add the tool to
+            agents_list = [
+                inquirer.Checkbox(
+                    "agents",
+                    message="Select which agents to make the tool available to",
+                    choices=[agent.name for agent in get_all_agents()],
+                )
+            ]
+            try:
+                agents = inquirer.prompt(agents_list)['agents']
+            except TypeError:
+                return  # user cancelled the prompt
 
-    assert tool_name  # appease type checker
-    generation.add_tool(tool_name, agents=agents)
+        assert tool_name  # appease type checker
+        generation.add_tool(tool_name, agents=agents)
+    except ToolError as e:
+        print(term_color(f"Error adding tool: {str(e)}", 'red'))
+        sys.exit(1)
+
+
+def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
+    """Remove a tool from the project"""
+    try:
+        generation.remove_tool(tool_name, agents=agents)
+    except ToolError as e:
+        print(term_color(f"Error removing tool: {str(e)}", 'red'))
+        sys.exit(1)
