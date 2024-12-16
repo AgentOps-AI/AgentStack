@@ -1,0 +1,113 @@
+---
+title: 'Pipedream Components'
+description: 'Execute pre-built Pipedream components in your agent projects'
+---
+
+# Pipedream Components
+
+The Pipedream integration allows you to use pre-built components from Pipedream's extensive library directly in your agent projects. This integration supports both actions (synchronous operations) and sources (event-driven triggers).
+
+## Setup
+
+1. Install the Pipedream tool:
+```bash
+agentstack tools add pipedream
+```
+
+2. Configure your API key:
+   - Get your API key from [Pipedream Settings](https://pipedream.com/settings/api-key)
+   - Add it to your .env file:
+     ```
+     PIPEDREAM_API_KEY=your-pipedream-api-key
+     ```
+
+## Component Types
+
+Pipedream components come in two types:
+
+### Actions
+- **What are they?** Synchronous operations that execute immediately and return a result
+- **Use cases:** Making API calls, processing data, performing one-time operations
+- **Tool to use:** `PipedreamActionTool`
+- **Example usage:**
+  ```yaml
+  # config/agents.yaml
+  agents:
+    - name: PipedreamAgent
+      role: API Integration Specialist
+      goal: Execute Pipedream components and handle responses
+      tools:
+        - PipedreamActionTool
+
+  # config/tasks.yaml
+  tasks:
+    - name: ExecutePipedreamAction
+      agent: PipedreamAgent
+      input: |
+        Execute the Pipedream component action with:
+        - Component ID: "gitlab-list-commits"
+        - Input parameters:
+          - projectId: 45672541
+          - refName: "main"
+  ```
+
+### Sources
+- **What are they?** Event-driven triggers that listen for events and execute when triggered
+- **Use cases:** Webhooks, scheduled tasks, real-time data processing
+- **Tool to use:** `PipedreamSourceTool`
+- **Requirements:** Public webhook URL for receiving events
+- **Example usage:**
+  ```yaml
+  # config/agents.yaml
+  agents:
+    - name: PipedreamAgent
+      role: API Integration Specialist
+      goal: Deploy and manage Pipedream source components
+      tools:
+        - PipedreamSourceTool
+
+  # config/tasks.yaml
+  tasks:
+    - name: DeployPipedreamSource
+      agent: PipedreamAgent
+      input: |
+        Deploy a Pipedream source component with:
+        - Component ID: "gitlab-new-issue"
+        - Webhook URL: "https://events.example.com/gitlab-new-issue"
+        - Configuration:
+          - projectId: 45672541
+  ```
+
+## Error Handling
+
+The Pipedream tools include comprehensive error handling:
+
+- API authentication errors (missing or invalid API key)
+- Network request failures
+- Invalid JSON responses
+- Component-specific errors
+
+Error messages are descriptive and include troubleshooting hints.
+
+## Best Practices
+
+1. **API Key Security**
+   - Never commit your API key to version control
+   - Use environment variables for sensitive data
+   - Include placeholder in .env.example
+
+2. **Component Selection**
+   - Choose appropriate component type (action vs source)
+   - Test components individually before integration
+   - Review component documentation for required parameters
+
+3. **Error Handling**
+   - Always handle potential errors in your agent tasks
+   - Validate inputs before execution
+   - Monitor source component health
+
+## Limitations
+
+- Pipedream Connect is currently in beta
+- Some components may require additional authentication
+- Source components need a publicly accessible webhook URL
