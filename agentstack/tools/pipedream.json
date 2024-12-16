@@ -1,6 +1,7 @@
 {
   "name": "pipedream",
-  "category": "api",
+  "category": "api-integration",
+  "description": "Execute Pipedream component actions and deploy source components with support for component discovery and configuration",
   "tools": ["PipedreamActionTool", "PipedreamSourceTool"],
   "url": "https://pipedream.com/docs/connect/components",
   "tools_bundled": false,
@@ -10,5 +11,10 @@
   },
   "packages": ["requests"],
   "post_install": null,
-  "post_remove": null
+  "post_remove": null,
+  "capabilities": {
+    "list_apps": true,
+    "list_components": true,
+    "component_props": true
+  }
 }
