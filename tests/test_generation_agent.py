@@ -1,4 +1,4 @@
-import os, sys
+import os
 from pathlib import Path
 import shutil
 import unittest
@@ -7,7 +7,6 @@ import ast
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack import frameworks
-from agentstack.exceptions import ValidationError
 from agentstack.generation.agent_generation import add_agent
 
 BASE_PATH = Path(__file__).parent

@@ -1,6 +1,5 @@
 import sys
 from typing import Optional
-from pathlib import Path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack.utils import verify_agentstack_project

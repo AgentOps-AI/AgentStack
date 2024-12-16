@@ -1,4 +1,4 @@
-import os, sys
+import os
 from pathlib import Path
 import shutil
 import unittest
@@ -7,7 +7,7 @@ import ast
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack import frameworks
-from agentstack.tools import get_all_tools, ToolConfig
+from agentstack.tools import ToolConfig
 from agentstack.generation.tool_generation import add_tool, remove_tool, TOOLS_INIT_FILENAME
 
 

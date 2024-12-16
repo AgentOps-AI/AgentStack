@@ -1,5 +1,5 @@
-from typing import Optional, Literal
-import os, sys
+from typing import Literal
+import os
 from pathlib import Path
 import pydantic
 import requests
@@ -99,7 +99,7 @@ class TemplateConfig(pydantic.BaseModel):
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':
         path = get_package_path() / f'templates/proj_templates/{name}.json'
-        if not name in get_all_template_names():
+        if name not in get_all_template_names():
             raise ValidationError(f"Template {name} not bundled with agentstack.")
         return cls.from_file(path)
 

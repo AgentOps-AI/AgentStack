@@ -8,7 +8,6 @@ from agentstack.generation.files import EnvFile
 from agentstack.utils import (
     verify_agentstack_project,
     get_framework,
-    get_telemetry_opt_out,
     get_version,
 )
 

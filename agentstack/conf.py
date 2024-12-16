@@ -1,5 +1,5 @@
 from typing import Optional, Union
-import os, sys
+import os
 import json
 from pathlib import Path
 from pydantic import BaseModel

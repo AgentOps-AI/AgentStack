@@ -1,5 +1,6 @@
 import subprocess
-import os, sys
+import os
+import sys
 import unittest
 from parameterized import parameterized
 from pathlib import Path
@@ -36,9 +37,9 @@ class CLITemplatesTest(unittest.TestCase):
 
     @unittest.skip("We're trying a new base template. TODO: Fix this test.")
     def test_export_template_v1(self):
-        result = self._run_cli('init', f"test_project")
+        result = self._run_cli('init', "test_project")
         self.assertEqual(result.returncode, 0)
-        os.chdir(self.project_dir / f"test_project")
+        os.chdir(self.project_dir / "test_project")
         result = self._run_cli('generate', 'agent', 'test_agent', '--llm', 'opeenai/gpt-4o')
         self.assertEqual(result.returncode, 0)
         result = self._run_cli('generate', 'task', 'test_task', '--agent', 'test_agent')

@@ -29,7 +29,7 @@ import socket
 import psutil
 import requests
 from agentstack import conf
-from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
+from agentstack.utils import get_telemetry_opt_out, get_version
 
 TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
 

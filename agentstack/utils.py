@@ -1,5 +1,5 @@
-from typing import Optional, Union
-import os, sys
+import os
+import sys
 import json
 from ruamel.yaml import YAML
 import re

@@ -1,4 +1,3 @@
-from typing import Optional
 import os
 from pathlib import Path
 import pydantic

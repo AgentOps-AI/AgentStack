@@ -1,7 +1,7 @@
 import subprocess
-import os, sys
+import os
+import sys
 import unittest
-from parameterized import parameterized
 from pathlib import Path
 import shutil
 

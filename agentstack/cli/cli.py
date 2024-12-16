@@ -1,8 +1,8 @@
 from typing import Optional
-import os, sys
+import os
+import sys
 import time
 from datetime import datetime
-from pathlib import Path
 
 import json
 import shutil

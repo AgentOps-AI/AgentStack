@@ -29,6 +29,9 @@ dependencies = [
     "requests>=2.32",
     "appdirs>=1.4.4",
     "python-dotenv>=1.0.1",
+    "crewai==0.83.0",
+    "crewai-tools==0.14.0",
+    "selenium>=4.18.1",
 ]
 
 [project.optional-dependencies]
@@ -39,16 +42,12 @@ dev = [
 ]
 test = [
     "tox",
+    "pytest",
+    "parameterized",
 ]
-crewai = [
-    "crewai==0.83.0",
-    "crewai-tools==0.14.0",
-]
-
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
-
 
 [project.scripts]
 agentstack = "agentstack.main:main"

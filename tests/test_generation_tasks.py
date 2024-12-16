@@ -1,4 +1,4 @@
-import os, sys
+import os
 from pathlib import Path
 import shutil
 import unittest
@@ -6,11 +6,9 @@ from parameterized import parameterized_class
 import ast
 
 from agentstack.conf import ConfigFile, set_path
-from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack.tasks import TaskConfig
 from agentstack.generation.task_generation import add_task
-from agentstack.generation.agent_generation import add_agent
 
 BASE_PATH = Path(__file__).parent
 

@@ -1,5 +1,6 @@
 import subprocess
-import os, sys
+import os
+import sys
 import unittest
 from pathlib import Path
 import shutil
