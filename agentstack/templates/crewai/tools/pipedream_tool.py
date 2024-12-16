@@ -1,9 +1,10 @@
 from typing import Optional, Dict, Any
 from crewai_tools import BaseTool
+from pydantic import Field
 import os
 import requests
 from json import JSONDecodeError
-from agentstack.exceptions import ToolError
+from agentstack.frameworks.crewai.exceptions import PipedreamToolError
 
 
 class PipedreamClient:
@@ -55,59 +56,87 @@ class PipedreamClient:
             raise PipedreamToolError("Invalid JSON response from Pipedream API")
 
 
-class PipedreamToolError(ToolError):
-    """Specific exception for Pipedream tool errors"""
-    pass
-
-
 class PipedreamListAppsTool(BaseTool):
     name: str = "List Pipedream Apps"
     description: str = "List available Pipedream apps with optional search query"
+    client: Optional[PipedreamClient] = Field(default=None, exclude=True)
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "extra": "allow"
+    }
 
     def __init__(self, api_key: str):
-        self.client = PipedreamClient(api_key)
         super().__init__()
+        self.client = PipedreamClient(api_key)
 
-    def _execute(self, query: str = None) -> str:
+    def _run(self, query: str = None) -> str:
         """List available Pipedream apps with optional search query"""
-        return self.client.list_apps(query)["data"]
+        try:
+            return self.client.list_apps(query)["data"]
+        except Exception as e:
+            raise PipedreamToolError(f"Failed to list apps: {str(e)}")
 
 
 class PipedreamListComponentsTool(BaseTool):
     name: str = "List Pipedream Components"
     description: str = "List available components for a Pipedream app"
+    client: Optional[PipedreamClient] = Field(default=None, exclude=True)
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "extra": "allow"
+    }
 
     def __init__(self, api_key: str):
-        self.client = PipedreamClient(api_key)
         super().__init__()
+        self.client = PipedreamClient(api_key)
 
-    def _execute(self, app: str) -> str:
+    def _run(self, app: str) -> str:
         """List available components for the specified app"""
-        return self.client.list_components(app)["data"]
+        try:
+            return self.client.list_components(app)["data"]
+        except Exception as e:
+            raise PipedreamToolError(f"Failed to list components: {str(e)}")
 
 
 class PipedreamGetPropsTool(BaseTool):
     name: str = "Get Pipedream Component Properties"
     description: str = "Get component definition and configuration options"
+    client: Optional[PipedreamClient] = Field(default=None, exclude=True)
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "extra": "allow"
+    }
 
     def __init__(self, api_key: str):
-        self.client = PipedreamClient(api_key)
         super().__init__()
+        self.client = PipedreamClient(api_key)
 
-    def _execute(self, key: str) -> str:
+    def _run(self, key: str) -> str:
         """Get component definition and configuration options"""
-        return self.client.get_component_definition(key)["data"]
+        try:
+            return self.client.get_component_definition(key)["data"]
+        except Exception as e:
+            raise PipedreamToolError(f"Failed to get component properties: {str(e)}")
 
 
 class PipedreamActionTool(BaseTool):
     name: str = "Execute Pipedream Action"
     description: str = "Execute a Pipedream component action with specified inputs"
+    client: Optional[PipedreamClient] = Field(default=None, exclude=True)
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "extra": "allow"
+    }
 
     def __init__(self, api_key: str):
-        self.client = PipedreamClient(api_key)
         super().__init__()
+        self.client = PipedreamClient(api_key)
 
-    def _execute(self, component_id: str, inputs: Dict[str, Any]) -> str:
+    def _run(self, component_id: str, inputs: Dict[str, Any]) -> str:
         """
         Execute a Pipedream component action.
 
@@ -121,18 +150,27 @@ class PipedreamActionTool(BaseTool):
         Raises:
             PipedreamToolError: If the API request fails or returns an error
         """
-        return self.client.run_action(component_id, inputs)
+        try:
+            return self.client.run_action(component_id, inputs)
+        except Exception as e:
+            raise PipedreamToolError(f"Failed to execute action: {str(e)}")
 
 
 class PipedreamSourceTool(BaseTool):
     name: str = "Deploy Pipedream Source"
     description: str = "Deploy a Pipedream source component with webhook configuration"
+    client: Optional[PipedreamClient] = Field(default=None, exclude=True)
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "extra": "allow"
+    }
 
     def __init__(self, api_key: str):
-        self.client = PipedreamClient(api_key)
         super().__init__()
+        self.client = PipedreamClient(api_key)
 
-    def _execute(self, component_id: str, webhook_url: str, config: Dict[str, Any]) -> str:
+    def _run(self, component_id: str, webhook_url: str, config: Dict[str, Any]) -> str:
         """
         Deploy a Pipedream component source.
 
@@ -147,4 +185,7 @@ class PipedreamSourceTool(BaseTool):
         Raises:
             PipedreamToolError: If the API request fails or returns an error
         """
-        return self.client.deploy_source(component_id, webhook_url, config)
+        try:
+            return self.client.deploy_source(component_id, webhook_url, config)
+        except Exception as e:
+            raise PipedreamToolError(f"Failed to deploy source: {str(e)}")
