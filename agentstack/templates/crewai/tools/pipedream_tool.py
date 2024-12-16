@@ -4,7 +4,12 @@ from pydantic import Field
 import os
 import requests
 from json import JSONDecodeError
-from agentstack.frameworks.crewai.exceptions import PipedreamToolError
+from agentstack.exceptions import ToolError
+
+
+class PipedreamToolError(ToolError):
+    """Exception raised for Pipedream-specific tool errors."""
+    pass
 
 
 class PipedreamClient:

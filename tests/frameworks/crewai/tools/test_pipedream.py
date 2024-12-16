@@ -6,8 +6,8 @@ from agentstack.templates.crewai.tools.pipedream_tool import (
     PipedreamGetPropsTool,
     PipedreamActionTool,
     PipedreamSourceTool,
+    PipedreamToolError,
 )
-from agentstack.frameworks.crewai.exceptions import PipedreamToolError
 
 @pytest.fixture
 def mock_pipedream_client():
