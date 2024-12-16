@@ -55,7 +55,7 @@ class TestFrameworks(unittest.TestCase):
         assert module.__name__ == f"agentstack.frameworks.{self.framework}"
 
     def test_get_framework_module_invalid(self):
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(Exception):
             frameworks.get_framework_module('invalid')
 
     def test_validate_project(self):
@@ -64,7 +64,7 @@ class TestFrameworks(unittest.TestCase):
 
     def test_validate_project_invalid(self):
         self._populate_min_entrypoint()
-        with self.assertRaises(ValidationError) as context:
+        with self.assertRaises(ValidationError):
             frameworks.validate_project()
 
     def test_add_tool(self):
@@ -84,7 +84,7 @@ class TestFrameworks(unittest.TestCase):
 
     def test_add_tool_invalid(self):
         self._populate_min_entrypoint()
-        with self.assertRaises(ValidationError) as context:
+        with self.assertRaises(ValidationError):
             frameworks.add_tool(self._get_test_tool(), 'test_agent')
 
     def test_remove_tool(self):

@@ -66,7 +66,7 @@ def main():
         parents=[global_parser],
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
-  --input-<key>=VALUE   Specify inputs to be passed to the run. 
+  --input-<key>=VALUE   Specify inputs to be passed to the run.
                         These will override the inputs in the project's inputs.yaml file.
                         Examples: --input-topic=Sports --input-content-type=News
     ''',
@@ -138,7 +138,7 @@ def main():
     )
     export_parser.add_argument('filename', help='The name of the file to export to')
 
-    update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
+    _ = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
 
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()

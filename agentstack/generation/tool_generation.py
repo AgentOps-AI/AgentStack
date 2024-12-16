@@ -58,9 +58,9 @@ class ToolsInitFile(asttools.File):
 
         try:
             last_import = asttools.get_all_imports(self.tree)[-1]
-            start, end = self.get_node_range(last_import)
+            _, end = self.get_node_range(last_import)
         except IndexError:
-            start, end = 0, 0  # No imports in the file
+            end = 0  # No imports in the file
 
         import_statement = tool.get_import_statement(framework)
         self.edit_node_range(end, end, f"\n{import_statement}")

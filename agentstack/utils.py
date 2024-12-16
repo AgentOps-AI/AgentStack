@@ -19,7 +19,7 @@ def get_version(package: str = 'agentstack'):
 
 def verify_agentstack_project():
     try:
-        agentstack_config = conf.ConfigFile()
+        _ = conf.ConfigFile()  # Just verify it exists
     except FileNotFoundError:
         print(
             "\033[31mAgentStack Error: This does not appear to be an AgentStack project."

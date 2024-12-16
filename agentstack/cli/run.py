@@ -35,34 +35,34 @@ def _format_friendy_error_message(exception: Exception):
 
     match (name, message, tracebacks):
         # The user doesn't have an environment variable set for the LLM provider.
-        case ('AuthenticationError', m, t) if 'litellm.AuthenticationError' in t[-1]:
+        case ('AuthenticationError', _, t) if 'litellm.AuthenticationError' in t[-1]:
             variable_name = [k for k in COMMON_LLM_ENV_VARS if k in message] or ["correct"]
             return (
                 "We were unable to connect to the LLM provider. "
                 f"Ensure your .env file has the {variable_name[0]} variable set."
             )
         # This happens when the LLM configured for an agent is invalid.
-        case ('BadRequestError', m, t) if 'LLM Provider NOT provided' in t[-1]:
+        case ('BadRequestError', _, t) if 'LLM Provider NOT provided' in t[-1]:
             return (
                 "An invalid LLM was configured for an agent. "
                 "Ensure the 'llm' attribute of the agent in the agents.yaml file is in the format <provider>/<model>."
             )
         # The user has not configured the correct agent name in the tasks.yaml file.
-        case ('KeyError', m, t) if 'self.tasks_config[task_name]["agent"]' in t[-2]:
+        case ('KeyError', _, t) if 'self.tasks_config[task_name]["agent"]' in t[-2]:
             return (
                 f"The agent {message} is not defined in your agents file. "
                 "Ensure the 'agent' fields in your tasks.yaml correspond to an entry in the agents.yaml file."
             )
         # The user does not have an agent defined in agents.yaml file, but it does
         # exist in the entrypoint code.
-        case ('KeyError', m, t) if 'config=self.agents_config[' in t[-2]:
+        case ('KeyError', _, tracebacks) if 'config=self.agents_config[' in tracebacks[-2]:
             return (
                 f"The agent {message} is not defined in your agents file. "
                 "Ensure all agents referenced in your code are defined in the agents.yaml file."
             )
         # The user does not have a task defined in tasks.yaml file, but it does
         # exist in the entrypoint code.
-        case ('KeyError', m, t) if 'config=self.tasks_config[' in t[-2]:
+        case ('KeyError', _, tracebacks) if 'config=self.tasks_config[' in tracebacks[-2]:
             return (
                 f"The task {message} is not defined in your tasks. "
                 "Ensure all tasks referenced in your code are defined in the tasks.yaml file."

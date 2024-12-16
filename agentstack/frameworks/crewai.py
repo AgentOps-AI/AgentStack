@@ -151,11 +151,9 @@ class CrewFile(asttools.File):
         method = asttools.find_method(self.get_agent_methods(), agent_name)
         if method is None:
             raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
-
         existing_node: ast.List = self.get_agent_tools(agent_name)
         existing_elts: list[ast.expr] = existing_node.elts
-
-        new_tool_nodes: list[ast.expr] = []
+        # Add new tool nodes to existing elements
         for tool_name in tool.tools:
             # TODO there is definitely a better way to do this. We can't use
             # a `set` becasue the ast nodes are unique objects.

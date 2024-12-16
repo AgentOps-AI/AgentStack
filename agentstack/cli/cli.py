@@ -413,8 +413,10 @@ def insert_template(
         pass
         # subprocess.check_output(["git", "init"])
         # subprocess.check_output(["git", "add", "."])
-    except:
-        print("Failed to initialize git repository. Maybe you're already in one? Do this with: git init")
+    except Exception as e:
+        print(
+            f"Failed to initialize git repository ({str(e)}). Maybe you're already in one? Do this with: git init"
+        )
 
     # TODO: check if poetry is installed and if so, run poetry install in the new directory
     # os.system("poetry install")

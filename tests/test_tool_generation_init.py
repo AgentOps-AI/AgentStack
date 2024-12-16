@@ -42,11 +42,11 @@ class TestToolGenerationInit(unittest.TestCase):
     def test_tools_init_file(self):
         tools_init = ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME)
         # file is empty
-        assert tools_init.get_import_for_tool(self._get_test_tool()) == None
+        assert tools_init.get_import_for_tool(self._get_test_tool()) is None
 
     def test_tools_init_file_missing(self):
-        with self.assertRaises(ValidationError) as context:
-            tools_init = ToolsInitFile(conf.PATH / 'missing')
+        with self.assertRaises(ValidationError):
+            _ = ToolsInitFile(conf.PATH / 'missing')
 
     def test_tools_init_file_add_import(self):
         tool = self._get_test_tool()
@@ -66,7 +66,7 @@ class TestToolGenerationInit(unittest.TestCase):
             tools_init.add_import_for_tool(tool_alt, self.framework)
 
         # Should not be able to re-add a tool import
-        with self.assertRaises(ValidationError) as context:
+        with self.assertRaises(ValidationError):
             with ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME) as tools_init:
                 tools_init.add_import_for_tool(tool, self.framework)
 
