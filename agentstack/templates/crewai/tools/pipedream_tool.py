@@ -60,25 +60,52 @@ class PipedreamToolError(ToolError):
     pass
 
 
-class PipedreamActionTool(BaseTool):
-    name: str = "Pipedream Action"
-    description: str = "Execute Pipedream component actions and manage components. Supports listing apps, components, and retrieving component properties."
+class PipedreamListAppsTool(BaseTool):
+    name: str = "List Pipedream Apps"
+    description: str = "List available Pipedream apps with optional search query"
 
     def __init__(self, api_key: str):
         self.client = PipedreamClient(api_key)
         super().__init__()
 
-    def list_apps(self, query: str = None) -> list:
+    def _execute(self, query: str = None) -> str:
         """List available Pipedream apps with optional search query"""
         return self.client.list_apps(query)["data"]
 
-    def list_components(self, app: str) -> list:
-        """List available components for an app"""
+
+class PipedreamListComponentsTool(BaseTool):
+    name: str = "List Pipedream Components"
+    description: str = "List available components for a Pipedream app"
+
+    def __init__(self, api_key: str):
+        self.client = PipedreamClient(api_key)
+        super().__init__()
+
+    def _execute(self, app: str) -> str:
+        """List available components for the specified app"""
         return self.client.list_components(app)["data"]
 
-    def get_component_props(self, key: str) -> dict:
+
+class PipedreamGetPropsTool(BaseTool):
+    name: str = "Get Pipedream Component Properties"
+    description: str = "Get component definition and configuration options"
+
+    def __init__(self, api_key: str):
+        self.client = PipedreamClient(api_key)
+        super().__init__()
+
+    def _execute(self, key: str) -> str:
         """Get component definition and configuration options"""
         return self.client.get_component_definition(key)["data"]
+
+
+class PipedreamActionTool(BaseTool):
+    name: str = "Execute Pipedream Action"
+    description: str = "Execute a Pipedream component action with specified inputs"
+
+    def __init__(self, api_key: str):
+        self.client = PipedreamClient(api_key)
+        super().__init__()
 
     def _execute(self, component_id: str, inputs: Dict[str, Any]) -> str:
         """
@@ -98,24 +125,12 @@ class PipedreamActionTool(BaseTool):
 
 
 class PipedreamSourceTool(BaseTool):
-    name: str = "Pipedream Source"
-    description: str = "Configure and deploy Pipedream source components. Supports listing apps, components, and retrieving component properties."
+    name: str = "Deploy Pipedream Source"
+    description: str = "Deploy a Pipedream source component with webhook configuration"
 
     def __init__(self, api_key: str):
         self.client = PipedreamClient(api_key)
         super().__init__()
-
-    def list_apps(self, query: str = None) -> list:
-        """List available Pipedream apps with optional search query"""
-        return self.client.list_apps(query)["data"]
-
-    def list_components(self, app: str) -> list:
-        """List available source components for an app"""
-        return self.client.list_components(app)["data"]
-
-    def get_component_props(self, key: str) -> dict:
-        """Get component definition and configuration options"""
-        return self.client.get_component_definition(key)["data"]
 
     def _execute(self, component_id: str, webhook_url: str, config: Dict[str, Any]) -> str:
         """
