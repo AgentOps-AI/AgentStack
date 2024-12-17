@@ -3,6 +3,7 @@ import os, sys
 import time
 from datetime import datetime
 from pathlib import Path
+import webbrowser
 
 import json
 import shutil
@@ -159,29 +160,21 @@ def configure_default_model():
 
 
 def ask_framework() -> str:
-    framework = "CrewAI"
-    # framework = inquirer.list_input(
-    #     message="What agent framework do you want to use?",
-    #     choices=["CrewAI", "Autogen", "LiteLLM", "Learn what these are (link)"],
-    # )
-    #
-    # if framework == "Learn what these are (link)":
-    #     webbrowser.open("https://youtu.be/xvFZjo5PgG0")
-    #     framework = inquirer.list_input(
-    #         message="What agent framework do you want to use?",
-    #         choices=["CrewAI", "Autogen", "LiteLLM"],
-    #     )
-    #
-    # while framework in ['Autogen', 'LiteLLM']:
-    #     print(f"{framework} support coming soon!!")
-    #     framework = inquirer.list_input(
-    #         message="What agent framework do you want to use?",
-    #         choices=["CrewAI", "Autogen", "LiteLLM"],
-    #     )
+    framework = inquirer.list_input(
+        message="What agent framework do you want to use?",
+        choices=["CrewAI", "Agent Protocol", "Learn what these are (link)"],
+    )
+
+    if framework == "Learn what these are (link)":
+        webbrowser.open("https://youtu.be/xvFZjo5PgG0")
+        framework = inquirer.list_input(
+            message="What agent framework do you want to use?",
+            choices=["CrewAI", "Agent Protocol"],
+        )
 
     print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
 
-    return framework
+    return framework.lower()
 
 
 def ask_design() -> dict:
