@@ -32,8 +32,13 @@ class ProjectRunTest(unittest.TestCase):
 
         # populate the entrypoint
         entrypoint_path = frameworks.get_entrypoint_path(self.framework)
+        print(f"Copying from {BASE_PATH}/fixtures/frameworks/{self.framework}/entrypoint_max.py to {entrypoint_path}")
+        print(f"Entrypoint path exists before copy: {entrypoint_path.exists()}")
+        print(f"Source path exists: {(BASE_PATH / f'fixtures/frameworks/{self.framework}/entrypoint_max.py').exists()}")
         shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
-
+        print(f"Entrypoint path exists after copy: {entrypoint_path.exists()}")
+        if entrypoint_path.exists():
+            print(f"Entrypoint content:\n{entrypoint_path.read_text()}")
         # write a basic .env file
         shutil.copy(BASE_PATH / 'fixtures' / '.env', self.project_dir / '.env')
 
