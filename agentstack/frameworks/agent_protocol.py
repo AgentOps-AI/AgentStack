@@ -62,10 +62,12 @@ class AgentProtocolFile:
             elif isinstance(node, ast.FunctionDef):
                 if hasattr(node, 'decorator_list'):
                     for decorator in node.decorator_list:
-                        if isinstance(decorator, ast.Attribute):
-                            if decorator.attr == 'on_task':
+                        if isinstance(decorator, ast.Attribute) and isinstance(decorator.value, ast.Name):
+                            if (decorator.value.id == 'agent_protocol' and
+                                decorator.attr == 'on_task'):
                                 has_task_handler = True
-                            elif decorator.attr == 'on_step':
+                            elif (decorator.value.id == 'agent_protocol' and
+                                  decorator.attr == 'on_step'):
                                 has_step_handler = True
 
         if not has_app:
