@@ -6,6 +6,26 @@ import requests
 from json import JSONDecodeError
 from agentstack.exceptions import ToolError
 
+# TODO: Future Enhancements
+# - Add support for workflow-specific operations (create/update/delete)
+#   - Implement workflow creation with component chaining
+#   - Add workflow update capabilities
+#   - Support workflow deletion and cleanup
+#
+# - Implement webhook management capabilities
+#   - Add webhook creation and configuration
+#   - Support webhook event filtering
+#   - Implement webhook deletion and updates
+#
+# - Add component version control integration
+#   - Support component versioning
+#   - Add version rollback capabilities
+#   - Implement version comparison
+#
+# - Support custom component deployment
+#   - Add custom component creation
+#   - Support component testing and validation
+#   - Implement component publishing
 
 class PipedreamToolError(ToolError):
     """Exception raised for Pipedream-specific tool errors."""
