@@ -14,12 +14,12 @@ tools = []  # Initial tool setup
 
 
 @agent_protocol.on_task
-async def task_handler(task: Task) -> None:
+async def handle_task(task: Task) -> None:
     pass
 
 
 @agent_protocol.on_step
-async def step_handler(step: Step) -> None:
+async def handle_step(step: Step) -> None:
     pass
 
 

@@ -32,12 +32,12 @@ tools = []
 
 
 @agent_protocol.on_task
-async def task_handler(task: Task) -> None:
+async def handle_task(task: Task) -> None:
     await task.step.create_step("Processing task", is_last=False)
 
 
 @agent_protocol.on_step
-async def step_handler(step: Step) -> None:
+async def handle_step(step: Step) -> None:
     await step.create_step("Processing step", is_last=True)
 
 
