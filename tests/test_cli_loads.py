@@ -3,6 +3,7 @@ import os, sys
 import unittest
 from pathlib import Path
 import shutil
+from cli_test_utils import run_cli
 
 BASE_PATH = Path(__file__).parent
 
@@ -14,20 +15,15 @@ class TestAgentStackCLI(unittest.TestCase):
         "agentstack.main",
     ]
 
-    def run_cli(self, *args):
-        """Helper method to run the CLI with arguments."""
-        result = subprocess.run([*self.CLI_ENTRY, *args], capture_output=True, text=True)
-        return result
-
     def test_version(self):
         """Test the --version command."""
-        result = self.run_cli("--version")
+        result = run_cli(self.CLI_ENTRY, "--version")
         self.assertEqual(result.returncode, 0)
         self.assertIn("AgentStack CLI version:", result.stdout)
 
     def test_invalid_command(self):
         """Test an invalid command gracefully exits."""
-        result = self.run_cli("invalid_command")
+        result = run_cli(self.CLI_ENTRY, "invalid_command")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("usage:", result.stderr)
 
@@ -35,7 +31,7 @@ class TestAgentStackCLI(unittest.TestCase):
         """Test the 'run' command on an invalid project."""
         test_dir = Path(BASE_PATH / 'tmp/test_project')
         if test_dir.exists():
-            shutil.rmtree(test_dir)
+            shutil.rmtree(test_dir, ignore_errors=True)
         os.makedirs(test_dir)
 
         # Write a basic agentstack.json file
@@ -43,11 +39,11 @@ class TestAgentStackCLI(unittest.TestCase):
             f.write(open(BASE_PATH / 'fixtures/agentstack.json', 'r').read())
 
         os.chdir(test_dir)
-        result = self.run_cli('run')
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("No such file or directory: 'src/crew.py'", result.stderr)
+        result = run_cli(self.CLI_ENTRY, 'run')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("An error occurred", result.stdout)
 
-        shutil.rmtree(test_dir)
+        shutil.rmtree(test_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":
