@@ -60,24 +60,40 @@ class AgentProtocolFile:
                         elif target.id == 'tools':
                             has_tools = True
             elif isinstance(node, ast.FunctionDef):
-                if hasattr(node, 'decorator_list'):
-                    for decorator in node.decorator_list:
-                        # Handle both simple decorators and attribute decorators
-                        if isinstance(decorator, ast.Name) and decorator.id == 'on_task':
-                            has_task_handler = True
-                        elif isinstance(decorator, ast.Attribute):
-                            if (isinstance(decorator.value, ast.Name) and
-                                decorator.value.id == 'agent_protocol' and
-                                decorator.attr == 'on_task'):
-                                has_task_handler = True
-                        # Similar check for on_step decorator
-                        elif isinstance(decorator, ast.Name) and decorator.id == 'on_step':
-                            has_step_handler = True
-                        elif isinstance(decorator, ast.Attribute):
-                            if (isinstance(decorator.value, ast.Name) and
-                                decorator.value.id == 'agent_protocol' and
-                                decorator.attr == 'on_step'):
-                                has_step_handler = True
+                for decorator in node.decorator_list:
+                    # Handle all possible decorator patterns
+                    decorator_str = ''
+                    if isinstance(decorator, ast.Name):
+                        decorator_str = decorator.id
+                    elif isinstance(decorator, ast.Attribute):
+                        # Build full decorator path (e.g., agent_protocol.on_task)
+                        parts = []
+                        current = decorator
+                        while isinstance(current, ast.Attribute):
+                            parts.append(current.attr)
+                            current = current.value
+                        if isinstance(current, ast.Name):
+                            parts.append(current.id)
+                        decorator_str = '.'.join(reversed(parts))
+                    elif isinstance(decorator, ast.Call):
+                        # Handle decorator calls (e.g., @decorator())
+                        if isinstance(decorator.func, ast.Attribute):
+                            parts = []
+                            current = decorator.func
+                            while isinstance(current, ast.Attribute):
+                                parts.append(current.attr)
+                                current = current.value
+                            if isinstance(current, ast.Name):
+                                parts.append(current.id)
+                            decorator_str = '.'.join(reversed(parts))
+                        elif isinstance(decorator.func, ast.Name):
+                            decorator_str = decorator.func.id
+
+                    # Check for task and step handlers
+                    if 'on_task' in decorator_str:
+                        has_task_handler = True
+                    elif 'on_step' in decorator_str:
+                        has_step_handler = True
 
         if not has_app:
             raise ValidationError(f"FastAPI app not found in {self.path}")
