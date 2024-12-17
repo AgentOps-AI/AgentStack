@@ -1,5 +1,5 @@
 import os
-import requests
+import httpx
 
 from pydantic import BaseModel, Field
 from typing import Optional, Type
@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 QUERY_DATA_ENDPOINT = "https://api.agentql.com/v1/query-data"
+API_TIMEOUT_SECONDS = 900
+
 api_key = os.getenv("AGENTQL_API_KEY")
 
 class AgentQLQueryDataSchema(BaseModel):
@@ -77,12 +79,29 @@ class AgentQLQueryDataTool(BaseTool):
             "Content-Type": "application/json"
         }
 
-        response = requests.post(QUERY_DATA_ENDPOINT, headers=headers, json=payload)
-        if response.status_code == 200 and response.text:
-            return response.text
+        try:
+            response = httpx.post(
+                QUERY_DATA_ENDPOINT, 
+                headers=headers, 
+                json=payload, 
+                timeout=API_TIMEOUT_SECONDS
+            )
+            response.raise_for_status()
+
+        except httpx.HTTPStatusError as e:
+            response = e.response
+            if response.status_code in [401, 403]:
+                raise ValueError("Please, provide a valid API Key. You can create one at https://dev.agentql.com.") from e
+            else:
+                try:
+                    error_json = response.json()
+                    msg = error_json["error_info"] if "error_info" in error_json else error_json["detail"]
+                except (ValueError, TypeError):
+                    msg = f"HTTP {e}."
+                raise ValueError(msg) from e
         else:
-            print(f"{response.status_code} - {response.text}")
-            return "Failed to query AgentQL"
+            json = response.json()
+            return json["data"]
         
 def createTool(func):
     def wrapper(*args, **kwargs):
