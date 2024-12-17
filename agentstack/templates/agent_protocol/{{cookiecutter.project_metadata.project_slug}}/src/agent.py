@@ -13,7 +13,7 @@ agent_protocol = AgentProtocol(app)
 
 
 @agent_protocol.on_task
-async def task_handler(task: Task) -> None:
+async def handle_task(task: Task) -> None:
     """
     Handle incoming tasks from the agent protocol.
 
@@ -28,7 +28,7 @@ async def task_handler(task: Task) -> None:
 
 
 @agent_protocol.on_step
-async def step_handler(step: Step) -> None:
+async def handle_step(step: Step) -> None:
     """
     Handle individual steps within a task.
 
