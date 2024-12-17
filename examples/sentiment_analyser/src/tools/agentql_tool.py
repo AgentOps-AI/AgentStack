@@ -1,5 +1,5 @@
 import os
-import requests
+import httpx
 
 from pydantic import BaseModel, Field
 from typing import Optional, Type
@@ -10,7 +10,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 QUERY_DATA_ENDPOINT = "https://api.agentql.com/v1/query-data"
-api_key = os.getenv("AGENTQL_API_KEY")
+API_TIMEOUT_SECONDS = 900
+
+API_KEY = os.getenv("AGENTQL_API_KEY")
 
 class AgentQLQueryDataSchema(BaseModel):
     url: str = Field(description="Website URL")
@@ -73,16 +75,33 @@ class AgentQLQueryDataTool(BaseTool):
         }
 
         headers = {
-            "X-API-Key": f"{api_key}",
+            "X-API-Key": f"{API_KEY}",
             "Content-Type": "application/json"
         }
 
-        response = requests.post(QUERY_DATA_ENDPOINT, headers=headers, json=payload)
-        if response.status_code == 200 and response.text:
-            return response.text
+        try:
+            response = httpx.post(
+                QUERY_DATA_ENDPOINT, 
+                headers=headers, 
+                json=payload, 
+                timeout=API_TIMEOUT_SECONDS
+            )
+            response.raise_for_status()
+
+        except httpx.HTTPStatusError as e:
+            response = e.response
+            if response.status_code in [401, 403]:
+                raise ValueError("Please, provide a valid API Key. You can create one at https://dev.agentql.com.") from e
+            else:
+                try:
+                    error_json = response.json()
+                    msg = error_json["error_info"] if "error_info" in error_json else error_json["detail"]
+                except (ValueError, TypeError):
+                    msg = f"HTTP {e}."
+                raise ValueError(msg) from e
         else:
-            print(f"{response.status_code} - {response.text}")
-            return "Failed to query AgentQL"
+            json = response.json()
+            return json["data"]
         
 def createTool(func):
     def wrapper(*args, **kwargs):

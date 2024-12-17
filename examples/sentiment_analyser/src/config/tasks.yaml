@@ -9,6 +9,9 @@ sentiment_analysis:
   description: >-
     Analyse the reddit comments and provide the sentiment analysis on the topic
   expected_output: >-
-    Overall assessement of positive, neutral or negative sentiment on the the following perspectives with a short explanation: 1. Price: too expensive/resonable/good price for value 2. Functionality: does the new price model justify the advanced features? 3. Competitive sentiment: is the new price model competitive with other providers?
+    Assessement of positive, neutral or negative sentiment(one word) on the the following axies with a one sentence explanation: 
+    1. Price: too expensive/resonable/good price for value 
+    2. Functionality: does the new price model justify the advanced features? 
+    3. Competitive sentiment: is the new price model competitive with other providers?
   agent: >-
     analyser
