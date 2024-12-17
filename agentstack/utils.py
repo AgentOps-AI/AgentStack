@@ -1,5 +1,5 @@
-from typing import Optional, Union
-import os, sys
+import os
+import sys
 import json
 from ruamel.yaml import YAML
 import re
@@ -7,6 +7,7 @@ from importlib.metadata import version
 from pathlib import Path
 import importlib.resources
 from agentstack import conf
+from inquirer import errors as inquirer_errors
 
 
 def get_version(package: str = 'agentstack'):
@@ -106,3 +107,14 @@ def term_color(text: str, color: str) -> str:
 
 def is_snake_case(string: str):
     return bool(re.match('^[a-z0-9_]+$', string))
+
+
+def validator_not_empty(min_length=1):
+    def validator(_, answer):
+        if len(answer) < min_length:
+            raise inquirer_errors.ValidationError(
+                '', reason=f"This field must be at least {min_length} characters long."
+            )
+        return True
+
+    return validator
