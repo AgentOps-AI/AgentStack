@@ -12,7 +12,7 @@ load_dotenv()
 QUERY_DATA_ENDPOINT = "https://api.agentql.com/v1/query-data"
 API_TIMEOUT_SECONDS = 900
 
-api_key = os.getenv("AGENTQL_API_KEY")
+API_KEY = os.getenv("AGENTQL_API_KEY")
 
 class AgentQLQueryDataSchema(BaseModel):
     url: str = Field(description="Website URL")
@@ -75,7 +75,7 @@ class AgentQLQueryDataTool(BaseTool):
         }
 
         headers = {
-            "X-API-Key": f"{api_key}",
+            "X-API-Key": f"{API_KEY}",
             "Content-Type": "application/json"
         }
 

@@ -7,5 +7,5 @@
         "AGENTQL_API_KEY": "..."
     },
     "tools": ["query_data"],
-    "cta": "Create your AgentQL API key at https://agentql.com/"
+    "cta": "Create your AgentQL API key at https://dev.agentql.com"
 }
