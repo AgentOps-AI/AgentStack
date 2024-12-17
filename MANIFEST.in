@@ -1,3 +1,7 @@
+# Include all template files with explicit patterns
 recursive-include agentstack/templates *
+recursive-include agentstack/templates/agent_protocol *.*
+recursive-include agentstack/templates/agent_protocol/{{cookiecutter.project_metadata.project_slug}} *.*
+recursive-include agentstack/templates/agent_protocol/{{cookiecutter.project_metadata.project_slug}}/src *.*
 recursive-include agentstack/tools *
 include agentstack.json .env .env.example
