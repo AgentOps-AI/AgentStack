@@ -23,14 +23,6 @@ class ToolConfig(pydantic.BaseModel):
     post_install: Optional[str] = None
     post_remove: Optional[str] = None
 
-    def __hash__(self):
-        return hash(self.name)
-
-    def __eq__(self, other):
-        if not isinstance(other, ToolConfig):
-            return False
-        return self.name == other.name
-
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
         path = get_package_path() / f'tools/{name}.json'

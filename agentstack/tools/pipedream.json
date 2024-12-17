@@ -10,7 +10,6 @@
     "PipedreamSourceTool"
   ],
   "url": "https://pipedream.com/docs/connect/components",
-  "tools_bundled": false,
   "cta": "Get your Pipedream API key at https://pipedream.com/settings/api-key",
   "env": {
     "PIPEDREAM_API_KEY": "your-pipedream-api-key"

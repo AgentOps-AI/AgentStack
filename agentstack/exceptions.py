@@ -6,10 +6,9 @@ class ValidationError(Exception):
 
     pass
 
-class ToolError(ValidationError):
+class ToolError(Exception):
     """
-    Base exception for all tool-related errors. Inherits from ValidationError to maintain
-    consistent error handling across the application. All tool-specific exceptions
-    should inherit from this class.
+    Base exception for all tool-related errors. All exceptions inside of tool
+    implementations should inherit from this class.
     """
     pass
