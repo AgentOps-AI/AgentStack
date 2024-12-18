@@ -37,26 +37,28 @@ def init_project(
     - copy project skeleton
     - install dependencies
     """
-    welcome_message()
+    require_uv()
 
-    # conf.PATH may have been set by the argument parser, but if not, use the slug_name
+    # TODO prevent the user from passing the --path arguent to init
     if slug_name:
         conf.set_path(conf.PATH / slug_name)
     else:
         print("Error: No project directory specified.")
-        print("Run `agentstack init <project_name> or use the --path flag.")
+        print("Run `agentstack init <project_name>`")
         sys.exit(1)
 
-    if os.path.exists(conf.PATH):
+    if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
         print(f"Error: Directory already exists: {conf.PATH}")
         sys.exit(1)
 
+    welcome_message()
     print(term_color("🦾 Creating a new AgentStack project...", 'blue'))
     print(f"Using project directory: {conf.PATH.absolute()}")
+
     # copy the project skeleton, create a virtual environment, and install dependencies
     init_project_builder(slug_name, template, use_wizard)
     packaging.create_venv()
-    packaging.install('.')
+    packaging.install_project()
 
     print(
         "\n"

@@ -5,47 +5,89 @@ import re
 import subprocess
 import select
 from agentstack import conf
-from agentstack.exceptions import EnvironmentError
 
 
 DEFAULT_PYTHON_VERSION = "3.12"
 VENV_DIR_NAME: Path = Path(".venv")
 
+# filter uv output by these words to only show useful progress messages
+RE_UV_PROGRESS = re.compile(r'^(Resolved|Prepared|Installed|Uninstalled|Audited)')
+
+
+# When calling `uv` we explicitly specify the --python executable to use so that
+# the packages are installed into the correct virtual environment.
+# In testing, when this was not set, packages could end up in the pyenv's
+# site-packages directory; it's possible an environemnt variable can control this.
+
 
 def install(package: str):
-    """
-    Install a package with `uv`.
-    Filter output to only show useful progress messages.
-    """
-    RE_USEFUL_PROGRESS = re.compile(r'^(Resolved|Prepared|Installed|Audited)')
+    """Install a package with `uv` and add it to pyproject.toml."""
 
     def on_progress(line: str):
-        # only print these four messages:
-        # Resolved 78 packages in 225ms
-        # Prepared 12 packages in 915ms
-        # Installed 78 packages in 65ms
-        # Audited 1 package in 28ms
-        if RE_USEFUL_PROGRESS.match(line):
+        if RE_UV_PROGRESS.match(line):
             print(line.strip())
 
     def on_error(line: str):
         print(f"uv: [error]\n {line.strip()}")
 
-    # explicitly specify the --python executable to use so that the packages
-    # are installed into the correct virtual environment
     _wrap_command_with_callbacks(
-        [get_uv_bin(), 'pip', 'install', '--python', '.venv/bin/python', package],
+        [get_uv_bin(), 'add', '--python', '.venv/bin/python', package],
+        on_progress=on_progress,
+        on_error=on_error,
+    )
+
+
+def install_project():
+    """Install all dependencies for the user's project."""
+
+    def on_progress(line: str):
+        if RE_UV_PROGRESS.match(line):
+            print(line.strip())
+
+    def on_error(line: str):
+        print(f"uv: [error]\n {line.strip()}")
+
+    _wrap_command_with_callbacks(
+        [get_uv_bin(), 'pip', 'install', '--python', '.venv/bin/python', '.'],
         on_progress=on_progress,
         on_error=on_error,
     )
 
 
 def remove(package: str):
-    raise NotImplementedError("TODO `packaging.remove`")
+    """Uninstall a package with `uv`."""
+
+    # TODO it may be worth considering removing unused sub-dependencies as well
+    def on_progress(line: str):
+        if RE_UV_PROGRESS.match(line):
+            print(line.strip())
+
+    def on_error(line: str):
+        print(f"uv: [error]\n {line.strip()}")
+
+    _wrap_command_with_callbacks(
+        [get_uv_bin(), 'remove', '--python', '.venv/bin/python', package],
+        on_progress=on_progress,
+        on_error=on_error,
+    )
 
 
 def upgrade(package: str):
-    raise NotImplementedError("TODO `packaging.upgrade`")
+    """Upgrade a package with `uv`."""
+
+    # TODO should we try to update the project's pyproject.toml as well?
+    def on_progress(line: str):
+        if RE_UV_PROGRESS.match(line):
+            print(line.strip())
+
+    def on_error(line: str):
+        print(f"uv: [error]\n {line.strip()}")
+
+    _wrap_command_with_callbacks(
+        [get_uv_bin(), 'pip', 'install', '-U', '--python', '.venv/bin/python', package],
+        on_progress=on_progress,
+        on_error=on_error,
+    )
 
 
 def create_venv(python_version: str = DEFAULT_PYTHON_VERSION):
@@ -53,10 +95,10 @@ def create_venv(python_version: str = DEFAULT_PYTHON_VERSION):
     if os.path.exists(conf.PATH / VENV_DIR_NAME):
         return  # venv already exists
 
-    RE_USEFUL_PROGRESS = re.compile(r'^(Using|Creating)')
+    RE_VENV_PROGRESS = re.compile(r'^(Using|Creating)')
 
     def on_progress(line: str):
-        if RE_USEFUL_PROGRESS.match(line):
+        if RE_VENV_PROGRESS.match(line):
             print(line.strip())
 
     def on_error(line: str):
@@ -82,7 +124,7 @@ def get_uv_bin() -> str:
 def _setup_env() -> dict[str, str]:
     """Copy the current environment and add the virtual environment path for use by a subprocess."""
     env = os.environ.copy()
-    env.setdefault("VIRTUAL_ENV", VENV_DIR_NAME)
+    env["VIRTUAL_ENV"] = str(conf.PATH / VENV_DIR_NAME.absolute())
     env["UV_INTERNAL__PARENT_INTERPRETER"] = sys.executable
     return env
 

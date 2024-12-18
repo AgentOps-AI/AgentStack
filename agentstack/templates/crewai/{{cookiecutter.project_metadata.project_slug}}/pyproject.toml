@@ -9,5 +9,5 @@ license = { text = "{{cookiecutter.project_metadata.license}}" }
 requires-python = ">=3.10"
 
 dependencies = [
-    "agentstack[{{cookiecutter.framework}}]=={{cookiecutter.project_metadata.agentstack_version}}",
+    "agentstack[{{cookiecutter.framework}}]>={{cookiecutter.project_metadata.agentstack_version}}",
 ]
