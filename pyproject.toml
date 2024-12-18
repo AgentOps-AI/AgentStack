@@ -47,7 +47,12 @@ crewai = [
 
 
 [tool.setuptools]
-packages = ["agentstack"]
+packages = []
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["agentstack*"]
+exclude = ["web*", "tests*", "examples*"]
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
