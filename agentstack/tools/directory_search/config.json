@@ -1,6 +1,9 @@
 {
   "name": "directory_search",
-  "url": "https://github.com/crewAIInc/crewAI-tools/tree/main/crewai_tools/tools/directory_search_tool",
   "category": "computer-control",
-  "tools": ["dir_search_tool"]
+  "tools": ["search_directory", "search_fixed_directory"],
+  "description": "Search through files in a directory using embedchain's DirectoryLoader",
+  "env": {
+    "DIRECTORY_SEARCH_PATH": "Optional. Path to directory for fixed directory search."
+  }
 }
