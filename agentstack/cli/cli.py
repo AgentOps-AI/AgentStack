@@ -411,26 +411,6 @@ def insert_template(
     except:
         print("Failed to initialize git repository. Maybe you're already in one? Do this with: git init")
 
-    # TODO: check if poetry is installed and if so, run poetry install in the new directory
-    # os.system("poetry install")
-    # os.system("cls" if os.name == "nt" else "clear")
-    # TODO: add `agentstack docs` command
-    # print(
-    #     "\n"
-    #     "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
-    #     "  Next, run:\n"
-    #     f"    cd {project_metadata.project_slug}\n"
-    #     "    python -m venv .venv\n"
-    #     "    source .venv/bin/activate\n\n"
-    #     "  Make sure you have the latest version of poetry installed:\n"
-    #     "    pip install -U poetry\n\n"
-    #     "  You'll need to install the project's dependencies with:\n"
-    #     "    poetry install\n\n"
-    #     "  Finally, try running your agent with:\n"
-    #     "    agentstack run\n\n"
-    #     "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
-    # )
-
 
 def export_template(output_filename: str):
     """

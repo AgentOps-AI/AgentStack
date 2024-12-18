@@ -83,7 +83,6 @@ def _import_project_module(path: Path):
     assert spec is not None  # appease type checker
     assert spec.loader is not None  # appease type checker
 
-    print('dev version')
     project_module = importlib.util.module_from_spec(spec)
     sys.path.append(str((path / MAIN_FILENAME).parent))
     spec.loader.exec_module(project_module)
