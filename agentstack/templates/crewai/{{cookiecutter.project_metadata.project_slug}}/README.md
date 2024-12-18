@@ -15,7 +15,7 @@ This will automatically create a new agent in the `agents.yaml` config as well a
 
 Similarly, tasks can be created with `agentstack g t <tool_name>`
 
-Add tools with `agentstack tools add <tool_name>` and view tools available with `agentstack tools list`
+Add tools with `agentstack tools add` and view tools available with `agentstack tools list`
 
 ## How to use your Crew
 In this directory, run `poetry install`  

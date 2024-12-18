@@ -1,26 +1,34 @@
-import json
-import shutil
-import sys
+from typing import Optional
+import os, sys
 import time
 from datetime import datetime
-from typing import Optional
-import requests
-import itertools
+from pathlib import Path
 
+import json
+import shutil
 from art import text2art
 import inquirer
-import os
-import importlib.resources
 from cookiecutter.main import cookiecutter
 
-from .agentstack_data import FrameworkData, ProjectMetadata, ProjectStructure, CookiecutterData
+from .agentstack_data import (
+    FrameworkData,
+    ProjectMetadata,
+    ProjectStructure,
+    CookiecutterData,
+)
 from agentstack.logger import log
+from agentstack import conf
+from agentstack.conf import ConfigFile
 from agentstack.utils import get_package_path
-from agentstack.generation.files import ConfigFile
-from agentstack.generation.tool_generation import get_all_tools
-from agentstack import packaging, generation
-from agentstack.utils import open_json_file, term_color, is_snake_case
-from agentstack.update import AGENTSTACK_PACKAGE
+from agentstack.generation.files import ProjectFile
+from agentstack import frameworks
+from agentstack import generation
+from agentstack import inputs
+from agentstack.agents import get_all_agents
+from agentstack.tasks import get_all_tasks
+from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework
+from agentstack.proj_templates import TemplateConfig
+
 
 PREFERRED_MODELS = [
     'openai/gpt-4o',
@@ -30,7 +38,16 @@ PREFERRED_MODELS = [
     'anthropic/claude-3-opus',
 ]
 
-def init_project_builder(slug_name: Optional[str] = None, template: Optional[str] = None, use_wizard: bool = False):
+
+def init_project_builder(
+    slug_name: Optional[str] = None,
+    template: Optional[str] = None,
+    use_wizard: bool = False,
+):
+    if not slug_name and not use_wizard:
+        print(term_color("Project name is required. Use `agentstack init <project_name>`", 'red'))
+        return
+
     if slug_name and not is_snake_case(slug_name):
         print(term_color("Project name must be snake case", 'red'))
         return
@@ -41,38 +58,34 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
 
     template_data = None
     if template is not None:
-        url_start = "https://"
-        if template[:len(url_start)] == url_start:
-            # template is a url
-            response = requests.get(template)
-            if response.status_code == 200:
-                template_data = response.json()
-            else:
-                print(term_color(f"Failed to fetch template data from {template}. Status code: {response.status_code}", 'red'))
+        if template.startswith("https://"):
+            try:
+                template_data = TemplateConfig.from_url(template)
+            except Exception as e:
+                print(term_color(f"Failed to fetch template data from {template}.\n{e}", 'red'))
                 sys.exit(1)
         else:
-            with importlib.resources.path('agentstack.templates.proj_templates', f'{template}.json') as template_path:
-                if template_path is None:
-                    print(term_color(f"No such template {template} found", 'red'))
-                    sys.exit(1)
-                template_data = open_json_file(template_path)
+            try:
+                template_data = TemplateConfig.from_template_name(template)
+            except Exception as e:
+                print(term_color(f"Failed to load template {template}.\n{e}", 'red'))
+                sys.exit(1)
 
     if template_data:
         project_details = {
-            "name": slug_name or template_data['name'],
+            "name": slug_name or template_data.name,
             "version": "0.0.1",
-            "description": template_data['description'],
+            "description": template_data.description,
             "author": "Name <Email>",
-            "license": "MIT"
+            "license": "MIT",
         }
-        framework = template_data['framework']
+        framework = template_data.framework
         design = {
-            'agents': template_data['agents'],
-            'tasks': template_data['tasks'],
-            'inputs': template_data['inputs'],
+            'agents': [agent.model_dump() for agent in template_data.agents],
+            'tasks': [task.model_dump() for task in template_data.tasks],
+            'inputs': template_data.inputs,
         }
-
-        tools = template_data['tools']
+        tools = [tools.model_dump() for tools in template_data.tools]
 
     elif use_wizard:
         welcome_message()
@@ -84,37 +97,31 @@ def init_project_builder(slug_name: Optional[str] = None, template: Optional[str
 
     else:
         welcome_message()
+        # the user has started a new project; let's give them something to work with
+        default_project = TemplateConfig.from_template_name('hello_alex')
         project_details = {
-            "name": slug_name or "agentstack_project",
+            "name": slug_name or default_project.name,
             "version": "0.0.1",
-            "description": "New agentstack project",
+            "description": default_project.description,
             "author": "Name <Email>",
-            "license": "MIT"
+            "license": "MIT",
         }
-
-        framework = "crewai"  # TODO: if --no-wizard, require a framework flag
-
+        framework = default_project.framework
         design = {
-            'agents': [],
-            'tasks': [],
-            'inputs': []
+            'agents': [agent.model_dump() for agent in default_project.agents],
+            'tasks': [task.model_dump() for task in default_project.tasks],
+            'inputs': default_project.inputs,
         }
+        tools = [tools.model_dump() for tools in default_project.tools]
 
-        tools = []
-
-    log.debug(
-        f"project_details: {project_details}"
-        f"framework: {framework}"
-        f"design: {design}"
-    )
+    log.debug(f"project_details: {project_details}" f"framework: {framework}" f"design: {design}")
     insert_template(project_details, framework, design, template_data)
-    for tool_data in tools:
-        generation.add_tool(tool_data['name'], agents=tool_data['agents'], path=project_details['name'])
 
-    try:
-        packaging.install(f'{AGENTSTACK_PACKAGE}[{framework}]', path=slug_name)
-    except Exception as e:
-        print(term_color(f"Failed to install dependencies for {slug_name}. Please try again by running `agentstack update`", 'red'))
+    # we have an agentstack.json file in the directory now
+    conf.set_path(project_details['name'])
+
+    for tool_data in tools:
+        generation.add_tool(tool_data['name'], agents=tool_data['agents'])
 
 
 def welcome_message():
@@ -130,24 +137,24 @@ def welcome_message():
     print(border)
 
 
-def configure_default_model(path: Optional[str] = None):
+def configure_default_model():
     """Set the default model"""
-    agentstack_config = ConfigFile(path)
+    agentstack_config = ConfigFile()
     if agentstack_config.default_model:
-        return # Default model already set
-    
+        return  # Default model already set
+
     print("Project does not have a default model configured.")
-    other_msg = f"Other (enter a model name)"
+    other_msg = "Other (enter a model name)"
     model = inquirer.list_input(
         message="Which model would you like to use?",
         choices=PREFERRED_MODELS + [other_msg],
     )
 
-    if model == other_msg: # If the user selects "Other", prompt for a model name
-        print(f'A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+    if model == other_msg:  # If the user selects "Other", prompt for a model name
+        print('A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
         model = inquirer.text(message="Enter the model name")
-    
-    with ConfigFile(path) as agentstack_config:
+
+    with ConfigFile() as agentstack_config:
         agentstack_config.default_model = model
 
 
@@ -183,10 +190,7 @@ def ask_design() -> dict:
     )
 
     if not use_wizard:
-        return {
-            'agents': [],
-            'tasks': []
-        }
+        return {'agents': [], 'tasks': []}
 
     os.system("cls" if os.name == "nt" else "clear")
 
@@ -208,18 +212,24 @@ First we need to create the agents that will work together to accomplish tasks:
         agent_incomplete = True
         agent = None
         while agent_incomplete:
-            agent = inquirer.prompt([
-                inquirer.Text("name", message="What's the name of this agent? (snake_case)"),
-                inquirer.Text("role", message="What role does this agent have?"),
-                inquirer.Text("goal", message="What is the goal of the agent?"),
-                inquirer.Text("backstory", message="Give your agent a backstory"),
-                # TODO: make a list - #2
-                inquirer.Text('model', message="What LLM should this agent use? (any LiteLLM provider)", default="openai/gpt-4"),
-                # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
-                #     'mixtral_llm',
-                #     'mixtral_llm',
-                # ]),
-            ])
+            agent = inquirer.prompt(
+                [
+                    inquirer.Text("name", message="What's the name of this agent? (snake_case)"),
+                    inquirer.Text("role", message="What role does this agent have?"),
+                    inquirer.Text("goal", message="What is the goal of the agent?"),
+                    inquirer.Text("backstory", message="Give your agent a backstory"),
+                    # TODO: make a list - #2
+                    inquirer.Text(
+                        'model',
+                        message="What LLM should this agent use? (any LiteLLM provider)",
+                        default="openai/gpt-4",
+                    ),
+                    # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
+                    #     'mixtral_llm',
+                    #     'mixtral_llm',
+                    # ]),
+                ]
+            )
 
             if not agent['name'] or agent['name'] == '':
                 print(term_color("Error: Agent name is required - Try again", 'red'))
@@ -251,14 +261,21 @@ First we need to create the agents that will work together to accomplish tasks:
         task_incomplete = True
         task = None
         while task_incomplete:
-            task = inquirer.prompt([
-                inquirer.Text("name", message="What's the name of this task? (snake_case)"),
-                inquirer.Text("description", message="Describe the task in more detail"),
-                inquirer.Text("expected_output",
-                              message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)"),
-                inquirer.List("agent", message="Which agent should be assigned this task?",
-                              choices=[a['name'] for a in agents], ),
-            ])
+            task = inquirer.prompt(
+                [
+                    inquirer.Text("name", message="What's the name of this task? (snake_case)"),
+                    inquirer.Text("description", message="Describe the task in more detail"),
+                    inquirer.Text(
+                        "expected_output",
+                        message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)",
+                    ),
+                    inquirer.List(
+                        "agent",
+                        message="Which agent should be assigned this task?",
+                        choices=[a['name'] for a in agents],  # type: ignore
+                    ),
+                ]
+            )
 
             if not task['name'] or task['name'] == '':
                 print(term_color("Error: Task name is required - Try again", 'red'))
@@ -297,17 +314,13 @@ def ask_tools() -> list:
     tools_data = open_json_file(tools_json_path)
 
     while adding_tools:
-
         tool_type = inquirer.list_input(
             message="What category tool do you want to add?",
-            choices=list(tools_data.keys()) + ["~~ Stop adding tools ~~"]
+            choices=list(tools_data.keys()) + ["~~ Stop adding tools ~~"],
         )
 
         tools_in_cat = [f"{t['name']} - {t['url']}" for t in tools_data[tool_type] if t not in tools_to_add]
-        tool_selection = inquirer.list_input(
-            message="Select your tool",
-            choices=tools_in_cat
-        )
+        tool_selection = inquirer.list_input(message="Select your tool", choices=tools_in_cat)
 
         tools_to_add.append(tool_selection.split(' - ')[0])
 
@@ -327,49 +340,69 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
         print(term_color("Project name must be snake case", 'red'))
         return ask_project_details(slug_name)
 
-    questions = inquirer.prompt([
-        inquirer.Text("version", message="What's the initial version", default="0.1.0"),
-        inquirer.Text("description", message="Enter a description for your project"),
-        inquirer.Text("author", message="Who's the author (your name)?"),
-    ])
+    questions = inquirer.prompt(
+        [
+            inquirer.Text("version", message="What's the initial version", default="0.1.0"),
+            inquirer.Text("description", message="Enter a description for your project"),
+            inquirer.Text("author", message="Who's the author (your name)?"),
+        ]
+    )
 
     questions['name'] = name
 
     return questions
 
 
-def insert_template(project_details: dict, framework_name: str, design: dict, template_data: Optional[dict] = None):
-    framework = FrameworkData(framework_name.lower())
-    project_metadata = ProjectMetadata(project_name=project_details["name"],
-                                       description=project_details["description"],
-                                       author_name=project_details["author"],
-                                       version="0.0.1",
-                                       license="MIT",
-                                       year=datetime.now().year,
-                                       template=template_data['name'] if template_data else None,
-                                       template_version=template_data['template_version'] if template_data else None)
+def insert_template(
+    project_details: dict,
+    framework_name: str,
+    design: dict,
+    template_data: Optional[TemplateConfig] = None,
+):
+    framework = FrameworkData(
+        name=framework_name.lower(),
+    )
+    project_metadata = ProjectMetadata(
+        project_name=project_details["name"],
+        description=project_details["description"],
+        author_name=project_details["author"],
+        version="0.0.1",
+        license="MIT",
+        year=datetime.now().year,
+        template=template_data.name if template_data else 'none',
+        template_version=template_data.template_version if template_data else 0,
+    )
 
     project_structure = ProjectStructure()
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
-    project_structure.set_inputs(design["inputs"])
+    project_structure.inputs = design["inputs"]
 
-    cookiecutter_data = CookiecutterData(project_metadata=project_metadata,
-                                         structure=project_structure,
-                                         framework=framework_name.lower())
+    cookiecutter_data = CookiecutterData(
+        project_metadata=project_metadata,
+        structure=project_structure,
+        framework=framework_name.lower(),
+    )
 
     template_path = get_package_path() / f'templates/{framework.name}'
     with open(f"{template_path}/cookiecutter.json", "w") as json_file:
         json.dump(cookiecutter_data.to_dict(), json_file)
+        # TODO this should not be written to the package directory
 
     # copy .env.example to .env
     shutil.copy(
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
-        f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env')
+        f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env',
+    )
 
     if os.path.isdir(project_details['name']):
-        print(term_color(f"Directory {template_path} already exists. Please check this and try again", "red"))
-        return
+        print(
+            term_color(
+                f"Directory {template_path} already exists. Please check this and try again",
+                "red",
+            )
+        )
+        sys.exit(1)
 
     cookiecutter(str(template_path), no_input=True, extra_context=None)
 
@@ -392,28 +425,87 @@ def insert_template(project_details: dict, framework_name: str, design: dict, te
         "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
         "  Next, run:\n"
         f"    cd {project_metadata.project_slug}\n"
-        "    poetry install\n"
+        "    python -m venv .venv\n"
+        "    source .venv/bin/activate\n\n"
+        "  Make sure you have the latest version of poetry installed:\n"
+        "    pip install -U poetry\n\n"
+        "  You'll need to install the project's dependencies with:\n"
+        "    poetry install\n\n"
+        "  Finally, try running your agent with:\n"
         "    agentstack run\n\n"
-        "  Add agents and tasks with:\n"
-        "    `agentstack generate agent/task <name>`\n\n"
         "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
     )
 
 
-def list_tools():
-    # Display the tools
-    tools = get_all_tools()
-    curr_category = None
+def export_template(output_filename: str):
+    """
+    Export the current project as a template.
+    """
+    try:
+        metadata = ProjectFile()
+    except Exception as e:
+        print(term_color(f"Failed to load project metadata: {e}", 'red'))
+        sys.exit(1)
 
-    print("\n\nAvailable AgentStack Tools:")
-    for category, tools in itertools.groupby(tools, lambda x: x.category):
-        if curr_category != category:
-            print(f"\n{category}:")
-            curr_category = category
-        for tool in tools:
-            print("  - ", end='')
-            print(term_color(f"{tool.name}", 'blue'), end='')
-            print(f": {tool.url if tool.url else 'AgentStack default tool'}")
+    # Read all the agents from the project's agents.yaml file
+    agents: list[TemplateConfig.Agent] = []
+    for agent in get_all_agents():
+        agents.append(
+            TemplateConfig.Agent(
+                name=agent.name,
+                role=agent.role,
+                goal=agent.goal,
+                backstory=agent.backstory,
+                model=agent.llm,  # TODO consistent naming (llm -> model)
+            )
+        )
 
-    print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
-    print("   https://docs.agentstack.sh/tools/core")
+    # Read all the tasks from the project's tasks.yaml file
+    tasks: list[TemplateConfig.Task] = []
+    for task in get_all_tasks():
+        tasks.append(
+            TemplateConfig.Task(
+                name=task.name,
+                description=task.description,
+                expected_output=task.expected_output,
+                agent=task.agent,
+            )
+        )
+
+    # Export all of the configured tools from the project
+    tools_agents: dict[str, list[str]] = {}
+    for agent_name in frameworks.get_agent_names():
+        for tool_name in frameworks.get_agent_tool_names(agent_name):
+            if not tool_name:
+                continue
+            if tool_name not in tools_agents:
+                tools_agents[tool_name] = []
+            tools_agents[tool_name].append(agent_name)
+
+    tools: list[TemplateConfig.Tool] = []
+    for tool_name, agent_names in tools_agents.items():
+        tools.append(
+            TemplateConfig.Tool(
+                name=tool_name,
+                agents=agent_names,
+            )
+        )
+
+    template = TemplateConfig(
+        template_version=2,
+        name=metadata.project_name,
+        description=metadata.project_description,
+        framework=get_framework(),
+        method="sequential",  # TODO this needs to be stored in the project somewhere
+        agents=agents,
+        tasks=tasks,
+        tools=tools,
+        inputs=inputs.get_inputs(),
+    )
+
+    try:
+        template.write_to_file(conf.PATH / output_filename)
+        print(term_color(f"Template saved to: {conf.PATH / output_filename}", 'green'))
+    except Exception as e:
+        print(term_color(f"Failed to write template to file: {e}", 'red'))
+        sys.exit(1)

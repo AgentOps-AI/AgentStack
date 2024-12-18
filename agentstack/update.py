@@ -20,7 +20,7 @@ def _is_ci_environment():
         'TRAVIS',
         'CIRCLECI',
         'JENKINS_URL',
-        'TEAMCITY_VERSION'
+        'TEAMCITY_VERSION',
     ]
     return any(os.getenv(var) for var in ci_env_vars)
 
@@ -45,7 +45,10 @@ CHECK_EVERY = 3600  # hour
 def get_latest_version(package: str) -> Version:
     """Get version information from PyPi to save a full package manager invocation"""
     import requests  # defer import until we know we need it
-    response = requests.get(f"{ENDPOINT_URL}/{package}/", headers={"Accept": "application/vnd.pypi.simple.v1+json"})
+
+    response = requests.get(
+        f"{ENDPOINT_URL}/{package}/", headers={"Accept": "application/vnd.pypi.simple.v1+json"}
+    )
     if response.status_code != 200:
         raise Exception(f"Failed to fetch package data from pypi.")
     data = response.json()
@@ -65,6 +68,10 @@ def load_update_data():
 
 def should_update() -> bool:
     """Has it been longer than CHECK_EVERY since the last update check?"""
+    # Allow disabling update checks with an environment variable
+    if 'AGENTSTACK_UPDATE_DISABLE' in os.environ:
+        return False
+
     # Always check for updates in CI
     if _is_ci_environment():
         return True
@@ -116,14 +123,21 @@ def check_for_updates(update_requested: bool = False):
     installed_version: Version = parse_version(get_version(AGENTSTACK_PACKAGE))
     if latest_version > installed_version:
         print('')  # newline
-        if inquirer.confirm(f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"):
+        if inquirer.confirm(
+            f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"
+        ):
             packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
-            print(term_color(f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.", 'green'))
+            print(
+                term_color(
+                    f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.", 'green'
+                )
+            )
             sys.exit(0)
         else:
-            print(term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue'))
+            print(
+                term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue')
+            )
     else:
         print(f"{AGENTSTACK_PACKAGE} is up to date ({installed_version})")
 
     record_update_check()
-

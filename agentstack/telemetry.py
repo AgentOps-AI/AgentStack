@@ -28,9 +28,11 @@ import platform
 import socket
 import psutil
 import requests
+from agentstack import conf
 from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 
 TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
+
 
 def collect_machine_telemetry(command: str):
     if command != "init" and get_telemetry_opt_out():
@@ -43,11 +45,11 @@ def collect_machine_telemetry(command: str):
         'os_version': platform.version(),
         'cpu_count': psutil.cpu_count(logical=True),
         'memory': psutil.virtual_memory().total,
-        'agentstack_version': get_version()
+        'agentstack_version': get_version(),
     }
 
     if command != "init":
-        telemetry_data['framework'] = get_framework()
+        telemetry_data['framework'] = conf.get_framework()
     else:
         telemetry_data['framework'] = "n/a"
 
@@ -56,12 +58,14 @@ def collect_machine_telemetry(command: str):
         response = requests.get('https://ipinfo.io/json')
         if response.status_code == 200:
             location_data = response.json()
-            telemetry_data.update({
-                'ip': location_data.get('ip'),
-                'city': location_data.get('city'),
-                'region': location_data.get('region'),
-                'country': location_data.get('country')
-            })
+            telemetry_data.update(
+                {
+                    'ip': location_data.get('ip'),
+                    'city': location_data.get('city'),
+                    'region': location_data.get('region'),
+                    'country': location_data.get('country'),
+                }
+            )
     except requests.RequestException as e:
         telemetry_data['location_error'] = str(e)
 
@@ -72,5 +76,5 @@ def track_cli_command(command: str):
     try:
         data = collect_machine_telemetry(command)
         requests.post(TELEMETRY_URL, json={"command": command, **data})
-    except:
+    except Exception:
         pass

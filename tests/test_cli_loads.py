@@ -1,25 +1,30 @@
 import subprocess
-import sys
+import os, sys
 import unittest
 from pathlib import Path
 import shutil
 
+BASE_PATH = Path(__file__).parent
+
 
 class TestAgentStackCLI(unittest.TestCase):
-    CLI_ENTRY = [sys.executable, "-m", "agentstack.main"]  # Replace with your actual CLI entry point if different
+    CLI_ENTRY = [
+        sys.executable,
+        "-m",
+        "agentstack.main",
+    ]
 
     def run_cli(self, *args):
         """Helper method to run the CLI with arguments."""
-        result = subprocess.run(
-            [*self.CLI_ENTRY, *args],
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run([*self.CLI_ENTRY, *args], capture_output=True, text=True)
         return result
 
     def test_version(self):
         """Test the --version command."""
         result = self.run_cli("--version")
+        print(result.stdout)
+        print(result.stderr)
+        print(result.returncode)
         self.assertEqual(result.returncode, 0)
         self.assertIn("AgentStack CLI version:", result.stdout)
 
@@ -29,19 +34,22 @@ class TestAgentStackCLI(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("usage:", result.stderr)
 
-    def test_init_command(self):
-        """Test the 'init' command to create a project directory."""
-        test_dir = Path("test_project")
-
-        # Ensure the directory doesn't exist from previous runs
+    def test_run_command_invalid_project(self):
+        """Test the 'run' command on an invalid project."""
+        test_dir = Path(BASE_PATH / 'tmp/test_project')
         if test_dir.exists():
             shutil.rmtree(test_dir)
+        os.makedirs(test_dir)
 
-        result = self.run_cli("init", str(test_dir))
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(test_dir.exists())
+        # Write a basic agentstack.json file
+        with (test_dir / 'agentstack.json').open('w') as f:
+            f.write(open(BASE_PATH / 'fixtures/agentstack.json', 'r').read())
 
-        # Clean up
+        os.chdir(test_dir)
+        result = self.run_cli('run')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Project validation failed", result.stdout)
+
         shutil.rmtree(test_dir)
 
 
