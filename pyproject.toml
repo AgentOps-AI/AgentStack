@@ -47,7 +47,6 @@ crewai = [
 
 
 [tool.setuptools]
-packages = []
 package-dir = {"" = "."}
 
 [tool.setuptools.packages.find]
