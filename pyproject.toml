@@ -46,9 +46,11 @@ crewai = [
 ]
 
 
+[tool.setuptools]
+packages = ["agentstack"]
+
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
-
 
 [project.scripts]
 agentstack = "agentstack.main:main"
