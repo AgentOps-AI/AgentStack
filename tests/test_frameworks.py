@@ -15,9 +15,10 @@ BASE_PATH = Path(__file__).parent
 @parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
 class TestFrameworks(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp' / self.framework
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'test_frameworks'
 
         os.makedirs(self.project_dir)
+        os.chdir(self.project_dir)  # importing the crewai module requires us to be in a working directory
         os.makedirs(self.project_dir / 'src')
         os.makedirs(self.project_dir / 'src' / 'tools')
 
@@ -45,10 +46,8 @@ class TestFrameworks(unittest.TestCase):
     def _get_test_tool(self) -> ToolConfig:
         return ToolConfig(name='test_tool', category='test', tools=['test_tool'])
 
-    def _get_test_tool_starred(self) -> ToolConfig:
-        return ToolConfig(
-            name='test_tool_star', category='test', tools=['test_tool_star'], tools_bundled=True
-        )
+    def _get_test_tool_alternate(self) -> ToolConfig:
+        return ToolConfig(name='test_tool_alt', category='test', tools=['test_tool_alt'])
 
     def test_get_framework_module(self):
         module = frameworks.get_framework_module(self.framework)
@@ -73,14 +72,7 @@ class TestFrameworks(unittest.TestCase):
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         # TODO these asserts are not framework agnostic
-        assert 'tools=[tools.test_tool' in entrypoint_src
-
-    def test_add_tool_starred(self):
-        self._populate_max_entrypoint()
-        frameworks.add_tool(self._get_test_tool_starred(), 'test_agent')
-
-        entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
-        assert 'tools=[*tools.test_tool_star' in entrypoint_src
+        assert "tools=[*agentstack.tools['test_tool']" in entrypoint_src
 
     def test_add_tool_invalid(self):
         self._populate_min_entrypoint()
@@ -93,33 +85,25 @@ class TestFrameworks(unittest.TestCase):
         frameworks.remove_tool(self._get_test_tool(), 'test_agent')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
-        assert 'tools=[tools.test_tool' not in entrypoint_src
-
-    def test_remove_tool_starred(self):
-        self._populate_max_entrypoint()
-        frameworks.add_tool(self._get_test_tool_starred(), 'test_agent')
-        frameworks.remove_tool(self._get_test_tool_starred(), 'test_agent')
-
-        entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
-        assert 'tools=[*tools.test_tool_star' not in entrypoint_src
+        assert "tools=[*agentstack.tools['test_tool']" not in entrypoint_src
 
     def test_add_multiple_tools(self):
         self._populate_max_entrypoint()
         frameworks.add_tool(self._get_test_tool(), 'test_agent')
-        frameworks.add_tool(self._get_test_tool_starred(), 'test_agent')
+        frameworks.add_tool(self._get_test_tool_alternate(), 'test_agent')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert (  # ordering is not guaranteed
-            'tools=[tools.test_tool, *tools.test_tool_star' in entrypoint_src
-            or 'tools=[*tools.test_tool_star, tools.test_tool' in entrypoint_src
+            "tools=[*agentstack.tools['test_tool'], *agentstack.tools['test_tool_alt']" in entrypoint_src
+            or "tools=[*agentstack.tools['test_tool_alt'], *agentstack.tools['test_tool']" in entrypoint_src
         )
 
     def test_remove_one_tool_of_multiple(self):
         self._populate_max_entrypoint()
         frameworks.add_tool(self._get_test_tool(), 'test_agent')
-        frameworks.add_tool(self._get_test_tool_starred(), 'test_agent')
+        frameworks.add_tool(self._get_test_tool_alternate(), 'test_agent')
         frameworks.remove_tool(self._get_test_tool(), 'test_agent')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
-        assert 'tools=[tools.test_tool' not in entrypoint_src
-        assert 'tools=[*tools.test_tool_star' in entrypoint_src
+        assert "*agentstack.tools['test_tool']" not in entrypoint_src
+        assert "tools=[*agentstack.tools['test_tool_alt']" in entrypoint_src

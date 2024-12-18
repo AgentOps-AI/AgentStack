@@ -5,6 +5,10 @@
     "env": {
         "NEON_API_KEY": "..."
     },
+    "dependencies": [
+        "neon-api>=0.1.5",
+        "psycopg2-binary"
+    ],
     "tools": ["create_database", "execute_sql_ddl", "run_sql_query"],
     "cta": "Create an API key at https://www.neon.tech"
 }

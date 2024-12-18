@@ -3,12 +3,15 @@
   "url": "https://github.com/chgaowei/AgentConnect",
   "category": "network-protocols",
   "env": {
-    "HOST_DOMAIN": "...",
+    "HOST_DOMAIN": null,
     "HOST_PORT": 80,
     "HOST_WS_PATH": "/ws",
-    "DID_DOCUMENT_PATH": "...",
-    "SSL_CERT_PATH": "...",
-    "SSL_KEY_PATH": "..."
+    "DID_DOCUMENT_PATH": "data/agent_connect_did.json",
+    "SSL_CERT_PATH": null,
+    "SSL_KEY_PATH": null
   },
+  "dependencies": [
+    "agent-connect>=0.3.0"
+  ],
   "tools": ["send_message", "receive_message"]
 }

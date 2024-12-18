@@ -13,7 +13,6 @@ class ToolConfigTest(unittest.TestCase):
         assert config.category == "category"
         assert config.tools == ["tool1", "tool2"]
         assert config.url is None
-        assert config.tools_bundled is False
         assert config.cta is None
         assert config.env is None
         assert config.post_install is None
@@ -25,7 +24,6 @@ class ToolConfigTest(unittest.TestCase):
         assert config.category == "category"
         assert config.tools == ["tool1", "tool2"]
         assert config.url == "https://example.com"
-        assert config.tools_bundled is True
         assert config.cta == "Click me!"
         assert config.env == {"ENV_VAR1": "value1", "ENV_VAR2": "value2"}
         assert config.post_install == "install.sh"
@@ -40,7 +38,7 @@ class ToolConfigTest(unittest.TestCase):
     def test_all_json_configs_from_tool_path(self):
         for path in get_all_tool_paths():
             try:
-                config = ToolConfig.from_json(path)
+                config = ToolConfig.from_json(f"{path}/config.json")
             except json.decoder.JSONDecodeError:
                 raise Exception(
                     f"Failed to decode tool json at {path}. Does your tool config fit the required formatting? https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/tools/~README.md"

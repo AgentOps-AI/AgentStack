@@ -1,8 +1,0 @@
-[project]
-name = "agentstack.code_interpreter"
-version = "0.1"
-
-dependencies = []
-
-[project.optional-dependencies]
-crewai = []

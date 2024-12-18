@@ -3,7 +3,10 @@
   "url": "https://perplexity.ai",
   "category": "search",
   "env": {
-    "PERPLEXITY_API_KEY": "..."
+    "PERPLEXITY_API_KEY": null
   },
+  "dependencies": [
+    "requests>=2.30"
+  ],
   "tools": ["query_perplexity"]
 }
