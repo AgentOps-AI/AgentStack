@@ -51,7 +51,7 @@ package-dir = {"" = "."}
 
 [tool.setuptools.packages.find]
 include = ["agentstack*"]
-exclude = ["web*", "tests*", "examples*"]
+exclude = ["web*", "frontend*", "tests*", "examples*", "*.tests", "*.tests.*", "tests.*", "web", "web.*", "frontend", "frontend.*"]
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
