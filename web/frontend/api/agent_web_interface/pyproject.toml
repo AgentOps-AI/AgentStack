@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "agent_web_interface"
+version = "0.0.1"
+description = "This is the start of your AgentStack project."
+authors = ["Name <Email>"]
+license = "MIT"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+agentstack = {extras = ["crewai"], version="0.2.2.2"}
+
+[project.scripts]
+agent_web_interface = "agent_web_interface.main:run"
+run_crew = "agent_web_interface.main:run"
+train = "agent_web_interface.main:train"
+replay = "agent_web_interface.main:replay"
+test = "agent_web_interface.main:test"
