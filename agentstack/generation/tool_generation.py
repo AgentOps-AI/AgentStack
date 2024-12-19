@@ -1,5 +1,4 @@
 import os
-import sys
 from typing import Optional
 from pathlib import Path
 import shutil
@@ -7,7 +6,7 @@ import ast
 
 from agentstack import conf
 from agentstack.conf import ConfigFile
-from agentstack.exceptions import ValidationError
+from agentstack.exceptions import ValidationError, ToolError
 from agentstack import frameworks
 from agentstack import packaging
 from agentstack.utils import term_color
@@ -97,7 +96,7 @@ def add_tool(tool_name: str, agents: Optional[list[str]] = []):
             with ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME) as tools_init:
                 tools_init.add_import_for_tool(tool, agentstack_config.framework)
         except ValidationError as e:
-            print(term_color(f"Error adding tool:\n{e}", 'red'))
+            raise ToolError(f"Error adding tool:\n{e}")
 
         if tool.env:  # add environment variables which don't exist
             with EnvFile() as env:
@@ -129,8 +128,7 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
     agentstack_config = ConfigFile()
 
     if tool_name not in agentstack_config.tools:
-        print(term_color(f'Tool {tool_name} is not installed', 'red'))
-        sys.exit(1)
+        raise ToolError(f'Tool {tool_name} is not installed')
 
     tool = ToolConfig.from_tool_name(tool_name)
     if tool.packages:
@@ -146,7 +144,7 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
         with ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME) as tools_init:
             tools_init.remove_import_for_tool(tool, agentstack_config.framework)
     except ValidationError as e:
-        print(term_color(f"Error removing tool:\n{e}", 'red'))
+        raise ToolError(f"Error removing tool:\n{e}")
 
     # Edit the framework entrypoint file to exclude the tool in the agent definition
     if not agents:  # If no agents are specified, remove the tool from all agents
