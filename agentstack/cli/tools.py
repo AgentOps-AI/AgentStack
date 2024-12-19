@@ -6,7 +6,7 @@ from agentstack.utils import term_color
 from agentstack import generation
 from agentstack.tools import get_all_tools
 from agentstack.agents import get_all_agents
-from agentstack.exceptions import ToolError
+from agentstack.exceptions import ToolError, ValidationError
 
 
 def list_tools():
@@ -29,8 +29,15 @@ def list_tools():
 
         print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
         print("   https://docs.agentstack.sh/tools/core")
-    except ToolError as e:
-        print(term_color(f"Error listing tools: {str(e)}", 'red'))
+    except ToolError:
+        print(term_color("Could not retrieve list of tools. The tools directory may be corrupted or missing.", 'red'))
+        sys.exit(1)
+    except ValidationError:
+        print(term_color("Some tool configurations are invalid and could not be loaded.", 'red'))
+        print(term_color("Please check your tool JSON files for formatting errors.", 'red'))
+        sys.exit(1)
+    except Exception:
+        print(term_color("An unexpected error occurred while listing tools.", 'red'))
         sys.exit(1)
 
 
@@ -74,8 +81,14 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
 
         assert tool_name  # appease type checker
         generation.add_tool(tool_name, agents=agents)
-    except ToolError as e:
-        print(term_color(f"Error adding tool: {str(e)}", 'red'))
+    except ToolError:
+        print(term_color(f"Could not add tool '{tool_name}'. Run 'agentstack tools list' to see available tools.", 'red'))
+        sys.exit(1)
+    except ValidationError:
+        print(term_color(f"Tool configuration is invalid. Please check the tool's JSON configuration file.", 'red'))
+        sys.exit(1)
+    except Exception:
+        print(term_color("An unexpected error occurred while adding the tool.", 'red'))
         sys.exit(1)
 
 
@@ -84,5 +97,14 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
     try:
         generation.remove_tool(tool_name, agents=agents)
     except ToolError as e:
-        print(term_color(f"Error removing tool: {str(e)}", 'red'))
+        if "not installed" in str(e):
+            print(term_color(f"Tool '{tool_name}' is not installed in this project.", 'red'))
+        else:
+            print(term_color(f"Could not remove tool '{tool_name}'. The tool may be in use or corrupted.", 'red'))
+        sys.exit(1)
+    except ValidationError:
+        print(term_color(f"Invalid tool configuration detected while removing '{tool_name}'.", 'red'))
+        sys.exit(1)
+    except Exception:
+        print(term_color("An unexpected error occurred while removing the tool.", 'red'))
         sys.exit(1)
