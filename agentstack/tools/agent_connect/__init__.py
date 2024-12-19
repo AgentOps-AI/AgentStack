@@ -5,28 +5,32 @@ from agent_connect.simple_node import SimpleNode
 
 # An HTTP and WS service will be started in agent-connect
 # It can be an IP address or a domain name
-host_domain = os.getenv("HOST_DOMAIN")
+host_domain = os.getenv("AGENT_CONNECT_HOST_DOMAIN")
 # Host port, default is 80
-host_port = os.getenv("HOST_PORT")
+host_port = os.getenv("AGENT_CONNECT_HOST_PORT")
 # WS path, default is /ws
-host_ws_path = os.getenv("HOST_WS_PATH")
+host_ws_path = os.getenv("AGENT_CONNECT_HOST_WS_PATH")
 # Path to store DID document
-did_document_path = os.getenv("DID_DOCUMENT_PATH")
+did_document_path = os.getenv("AGENT_CONNECT_DID_DOCUMENT_PATH")
 # SSL certificate path, if using HTTPS, certificate and key need to be provided
-ssl_cert_path = os.getenv("SSL_CERT_PATH")
-ssl_key_path = os.getenv("SSL_KEY_PATH")
+ssl_cert_path = os.getenv("AGENT_CONNECT_SSL_CERT_PATH")
+ssl_key_path = os.getenv("AGENT_CONNECT_SSL_KEY_PATH")
 
 if not host_domain:
-    raise Exception((
-        "Host domain has not been provided.\n"
-        "Did you set the HOST_DOMAIN in you project's .env file?"
-    ))
+    raise Exception(
+        (
+            "Host domain has not been provided.\n"
+            "Did you set the AGENT_CONNECT_HOST_DOMAIN in you project's .env file?"
+        )
+    )
 
 if not did_document_path:
-    raise Exception((
-        "DID document path has not been provided.\n"
-        "Did you set the DID_DOCUMENT_PATH in you project's .env file?"
-    ))
+    raise Exception(
+        (
+            "DID document path has not been provided.\n"
+            "Did you set the AGENT_CONNECT_DID_DOCUMENT_PATH in you project's .env file?"
+        )
+    )
 
 
 def generate_did_info(node: SimpleNode, did_document_path: str) -> None:
@@ -48,7 +52,7 @@ def generate_did_info(node: SimpleNode, did_document_path: str) -> None:
         node.set_did_info(private_key_pem, did, did_document_json)
 
         # Save DID information
-        if os.path.dirname(did_document_path): # allow saving to current directory
+        if os.path.dirname(did_document_path):  # allow saving to current directory
             os.makedirs(os.path.dirname(did_document_path), exist_ok=True)
         with open(did_document_path, "w") as f:
             json.dump(
