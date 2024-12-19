@@ -9,15 +9,10 @@ BASE_PATH = Path(__file__).parent
 
 
 class TestAgentStackCLI(unittest.TestCase):
-    CLI_ENTRY = [
-        sys.executable,
-        "-m",
-        "agentstack.main",
-    ]
 
     def test_version(self):
         """Test the --version command."""
-        result = run_cli(self.CLI_ENTRY, "--version")
+        result = run_cli("--version")
         print(result.stdout)
         print(result.stderr)
         print(result.returncode)
@@ -26,7 +21,7 @@ class TestAgentStackCLI(unittest.TestCase):
 
     def test_invalid_command(self):
         """Test an invalid command gracefully exits."""
-        result = run_cli(self.CLI_ENTRY, "invalid_command")
+        result = run_cli("invalid_command")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("usage:", result.stderr)
 
@@ -42,7 +37,7 @@ class TestAgentStackCLI(unittest.TestCase):
             f.write(open(BASE_PATH / 'fixtures/agentstack.json', 'r').read())
 
         os.chdir(test_dir)
-        result = run_cli(self.CLI_ENTRY, 'run')
+        result = run_cli('run')
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Project validation failed", result.stdout)
 

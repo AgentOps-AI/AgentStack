@@ -6,12 +6,6 @@ import shutil
 from cli_test_utils import run_cli
 
 BASE_PATH = Path(__file__).parent
-CLI_ENTRY = [
-    sys.executable,
-    "-m",
-    "agentstack.main",
-]
-
 
 class CLIInitTest(unittest.TestCase):
     def setUp(self):
@@ -27,6 +21,6 @@ class CLIInitTest(unittest.TestCase):
 
     def test_init_command(self):
         """Test the 'init' command to create a project directory."""
-        result = run_cli(CLI_ENTRY, 'init', 'test_project')
+        result = run_cli('init', 'test_project')
         self.assertEqual(result.returncode, 0)
         self.assertTrue((self.project_dir / 'test_project').exists())
