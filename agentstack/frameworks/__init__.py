@@ -1,4 +1,4 @@
-from typing import Optional, Protocol
+from typing import Optional, Protocol, Callable
 from types import ModuleType
 from importlib import import_module
 from pathlib import Path
@@ -45,6 +45,12 @@ class FrameworkModule(Protocol):
     def remove_tool(self, tool: ToolConfig, agent_name: str) -> None:
         """
         Remove a tool from an agent in user's project.
+        """
+        ...
+
+    def get_tool_callables(self, tool_name: str) -> list[Callable]:
+        """
+        Get a tool by name and return it as a list of framework-native callables.
         """
         ...
 
@@ -113,6 +119,12 @@ def remove_tool(tool: ToolConfig, agent_name: str):
     Remove a tool from the user's project.
     """
     return get_framework_module(get_framework()).remove_tool(tool, agent_name)
+
+def get_tool_callables(tool_name: str) -> list[Callable]:
+    """
+    Get a tool by name and return it as a list of framework-native callables.
+    """
+    return get_framework_module(get_framework()).get_tool_callables(tool_name)
 
 def get_agent_names() -> list[str]:
     """
