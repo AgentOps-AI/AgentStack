@@ -5,7 +5,13 @@
   "env": {
     "COMPOSIO_API_KEY": "..."
   },
-  "tools": ["composio_tools"],
-  "tools_bundled": true,
-  "cta": "!!! Composio provides 150+ tools. Additional setup is required in src/tools/composio_tool.py"
+  "tools": [
+    "execute_action",
+    "get_action_schema",
+    "find_actions_by_use_case",
+    "find_actions_by_tags"
+  ],
+  "dependencies": [
+    "composio>=1.0.0"
+  ]
 }
