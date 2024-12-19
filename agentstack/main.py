@@ -3,6 +3,7 @@ import argparse
 import webbrowser
 
 from agentstack import conf
+from agentstack import log
 from agentstack.cli import (
     init_project_builder,
     add_tool,
@@ -145,6 +146,8 @@ def main():
 
     # Set the project path from --path if it is provided in the global_parser
     conf.set_path(args.project_path)
+    # Set the debug flag
+    conf.set_debug(args.debug)
 
     # Handle version
     if args.version:
@@ -194,8 +197,16 @@ def main():
 
 
 if __name__ == "__main__":
+    # display logging messages in the console
+    log.set_stdout(sys.stdout)
+    log.set_stderr(sys.stderr)
+
     try:
         main()
+    except Exception as e:
+        log.error((f"An error occurred: {e}\n" "Run again with --debug for more information."))
+        log.debug("Full traceback:", exc_info=e)
+        sys.exit(1)
     except KeyboardInterrupt:
         # Handle Ctrl+C (KeyboardInterrupt)
         print("\nTerminating AgentStack CLI")

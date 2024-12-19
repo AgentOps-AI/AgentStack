@@ -16,7 +16,7 @@ from .agentstack_data import (
     ProjectStructure,
     CookiecutterData,
 )
-from agentstack.logger import log
+from agentstack import log
 from agentstack import conf
 from agentstack.conf import ConfigFile
 from agentstack.utils import get_package_path
