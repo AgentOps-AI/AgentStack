@@ -9,15 +9,20 @@ import os
 from typing import Dict, Optional
 
 import stripe
+from stripe_agent_toolkit.functions import (
+    create_payment_link as toolkit_create_payment_link,
+    create_product as toolkit_create_product,
+    create_price as toolkit_create_price,
+)
+from stripe_agent_toolkit.configuration import Context
+from stripe_agent_toolkit.schema import CreatePaymentLink, CreateProduct, CreatePrice
+
 
 def setup_stripe(secret_key: str) -> None:
     """Initialize Stripe with the provided secret key."""
     stripe.api_key = secret_key
-    stripe.set_app_info(
-        "agentstack-stripe",
-        version="0.1.0",
-        url="https://github.com/AgentOps-AI/AgentStack"
-    )
+    stripe.set_app_info("agentstack-stripe", version="0.1.0", url="https://github.com/AgentOps-AI/AgentStack")
+
 
 def create_payment_link(price: str, quantity: int) -> Dict:
     """Create a payment link for a specific price and quantity.
@@ -29,10 +34,10 @@ def create_payment_link(price: str, quantity: int) -> Dict:
     Returns:
         Dict containing the payment link ID and URL
     """
-    payment_link = stripe.PaymentLink.create(
-        line_items=[{"price": price, "quantity": quantity}]
-    )
-    return {"id": payment_link.id, "url": payment_link.url}
+    # Validate input using toolkit's schema
+    params = CreatePaymentLink(price=price, quantity=quantity)
+    return toolkit_create_payment_link(Context(), params.price, params.quantity)
+
 
 def get_payment_link(payment_link_id: str) -> Dict:
     """Retrieve a payment link by ID.
@@ -46,6 +51,7 @@ def get_payment_link(payment_link_id: str) -> Dict:
     payment_link = stripe.PaymentLink.retrieve(payment_link_id)
     return {"id": payment_link.id, "url": payment_link.url}
 
+
 def create_product(name: str, description: Optional[str] = None) -> Dict:
     """Create a new product.
 
@@ -56,11 +62,10 @@ def create_product(name: str, description: Optional[str] = None) -> Dict:
     Returns:
         Dict containing the product details
     """
-    product_data = {"name": name}
-    if description:
-        product_data["description"] = description
-    product = stripe.Product.create(**product_data)
-    return json.loads(str(product))
+    # Validate input using toolkit's schema
+    params = CreateProduct(name=name, description=description)
+    return toolkit_create_product(Context(), params.name, params.description)
+
 
 def update_product(product_id: str, **kwargs) -> Dict:
     """Update an existing product.
@@ -75,6 +80,7 @@ def update_product(product_id: str, **kwargs) -> Dict:
     product = stripe.Product.modify(product_id, **kwargs)
     return json.loads(str(product))
 
+
 def create_price(product: str, currency: str, unit_amount: int) -> Dict:
     """Create a new price for a product.
 
@@ -86,12 +92,10 @@ def create_price(product: str, currency: str, unit_amount: int) -> Dict:
     Returns:
         Dict containing the price details
     """
-    price = stripe.Price.create(
-        product=product,
-        currency=currency,
-        unit_amount=unit_amount
-    )
-    return json.loads(str(price))
+    # Validate input using toolkit's schema
+    params = CreatePrice(product=product, currency=currency, unit_amount=unit_amount)
+    return toolkit_create_price(Context(), params.product, params.currency, params.unit_amount)
+
 
 def update_price(price_id: str, **kwargs) -> Dict:
     """Update an existing price.
@@ -105,6 +109,7 @@ def update_price(price_id: str, **kwargs) -> Dict:
     """
     price = stripe.Price.modify(price_id, **kwargs)
     return json.loads(str(price))
+
 
 # Initialize Stripe when the module is imported if the environment variable is set
 if "STRIPE_SECRET_KEY" in os.environ:
