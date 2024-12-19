@@ -1,26 +1,32 @@
 """Framework-agnostic directory search implementation using embedchain."""
+from typing import Optional
+from embedchain.loaders.directory_loader import DirectoryLoader
 import os
-from embedchain import DirectoryLoader
+
 
 def search_directory(directory: str, query: str) -> str:
-    """Search through files in a specified directory using embedchain's DirectoryLoader.
+    """
+    Search through files in a directory using embedchain's DirectoryLoader.
 
     Args:
-        directory: Path to the directory to search
-        query: Search query string
+        directory: Path to directory to search
+        query: Search query to find relevant content
 
     Returns:
         str: Search results as a string
     """
-    loader = DirectoryLoader(directory)
-    results = loader.search(query)
+    loader = DirectoryLoader(config=dict(recursive=True))
+    results = loader.search(directory, query)
     return str(results)
 
+
 def search_fixed_directory(query: str) -> str:
-    """Search through files in a preconfigured directory using embedchain's DirectoryLoader.
+    """
+    Search through files in a preconfigured directory using embedchain's DirectoryLoader.
+    Uses DIRECTORY_SEARCH_PATH environment variable.
 
     Args:
-        query: Search query string
+        query: Search query to find relevant content
 
     Returns:
         str: Search results as a string
@@ -28,7 +34,7 @@ def search_fixed_directory(query: str) -> str:
     Raises:
         ValueError: If DIRECTORY_SEARCH_PATH environment variable is not set
     """
-    directory = os.getenv("DIRECTORY_SEARCH_PATH")
+    directory = os.getenv('DIRECTORY_SEARCH_PATH')
     if not directory:
-        raise ValueError("DIRECTORY_SEARCH_PATH environment variable must be set")
+        raise ValueError("DIRECTORY_SEARCH_PATH environment variable not set")
     return search_directory(directory, query)

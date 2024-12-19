@@ -1,5 +1,12 @@
 {
   "name": "vision",
-  "category": "vision",
-  "tools": ["vision_tool"]
+  "category": "image-analysis",
+  "env": {
+    "OPENAI_API_KEY": null
+  },
+  "dependencies": [
+    "openai>=1.0.0",
+    "requests>=2.31.0"
+  ],
+  "tools": ["analyze_image"]
 }
