@@ -13,5 +13,6 @@
   ],
   "dependencies": [
     "composio>=1.0.0"
-  ]
+  ],
+  "cta": "!!! Composio provides 150+ tools. Additional setup is required in agentstack/tools/composio/__init__.py"
 }
