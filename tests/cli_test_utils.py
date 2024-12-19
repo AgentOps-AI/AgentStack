@@ -1,7 +1,13 @@
 import os, sys
 import subprocess
 
-def run_cli(cli_entry, *args):
+CLI_ENTRY = [
+    sys.executable,
+    "-m",
+    "agentstack.main",
+]
+
+def run_cli(*args):
     """Helper method to run the CLI with arguments. Cross-platform."""
     try:
         # Use shell=True on Windows to handle path issues
@@ -10,7 +16,7 @@ def run_cli(cli_entry, *args):
             env = os.environ.copy()
             env['PYTHONIOENCODING'] = 'utf-8'
             result = subprocess.run(
-                " ".join(str(arg) for arg in cli_entry + list(args)),
+                " ".join(str(arg) for arg in CLI_ENTRY + list(args)),
                 capture_output=True,
                 text=True,
                 shell=True,
@@ -19,7 +25,7 @@ def run_cli(cli_entry, *args):
             )
         else:
             result = subprocess.run(
-                [*cli_entry, *args],
+                [*CLI_ENTRY, *args],
                 capture_output=True,
                 text=True,
                 encoding='utf-8'
