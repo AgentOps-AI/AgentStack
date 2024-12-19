@@ -17,21 +17,16 @@ ssl_cert_path = os.getenv("AGENT_CONNECT_SSL_CERT_PATH")
 ssl_key_path = os.getenv("AGENT_CONNECT_SSL_KEY_PATH")
 
 if not host_domain:
-    raise Exception(
-        (
-            "Host domain has not been provided.\n"
-            "Did you set the AGENT_CONNECT_HOST_DOMAIN in you project's .env file?"
-        )
-    )
+    raise Exception((
+        "Host domain has not been provided.\n"
+        "Did you set the AGENT_CONNECT_HOST_DOMAIN in you project's .env file?"
+    ))
 
 if not did_document_path:
-    raise Exception(
-        (
-            "DID document path has not been provided.\n"
-            "Did you set the AGENT_CONNECT_DID_DOCUMENT_PATH in you project's .env file?"
-        )
-    )
-
+    raise Exception((
+        "DID document path has not been provided.\n"
+        "Did you set the AGENT_CONNECT_DID_DOCUMENT_PATH in you project's .env file?"
+    ))
 
 def generate_did_info(node: SimpleNode, did_document_path: str) -> None:
     """
