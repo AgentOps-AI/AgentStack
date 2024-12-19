@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, Any, Callable
 from pathlib import Path
 import ast
 from agentstack import conf
@@ -8,6 +8,10 @@ from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 
+try:
+    from crewai.tools import tool as _crewai_tool_decorator
+except ImportError:
+    raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
 
 ENTRYPOINT: Path = Path('src/crew.py')
 
@@ -140,6 +144,44 @@ class CrewFile(asttools.File):
 
         return tools_kwarg.value
 
+    def get_agent_tool_nodes(self, agent_name: str) -> list[ast.Starred]:
+        """
+        Get a list of all ast nodes that define agentstack tools used by the agent.
+        """
+        tool_nodes: list[ast.Starred] = []
+        agent_tools_node = self.get_agent_tools(agent_name)
+        for node in agent_tools_node.elts:
+            try:
+                # we need to find nodes that look like:
+                #   `*agentstack.tools['tool_name']`
+                assert isinstance(node, ast.Starred)
+                assert isinstance(node.value, ast.Subscript)
+                assert isinstance(node.value.slice, ast.Constant)
+                name_node = node.value.value
+                assert isinstance(name_node, ast.Attribute)
+                assert isinstance(name_node.value, ast.Name)
+                assert name_node.value.id == 'agentstack'
+                assert name_node.attr == 'tools'
+
+                # This is a starred subscript node referencing agentstack.tools with
+                # a string slice, so it must be an agentstack tool
+                tool_nodes.append(node)
+            except AssertionError:
+                continue  # not a matched node; that's ok
+        return tool_nodes
+
+    def get_agent_tool_names(self, agent_name: str) -> list[str]:
+        """
+        Get a list of all tools used by the agent.
+
+        Tools are identified by the item name of an `agentstack.tools` attribute node.
+        """
+        tool_names: list[str] = []
+        for node in self.get_agent_tool_nodes(agent_name):
+            # ignore type checking here since `get_agent_tool_nodes` is exhaustive
+            tool_names.append(node.value.slice.value)  # type: ignore[attr-defined]
+        return tool_names
+
     def add_agent_tools(self, agent_name: str, tool: ToolConfig):
         """
         Add new tools to be used by an agent.
@@ -156,21 +198,17 @@ class CrewFile(asttools.File):
         existing_elts: list[ast.expr] = existing_node.elts
 
         new_tool_nodes: list[ast.expr] = []
-        for tool_name in tool.tools:
-            # TODO there is definitely a better way to do this. We can't use
-            # a `set` becasue the ast nodes are unique objects.
-            _found = False
-            for elt in existing_elts:
-                if str(asttools.get_node_value(elt)) == tool_name:
-                    _found = True
-                    break  # skip if the tool is already in the list
-
-            if not _found:
-                # This prefixes the tool name with the 'tools' module
-                node: ast.expr = asttools.create_attribute('tools', tool_name)
-                if tool.tools_bundled:  # Splat the variable if it's bundled
-                    node = ast.Starred(value=node, ctx=ast.Load())
-                existing_elts.append(node)
+        if not tool.name in self.get_agent_tool_names(agent_name):
+            # we need to create a node that looks like:
+            #   `*agentstack.tools['tool_name']`
+            # we always get a list of callables from the `agentstack.tools` module,
+            # so we need to wrap the node in a `Starred` node to unpack it.
+            node = ast.Subscript(
+                value=asttools.create_attribute('agentstack', 'tools'),
+                slice=ast.Constant(tool.name),
+                ctx=ast.Load(),
+            )
+            existing_elts.append(ast.Starred(value=node, ctx=ast.Load()))
 
         new_node = ast.List(elts=existing_elts, ctx=ast.Load())
         start, end = self.get_node_range(existing_node)
@@ -184,19 +222,12 @@ class CrewFile(asttools.File):
         start, end = self.get_node_range(existing_node)
 
         # modify the existing node to remove any matching tools
-        for tool_name in tool.tools:
-            for node in existing_node.elts:
-                if isinstance(node, ast.Starred):
-                    if isinstance(node.value, ast.Attribute):
-                        attr_name = node.value.attr
-                    else:
-                        continue  # not an attribute node
-                elif isinstance(node, ast.Attribute):
-                    attr_name = node.attr
-                else:
-                    continue  # not an attribute node
-                if attr_name == tool_name:
-                    existing_node.elts.remove(node)
+        # we're referencing the internal node list from two directions here,
+        # so it's important that the node tree doesn't get re-parsed in between
+        for node in self.get_agent_tool_nodes(agent_name):
+            # ignore type checking here since `get_agent_tool_nodes` is exhaustive
+            if tool.name == node.value.slice.value:  # type: ignore[attr-defined]
+                existing_node.elts.remove(node)
 
         self.edit_node_range(start, end, existing_node)
 
@@ -267,8 +298,7 @@ def get_agent_tool_names(agent_name: str) -> list[Any]:
     Get a list of tools used by an agent.
     """
     with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
-        tools = crew_file.get_agent_tools(agent_name)
-    return [asttools.get_node_value(node) for node in tools.elts]
+        return crew_file.get_agent_tool_names(agent_name)
 
 
 def add_agent(agent: AgentConfig) -> None:
@@ -294,3 +324,20 @@ def remove_tool(tool: ToolConfig, agent_name: str):
     """
     with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.remove_agent_tools(agent_name, tool)
+
+
+def get_tool_callables(tool_name: str) -> list[Callable]:
+    """
+    Get a tool implementations for use directly by a CrewAI agent.
+    """
+    tool_funcs = []
+    tool_config = ToolConfig.from_tool_name(tool_name)
+    for tool_func_name in tool_config.tools:
+        tool_func = getattr(tool_config.module, tool_func_name)
+
+        assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
+        assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
+
+        # apply the CrewAI tool decorator to the tool function
+        tool_funcs.append(_crewai_tool_decorator(tool_func))
+    return tool_funcs
