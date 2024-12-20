@@ -1,0 +1,14 @@
+{
+  "name": "browserbase",
+  "url": "https://github.com/browserbase/python-sdk",
+  "category": "browsing",
+  "env": {
+    "BROWSERBASE_API_KEY": null,
+    "BROWSERBASE_PROJECT_ID": null
+  },
+  "dependencies": [
+    "browserbase>=1.0.5"
+  ],
+  "tools": ["load_url"],
+  "cta": "Create an API key at https://www.browserbase.com/"
+}

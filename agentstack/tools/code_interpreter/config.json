@@ -1,0 +1,12 @@
+{
+  "name": "code_interpreter",
+  "category": "code-execution",
+  "env": {
+    "CODE_INTERPRETER_DEFAULT_IMAGE_TAG": null,
+    "CODE_INTERPRETER_DOCKERFILE_PATH": null
+  },
+  "dependencies": [
+    "docker>=7.1.0"
+  ],
+  "tools": ["run_code"]
+}
