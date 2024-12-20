@@ -15,7 +15,7 @@ MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
 
 
-def _format_friendy_error_message(exception: Exception):
+def _format_friendly_error_message(exception: Exception):
     """
     Projects will throw various errors, especially on first runs, so we catch
     them here and print a more helpful message.
@@ -84,7 +84,7 @@ def _import_project_module(path: Path):
     assert spec.loader is not None  # appease type checker
 
     project_module = importlib.util.module_from_spec(spec)
-    sys.path.append(str((path / MAIN_FILENAME).parent))
+    sys.path.insert(0, str((path / MAIN_FILENAME).parent))
     spec.loader.exec_module(project_module)
     return project_module
 
@@ -124,6 +124,6 @@ def run_project(command: str = 'run', debug: bool = False, cli_args: Optional[st
         if debug:
             raise exception
         print(term_color("\nAn error occurred while running your project:\n", 'red'))
-        print(_format_friendy_error_message(exception))
+        print(_format_friendly_error_message(exception))
         print(term_color("\nRun `agentstack run --debug` for a full traceback.", 'blue'))
         sys.exit(1)
