@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from agentstack.utils import clean_input, get_version
-from agentstack.logger import log
+from agentstack import log
 
 
 class ProjectMetadata:
