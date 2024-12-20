@@ -5,6 +5,29 @@ from typing import Optional
 from weaviate.classes.config import Configure
 from weaviate.classes.init import Auth
 
+# Required environment variables
+url = os.getenv("WEAVIATE_URL")
+api_key = os.getenv("WEAVIATE_API_KEY")
+openai_key = os.getenv("WEAVIATE_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+
+if not url:
+    raise Exception((
+        "Weaviate URL has not been provided.\n"
+        "Did you set the WEAVIATE_URL in your project's .env file?"
+    ))
+
+if not api_key:
+    raise Exception((
+        "Weaviate API key has not been provided.\n"
+        "Did you set the WEAVIATE_API_KEY in your project's .env file?"
+    ))
+
+if not openai_key:
+    raise Exception((
+        "OpenAI API key has not been provided.\n"
+        "Did you set either WEAVIATE_OPENAI_API_KEY or OPENAI_API_KEY in your project's .env file?"
+    ))
+
 def search_collection(
     collection_name: str,
     query: str,
@@ -22,14 +45,6 @@ def search_collection(
     Returns:
         str: JSON string containing search results
     """
-    url = os.environ.get("WEAVIATE_URL")
-    api_key = os.environ.get("WEAVIATE_API_KEY")
-    openai_key = os.environ.get("WEAVIATE_OPENAI_API_KEY") or \
-                 os.environ.get("OPENAI_API_KEY")
-
-    if not url or not api_key or not openai_key:
-        raise ValueError("Missing required environment variables")
-
     headers = {"X-OpenAI-Api-Key": openai_key}
     vectorizer = Configure.Vectorizer.text2vec_openai(model=model)
 
@@ -70,14 +85,6 @@ def create_collection(
     Returns:
         str: Success message
     """
-    url = os.environ.get("WEAVIATE_URL")
-    api_key = os.environ.get("WEAVIATE_API_KEY")
-    openai_key = os.environ.get("WEAVIATE_OPENAI_API_KEY") or \
-                 os.environ.get("OPENAI_API_KEY")
-
-    if not url or not api_key or not openai_key:
-        raise ValueError("Missing required environment variables")
-
     headers = {"X-OpenAI-Api-Key": openai_key}
     vectorizer = Configure.Vectorizer.text2vec_openai(model=model)
 
