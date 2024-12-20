@@ -18,7 +18,7 @@ def load_url(
 ) -> Any:
     """
     Load a URL in a headless browser and return the page content.
-    
+
     Args:
         url: URL to load
         text_content: Return text content if True, otherwise return raw content

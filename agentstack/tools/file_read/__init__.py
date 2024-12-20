@@ -1,6 +1,7 @@
 """
 Framework-agnostic implementation of file reading functionality.
 """
+
 from typing import Optional
 from pathlib import Path
 

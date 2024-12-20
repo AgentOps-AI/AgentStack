@@ -12,7 +12,7 @@ from agentstack.utils import get_package_path, open_json_file, term_color, snake
 class ToolConfig(pydantic.BaseModel):
     """
     This represents the configuration data for a tool.
-    It parses and validates the `config.json` file and provides a dynamic 
+    It parses and validates the `config.json` file and provides a dynamic
     interface for interacting with the tool implementation.
     """
 
@@ -52,17 +52,21 @@ class ToolConfig(pydantic.BaseModel):
         Dynamically generate a type for the tool module.
         ie. indicate what methods it's importable module should have.
         """
+
         def method_stub(name: str):
             def not_implemented(*args, **kwargs):
-                raise NotImplementedError((
+                raise NotImplementedError(
                     f"Method '{name}' is configured in config.json for tool '{self.name}'"
                     f"but has not been implemented in the tool module ({self.module_name})."
-                ))
+                )
+
             return not_implemented
 
+        # fmt: off
         type_ = type(f'{snake_to_camel(self.name)}Module', (Protocol,), {  # type: ignore[arg-type]
             method_name: method_stub(method_name) for method_name in self.tools
-        })
+        },)
+        # fmt: on
         return runtime_checkable(type_)
 
     @property
@@ -81,24 +85,24 @@ class ToolConfig(pydantic.BaseModel):
             assert isinstance(_module, self.type)
             return _module
         except AssertionError as e:
-            raise ValidationError((
+            raise ValidationError(
                 f"Tool module `{self.module_name}` does not match the expected implementation. \n"
                 f"The tool's config.json file lists the following public methods: `{'`, `'.join(self.tools)}` "
                 f"but only implements: '{'`, `'.join([m for m in dir(_module) if not m.startswith('_')])}`"
-            ))
+            )
         except ModuleNotFoundError as e:
-            raise ValidationError((
+            raise ValidationError(
                 f"Could not import tool module: {self.module_name}\n"
                 f"Are you sure you have installed the tool? (agentstack tools add {self.name})\n"
                 f"ModuleNotFoundError: {e}"
-            ))
+            )
 
 
 def get_all_tool_paths() -> list[Path]:
     """
     Get all the paths to the tool configuration files.
     ie. agentstack/tools/<tool_name>/
-    Tools are identified by having a `config.json` file instide the tools/<tool_name> directory.
+    Tools are identified by having a `config.json` file inside the tools/<tool_name> directory.
     """
     paths = []
     tools_dir = get_package_path() / 'tools'

@@ -1,4 +1,5 @@
 """Framework-agnostic directory search implementation using embedchain."""
+
 from typing import Optional
 from pathlib import Path
 from embedchain.loaders.directory_loader import DirectoryLoader

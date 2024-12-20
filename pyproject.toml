@@ -67,8 +67,7 @@ exclude = [
     "dist",
     "*.egg-info",
     "agentstack/templates/",
-    "examples",
-    "__init__.py"
+    "examples"
 ]
 line-length = 110
 

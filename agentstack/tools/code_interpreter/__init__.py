@@ -14,10 +14,12 @@ def _verify_docker_image() -> None:
         client.images.get(DEFAULT_IMAGE_TAG)
     except docker.errors.ImageNotFound:
         if not os.path.exists(DOCKERFILE_PATH):
-            raise Exception((
-                "Dockerfile path has not been provided.\n"
-                "Did you set the DOCKERFILE_PATH in you project's .env file?"
-            ))
+            raise Exception(
+                (
+                    "Dockerfile path has not been provided.\n"
+                    "Did you set the DOCKERFILE_PATH in you project's .env file?"
+                )
+            )
 
         client.images.build(
             path=DOCKERFILE_PATH,
@@ -51,16 +53,16 @@ def _init_docker_container() -> docker.models.containers.Container:
 def run_code(code: str, libraries_used: list[str]) -> str:
     """
     Run the code in a Docker container using Python 3.
-    
+
     The container will be built and started, the code will be executed, and the container will be stopped.
-    
+
     Args:
         code: The code to be executed. ALWAYS PRINT the final result and the output of the code.
         libraries_used: A list of libraries to be installed in the container before running the code.
     """
     _verify_docker_image()
     container = _init_docker_container()
-    
+
     for library in libraries_used:
         container.exec_run(f"pip install {library}")
 
@@ -68,8 +70,4 @@ def run_code(code: str, libraries_used: list[str]) -> str:
     container.stop()
     container.remove()
 
-    return (
-        f"exit code: {result.exit_code}\n"
-        f"{result.output.decode('utf-8')}"
-    )
-
+    return f"exit code: {result.exit_code}\n" f"{result.output.decode('utf-8')}"

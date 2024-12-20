@@ -21,10 +21,10 @@ class EnvFile:
     and instead just append new lines to the end of the file. This preseres
     comments and other formatting that the user may have added and prevents
     opportunities for data loss.
-    
+
     If the value of a variable is None, it will be commented out when it is written
     to the file. This gives the user a suggestion, but doesn't override values that
-    may have been set by the user via other means. 
+    may have been set by the user via other means.
 
     `path` is the directory where the .env file is located. Defaults to the
     current working directory.

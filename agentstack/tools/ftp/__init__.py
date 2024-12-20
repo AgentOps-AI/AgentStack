@@ -8,34 +8,29 @@ PATH = '/'
 
 
 if not HOST:
-    raise Exception((
-        "Host domain has not been provided.\n"
-        "Did you set the FTP_HOST in you project's .env file?"
-    ))
+    raise Exception(
+        "Host domain has not been provided.\n Did you set the FTP_HOST in you project's .env file?"
+    )
 
 if not USER:
-    raise Exception((
-        "User has not been provided.\n"
-        "Did you set the FTP_USER in you project's .env file?"
-    ))
+    raise Exception("User has not been provided.\n Did you set the FTP_USER in you project's .env file?")
 
 if not PASSWORD:
-    raise Exception((
-        "Password has not been provided.\n"
-        "Did you set the FTP_PASSWORD in you project's .env file?"
-    ))
+    raise Exception(
+        "Password has not been provided.\n Did you set the FTP_PASSWORD in you project's .env file?"
+    )
 
 
 def upload_files(file_paths: list[str]):
     """
     Upload a list of files to the FTP server.
-    
+
     Args:
         file_paths: A list of file paths to upload to the FTP server.
     Returns:
         bool: True if all files were uploaded successfully, False otherwise.
     """
-    
+
     assert HOST and USER and PASSWORD  # appease type checker
 
     result = True
