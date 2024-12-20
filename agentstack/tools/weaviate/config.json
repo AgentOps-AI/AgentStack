@@ -3,9 +3,9 @@
   "url": "https://github.com/weaviate/weaviate-python-client",
   "category": "vector-store",
   "env": {
-    "WEAVIATE_TOOL_URL": null,
-    "WEAVIATE_TOOL_API_KEY": null,
-    "WEAVIATE_TOOL_OPENAI_API_KEY": null
+    "WEAVIATE_URL": null,
+    "WEAVIATE_API_KEY": null,
+    "WEAVIATE_OPENAI_API_KEY": null
   },
   "dependencies": [
     "weaviate-client>=3.0.0",

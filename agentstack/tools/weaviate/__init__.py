@@ -22,9 +22,10 @@ def search_collection(
     Returns:
         str: JSON string containing search results
     """
-    url = os.environ.get("WEAVIATE_TOOL_URL")
-    api_key = os.environ.get("WEAVIATE_TOOL_API_KEY")
-    openai_key = os.environ.get("WEAVIATE_TOOL_OPENAI_API_KEY")
+    url = os.environ.get("WEAVIATE_URL")
+    api_key = os.environ.get("WEAVIATE_API_KEY")
+    openai_key = os.environ.get("WEAVIATE_OPENAI_API_KEY") or \
+                 os.environ.get("OPENAI_API_KEY")
 
     if not url or not api_key or not openai_key:
         raise ValueError("Missing required environment variables")
@@ -69,9 +70,10 @@ def create_collection(
     Returns:
         str: Success message
     """
-    url = os.environ.get("WEAVIATE_TOOL_URL")
-    api_key = os.environ.get("WEAVIATE_TOOL_API_KEY")
-    openai_key = os.environ.get("WEAVIATE_TOOL_OPENAI_API_KEY")
+    url = os.environ.get("WEAVIATE_URL")
+    api_key = os.environ.get("WEAVIATE_API_KEY")
+    openai_key = os.environ.get("WEAVIATE_OPENAI_API_KEY") or \
+                 os.environ.get("OPENAI_API_KEY")
 
     if not url or not api_key or not openai_key:
         raise ValueError("Missing required environment variables")
