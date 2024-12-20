@@ -163,13 +163,13 @@ cython_debug/
 .idea/
 
 # aider
-.adier*
+.aider*
 
 # VSCode
 .vscode
 
 # AgentStack
-.agentstack
+.agentstack*
 example_project/
 ex/
 **/ex/
