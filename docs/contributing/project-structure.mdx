@@ -1,0 +1,284 @@
+---
+title: 'Project Structure'
+description: 'Concepts and Structure of AgentStack'
+---
+
+> This document is a work-in-progress as we build to version 0.3 and helps
+define the structure of the project that we are aiming to create. 
+
+AgentStack is a framework-agnostic toolkit for bootstrapping and managing
+AI agents. Out of the box it has support for a number of tools and generates
+code to get your project off the ground and deployed to a production environment. 
+It also aims to provide robust tooling for running and managing agents including
+logging, debugging, deployment, and observability via [AgentOps](https://www.agentops.ai/).
+
+Developers with limited agent experience should be able to get an agentic 
+workflow up and running in a matter of minutes. Developers with more experience
+should be able to leverage the tools provided by AgentStack to create more
+complex workflows and deploy them to production with ease.
+
+# Concepts
+
+## Projects
+A project is a user's implementation of AgentStack that is used to implement
+and agentic workflow. This is a directory the `agentstack` shell command is 
+executed from. 
+
+## Frameworks
+Frameworks are the target platforms that `agentstack` can generate code for.
+We don't implement all of the functionality provided by a framework, but instead
+leverage them to create agentic workflows and provide tooling to aid in their
+creation and operation. [Documented in Frameworks](#frameworks-1)
+
+## Tools
+Tools are implementations from useful third party libraries that are provided
+to Agents in the user's project. AgentStack handles implementation details and
+dependency management for these tools. [Documented in Tools](#tools-1)
+
+## Runtime
+When a user initiates `agentstack run` the runtime is the environment that is
+created to execute the tasks in the project. This includes the environment
+variables, the tools that are available, and the agents that are available to
+perform work. The [Public API](#public-api) is available to the user's project
+at runtime.
+
+### Environment
+The environment is the set of variables that are available to the project. The 
+user's `~/.env` file is loaded first, and then the project's `.env` file is loaded
+to override any variables specific to the project. 
+
+
+# Public API
+The public API is available inside of a project after declaring `import agentstack`.
+We intentionally keep the exports sparse to maintain a usable module tree inside
+the user's project, while only ever importing the single keyword. 
+
+## `agentstack.conf.PATH`
+`<pathlib.Path>` This is the path to the current project directory.
+
+## `agentstack.tools[<tool_name>]`
+`<callable>` This is a tool that is available to agents in the project. Tools
+are implementations from useful third party libraries that are provided to Agents
+in the user's project. Configuration, dependency management, and wrapper
+implementations are provided by AgentStack. Tools implemented at this level are
+framework-agnostic and expose useful implementations as `callable`s for agents to
+use including docstrings and type hints for argument and return types.
+
+## `agentstack.get_framework()`
+`<str>` This is the name of the current framework ie. `"crewai"`.
+
+## `agentstack.get_inputs()`
+`<dict[str, str]>` This function returns the inputs for a project. These are the 
+variables that can be used to configure tasks in the project and are stored in the 
+`inputs.yaml` file inside the project directory.
+
+## `agentstack.get_tags()`
+`<List[str]>` This function returns the tags for a project. These are strings
+that help identify the workflow in an `AgentOps` observability context.
+
+# Core
+These namespaces occupy the root of `agentstack` and are shared across all
+project & frameworks. Methods from these products are generally candidates for 
+availability in the public API for use within a project. 
+
+
+## `agents`
+Agents are the actual personalities that accomplish work. We provide tools for
+interacting with the `agents.yaml` configuration file in this package. 
+
+### `AgentConfig.__init__(name: str)`
+`<AgentConfig>` Initialize an `AgentConfig` to read and modify `agents.yaml` in 
+the current project.
+
+### `agents.get_all_agent_names()`
+`<List[str]>` This function returns a list of all the agent names in the project.
+
+### `agents.get_all_agents()`
+`<List[AgentConfig]>` This function returns a list of all the agents in the project.
+
+
+## `tasks`
+Tasks are the individual units of work that an Agent can perform. `agents` will
+use the `tools` they have available to accomplish `tasks`. We provide tools for
+interacting with the `tasks.yaml` configuration file in this package.
+
+### `TaskConfig.__init__(name: str)`
+`<TaskConfig>` Initialize a `TaskConfig` to read and modify `tasks.yaml` in the
+current project.
+
+### `tasks.get_all_task_names()`
+`<List[str]>` This function returns a list of all the task names in the project.
+
+### `tasks.get_all_tasks()`
+`<List[TaskConfig]>` This function returns a list of all the tasks in the project.
+
+
+## `inputs`
+Inputs are variable data that can be used to configure `tasks`. Behind the scenes
+`inputs` are interpolated into `task` prompts to determine their specialization. 
+We provide tools for interacting with the `inputs.yaml` configuration file in this
+package. 
+
+> TODO: Iterable inputs that can be used to generate `tasks` for multiple sequential runs. 
+
+### `InputsConfig.__init__(name: str)`
+`<InputsConfig>` Initialize an `InputsConfig` to read and modify `inputs.yaml` in
+the current project.
+
+#### `InputsConfig.__getitem__(key: str)`
+`<str>` Instance method to get the value of an input from the `inputs.yaml` file.
+
+#### `InputsConfig.__setitem__(key: str, value: str)`
+`<None>` Instance method to set the value of an input in the `inputs.yaml` file.
+
+### `inputs.get_inputs()`
+`<dict[str, str]>` This function returns the inputs for a project.
+
+### `inputs.add_input_for_run(key: str, value: str)`
+`<None>` This function adds an input for a run to the `inputs.yaml` file. A run
+is the current execution of the `agentstack` command (ie. `agentstack run --inputs-foo=bar`)
+and inputs set here will not be saved to the project state. 
+
+
+## `templates`
+Templates are configuration data stored in a JSON file that can be used to 
+generate an entire project. This is useful for bootstrapping a new project
+which adheres to a common pattern or exporting your project to share. 
+
+Templates are versioned, and each previous version provides a method to convert
+it's content to the current version. 
+
+> TODO: Templates are currently identified as `proj_templates` since they conflict
+with the templates used by `generation`. Move existing templates to be part of
+the generation package. 
+
+### `TemplateConfig.from_template_name(name: str)`
+`<TemplateConfig>` This function returns a `TemplateConfig` object for a given
+template name.
+
+### `TemplateConfig.from_file(path: Path)`
+`<TemplateConfig>` This function returns a `TemplateConfig` object for a given
+template file path.
+
+### `TemplateConfig.from_url(url: str)`
+`<TemplateConfig>` This function returns a `TemplateConfig` object after loading
+data from a URL.
+
+### `TemplateConfig.from_json(data: dict)`
+`<TemplateConfig>` This function returns a `TemplateConfig` object from a parsed
+JSON object.
+
+### `TemplateConfig.write_to_file(filename: Path)`
+`<None>` Instance method to serialize and write the `TemplateConfig` data to a file.
+
+### `templates.get_all_template_paths()`
+`<List[Path]>` This function returns a list of all the template paths in the project.
+
+### `templates.get_all_template_names()`
+`<List[str]>` This function returns a list of all the template names in the project.
+
+### `templates.get_all_templates()`
+`<List[TemplateConfig]>` This function returns a list of all the templates in the
+project as `TemplateConfig` objects.
+
+
+## `conf`
+Configuration data for the AgentStack application. This includes the path to the
+current project directory and the name of the current framework.
+
+### `agentstack.json`
+This is the configuration file for a user's project. It contains the project's
+configuration and metadata. It can be read and modified directly by accessing 
+`conf.ConfigFile`. 
+
+## `log`
+AgentStack provides a robust logging interface for tracking and debugging 
+agentic workflows. Runs are separated into separate named files for easy tracking
+and have standard conventions for outputs from different parts of the system
+for parsing. 
+
+## `serve`
+Completed agents can be deployed to the AgentStack cloud service with a single
+command. This provides a fast, secure, and publicly available interface for your
+agentic workflows.
+
+> TODO: This is under development. 
+
+## `cli`
+The command line interface for `agentstack` is provided in this package. Outside
+of `main.py` all logic relating to the command line interface resides here. 
+
+> TODO: Code from other parts of the application should always throw exceptions
+and leave the CLI to handle error messaging and control flow. 
+
+## `packaging`
+We manage the virtual environment and dependencies for tools that are added to 
+the project, in addition to keeping AgentStack up-to-date. 
+
+## `update`
+Auto-updates for AgentStack. 
+
+
+# Tools
+> TODO: Tools should be documented here, or in sub-pages of documentation for
+an overview of their usage.
+
+# Generation
+AgentStack generates code for a number of frameworks. The generated code is
+a starting point for a user's project and is meant to be modified and extended
+to suit the user's needs.
+
+## `generation.agents`
+This is code that creates and modifies the `agents` in a user's project. Agents
+include code that is part of a framework-specific entrypoint file.
+
+> TODO: Rename `generation.agent_generation` to `generation.agents`.
+
+## `generation.tasks`
+This is code that creates and modifies the `tasks` in a user's project. Tasks
+include code that is part of a framework-specific entrypoint file.
+
+> TODO: Rename `generation.task_generation` to `generation.tasks`.
+
+## `generation.tools`
+This is code that creates and modifies the `tools` in a user's project. Tools
+are imported into the project and available for use by `agents`.
+
+> TODO: Rename `generation.tool_generation` to `generation.tools`.
+
+## `generation.files`
+This is code that creates and modifies the `files` in a user's project.
+
+### `.env`
+This is the environment file for a user's project. It contains the project's
+environment variables. We dynamically modify this file to include relevant
+variables to support `tools` that are used in the project.
+
+## `generation.asttools`
+Since we're interacting with generated code, we provide a shared toolkit for
+common AST operations. 
+
+
+# Frameworks
+AgentStack generates code for a number of frameworks. The generated code is
+a starting point for a user's project and is meant to be modified and extended
+to suit the user's needs. The `frameworks` package contains code that adapts
+general interactions with a framework into a specific implementation.
+
+## `frameworks.FrameworkModule`
+This is the base protocol for all framework implementations– all implementations
+must implement this protocol.
+
+## `frameworks.crewai`
+This is the implementation for the CrewAI framework. CrewAI is a framework for
+creating and managing AI agents. All code related specifically to CrewAI is
+contained in this package.
+
+## `frameworks.langgraph`
+> TODO Add [LangGraph](https://langchain-ai.github.io/langgraph/) as a framework.
+
+## `frameworks.openai_swarms`
+> TODO: Add OpenAI Swarms as a framework.
+
+## `frameworks.agency_swarm`
+> TODO: Add [VRSEN Agency Swarm](https://github.com/VRSEN/agency-swarm?tab=readme-ov-file) as a framework.
