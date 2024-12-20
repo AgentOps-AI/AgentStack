@@ -11,7 +11,6 @@ from agentstack.conf import ConfigFile
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack import packaging
-from agentstack.utils import term_color
 from agentstack.tools import ToolConfig
 from agentstack.generation import asttools
 from agentstack.generation.files import EnvFile
@@ -161,8 +160,4 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
     with agentstack_config as config:
         config.tools.remove(tool.name)
 
-    log.success(
-        term_color(f'🔨 Tool {tool_name}', 'green'),
-        term_color('removed', 'red'),
-        term_color('from agentstack project successfully', 'green'),
-    )
+    log.success(f'🔨 Tool {tool_name} removed from agentstack project successfully')

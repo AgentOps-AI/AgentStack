@@ -32,8 +32,8 @@ LOG_FILENAME: str = 'agentstack.log'
 # define additional log levels to accommodate other messages inside the app
 # TODO add agent output definitions for messages from the agent
 DEBUG = logging.DEBUG  # 10
-SUCCESS = 18
-NOTIFY = 19
+SUCCESS = 21  # Just above INFO
+NOTIFY = 22  # Just above INFO
 INFO = logging.INFO  # 20
 WARNING = logging.WARNING  # 30
 ERROR = logging.ERROR  # 40

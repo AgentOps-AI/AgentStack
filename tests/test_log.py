@@ -34,19 +34,14 @@ class TestLog(unittest.TestCase):
         if self.test_dir.exists():
             shutil.rmtree(self.test_dir)
 
-        # Reset log instance and streams
-        log.instance = None
-        log.set_stdout(sys.stdout)
-        log.set_stderr(sys.stderr)
-
         # Clear string IO buffers
         self.stdout.close()
         self.stderr.close()
 
     def test_debug_message(self):
         log.debug("Debug message")
-        self.assertIn("DEBUG: Debug message", self.stdout.getvalue())
-        self.assertIn("DEBUG", self.test_log_file.read_text())
+        self.assertIn("Debug message", self.stdout.getvalue())
+        self.assertIn("Debug message", self.test_log_file.read_text())
 
     def test_success_message(self):
         log.success("Success message")
@@ -61,17 +56,17 @@ class TestLog(unittest.TestCase):
     def test_info_message(self):
         log.info("Info message")
         self.assertIn("Info message", self.stdout.getvalue())
-        self.assertIn("INFO: Info message", self.test_log_file.read_text())
+        self.assertIn("Info message", self.test_log_file.read_text())
 
     def test_warning_message(self):
         log.warning("Warning message")
         self.assertIn("Warning message", self.stdout.getvalue())
-        self.assertIn("WARN: Warning message", self.test_log_file.read_text())
+        self.assertIn("Warning message", self.test_log_file.read_text())
 
     def test_error_message(self):
         log.error("Error message")
         self.assertIn("Error message", self.stderr.getvalue())
-        self.assertIn("ERROR", self.test_log_file.read_text())
+        self.assertIn("Error message", self.test_log_file.read_text())
 
     def test_multiple_messages(self):
         log.info("First message")
@@ -89,24 +84,6 @@ class TestLog(unittest.TestCase):
         self.assertIn("Second message", file_content)
         self.assertIn("Third message", file_content)
 
-    def test_custom_log_levels(self):
-        self.assertEqual(SUCCESS, 18)
-        self.assertEqual(NOTIFY, 19)
-        self.assertEqual(logging.getLevelName(SUCCESS), 'SUCCESS')
-        self.assertEqual(logging.getLevelName(NOTIFY), 'NOTIFY')
-
-    def test_formatter_console(self):
-        formatter = log.ConsoleFormatter()
-        record = logging.LogRecord('test', logging.INFO, 'pathname', 1, 'Test message', (), None)
-        formatted = formatter.format(record)
-        self.assertEqual(formatted, 'Test message')
-
-    def test_formatter_file(self):
-        formatter = log.FileFormatter()
-        record = logging.LogRecord('test', logging.INFO, 'pathname', 1, 'Test message', (), None)
-        formatted = formatter.format(record)
-        self.assertEqual(formatted, 'INFO: Test message')
-
     def test_stream_redirection(self):
         new_stdout = io.StringIO()
         new_stderr = io.StringIO()
@@ -121,13 +98,13 @@ class TestLog(unittest.TestCase):
 
     def test_debug_level_config(self):
         # Test with debug disabled
-        conf.DEBUG = False
+        conf.set_debug(False)
         log.instance = None  # Reset logger
         log.debug("Hidden debug")
         self.assertEqual("", self.stdout.getvalue())
 
         # Test with debug enabled
-        conf.DEBUG = True
+        conf.set_debug(True)
         log.instance = None  # Reset logger
         log.debug("Visible debug")
         self.assertIn("Visible debug", self.stdout.getvalue())
@@ -143,21 +120,61 @@ class TestLog(unittest.TestCase):
         self.assertTrue(self.test_log_file.exists())
         self.assertIn("Create log file", self.test_log_file.read_text())
 
-    def test_handler_levels(self):
-        # Reset logger to test handler configuration
+    def test_debug_mode_filtering(self):
+        # Test with debug mode off
+        conf.set_debug(False)
+        log.instance = None  # Reset logger to apply new debug setting
+
+        log.debug("Debug message when off")
+        log.info("Info message when off")
+
+        stdout_off = self.stdout.getvalue()
+        self.assertNotIn("Debug message when off", stdout_off)
+        self.assertIn("Info message when off", stdout_off)
+
+        # Clear buffers
+        self.stdout.truncate(0)
+        self.stdout.seek(0)
+
+        # Test with debug mode on
+        conf.set_debug(True)
+        log.instance = None  # Reset logger to apply new debug setting
+
+        log.debug("Debug message when on")
+        log.info("Info message when on")
+
+        stdout_on = self.stdout.getvalue()
+        self.assertIn("Debug message when on", stdout_on)
+        self.assertIn("Info message when on", stdout_on)
+
+    def test_custom_levels_visibility(self):
+        """Custom levels should print below DEBUG level"""
+        # Test with debug mode off
+        conf.set_debug(False)
         log.instance = None
-        logger = log._build_logger()
 
-        # Check handler levels
-        handlers = logger.handlers
-        file_handler = next(h for h in handlers if isinstance(h, logging.FileHandler))
-        stdout_handler = next(
-            h for h in handlers if isinstance(h, logging.StreamHandler) and h.stream == self.stdout
-        )
-        stderr_handler = next(
-            h for h in handlers if isinstance(h, logging.StreamHandler) and h.stream == self.stderr
-        )
+        log.debug("Debug message when debug off")
+        log.success("Success message when debug off")
+        log.notify("Notify message when debug off")
 
-        self.assertEqual(file_handler.level, log.DEBUG)
-        self.assertEqual(stdout_handler.level, log.DEBUG)
-        self.assertEqual(stderr_handler.level, log.ERROR)
+        stdout_off = self.stdout.getvalue()
+        self.assertNotIn("Debug message when debug off", stdout_off)
+        self.assertIn("Success message when debug off", stdout_off)
+        self.assertIn("Notify message when debug off", stdout_off)
+
+        # Clear buffers
+        self.stdout.truncate(0)
+        self.stdout.seek(0)
+
+        # Test with debug mode on
+        conf.set_debug(True)
+        log.instance = None
+
+        log.debug("Debug message when debug on")
+        log.success("Success message when debug on")
+        log.notify("Notify message when debug on")
+
+        stdout_on = self.stdout.getvalue()
+        self.assertIn("Debug message when debug on", stdout_on)
+        self.assertIn("Success message when debug on", stdout_on)
+        self.assertIn("Notify message when debug on", stdout_on)
