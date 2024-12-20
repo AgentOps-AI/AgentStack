@@ -1,16 +1,20 @@
 {
-    "name": "stripe",
-    "description": "Interact with Stripe API for payment processing",
-    "version": "0.1.0",
-    "dependencies": [
-        "stripe>=11.0.0",
-        "stripe-agent-toolkit>=0.2.0"
-    ],
-    "cta": "Visit https://stripe.com/docs/api for more information",
-    "environment_variables": {
-        "STRIPE_SECRET_KEY": {
-            "description": "Your Stripe API secret key",
-            "required": true
-        }
-    }
+  "name": "stripe",
+  "url": "https://github.com/stripe/agent-toolkit",
+  "category": "application-specific",
+  "env": {
+    "STRIPE_SECRET_KEY": null
+  },
+  "dependencies": [
+    "stripe-agent-toolkit>=0.2.0"
+  ],
+  "tools": [
+    "create_payment_link",
+    "get_payment_link",
+    "create_product",
+    "update_product",
+    "create_price",
+    "update_price"
+  ],
+  "cta": "🔑 Create your Stripe API key here: https://dashboard.stripe.com/account/apikeys"
 }
