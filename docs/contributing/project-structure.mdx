@@ -30,6 +30,11 @@ We don't implement all of the functionality provided by a framework, but instead
 leverage them to create agentic workflows and provide tooling to aid in their
 creation and operation. [Documented in Frameworks](#frameworks-1)
 
+## Tools
+Tools are implementations from useful third party libraries that are provided
+to Agents in the user's project. AgentStack handles implementation details and
+dependency management for these tools. [Documented in Tools](#tools-1)
+
 ## Runtime
 When a user initiates `agentstack run` the runtime is the environment that is
 created to execute the tasks in the project. This includes the environment
@@ -57,9 +62,7 @@ are implementations from useful third party libraries that are provided to Agent
 in the user's project. Configuration, dependency management, and wrapper
 implementations are provided by AgentStack. Tools implemented at this level are
 framework-agnostic and expose useful implementations as `callable`s for agents to
-including docstrings and type hints.
-
-> TODO: The public tools API is not yet implemented.
+use including docstrings and type hints for argument and return types.
 
 ## `agentstack.get_framework()`
 `<str>` This is the name of the current framework ie. `"crewai"`.
@@ -137,21 +140,6 @@ is the current execution of the `agentstack` command (ie. `agentstack run --inpu
 and inputs set here will not be saved to the project state. 
 
 
-## `tools`
-Tools are implementations from useful third party libraries that are provided 
-to Agents in the user's project. Configuration, dependency management, and wrapper 
-implementations are provided by AgentStack. Tools implemented at this level are 
-framework-agnostic and expose useful implementations as `callable`s for agents to use. 
-
-Details of tool implementations are documented in the [Tools](#tools-1) section.
-
-> TODO: Some frameworks use decorators to prepare tools for use by agents. Determine
-what that actually does and if we can do it in an agnostic way that avoids the
-need for decorators. Fundamentally a tool is just a `callable` to so we should
-be able to keep this simple. 
-> TODO: Expose tools to the user's project through `agentstack.tools['tool_name']`
-which dynamically generates the wrapped tool based on the active framework.
-
 ## `templates`
 Templates are configuration data stored in a JSON file that can be used to 
 generate an entire project. This is useful for bootstrapping a new project
@@ -209,9 +197,6 @@ agentic workflows. Runs are separated into separate named files for easy trackin
 and have standard conventions for outputs from different parts of the system
 for parsing. 
 
-> TODO: Logging is not yet this robust. 
-> TODO: Rename `logging` to `log` for brevity.
-
 ## `serve`
 Completed agents can be deployed to the AgentStack cloud service with a single
 command. This provides a fast, secure, and publicly available interface for your
@@ -227,10 +212,8 @@ of `main.py` all logic relating to the command line interface resides here.
 and leave the CLI to handle error messaging and control flow. 
 
 ## `packaging`
-We manage dependencies for tools that are added to the project, in addition
-to keeping AgentStack up-to-date. 
-
-> TODO: Migrate packaging to use `uv` exclusively.
+We manage the virtual environment and dependencies for tools that are added to 
+the project, in addition to keeping AgentStack up-to-date. 
 
 ## `update`
 Auto-updates for AgentStack. 
@@ -291,11 +274,11 @@ This is the implementation for the CrewAI framework. CrewAI is a framework for
 creating and managing AI agents. All code related specifically to CrewAI is
 contained in this package.
 
+## `frameworks.langgraph`
+> TODO Add [LangGraph](https://langchain-ai.github.io/langgraph/) as a framework.
+
 ## `frameworks.openai_swarms`
 > TODO: Add OpenAI Swarms as a framework.
 
 ## `frameworks.agency_swarm`
 > TODO: Add [VRSEN Agency Swarm](https://github.com/VRSEN/agency-swarm?tab=readme-ov-file) as a framework.
-
-## `frameworks.langgraph`
-> TODO Add [LangGraph](https://langchain-ai.github.io/langgraph/) as a framework.
