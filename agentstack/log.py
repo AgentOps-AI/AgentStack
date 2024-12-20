@@ -1,6 +1,18 @@
 """
 `agentstack.log`
 
+DEBUG:    Detailed technical information, typically of interest when diagnosing problems.
+TOOL_USE: A message to indicate the use of a tool.
+THINKING: Information about an internal monologue or reasoning.
+INFO:     Useful information about the state of the application.
+NOTIFY:   A notification or update.
+SUCCESS:  An indication of a successful operation.
+RESPONSE: A response to a request.
+WARNING:  An indication that something unexpected happened, but not severe.
+ERROR:    An indication that something went wrong, and the application may not be able to continue.
+
+TODO TOOL_USE and THINKING are below INFO; this is intentional for now.
+
 TODO would be cool to intercept all messages from the framework and redirect
 them through this logger. This would allow us to capture all messages and display
 them in the console and filter based on priority.
@@ -19,9 +31,12 @@ __all__ = [
     'set_stdout',
     'set_stderr',
     'debug',
-    'success',
-    'notify',
+    'tool_use',
+    'thinking',
     'info',
+    'notify',
+    'success',
+    'response',
     'warning',
     'error',
 ]
@@ -30,16 +45,21 @@ LOG_NAME: str = 'agentstack'
 LOG_FILENAME: str = 'agentstack.log'
 
 # define additional log levels to accommodate other messages inside the app
-# TODO add agent output definitions for messages from the agent
 DEBUG = logging.DEBUG  # 10
-SUCCESS = 21  # Just above INFO
-NOTIFY = 22  # Just above INFO
+TOOL_USE = 16
+THINKING = 18
 INFO = logging.INFO  # 20
+NOTIFY = 22
+SUCCESS = 24
+RESPONSE = 26
 WARNING = logging.WARNING  # 30
 ERROR = logging.ERROR  # 40
 
+logging.addLevelName(THINKING, 'THINKING')
+logging.addLevelName(TOOL_USE, 'TOOL_USE')
 logging.addLevelName(NOTIFY, 'NOTIFY')
 logging.addLevelName(SUCCESS, 'SUCCESS')
+logging.addLevelName(RESPONSE, 'RESPONSE')
 
 # `instance` is lazy so we have time to set up handlers
 instance: Optional[logging.Logger] = None
@@ -71,10 +91,7 @@ def set_stderr(stream: IO):
 
 
 def _create_handler(levelno: int) -> Callable:
-    """
-    Get the logging function for the given log level.
-    ie. log.debug("message")
-    """
+    """Get the logging handler for the given log level."""
 
     def handler(msg, *args, **kwargs):
         global instance
@@ -86,9 +103,12 @@ def _create_handler(levelno: int) -> Callable:
 
 
 debug = _create_handler(DEBUG)
-success = _create_handler(SUCCESS)
-notify = _create_handler(NOTIFY)
+tool_use = _create_handler(TOOL_USE)
+thinking = _create_handler(THINKING)
 info = _create_handler(INFO)
+notify = _create_handler(NOTIFY)
+success = _create_handler(SUCCESS)
+response = _create_handler(RESPONSE)
 warning = _create_handler(WARNING)
 error = _create_handler(ERROR)
 
@@ -96,33 +116,31 @@ error = _create_handler(ERROR)
 class ConsoleFormatter(logging.Formatter):
     """Formats log messages for display in the console."""
 
+    default_format = logging.Formatter('%(message)s')
     formats = {
         DEBUG: logging.Formatter('DEBUG: %(message)s'),
         SUCCESS: logging.Formatter(term_color('%(message)s', 'green')),
         NOTIFY: logging.Formatter(term_color('%(message)s', 'blue')),
-        INFO: logging.Formatter('%(message)s'),
         WARNING: logging.Formatter(term_color('%(message)s', 'yellow')),
         ERROR: logging.Formatter(term_color('%(message)s', 'red')),
     }
 
     def format(self, record: logging.LogRecord) -> str:
-        return self.formats[record.levelno].format(record)
+        template = self.formats.get(record.levelno, self.default_format)
+        return template.format(record)
 
 
 class FileFormatter(logging.Formatter):
     """Formats log messages for display in a log file."""
 
+    default_format = logging.Formatter('%(levelname)s: %(message)s')
     formats = {
         DEBUG: logging.Formatter('DEBUG (%(asctime)s):\n %(pathname)s:%(lineno)d\n %(message)s'),
-        SUCCESS: logging.Formatter('%(message)s'),
-        NOTIFY: logging.Formatter('%(message)s'),
-        INFO: logging.Formatter('INFO: %(message)s'),
-        WARNING: logging.Formatter('WARN: %(message)s'),
-        ERROR: logging.Formatter('ERROR (%(asctime)s):\n %(pathname)s:%(lineno)d\n %(message)s'),
     }
 
     def format(self, record: logging.LogRecord) -> str:
-        return self.formats[record.levelno].format(record)
+        template = self.formats.get(record.levelno, self.default_format)
+        return template.format(record)
 
 
 def _build_logger() -> logging.Logger:
@@ -134,15 +152,15 @@ def _build_logger() -> logging.Logger:
     """
     # global stdout, stderr
 
+    log = logging.getLogger(LOG_NAME)
+    # min log level set here cascades to all handlers
+    log.setLevel(DEBUG if conf.DEBUG else INFO)
+
     # `conf.PATH`` can change during startup, so defer building the path
     log_filename = conf.PATH / LOG_FILENAME
     if not os.path.exists(log_filename):
         os.makedirs(log_filename.parent, exist_ok=True)
         log_filename.touch()
-
-    log = logging.getLogger(LOG_NAME)
-    # min log level set here cascades to all handlers
-    log.setLevel(DEBUG if conf.DEBUG else INFO)
 
     file_handler = logging.FileHandler(log_filename)
     file_handler.setFormatter(FileFormatter())
