@@ -1,116 +1,79 @@
-"""Stripe tool for AgentStack.
+from typing import Callable, Optional
+import os, sys
+from stripe_agent_toolkit.configuration import Configuration, is_tool_allowed
+from stripe_agent_toolkit.api import StripeAPI
+from stripe_agent_toolkit.tools import tools
 
-This module provides framework-agnostic functions for interacting with the Stripe API,
-supporting payment links, products, and prices operations.
-"""
+__all__ = [
+    "create_payment_link",
+    "create_product",
+    "list_products",
+    "create_price",
+    "list_prices",
+]
 
-import json
-import os
-from typing import Dict, Optional
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 
-import stripe
-from stripe_agent_toolkit.functions import (
-    create_payment_link as toolkit_create_payment_link,
-    create_product as toolkit_create_product,
-    create_price as toolkit_create_price,
+if not STRIPE_SECRET_KEY:
+    raise Exception(
+        "Stripe Secret Key not found. Did you set the STRIPE_SECRET_KEY in you project's .env file?"
+    )
+
+_configuration = Configuration(
+    {
+        "actions": {
+            "payment_links": {
+                "create": True,
+            },
+            "products": {
+                "create": True,
+                "read": True,
+            },
+            "prices": {
+                "create": True,
+                "read": True,
+            },
+        }
+    }
 )
-from stripe_agent_toolkit.configuration import Context
-from stripe_agent_toolkit.schema import CreatePaymentLink, CreateProduct, CreatePrice
+client = StripeAPI(
+    secret_key=STRIPE_SECRET_KEY,
+    context=_configuration.get('context') or None,
+)
 
 
-def setup_stripe(secret_key: str) -> None:
-    """Initialize Stripe with the provided secret key."""
-    stripe.api_key = secret_key
-    stripe.set_app_info("agentstack-stripe", version="0.1.0", url="https://github.com/AgentOps-AI/AgentStack")
+def _create_tool_function(tool: dict) -> Callable:
+    """Dynamically create a tool function based on the tool schema."""
+    # `tool` is not typed, but follows this schema:
+    # {
+    #     "method": "create_customer",
+    #     "name": "Create Customer",
+    #     "description": CREATE_CUSTOMER_PROMPT,
+    #     "args_schema": CreateCustomer,
+    #     "actions": {
+    #         "customers": {
+    #             "create": True,
+    #         }
+    #     },
+    # }
+    schema = tool['args_schema']
+
+    def func(**kwargs) -> str:
+        validated_data = schema(**kwargs)
+        return client.run(tool['method'], **validated_data.dict(exclude_unset=True))
+
+    func.__name__ = tool['method']
+    func.__doc__ = f"{tool['name']}: \n{tool['description']}"
+    func.__annotations__ = {
+        'return': str,
+        **{name: field.annotation for name, field in schema.model_fields.items()},
+    }
+    return func
 
 
-def create_payment_link(price: str, quantity: int) -> Dict:
-    """Create a payment link for a specific price and quantity.
+# Dynamically create tool functions based on the configuration and add them to the module.
+for tool in tools:
+    if not is_tool_allowed(tool, _configuration):
+        continue
 
-    Args:
-        price: The ID of the price to create a payment link for
-        quantity: The quantity of items to include in the payment link
-
-    Returns:
-        Dict containing the payment link ID and URL
-    """
-    # Validate input using toolkit's schema
-    params = CreatePaymentLink(price=price, quantity=quantity)
-    return toolkit_create_payment_link(Context(), params.price, params.quantity)
-
-
-def get_payment_link(payment_link_id: str) -> Dict:
-    """Retrieve a payment link by ID.
-
-    Args:
-        payment_link_id: The ID of the payment link to retrieve
-
-    Returns:
-        Dict containing the payment link ID and URL
-    """
-    payment_link = stripe.PaymentLink.retrieve(payment_link_id)
-    return {"id": payment_link.id, "url": payment_link.url}
-
-
-def create_product(name: str, description: Optional[str] = None) -> Dict:
-    """Create a new product.
-
-    Args:
-        name: The name of the product
-        description: Optional description of the product
-
-    Returns:
-        Dict containing the product details
-    """
-    # Validate input using toolkit's schema
-    params = CreateProduct(name=name, description=description)
-    return toolkit_create_product(Context(), params.name, params.description)
-
-
-def update_product(product_id: str, **kwargs) -> Dict:
-    """Update an existing product.
-
-    Args:
-        product_id: The ID of the product to update
-        **kwargs: Additional fields to update (e.g., name, description)
-
-    Returns:
-        Dict containing the updated product details
-    """
-    product = stripe.Product.modify(product_id, **kwargs)
-    return json.loads(str(product))
-
-
-def create_price(product: str, currency: str, unit_amount: int) -> Dict:
-    """Create a new price for a product.
-
-    Args:
-        product: The ID of the product to create a price for
-        currency: Three-letter ISO currency code
-        unit_amount: The amount in cents to charge
-
-    Returns:
-        Dict containing the price details
-    """
-    # Validate input using toolkit's schema
-    params = CreatePrice(product=product, currency=currency, unit_amount=unit_amount)
-    return toolkit_create_price(Context(), params.product, params.currency, params.unit_amount)
-
-
-def update_price(price_id: str, **kwargs) -> Dict:
-    """Update an existing price.
-
-    Args:
-        price_id: The ID of the price to update
-        **kwargs: Additional fields to update (e.g., nickname, active)
-
-    Returns:
-        Dict containing the updated price details
-    """
-    price = stripe.Price.modify(price_id, **kwargs)
-    return json.loads(str(price))
-
-
-# Initialize Stripe when the module is imported if the environment variable is set
-if "STRIPE_SECRET_KEY" in os.environ:
-    setup_stripe(os.environ["STRIPE_SECRET_KEY"])
+    setattr(sys.modules[__name__], tool['method'], _create_tool_function(tool))

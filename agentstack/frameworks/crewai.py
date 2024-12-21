@@ -1,4 +1,4 @@
-from typing import Optional, Any, Callable
+from typing import Optional, Callable
 from pathlib import Path
 import ast
 from agentstack import conf
@@ -11,7 +11,11 @@ from agentstack.generation import asttools
 try:
     from crewai.tools import tool as _crewai_tool_decorator
 except ImportError:
-    raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
+    raise ValidationError(
+        "Could not import `crewai`. "
+        "Ensure you have installed the CrewAI version of AgentStack with: "
+        "`uv pip install agentstack[crewai]`"
+    )
 
 ENTRYPOINT: Path = Path('src/crew.py')
 
@@ -117,7 +121,7 @@ class CrewFile(asttools.File):
         """
         Get the tools used by an agent as AST nodes.
 
-        Tool definitons are inside of the methods marked with an `@agent` decorator.
+        Tool definitions are inside of the methods marked with an `@agent` decorator.
         The method returns a new class instance with the tools as a list of callables
         under the kwarg `tools`.
         """
@@ -186,7 +190,7 @@ class CrewFile(asttools.File):
         """
         Add new tools to be used by an agent.
 
-        Tool definitons are inside of the methods marked with an `@agent` decorator.
+        Tool definitions are inside of the methods marked with an `@agent` decorator.
         The method returns a new class instance with the tools as a list of callables
         under the kwarg `tools`.
         """
@@ -235,7 +239,7 @@ class CrewFile(asttools.File):
 def validate_project() -> None:
     """
     Validate that a CrewAI project is ready to run.
-    Raises an `agentstack.VaidationError` if the project is not valid.
+    Raises an `agentstack.ValidationError` if the project is not valid.
     """
     try:
         crew_file = CrewFile(conf.PATH / ENTRYPOINT)
@@ -293,12 +297,19 @@ def get_agent_names() -> list[str]:
     return [method.name for method in crew_file.get_agent_methods()]
 
 
-def get_agent_tool_names(agent_name: str) -> list[Any]:
+def get_agent_tool_names(agent_name: str) -> list[str]:
     """
     Get a list of tools used by an agent.
     """
     with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         return crew_file.get_agent_tool_names(agent_name)
+
+
+def get_agent_decorator_kwargs(agent_name: str) -> dict:
+    """
+    Get the kwargs needed to instantiate an agent in a CrewAI framework.
+    """
+    return {}  # TODO we're not using this decorator in crew projects (yet)
 
 
 def add_agent(agent: AgentConfig) -> None:
@@ -332,12 +343,7 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     """
     tool_funcs = []
     tool_config = ToolConfig.from_tool_name(tool_name)
-    for tool_func_name in tool_config.tools:
-        tool_func = getattr(tool_config.module, tool_func_name)
-
-        assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
-        assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
-
+    for tool_func in tool_config.get_all_callables():
         # apply the CrewAI tool decorator to the tool function
         tool_funcs.append(_crewai_tool_decorator(tool_func))
     return tool_funcs

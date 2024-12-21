@@ -65,6 +65,8 @@ class ConfigFile(BaseModel):
         The template used to generate the project.
     template_version: Optional[str]
         The version of the template system used to generate the project.
+    extra: Optional[dict]
+        Variables that will be available inside the project with `agentstack.conf[<var_name>]`.
     """
 
     framework: str = DEFAULT_FRAMEWORK  # TODO this should probably default to None
@@ -74,6 +76,7 @@ class ConfigFile(BaseModel):
     agentstack_version: Optional[str] = get_version()
     template: Optional[str] = None
     template_version: Optional[str] = None
+    extra: Optional[dict] = None
 
     def __init__(self):
         if os.path.exists(PATH / CONFIG_FILENAME):

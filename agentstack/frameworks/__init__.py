@@ -11,12 +11,18 @@ from agentstack.tasks import TaskConfig
 
 
 CREWAI = 'crewai'
-SUPPORTED_FRAMEWORKS = [CREWAI, ]
+PYDANTIC_AI = 'pydantic_ai'
+SUPPORTED_FRAMEWORKS = [
+    CREWAI,
+    PYDANTIC_AI,
+]
+
 
 class FrameworkModule(Protocol):
     """
     Protocol spec for a framework implementation module.
     """
+
     ENTRYPOINT: Path
     """
     Relative path to the entrypoint file for the framework in the user's project.
@@ -60,6 +66,12 @@ class FrameworkModule(Protocol):
         """
         ...
 
+    def get_agent_decorator_kwargs(self, agent_name: str) -> dict:
+        """
+        Get the kwargs needed to instantiate an agent in the user's project.
+        """
+        ...
+
     def get_agent_tool_names(self, agent_name: str) -> list[str]:
         """
         Get a list of tool names in an agent in the user's project.
@@ -83,6 +95,12 @@ class FrameworkModule(Protocol):
         Get a list of task names in the user's project.
         """
         ...
+    
+    def get_task_decorator_kwargs(task_name: str) -> dict:
+        """
+        Get the keyword arguments for the function affected by the task decorator.
+        """
+        ...
 
 
 def get_framework_module(framework: str) -> FrameworkModule:
@@ -94,11 +112,13 @@ def get_framework_module(framework: str) -> FrameworkModule:
     except ImportError:
         raise Exception(f"Framework {framework} could not be imported.")
 
+
 def get_entrypoint_path(framework: str) -> Path:
     """
     Get the path to the entrypoint file for a framework.
     """
     return conf.PATH / get_framework_module(framework).ENTRYPOINT
+
 
 def validate_project():
     """
@@ -106,13 +126,15 @@ def validate_project():
     """
     return get_framework_module(get_framework()).validate_project()
 
+
 def add_tool(tool: ToolConfig, agent_name: str):
     """
-    Add a tool to the user's project. 
+    Add a tool to the user's project.
     The tool will have aready been installed in the user's application and have
     all dependencies installed. We're just handling code generation here.
     """
     return get_framework_module(get_framework()).add_tool(tool, agent_name)
+
 
 def remove_tool(tool: ToolConfig, agent_name: str):
     """
@@ -120,11 +142,13 @@ def remove_tool(tool: ToolConfig, agent_name: str):
     """
     return get_framework_module(get_framework()).remove_tool(tool, agent_name)
 
+
 def get_tool_callables(tool_name: str) -> list[Callable]:
     """
     Get a tool by name and return it as a list of framework-native callables.
     """
     return get_framework_module(get_framework()).get_tool_callables(tool_name)
+
 
 def get_agent_names() -> list[str]:
     """
@@ -132,11 +156,20 @@ def get_agent_names() -> list[str]:
     """
     return get_framework_module(get_framework()).get_agent_names()
 
+
+def get_agent_decorator_kwargs(agent_name: str) -> dict:
+    """
+    Get the kwargs needed to instantiate an agent in the user's project.
+    """
+    return get_framework_module(get_framework()).get_agent_decorator_kwargs(agent_name)
+
+
 def get_agent_tool_names(agent_name: str) -> list[str]:
     """
     Get a list of tool names in the user's project.
     """
     return get_framework_module(get_framework()).get_agent_tool_names(agent_name)
+
 
 def add_agent(agent: AgentConfig):
     """
@@ -144,15 +177,24 @@ def add_agent(agent: AgentConfig):
     """
     return get_framework_module(get_framework()).add_agent(agent)
 
+
 def add_task(task: TaskConfig):
     """
     Add a task to the user's project.
     """
     return get_framework_module(get_framework()).add_task(task)
 
+
 def get_task_names() -> list[str]:
     """
     Get a list of task names in the user's project.
     """
     return get_framework_module(get_framework()).get_task_names()
+
+
+def get_task_decorator_kwargs(task_name: str) -> dict:
+    """
+    Get the keyword arguments for the function affected by the task decorator.
+    """
+    return get_framework_module(get_framework()).get_task_decorator_kwargs(task_name)
 

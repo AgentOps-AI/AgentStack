@@ -1,5 +1,7 @@
 from typing import Optional
 import sys
+import asyncio
+import inspect
 import traceback
 from pathlib import Path
 import importlib.util
@@ -84,7 +86,7 @@ def _import_project_module(path: Path):
     assert spec.loader is not None  # appease type checker
 
     project_module = importlib.util.module_from_spec(spec)
-    sys.path.append(str((path / MAIN_FILENAME).parent))
+    sys.path.insert(0, str((path / MAIN_FILENAME).parent))
     spec.loader.exec_module(project_module)
     return project_module
 
@@ -116,7 +118,12 @@ def run_project(command: str = 'run', debug: bool = False, cli_args: Optional[st
     try:
         print("Running your agent...")
         project_main = _import_project_module(conf.PATH)
-        getattr(project_main, command)()
+        callback = getattr(project_main, command)
+        
+        if inspect.iscoroutinefunction(callback):
+            asyncio.run(callback())
+        else:
+            callback()
     except ImportError as e:
         print(term_color(f"Failed to import project. Does '{MAIN_FILENAME}' exist?:\n{e}", 'red'))
         sys.exit(1)
