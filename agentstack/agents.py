@@ -38,7 +38,10 @@ class AgentConfig(pydantic.BaseModel):
         The backstory of the agent.
     llm: str
         The model this agent should use.
-        Adheres to the format set by the framework.
+        Always follows the format `org/repo`, regardless of the framework.
+        # TODO we need to reformat this on-read depending on the framework
+    retries: int
+        The number of times the agent should retry a task.
     """
 
     name: str
@@ -46,6 +49,7 @@ class AgentConfig(pydantic.BaseModel):
     goal: str = ""
     backstory: str = ""
     llm: str = ""
+    retries: int = 0
 
     def __init__(self, name: str):
         filename = conf.PATH / AGENTS_FILENAME

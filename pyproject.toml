@@ -44,8 +44,11 @@ crewai = [
     "crewai==0.83.0",
     "crewai-tools==0.14.0",
 ]
+pydantic_ai = [
+    "pydantic-ai>=0.0.14",
+]
 all = [
-    "agentstack[dev,test,crewai]",
+    "agentstack[dev,test,crewai,pydantic_ai]",
 ]
 
 [tool.setuptools.package-data]

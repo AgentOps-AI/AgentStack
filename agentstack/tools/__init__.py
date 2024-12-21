@@ -1,4 +1,4 @@
-from typing import Optional, Protocol, runtime_checkable
+from typing import Optional, Callable, Protocol, runtime_checkable
 from types import ModuleType
 import os
 import sys
@@ -96,6 +96,17 @@ class ToolConfig(pydantic.BaseModel):
                 f"Are you sure you have installed the tool? (agentstack tools add {self.name})\n"
                 f"ModuleNotFoundError: {e}"
             )
+
+    def get_callable(self, func_name: str) -> Callable:
+        """Get a tool function as a callable by function name."""
+        tool_func = getattr(self.module, func_name)
+        assert callable(tool_func), f"Tool function {func_name} is not callable."
+        assert tool_func.__doc__, f"Tool function {func_name} is missing a docstring."
+        return tool_func
+
+    def get_all_callables(self) -> list[Callable]:
+        """Get all the tool functions as callables."""
+        return [self.get_callable(func_name) for func_name in self.tools]
 
 
 def get_all_tool_paths() -> list[Path]:

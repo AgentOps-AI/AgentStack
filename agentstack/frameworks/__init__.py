@@ -11,8 +11,10 @@ from agentstack.tasks import TaskConfig
 
 
 CREWAI = 'crewai'
+PYDANTIC_AI = 'pydantic_ai'
 SUPPORTED_FRAMEWORKS = [
     CREWAI,
+    PYDANTIC_AI,
 ]
 
 
@@ -64,6 +66,12 @@ class FrameworkModule(Protocol):
         """
         ...
 
+    def get_agent_decorator_kwargs(self, agent_name: str) -> dict:
+        """
+        Get the kwargs needed to instantiate an agent in the user's project.
+        """
+        ...
+
     def get_agent_tool_names(self, agent_name: str) -> list[str]:
         """
         Get a list of tool names in an agent in the user's project.
@@ -85,6 +93,12 @@ class FrameworkModule(Protocol):
     def get_task_names(self) -> list[str]:
         """
         Get a list of task names in the user's project.
+        """
+        ...
+    
+    def get_task_decorator_kwargs(task_name: str) -> dict:
+        """
+        Get the keyword arguments for the function affected by the task decorator.
         """
         ...
 
@@ -143,6 +157,13 @@ def get_agent_names() -> list[str]:
     return get_framework_module(get_framework()).get_agent_names()
 
 
+def get_agent_decorator_kwargs(agent_name: str) -> dict:
+    """
+    Get the kwargs needed to instantiate an agent in the user's project.
+    """
+    return get_framework_module(get_framework()).get_agent_decorator_kwargs(agent_name)
+
+
 def get_agent_tool_names(agent_name: str) -> list[str]:
     """
     Get a list of tool names in the user's project.
@@ -169,3 +190,11 @@ def get_task_names() -> list[str]:
     Get a list of task names in the user's project.
     """
     return get_framework_module(get_framework()).get_task_names()
+
+
+def get_task_decorator_kwargs(task_name: str) -> dict:
+    """
+    Get the keyword arguments for the function affected by the task decorator.
+    """
+    return get_framework_module(get_framework()).get_task_decorator_kwargs(task_name)
+
