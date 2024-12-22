@@ -3,6 +3,11 @@ First of all, __thank you__ for your interest in contributing to AgentStack! Eve
 
 Our vision is to build the defacto CLI for quickly spinning up an AI Agent project. We want to be the [create-react-app](https://create-react-app.dev/) of agents. Our inspiration also includes the oh-so-convenient [Angular CLI](https://v17.angular.io/cli).
 
+### Exclusive Contributor Sticker
+AgentStack contributors all receive a free sticker pack including an exclusive holographic sticker only available to contributors to the project :)
+
+Once your PR is merge, fill out [this form](https://docs.google.com/forms/d/e/1FAIpQLSfvBEnsT8nsQleonJHoWQtHuhbsgUJ0a9IjOqeZbMGkga2NtA/viewform?usp=sf_link) and I'll send your sticker pack out ASAP! <3
+
 ## How to Help
 
 Grab an issue from the [issues tab](https://github.com/AgentOps-AI/AgentStack/issues)! Plenty are labelled "Good First Issue". Fork the repo and create a PR when ready!
