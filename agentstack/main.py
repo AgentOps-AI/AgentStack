@@ -1,10 +1,9 @@
 import sys
 import argparse
 import webbrowser
-from typing import Optional
 
-from agentstack import conf
-from agentstack import log
+from agentstack import conf, log
+from agentstack import auth
 from agentstack.cli import (
     init_project_builder,
     add_tool,
@@ -51,6 +50,9 @@ def main():
 
     # 'templates' command
     subparsers.add_parser("templates", help="View Agentstack templates")
+
+    # 'login' command
+    subparsers.add_parser("login", help="Authenticate with Agentstack.sh")
 
     # 'init' command
     init_parser = subparsers.add_parser(
@@ -155,65 +157,54 @@ def main():
         print(f"AgentStack CLI version: {get_version()}")
         sys.exit(0)
 
+    telemetry_id = track_cli_command(args.command, " ".join(sys.argv[1:]))
     check_for_updates(update_requested=args.command in ('update', 'u'))
 
-    telemetry_id = None
-    try:
-        telemetry_id = track_cli_command(args.command, " ".join(sys.argv[1:]))
-        handle_commands(args, extra_args, parser, tools_parser, generate_parser)
-        update_telemetry(telemetry_id, result=0)
-
-    except KeyboardInterrupt:
-        # Handle Ctrl+C (KeyboardInterrupt)
-        print("\nTerminating AgentStack CLI")
-        sys.exit(1)
-    except Exception as e:
-        # Update telemetry with failure
-        if telemetry_id is not None:
-            update_telemetry(telemetry_id, result=1, message=str(e))
-        log.error(f"An error occurred: {e}\nRun again with --debug for more information.")
-        log.debug("Full traceback:", exc_info=e)
-        sys.exit(1)
-
-
-def handle_commands(args, extra_args, parser, tools_parser, generate_parser):
     # Handle commands
-    if args.command in ["docs"]:
-        webbrowser.open("https://docs.agentstack.sh/")
-    elif args.command in ["quickstart"]:
-        webbrowser.open("https://docs.agentstack.sh/quickstart")
-    elif args.command in ["templates"]:
-        webbrowser.open("https://docs.agentstack.sh/quickstart")
-    elif args.command in ["init", "i"]:
-        init_project_builder(args.slug_name, args.template, args.wizard)
-    elif args.command in ["run", "r"]:
-        run_project(command=args.function, cli_args=extra_args)
-    elif args.command in ['generate', 'g']:
-        if args.generate_command in ['agent', 'a']:
-            if not args.llm:
-                configure_default_model()
-            generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm)
-        elif args.generate_command in ['task', 't']:
-            generation.add_task(args.name, args.description, args.expected_output, args.agent)
+    try:
+        if args.command in ["docs"]:
+            webbrowser.open("https://docs.agentstack.sh/")
+        elif args.command in ["quickstart"]:
+            webbrowser.open("https://docs.agentstack.sh/quickstart")
+        elif args.command in ["templates"]:
+            webbrowser.open("https://docs.agentstack.sh/quickstart")
+        elif args.command in ["init", "i"]:
+            init_project_builder(args.slug_name, args.template, args.wizard)
+        elif args.command in ["run", "r"]:
+            run_project(command=args.function, cli_args=extra_args)
+        elif args.command in ['generate', 'g']:
+            if args.generate_command in ['agent', 'a']:
+                if not args.llm:
+                    configure_default_model()
+                generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm)
+            elif args.generate_command in ['task', 't']:
+                generation.add_task(args.name, args.description, args.expected_output, args.agent)
+            else:
+                generate_parser.print_help()
+        elif args.command in ["tools", "t"]:
+            if args.tools_command in ["list", "l"]:
+                list_tools()
+            elif args.tools_command in ["add", "a"]:
+                agents = [args.agent] if args.agent else None
+                agents = args.agents.split(",") if args.agents else agents
+                add_tool(args.name, agents)
+            elif args.tools_command in ["remove", "r"]:
+                generation.remove_tool(args.name)
+            else:
+                tools_parser.print_help()
+        elif args.command in ['export', 'e']:
+            export_template(args.filename)
+        elif args.command in ['login']:
+            auth.login()
+        elif args.command in ['update', 'u']:
+            pass  # Update check already done
         else:
-            generate_parser.print_help()
-    elif args.command in ["tools", "t"]:
-        if args.tools_command in ["list", "l"]:
-            list_tools()
-        elif args.tools_command in ["add", "a"]:
-            agents = [args.agent] if args.agent else None
-            agents = args.agents.split(",") if args.agents else agents
-            add_tool(args.name, agents)
-        elif args.tools_command in ["remove", "r"]:
-            generation.remove_tool(args.name)
-        else:
-            tools_parser.print_help()
-    elif args.command in ['export', 'e']:
-        export_template(args.filename)
-    elif args.command in ['update', 'u']:
-        pass  # Update check already done
-    else:
-        parser.print_help()
+            parser.print_help()
+    except Exception as e:
+        update_telemetry(telemetry_id, result=1, message=str(e))
+        raise e
+
+    update_telemetry(telemetry_id, result=0)
 
 
 if __name__ == "__main__":
@@ -221,4 +212,13 @@ if __name__ == "__main__":
     log.set_stdout(sys.stdout)
     log.set_stderr(sys.stderr)
 
-    main()
+    try:
+        main()
+    except Exception as e:
+        log.error((f"An error occurred: {e}\n" "Run again with --debug for more information."))
+        log.debug("Full traceback:", exc_info=e)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        # Handle Ctrl+C (KeyboardInterrupt)
+        print("\nTerminating AgentStack CLI")
+        sys.exit(1)
