@@ -9,7 +9,7 @@ agentops.init(default_tags=['autogen', 'agentstack'])
 
 def main():
     # Load LLM inference endpoints from an env variable or a file
-    # See https://microsoft.github.io/autogen/docs/FAQ#set-your-api-endpoints
+    # See https://docs.ag2.ai/docs/topics/llm_configuration
     # and OAI_CONFIG_LIST_sample.
     # For example, if you have created a OAI_CONFIG_LIST file in the current working directory, that file will be used.
     config_list = config_list_from_json(env_or_file="OAI_CONFIG_LIST")
