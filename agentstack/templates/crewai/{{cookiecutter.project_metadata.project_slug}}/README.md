@@ -1,8 +1,6 @@
 # {{ cookiecutter.project_metadata.project_name }}
 {{ cookiecutter.project_metadata.description }}
 
-~~ Built with AgentStack ~~
-
 ## How to build your Crew
 ### With the CLI
 Add an agent using AgentStack with the CLI:  
@@ -21,7 +19,7 @@ Add tools with `agentstack tools add` and view tools available with `agentstack 
 In this directory, run `poetry install`  
 
 To run your project, use the following command:  
-`crewai run` or `python src/main.py`
+`agentstack run`
 
 This will initialize your crew of AI agents and begin task execution as defined in your configuration in the main.py file.
 
@@ -36,3 +34,4 @@ If you need to reset the memory of your crew before running it again, you can do
 `crewai reset-memory`  
 This will clear the crew's memory, allowing for a fresh start.
 
+> 🪩 Project built with [AgentStack](https://github.com/AgentOps-AI/AgentStack)
