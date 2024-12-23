@@ -62,17 +62,14 @@ class EnvFile:
             self._new_variables[key] = value
 
     def read(self) -> None:
-        def parse_line(line) -> tuple[str, Union[str, None]]:
+        def parse_line(line) -> tuple[str, str]:
             """
             Parse a line from the .env file.
             Pairs are split on the first '=' character, and stripped of whitespace & quotes.
-            If the value is empty, it is returned as None.
             Only the last occurrence of a variable is stored.
             """
             key, value = line.split('=')
-            key = key.strip()
-            value = value.strip(string.whitespace + '"')
-            return key, value if value else None
+            return key.strip(), value.strip(string.whitespace + '"')
 
         if os.path.exists(conf.PATH / self._filename):
             with open(conf.PATH / self._filename, 'r') as f:
