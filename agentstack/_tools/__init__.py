@@ -9,6 +9,10 @@ from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path, open_json_file, term_color, snake_to_camel
 
 
+TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir, also update MANIFEST.in
+TOOLS_CONFIG_FILENAME: str = 'config.json'
+
+
 class ToolConfig(pydantic.BaseModel):
     """
     This represents the configuration data for a tool.
@@ -28,7 +32,7 @@ class ToolConfig(pydantic.BaseModel):
 
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
-        path = get_package_path() / f'tools/{name}/config.json'
+        path = TOOLS_DIR / name / TOOLS_CONFIG_FILENAME
         if not os.path.exists(path):  # TODO raise exceptions and handle message/exit in cli
             print(term_color(f'No known agentstack tool: {name}', 'red'))
             sys.exit(1)
@@ -72,7 +76,7 @@ class ToolConfig(pydantic.BaseModel):
     @property
     def module_name(self) -> str:
         """Module name for the tool module."""
-        return f"agentstack.tools.{self.name}"
+        return f"agentstack._tools.{self.name}"
 
     @property
     def module(self) -> ModuleType:
@@ -101,14 +105,13 @@ class ToolConfig(pydantic.BaseModel):
 def get_all_tool_paths() -> list[Path]:
     """
     Get all the paths to the tool configuration files.
-    ie. agentstack/tools/<tool_name>/
-    Tools are identified by having a `config.json` file inside the tools/<tool_name> directory.
+    ie. agentstack/_tools/<tool_name>/
+    Tools are identified by having a `config.json` file inside the _tools/<tool_name> directory.
     """
     paths = []
-    tools_dir = get_package_path() / 'tools'
-    for tool_dir in tools_dir.iterdir():
+    for tool_dir in TOOLS_DIR.iterdir():
         if tool_dir.is_dir():
-            config_path = tool_dir / 'config.json'
+            config_path = tool_dir / TOOLS_CONFIG_FILENAME
             if config_path.exists():
                 paths.append(tool_dir)
     return paths

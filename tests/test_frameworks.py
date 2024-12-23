@@ -7,7 +7,7 @@ from parameterized import parameterized_class
 from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
-from agentstack.tools import ToolConfig
+from agentstack._tools import ToolConfig
 
 BASE_PATH = Path(__file__).parent
 

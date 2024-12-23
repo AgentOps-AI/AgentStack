@@ -7,7 +7,7 @@ from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack import packaging
 from agentstack.utils import term_color
-from agentstack.tools import ToolConfig
+from agentstack._tools import ToolConfig
 from agentstack.generation.files import EnvFile
 
 

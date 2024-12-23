@@ -3,7 +3,7 @@ from pathlib import Path
 import ast
 from agentstack import conf
 from agentstack.exceptions import ValidationError
-from agentstack.tools import ToolConfig
+from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools

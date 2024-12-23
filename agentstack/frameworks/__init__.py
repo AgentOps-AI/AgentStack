@@ -5,7 +5,7 @@ from pathlib import Path
 from agentstack import conf
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_framework
-from agentstack.tools import ToolConfig
+from agentstack._tools import ToolConfig
 from agentstack.agents import AgentConfig
 from agentstack.tasks import TaskConfig
 

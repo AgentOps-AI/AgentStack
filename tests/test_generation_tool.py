@@ -7,7 +7,7 @@ import ast
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack import frameworks
-from agentstack.tools import get_all_tools, ToolConfig
+from agentstack._tools import get_all_tools, ToolConfig
 from agentstack.generation.tool_generation import add_tool, remove_tool
 
 

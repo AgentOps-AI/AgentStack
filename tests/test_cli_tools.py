@@ -4,7 +4,7 @@ import unittest
 from parameterized import parameterized
 from pathlib import Path
 import shutil
-from agentstack.tools import get_all_tool_names
+from agentstack._tools import get_all_tool_names
 
 BASE_PATH = Path(__file__).parent
 CLI_ENTRY = [
@@ -35,7 +35,7 @@ class CLIToolsTest(unittest.TestCase):
         result = self._run_cli('init', f"{tool_name}_project")
         self.assertEqual(result.returncode, 0)
         os.chdir(self.project_dir / f"{tool_name}_project")
-        result = self._run_cli('generate', 'agent', 'test_agent', '--llm', 'opeenai/gpt-4o')
+        result = self._run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4o')
         self.assertEqual(result.returncode, 0)
         result = self._run_cli('generate', 'task', 'test_task')
         self.assertEqual(result.returncode, 0)

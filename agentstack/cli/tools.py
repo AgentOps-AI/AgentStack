@@ -3,7 +3,7 @@ import itertools
 import inquirer
 from agentstack.utils import term_color
 from agentstack import generation
-from agentstack.tools import get_all_tools
+from agentstack._tools import get_all_tools
 from agentstack.agents import get_all_agents
 
 
