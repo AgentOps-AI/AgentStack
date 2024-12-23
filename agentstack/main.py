@@ -2,7 +2,7 @@ import sys
 import argparse
 import webbrowser
 
-from agentstack import conf
+from agentstack import conf, auth
 from agentstack.cli import (
     init_project_builder,
     add_tool,
@@ -49,6 +49,9 @@ def main():
 
     # 'templates' command
     subparsers.add_parser("templates", help="View Agentstack templates")
+
+    # 'login' command
+    subparsers.add_parser("login", help="Authenticate with Agentstack.sh")
 
     # 'init' command
     init_parser = subparsers.add_parser(
@@ -188,6 +191,8 @@ def main():
                 tools_parser.print_help()
         elif args.command in ['export', 'e']:
             export_template(args.filename)
+        elif args.command in ['login']:
+            auth.login()
         elif args.command in ['update', 'u']:
             pass  # Update check already done
         else:
