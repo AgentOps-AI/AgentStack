@@ -33,8 +33,7 @@ def list_tools():
         print(term_color("Could not retrieve list of tools. The tools directory may be corrupted or missing.", 'red'))
         sys.exit(1)
     except ValidationError as e:
-        print(term_color("Some tool configurations are invalid and could not be loaded.", 'red'))
-        print(term_color(f"Validation error details: {str(e)}", 'red'))
+        print(term_color(f"Validation error: {str(e)}", 'red'))
         sys.exit(1)
     except Exception:
         print(term_color("An unexpected error occurred while listing tools.", 'red'))
@@ -85,8 +84,7 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
         print(term_color(f"Could not add tool '{tool_name}'. Run 'agentstack tools list' to see available tools.", 'red'))
         sys.exit(1)
     except ValidationError as e:
-        print(term_color(f"Tool configuration is invalid. Please check the tool's JSON configuration file.", 'red'))
-        print(term_color(f"Validation error details: {str(e)}", 'red'))
+        print(term_color(f"Validation error: {str(e)}", 'red'))
         sys.exit(1)
     except Exception:
         print(term_color("An unexpected error occurred while adding the tool.", 'red'))
@@ -104,8 +102,7 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
             print(term_color(f"Could not remove tool '{tool_name}'. The tool may be in use or corrupted.", 'red'))
         sys.exit(1)
     except ValidationError as e:
-        print(term_color(f"Invalid tool configuration detected while removing '{tool_name}'.", 'red'))
-        print(term_color(f"Validation error details: {str(e)}", 'red'))
+        print(term_color(f"Validation error: {str(e)}", 'red'))
         sys.exit(1)
     except Exception:
         print(term_color("An unexpected error occurred while removing the tool.", 'red'))
