@@ -4,7 +4,7 @@
   "category": "application-specific",
   "packages": ["stripe-agent-toolkit", "stripe"],
   "env": {
-    "STRIPE_SECRET_KEY": "sk-..."
+    "STRIPE_SECRET_KEY": null
   },
   "tools_bundled": true,
   "tools": ["stripe_tools"],
