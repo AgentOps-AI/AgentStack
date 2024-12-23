@@ -107,6 +107,16 @@ class GenerationFilesTest(unittest.TestCase):
             tmp_data
             == """\nENV_VAR1=value1\nENV_VAR2=value_ignored\nENV_VAR2=value2\n#ENV_VAR3=""\nENV_VAR100=value2"""
         )
+    
+    def test_write_env_numeric_that_can_be_boolean(self):
+        shutil.copy(BASE_PATH / "fixtures/.env", self.project_dir / ".env")
+
+        with EnvFile() as env:
+            env.append_if_new("ENV_VAR100", 0)
+            env.append_if_new("ENV_VAR101", 1)
+        
+        env = EnvFile()  # re-read the file
+        assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2", "ENV_VAR100": "0", "ENV_VAR101": "1"}
 
     def test_write_env_commented(self):
         """We should be able to write a commented-out value."""
