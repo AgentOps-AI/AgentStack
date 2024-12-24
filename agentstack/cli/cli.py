@@ -373,7 +373,10 @@ def insert_template(
         template_version=template_data.template_version if template_data else 0,
     )
 
-    project_structure = ProjectStructure()
+    project_structure = ProjectStructure(
+        method=template_data.method if template_data else "sequential",
+        manager_agent=template_data.manager_agent if template_data else None,
+    )
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
     project_structure.inputs = design["inputs"]
@@ -456,6 +459,7 @@ def export_template(output_filename: str):
                 role=agent.role,
                 goal=agent.goal,
                 backstory=agent.backstory,
+                allow_delegation=False,  # TODO
                 model=agent.llm,  # TODO consistent naming (llm -> model)
             )
         )
@@ -492,11 +496,12 @@ def export_template(output_filename: str):
         )
 
     template = TemplateConfig(
-        template_version=2,
+        template_version=3,
         name=metadata.project_name,
         description=metadata.project_description,
         framework=get_framework(),
         method="sequential",  # TODO this needs to be stored in the project somewhere
+        manager_agent=None,  # TODO
         agents=agents,
         tasks=tasks,
         tools=tools,
