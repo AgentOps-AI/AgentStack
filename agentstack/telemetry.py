@@ -28,6 +28,7 @@ from typing import Optional
 import psutil
 import requests
 from agentstack import conf
+from agentstack.auth import get_stored_token
 from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 
 TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
@@ -77,7 +78,12 @@ def collect_machine_telemetry(command: str):
 def track_cli_command(command: str, args: Optional[str] = None):
     try:
         data = collect_machine_telemetry(command)
-        return requests.post(TELEMETRY_URL, json={"command": command, "args":args, **data}).json().get('id')
+        headers = {}
+        token = get_stored_token()
+        if token:
+            headers['Authorization'] = f'Bearer {token}'
+
+        return requests.post(TELEMETRY_URL, json={"command": command, "args":args, **data}, headers=headers).json().get('id')
     except Exception:
         pass
 
