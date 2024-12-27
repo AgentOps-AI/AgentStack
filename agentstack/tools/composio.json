@@ -4,7 +4,7 @@
   "category": "unified-apis",
   "packages": ["composio-crewai"],
   "env": {
-    "COMPOSIO_API_KEY": "..."
+    "COMPOSIO_API_KEY": null
   },
   "tools": ["composio_tools"],
   "tools_bundled": true,
