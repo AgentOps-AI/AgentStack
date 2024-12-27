@@ -4,12 +4,12 @@
   "category": "network-protocols",
   "packages": ["agent-connect"],
   "env": {
-    "HOST_DOMAIN": "...",
+    "HOST_DOMAIN": null,
     "HOST_PORT": 80,
     "HOST_WS_PATH": "/ws",
-    "DID_DOCUMENT_PATH": "...",
-    "SSL_CERT_PATH": "...",
-    "SSL_KEY_PATH": "..."
+    "DID_DOCUMENT_PATH": null,
+    "SSL_CERT_PATH": null,
+    "SSL_KEY_PATH": null
   },
   "tools": ["send_message", "receive_message"]
 }
