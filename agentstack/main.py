@@ -187,7 +187,7 @@ def handle_commands(args, extra_args, parser, tools_parser, generate_parser):
     elif args.command in ["init", "i"]:
         init_project_builder(args.slug_name, args.template, args.wizard)
     elif args.command in ["run", "r"]:
-        run_project(command=args.function, debug=args.debug, cli_args=extra_args)
+        run_project(command=args.function, cli_args=extra_args)
     elif args.command in ['generate', 'g']:
         if args.generate_command in ['agent', 'a']:
             if not args.llm:

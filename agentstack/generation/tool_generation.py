@@ -144,8 +144,8 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
     try:  # Edit the user's project tool init file to exclude the tool
         with ToolsInitFile(conf.PATH / TOOLS_INIT_FILENAME) as tools_init:
             tools_init.remove_import_for_tool(tool, agentstack_config.framework)
-    except ValidationError as e:
-        log.error(f"Error removing tool:\n{e}")
+    except ValidationError as e:  # continue with removal
+        log.error(f"Error removing tool {tool_name} from `tools/__init__.py`:\n{e}")
 
     # Edit the framework entrypoint file to exclude the tool in the agent definition
     if not agents:  # If no agents are specified, remove the tool from all agents
