@@ -1,0 +1,7 @@
+agents:
+  - name: PipedreamAgent
+    role: API Integration Specialist
+    goal: Execute Pipedream components and handle responses
+    tools:
+      - PipedreamActionTool
+      - PipedreamSourceTool

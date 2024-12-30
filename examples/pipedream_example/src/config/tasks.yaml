@@ -1,0 +1,22 @@
+tasks:
+  - name: ExecutePipedreamAction
+    agent: PipedreamAgent
+    input: |
+      Execute the Pipedream component action with the following parameters:
+      - Component ID: "gitlab-list-commits"
+      - Input parameters:
+        - projectId: 45672541
+        - refName: "main"
+
+      Process the response and summarize the commit information.
+
+  - name: DeployPipedreamSource
+    agent: PipedreamAgent
+    input: |
+      Deploy a Pipedream source component with the following configuration:
+      - Component ID: "gitlab-new-issue"
+      - Webhook URL: "https://events.example.com/gitlab-new-issue"
+      - Configuration:
+        - projectId: 45672541
+
+      Verify the source deployment and provide the deployment status.

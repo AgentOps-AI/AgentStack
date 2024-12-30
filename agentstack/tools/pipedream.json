@@ -1,0 +1,18 @@
+{
+  "name": "pipedream",
+  "category": "api-integration",
+  "description": "Execute Pipedream component actions and deploy source components",
+  "tools": [
+    "PipedreamListAppsTool",
+    "PipedreamListComponentsTool",
+    "PipedreamGetPropsTool",
+    "PipedreamActionTool",
+    "PipedreamSourceTool"
+  ],
+  "url": "https://pipedream.com/docs/connect/components",
+  "cta": "Get your Pipedream API key at https://pipedream.com/settings/api-key",
+  "env": {
+    "PIPEDREAM_API_KEY": "your-pipedream-api-key"
+  },
+  "packages": ["requests"]
+}
