@@ -1,4 +1,9 @@
+import os
+import tempfile
+import tomllib
 import webbrowser
+import zipfile
+from pathlib import Path
 
 from agentstack.auth import get_stored_token, login
 from agentstack.conf import ConfigFile
@@ -17,8 +22,36 @@ def deploy():
             return
 
     project_id = get_project_id()
+    pyproject = load_pyproject()
+    files = list(Path('.').rglob('*.py'))
+
+    with tempfile.NamedTemporaryFile(suffix='.zip') as tmp:
+        with zipfile.ZipFile(tmp.name, 'w') as zf:
+            for file in files:
+                zf.write(file)
+            if pyproject:
+                zf.write("pyproject.toml")
+
+        response = requests.post(
+            'http://localhost:3000/deploy/build',
+            files={'code': ('code.zip', open(tmp.name, 'rb'))},
+            params={'projectId': project_id},
+            headers={'Authorization': bearer_token}
+        )
+
+    if response.status_code != 200:
+        print(term_color("Failed to deploy with AgentStack.sh", "red"))
+        print(response.text)
+        return
+
     webbrowser.open(f"http://localhost:5173/project/{project_id}")
 
+
+def load_pyproject():
+   if os.path.exists("pyproject.toml"):
+       with open("pyproject.toml", "rb") as f:
+           return tomllib.load(f)
+   return None
 
 def get_project_id():
     project_config = ConfigFile()
