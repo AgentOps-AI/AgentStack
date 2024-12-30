@@ -1,4 +1,9 @@
 import sys
+from agentstack.cli import init_project_builder, list_tools, configure_default_model, serve_project
+from agentstack.telemetry import track_cli_command
+from agentstack.utils import get_version, get_framework
+import agentstack.generation as generation
+from agentstack.update import check_for_updates
 import argparse
 import webbrowser
 
@@ -143,6 +148,9 @@ def main():
 
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
 
+    # 'deploy' command
+    serve_parser = subparsers.add_parser('serve', aliases=['s'], help='Serve your agent')
+
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()
 
@@ -195,6 +203,8 @@ def main():
             auth.login()
         elif args.command in ['update', 'u']:
             pass  # Update check already done
+        if args.command in ['serve', 's']:
+            serve_project()
         else:
             parser.print_help()
     except Exception as e:
