@@ -1,4 +1,5 @@
 {
+  "project_name": "{{ cookiecutter.project_metadata.project_name }}",
   "framework": "{{ cookiecutter.framework }}",
   "agentstack_version": "{{ cookiecutter.project_metadata.agentstack_version }}",
   "template": "{{ cookiecutter.project_metadata.template }}",

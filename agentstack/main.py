@@ -15,6 +15,7 @@ from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
 from agentstack import generation
 from agentstack.update import check_for_updates
+from agentstack.deploy import deploy
 
 
 def main():
@@ -136,12 +137,17 @@ def main():
     )
     tools_remove_parser.add_argument("name", help="Name of the tool to remove")
 
+    # 'export'
     export_parser = subparsers.add_parser(
         'export', aliases=['e'], help='Export your agent as a template', parents=[global_parser]
     )
     export_parser.add_argument('filename', help='The name of the file to export to')
 
+    # 'update'
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
+
+    # 'deploy'
+    deploy_ = subparsers.add_parser('deploy', aliases=['d'], help='Deploy your agent to AgentStack.sh', parents=[global_parser])
 
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()
@@ -193,6 +199,8 @@ def main():
             export_template(args.filename)
         elif args.command in ['login']:
             auth.login()
+        elif args.command in ['deploy', 'd']:
+            deploy()
         elif args.command in ['update', 'u']:
             pass  # Update check already done
         else:
