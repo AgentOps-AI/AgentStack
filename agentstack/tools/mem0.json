@@ -4,7 +4,7 @@
   "category": "storage",
   "packages": ["mem0ai"],
   "env": {
-    "MEM0_API_KEY": "..."
+    "MEM0_API_KEY": null
   },
   "tools": ["write_to_memory", "read_from_memory"],
   "cta": "Create your mem0 API key at https://mem0.ai/"

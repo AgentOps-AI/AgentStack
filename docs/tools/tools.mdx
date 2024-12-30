@@ -7,5 +7,10 @@ description: 'Giving your agents tools should be easy'
 
 Once you find the right tool for your use-case, install it with simply
 ```bash
-agentstack tools add <tool_name>
+agentstack tools add
+```
+
+You can also specify a tool, and one or more agents to install it to:
+```bash
+agentstack tools add <tool_name> --agents=<agent_name1>,<agent_name2>
 ```
