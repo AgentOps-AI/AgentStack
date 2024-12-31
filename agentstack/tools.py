@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 import pydantic
+from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path, open_json_file, term_color
 
 

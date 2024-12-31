@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from packaging.version import parse as parse_version, Version
 import inquirer
+from agentstack import log
 from agentstack.utils import term_color, get_version, get_framework
 from agentstack import packaging
 from appdirs import user_data_dir
