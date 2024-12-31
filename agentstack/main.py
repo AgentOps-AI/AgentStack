@@ -232,7 +232,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     # Note that since we primarily interact with the CLI through a bin, all logic
-    # needs to reside within the main() function. 
-    # This module syntax is typically only used by tests. 
+    # needs to reside within the main() function.
+    # Module syntax is typically only used by tests.
     # see `project.scripts.agentstack` in pyproject.toml for the bin config.
     sys.exit(main())

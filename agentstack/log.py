@@ -11,7 +11,10 @@ RESPONSE: A response to a request.
 WARNING:  An indication that something unexpected happened, but not severe.
 ERROR:    An indication that something went wrong, and the application may not be able to continue.
 
-TODO TOOL_USE and THINKING are below INFO; this is intentional for now.
+TODO when running commands outside of a project directory, the log file
+is created in the current working directory.
+State changes, like going from a pre-initialized project to a valid project,
+should trigger a re-initialization of the logger.
 
 TODO would be cool to intercept all messages from the framework and redirect
 them through this logger. This would allow us to capture all messages and display
@@ -157,16 +160,19 @@ def _build_logger() -> logging.Logger:
     # min log level set here cascades to all handlers
     log.setLevel(DEBUG if conf.DEBUG else INFO)
 
-    # `conf.PATH`` can change during startup, so defer building the path
-    log_filename = conf.PATH / LOG_FILENAME
-    if not os.path.exists(log_filename):
-        os.makedirs(log_filename.parent, exist_ok=True)
-        log_filename.touch()
+    try:
+        # `conf.PATH` can change during startup, so defer building the path
+        log_filename = conf.PATH / LOG_FILENAME
+        if not os.path.exists(log_filename):
+            os.makedirs(log_filename.parent, exist_ok=True)
+            log_filename.touch()
 
-    file_handler = logging.FileHandler(log_filename)
-    file_handler.setFormatter(FileFormatter())
-    file_handler.setLevel(DEBUG)
-    log.addHandler(file_handler)
+        file_handler = logging.FileHandler(log_filename)
+        file_handler.setFormatter(FileFormatter())
+        file_handler.setLevel(DEBUG)
+        log.addHandler(file_handler)
+    except FileNotFoundError:
+        pass  # we are not in a writeable directory
 
     # stdout handler for warnings and below
     # `stdout` can change, so defer building the stream until we need it
