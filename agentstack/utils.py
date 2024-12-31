@@ -22,8 +22,8 @@ def verify_agentstack_project():
         agentstack_config = conf.ConfigFile()
     except FileNotFoundError:
         raise Exception(
-            "Error: This does not appear to be an AgentStack project.\n"
-            "Please ensure you're at the root directory of your project and a file named agentstack.json exists. "
+            "This does not appear to be an AgentStack project.\n"
+            "Please ensure you're at the root directory of your project and a file named agentstack.json exists.\n"
             "If you're starting a new project, run `agentstack init`."
         )
 

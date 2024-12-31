@@ -154,7 +154,7 @@ def _main():
 
     # Handle version
     if args.version:
-        print(f"AgentStack CLI version: {get_version()}")
+        log.info(f"AgentStack CLI version: {get_version()}")
         return
 
     telemetry_id = track_cli_command(args.command, " ".join(sys.argv[1:]))
@@ -225,7 +225,9 @@ def main() -> int:
         _main()
         return 0
     except Exception as e:
-        log.error((f"An error occurred: {e}\n" "Run again with --debug for more information."))
+        log.error(f"An error occurred: \n{e}")
+        if not conf.DEBUG:
+            log.info("Run again with --debug for more information.")
         log.debug("Full traceback:", exc_info=e)
         return 1
     except KeyboardInterrupt:

@@ -153,6 +153,7 @@ def _build_logger() -> logging.Logger:
     # global stdout, stderr
 
     log = logging.getLogger(LOG_NAME)
+    log.propagate = False  # prevent inheritance from the root logger
     # min log level set here cascades to all handlers
     log.setLevel(DEBUG if conf.DEBUG else INFO)
 
