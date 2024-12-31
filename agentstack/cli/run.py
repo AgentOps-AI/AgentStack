@@ -9,7 +9,7 @@ from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack import inputs
 from agentstack import frameworks
-from agentstack.utils import term_color, get_framework
+from agentstack.utils import term_color, get_framework, verify_agentstack_project
 
 MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
@@ -95,6 +95,8 @@ def _import_project_module(path: Path):
 
 def run_project(command: str = 'run', cli_args: Optional[str] = None):
     """Validate that the project is ready to run and then run it."""
+    verify_agentstack_project()
+    
     if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
         raise ValidationError(f"Framework {conf.get_framework()} is not supported by agentstack.")
 
