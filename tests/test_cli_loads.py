@@ -35,8 +35,8 @@ class TestAgentStackCLI(unittest.TestCase):
 
         os.chdir(test_dir)
         result = run_cli('run')
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("An error occurred", result.stdout)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("An error occurred", result.stderr)
 
         shutil.rmtree(test_dir, ignore_errors=True)
 
