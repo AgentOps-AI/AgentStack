@@ -210,12 +210,6 @@ def _main():
 def main() -> int:
     """
     Main entry point for the AgentStack CLI.
-    
-    This function is called when the `agentstack` command is run from the terminal.
-    ```
-    from agentstack.main import main
-    sys.exit(main())
-    ```
     """
     # display logging messages in the console
     log.set_stdout(sys.stdout)
@@ -234,3 +228,11 @@ def main() -> int:
         # Handle Ctrl+C (KeyboardInterrupt)
         print("\nTerminating AgentStack CLI")
         return 1
+
+
+if __name__ == "__main__":
+    # Note that since we primarily interact with the CLI through a bin, all logic
+    # needs to reside within the main() function. 
+    # This module syntax is typically only used by tests. 
+    # see `project.scripts.agentstack` in pyproject.toml for the bin config.
+    sys.exit(main())
