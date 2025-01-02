@@ -22,17 +22,17 @@ class AgentConfigTest(unittest.TestCase):
     def test_empty_file(self):
         config = TaskConfig("task_name")
         assert config.name == "task_name"
-        assert config.description is ""
-        assert config.expected_output is ""
-        assert config.agent is ""
+        assert config.description == ""
+        assert config.expected_output == ""
+        assert config.agent == ""
 
     def test_read_minimal_yaml(self):
         shutil.copy(BASE_PATH / "fixtures/tasks_min.yaml", self.project_dir / TASKS_FILENAME)
         config = TaskConfig("task_name")
         assert config.name == "task_name"
-        assert config.description is ""
-        assert config.expected_output is ""
-        assert config.agent is ""
+        assert config.description == ""
+        assert config.expected_output == ""
+        assert config.agent == ""
 
     def test_read_maximal_yaml(self):
         shutil.copy(BASE_PATH / "fixtures/tasks_max.yaml", self.project_dir / TASKS_FILENAME)
