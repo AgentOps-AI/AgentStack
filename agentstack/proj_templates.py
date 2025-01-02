@@ -1,11 +1,11 @@
-from typing import Optional, Literal
+from typing import Literal
 import os, sys
 from pathlib import Path
 import pydantic
 import requests
 import json
 from agentstack.exceptions import ValidationError
-from agentstack.utils import get_package_path, term_color, open_json_file
+from agentstack.utils import get_package_path
 
 
 class TemplateConfig_v1(pydantic.BaseModel):
