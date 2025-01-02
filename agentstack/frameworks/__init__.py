@@ -2,7 +2,9 @@ from typing import Optional, Protocol
 from types import ModuleType
 from importlib import import_module
 from pathlib import Path
-from agentstack import ValidationError
+from agentstack import conf
+from agentstack.exceptions import ValidationError
+from agentstack.utils import get_framework
 from agentstack.tools import ToolConfig
 from agentstack.agents import AgentConfig
 from agentstack.tasks import TaskConfig
@@ -21,52 +23,58 @@ class FrameworkModule(Protocol):
     ie. `src/crewai.py`
     """
 
-    def validate_project(self, path: Optional[Path] = None) -> None:
+    def validate_project(self) -> None:
         """
         Validate that a user's project is ready to run.
         Raises a `ValidationError` if the project is not valid.
         """
         ...
 
-    def get_tool_names(self, path: Optional[Path] = None) -> list[str]:
+    def get_tool_names(self) -> list[str]:
         """
         Get a list of tool names in the user's project.
         """
         ...
 
-    def add_tool(self, tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None:
+    def add_tool(self, tool: ToolConfig, agent_name: str) -> None:
         """
         Add a tool to an agent in the user's project.
         """
         ...
 
-    def remove_tool(self, tool: ToolConfig, agent_name: str, path: Optional[Path] = None) -> None:
+    def remove_tool(self, tool: ToolConfig, agent_name: str) -> None:
         """
         Remove a tool from an agent in user's project.
         """
         ...
 
-    def get_agent_names(self, path: Optional[Path] = None) -> list[str]:
+    def get_agent_names(self) -> list[str]:
         """
         Get a list of agent names in the user's project.
         """
         ...
 
-    def get_agent_tool_names(self, agent_name: str, path: Optional[Path] = None) -> list[str]:
+    def get_agent_tool_names(self, agent_name: str) -> list[str]:
         """
         Get a list of tool names in an agent in the user's project.
         """
         ...
 
-    def add_agent(self, agent: AgentConfig, path: Optional[Path] = None) -> None:
+    def add_agent(self, agent: AgentConfig) -> None:
         """
         Add an agent to the user's project.
         """
         ...
 
-    def add_task(self, task: TaskConfig, path: Optional[Path] = None) -> None:
+    def add_task(self, task: TaskConfig) -> None:
         """
         Add a task to the user's project.
+        """
+        ...
+
+    def get_task_names(self) -> list[str]:
+        """
+        Get a list of task names in the user's project.
         """
         ...
 
@@ -80,55 +88,59 @@ def get_framework_module(framework: str) -> FrameworkModule:
     except ImportError:
         raise Exception(f"Framework {framework} could not be imported.")
 
-def get_entrypoint_path(framework: str, path: Optional[Path] = None) -> Path:
+def get_entrypoint_path(framework: str) -> Path:
     """
     Get the path to the entrypoint file for a framework.
     """
-    if path is None:
-        path = Path()
-    return path / get_framework_module(framework).ENTRYPOINT
+    return conf.PATH / get_framework_module(framework).ENTRYPOINT
 
-def validate_project(framework: str, path: Optional[Path] = None):
+def validate_project():
     """
     Validate that the user's project is ready to run.
     """
-    return get_framework_module(framework).validate_project(path)
+    return get_framework_module(get_framework()).validate_project()
 
-def add_tool(framework: str, tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
+def add_tool(tool: ToolConfig, agent_name: str):
     """
     Add a tool to the user's project. 
     The tool will have aready been installed in the user's application and have
     all dependencies installed. We're just handling code generation here.
     """
-    return get_framework_module(framework).add_tool(tool, agent_name, path)
+    return get_framework_module(get_framework()).add_tool(tool, agent_name)
 
-def remove_tool(framework: str, tool: ToolConfig, agent_name: str, path: Optional[Path] = None):
+def remove_tool(tool: ToolConfig, agent_name: str):
     """
     Remove a tool from the user's project.
     """
-    return get_framework_module(framework).remove_tool(tool, agent_name, path)
+    return get_framework_module(get_framework()).remove_tool(tool, agent_name)
 
-def get_agent_names(framework: str, path: Optional[Path] = None) -> list[str]:
+def get_agent_names() -> list[str]:
     """
     Get a list of agent names in the user's project.
     """
-    return get_framework_module(framework).get_agent_names(path)
+    return get_framework_module(get_framework()).get_agent_names()
 
-def get_agent_tool_names(framework: str, agent_name: str, path: Optional[Path] = None) -> list[str]:
+def get_agent_tool_names(agent_name: str) -> list[str]:
     """
     Get a list of tool names in the user's project.
     """
-    return get_framework_module(framework).get_agent_tool_names(agent_name, path)
+    return get_framework_module(get_framework()).get_agent_tool_names(agent_name)
 
-def add_agent(framework: str, agent: AgentConfig, path: Optional[Path] = None):
+def add_agent(agent: AgentConfig):
     """
     Add an agent to the user's project.
     """
-    return get_framework_module(framework).add_agent(agent, path)
+    return get_framework_module(get_framework()).add_agent(agent)
 
-def add_task(framework: str, task: TaskConfig, path: Optional[Path] = None):
+def add_task(task: TaskConfig):
     """
     Add a task to the user's project.
     """
-    return get_framework_module(framework).add_task(task, path)
+    return get_framework_module(get_framework()).add_task(task)
+
+def get_task_names() -> list[str]:
+    """
+    Get a list of task names in the user's project.
+    """
+    return get_framework_module(get_framework()).get_task_names()
 

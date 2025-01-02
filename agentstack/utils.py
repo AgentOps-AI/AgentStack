@@ -1,11 +1,13 @@
-from typing import Optional, Union
-import os, sys
+import os
+import sys
 import json
 from ruamel.yaml import YAML
 import re
 from importlib.metadata import version
 from pathlib import Path
 import importlib.resources
+from agentstack import conf
+from inquirer import errors as inquirer_errors
 
 
 def get_version(package: str = 'agentstack'):
@@ -16,11 +18,9 @@ def get_version(package: str = 'agentstack'):
         return "Unknown version"
 
 
-def verify_agentstack_project(path: Optional[Path] = None):
-    from agentstack.generation import ConfigFile
-
+def verify_agentstack_project():
     try:
-        agentstack_config = ConfigFile(path)
+        agentstack_config = conf.ConfigFile()
     except FileNotFoundError:
         print(
             "\033[31mAgentStack Error: This does not appear to be an AgentStack project."
@@ -37,35 +37,25 @@ def get_package_path() -> Path:
     return importlib.resources.files('agentstack')  # type: ignore[return-value]
 
 
-def get_framework(path: Union[str, Path, None] = None) -> str:
-    from agentstack.generation import ConfigFile
-
-    try:
-        agentstack_config = ConfigFile(path)
-        framework = agentstack_config.framework
-
-        if framework.lower() not in ['crewai', 'autogen', 'litellm']:
-            print(term_color("agentstack.json contains an invalid framework", "red"))
-
-        return framework
-    except FileNotFoundError:
-        print("\033[31mFile agentstack.json does not exist. Are you in the right directory?\033[0m")
-        sys.exit(1)
+def get_framework() -> str:
+    """Assert that we're inside a valid project and return the framework name."""
+    verify_agentstack_project()
+    framework = conf.get_framework()
+    assert framework  # verify_agentstack_project should catch this
+    return framework
 
 
-def get_telemetry_opt_out(path: Optional[str] = None) -> bool:
+def get_telemetry_opt_out() -> bool:
     """
     Gets the telemetry opt out setting.
     First checks the environment variable AGENTSTACK_TELEMETRY_OPT_OUT.
     If that is not set, it checks the agentstack.json file.
     Otherwise we can assume the user has not opted out.
     """
-    from agentstack.generation import ConfigFile
-
     try:
         return bool(os.environ['AGENTSTACK_TELEMETRY_OPT_OUT'])
     except KeyError:
-        agentstack_config = ConfigFile(path)
+        agentstack_config = conf.ConfigFile()
         return bool(agentstack_config.telemetry_opt_out)
     except FileNotFoundError:
         return False
@@ -119,3 +109,14 @@ def term_color(text: str, color: str) -> str:
 
 def is_snake_case(string: str):
     return bool(re.match('^[a-z0-9_]+$', string))
+
+
+def validator_not_empty(min_length=1):
+    def validator(_, answer):
+        if len(answer) < min_length:
+            raise inquirer_errors.ValidationError(
+                '', reason=f"This field must be at least {min_length} characters long."
+            )
+        return True
+
+    return validator

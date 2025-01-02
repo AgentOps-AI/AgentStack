@@ -5,9 +5,9 @@ import unittest
 from parameterized import parameterized_class
 import ast
 
+from agentstack.conf import ConfigFile, set_path
 from agentstack import frameworks
 from agentstack.tools import get_all_tools, ToolConfig
-from agentstack.generation.files import ConfigFile
 from agentstack.generation.tool_generation import add_tool, remove_tool, TOOLS_INIT_FILENAME
 
 
@@ -26,23 +26,24 @@ class TestGenerationTool(unittest.TestCase):
         (self.project_dir / 'src' / '__init__.py').touch()
         (self.project_dir / TOOLS_INIT_FILENAME).touch()
 
-        # populate the entrypoint
-        entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
-        shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
-
         # set the framework in agentstack.json
         shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')
-        with ConfigFile(self.project_dir) as config:
+        set_path(self.project_dir)
+        with ConfigFile() as config:
             config.framework = self.framework
+
+        # populate the entrypoint
+        entrypoint_path = frameworks.get_entrypoint_path(self.framework)
+        shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
 
     def tearDown(self):
         shutil.rmtree(self.project_dir)
 
     def test_add_tool(self):
         tool_conf = ToolConfig.from_tool_name('agent_connect')
-        add_tool('agent_connect', path=self.project_dir)
+        add_tool('agent_connect')
 
-        entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
+        entrypoint_path = frameworks.get_entrypoint_path(self.framework)
         entrypoint_src = open(entrypoint_path).read()
         ast.parse(entrypoint_src)
         tools_init_src = open(self.project_dir / TOOLS_INIT_FILENAME).read()
@@ -55,10 +56,10 @@ class TestGenerationTool(unittest.TestCase):
 
     def test_remove_tool(self):
         tool_conf = ToolConfig.from_tool_name('agent_connect')
-        add_tool('agent_connect', path=self.project_dir)
-        remove_tool('agent_connect', path=self.project_dir)
+        add_tool('agent_connect')
+        remove_tool('agent_connect')
 
-        entrypoint_path = frameworks.get_entrypoint_path(self.framework, self.project_dir)
+        entrypoint_path = frameworks.get_entrypoint_path(self.framework)
         entrypoint_src = open(entrypoint_path).read()
         ast.parse(entrypoint_src)
         tools_init_src = open(self.project_dir / TOOLS_INIT_FILENAME).read()

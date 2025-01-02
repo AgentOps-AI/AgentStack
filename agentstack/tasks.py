@@ -4,7 +4,8 @@ from pathlib import Path
 import pydantic
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
-from agentstack import ValidationError
+from agentstack import conf
+from agentstack.exceptions import ValidationError
 
 
 TASKS_FILENAME: Path = Path("src/config/tasks.yaml")
@@ -42,11 +43,8 @@ class TaskConfig(pydantic.BaseModel):
     expected_output: str = ""
     agent: str = ""
 
-    def __init__(self, name: str, path: Optional[Path] = None):
-        if not path:
-            path = Path()
-
-        filename = path / TASKS_FILENAME
+    def __init__(self, name: str):
+        filename = conf.PATH / TASKS_FILENAME
         if not os.path.exists(filename):
             os.makedirs(filename.parent, exist_ok=True)
             filename.touch()
@@ -65,9 +63,6 @@ class TaskConfig(pydantic.BaseModel):
                 error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(f"Error loading task {name} from {filename}.\n{error_str}")
 
-        # store the path *after* loading data
-        self._path = path
-
     def model_dump(self, *args, **kwargs) -> dict:
         dump = super().model_dump(*args, **kwargs)
         dump.pop('name')  # name is the key, so keep it out of the data
@@ -77,7 +72,7 @@ class TaskConfig(pydantic.BaseModel):
         return {self.name: dump}
 
     def write(self):
-        filename = self._path / TASKS_FILENAME
+        filename = conf.PATH / TASKS_FILENAME
 
         with open(filename, 'r') as f:
             data = yaml.load(f) or {}
@@ -94,10 +89,8 @@ class TaskConfig(pydantic.BaseModel):
         self.write()
 
 
-def get_all_task_names(path: Optional[Path] = None) -> list[str]:
-    if not path:
-        path = Path()
-    filename = path / TASKS_FILENAME
+def get_all_task_names() -> list[str]:
+    filename = conf.PATH / TASKS_FILENAME
     if not os.path.exists(filename):
         return []
     with open(filename, 'r') as f:
@@ -105,5 +98,5 @@ def get_all_task_names(path: Optional[Path] = None) -> list[str]:
     return list(data.keys())
 
 
-def get_all_tasks(path: Optional[Path] = None) -> list[TaskConfig]:
-    return [TaskConfig(name, path) for name in get_all_task_names(path)]
+def get_all_tasks() -> list[TaskConfig]:
+    return [TaskConfig(name) for name in get_all_task_names()]
