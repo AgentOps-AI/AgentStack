@@ -6,6 +6,7 @@ import importlib.util
 from dotenv import load_dotenv
 
 from agentstack import conf
+from agentstack.conf import assert_project
 from agentstack.exceptions import ValidationError
 from agentstack import inputs
 from agentstack import frameworks
@@ -91,6 +92,7 @@ def _import_project_module(path: Path):
 
 def run_project(command: str = 'run', debug: bool = False, cli_args: Optional[str] = None):
     """Validate that the project is ready to run and then run it."""
+    assert_project()
     if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
         print(term_color(f"Framework {conf.get_framework()} is not supported by agentstack.", 'red'))
         sys.exit(1)
