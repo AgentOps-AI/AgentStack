@@ -9,7 +9,7 @@ from pathlib import Path
 
 import inquirer
 from appdirs import user_data_dir
-from agentstack.logger import log
+from agentstack import log
 
 
 try:

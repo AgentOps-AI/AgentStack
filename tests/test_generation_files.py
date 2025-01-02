@@ -74,7 +74,7 @@ class GenerationFilesTest(unittest.TestCase):
 
     def test_verify_agentstack_project_invalid(self):
         conf.set_path(BASE_PATH / "missing")
-        with self.assertRaises(SystemExit) as _:
+        with self.assertRaises(Exception) as _:
             verify_agentstack_project()
 
     def test_get_framework(self):
@@ -82,7 +82,7 @@ class GenerationFilesTest(unittest.TestCase):
 
     def test_get_framework_missing(self):
         conf.set_path(BASE_PATH / "missing")
-        with self.assertRaises(SystemExit) as _:
+        with self.assertRaises(Exception) as _:
             get_framework()
 
     def test_read_env(self):

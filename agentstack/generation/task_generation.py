@@ -1,6 +1,6 @@
-import sys
 from typing import Optional
 from pathlib import Path
+from agentstack import log
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack.utils import verify_agentstack_project
@@ -28,8 +28,8 @@ def add_task(
 
     try:
         frameworks.add_task(task)
-        print(f"    > Added to {TASKS_FILENAME}")
+        log.info(f"Added task \"{task_name}\" to project.")
     except ValidationError as e:
-        print(f"Error adding task to project:\n{e}")
-        sys.exit(1)
-    print(f"Added task \"{task_name}\" to your AgentStack project successfully!")
+        raise ValidationError(f"Error adding task to project:\n{e}")
+
+    log.success(f"Added task \"{task_name}\" to your AgentStack project successfully!")

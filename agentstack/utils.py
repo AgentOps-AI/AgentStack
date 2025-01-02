@@ -14,7 +14,6 @@ def get_version(package: str = 'agentstack'):
     try:
         return version(package)
     except (KeyError, FileNotFoundError) as e:
-        print(e)
         return "Unknown version"
 
 
@@ -22,12 +21,11 @@ def verify_agentstack_project():
     try:
         agentstack_config = conf.ConfigFile()
     except FileNotFoundError:
-        print(
-            "\033[31mAgentStack Error: This does not appear to be an AgentStack project."
-            "\nPlease ensure you're at the root directory of your project and a file named agentstack.json exists. "
-            "If you're starting a new project, run `agentstack init`\033[0m"
+        raise Exception(
+            "This does not appear to be an AgentStack project.\n"
+            "Please ensure you're at the root directory of your project and a file named agentstack.json exists.\n"
+            "If you're starting a new project, run `agentstack init`."
         )
-        sys.exit(1)
 
 
 def get_package_path() -> Path:
