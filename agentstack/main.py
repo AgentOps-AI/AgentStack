@@ -159,6 +159,7 @@ def main():
 
     # Handle commands
     try:
+        # outside of project
         if args.command in ["docs"]:
             webbrowser.open("https://docs.agentstack.sh/")
         elif args.command in ["quickstart"]:
@@ -167,7 +168,28 @@ def main():
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["init", "i"]:
             init_project_builder(args.slug_name, args.template, args.wizard)
-        elif args.command in ["run", "r"]:
+        elif args.command in ["tools", "t"]:
+            if args.tools_command in ["list", "l"]:
+                list_tools()
+            elif args.tools_command in ["add", "a"]:
+                conf.assert_project()
+                agents = [args.agent] if args.agent else None
+                agents = args.agents.split(",") if args.agents else agents
+                add_tool(args.name, agents)
+            elif args.tools_command in ["remove", "r"]:
+                conf.assert_project()
+                generation.remove_tool(args.name)
+            else:
+                tools_parser.print_help()
+        elif args.command in ['login']:
+            auth.login()
+        elif args.command in ['update', 'u']:
+            pass  # Update check already done
+
+        # inside project dir commands only
+        conf.assert_project()
+
+        if args.command in ["run", "r"]:
             run_project(command=args.function, debug=args.debug, cli_args=extra_args)
         elif args.command in ['generate', 'g']:
             if args.generate_command in ['agent', 'a']:
@@ -178,25 +200,16 @@ def main():
                 generation.add_task(args.name, args.description, args.expected_output, args.agent)
             else:
                 generate_parser.print_help()
-        elif args.command in ["tools", "t"]:
-            if args.tools_command in ["list", "l"]:
-                list_tools()
-            elif args.tools_command in ["add", "a"]:
-                agents = [args.agent] if args.agent else None
-                agents = args.agents.split(",") if args.agents else agents
-                add_tool(args.name, agents)
-            elif args.tools_command in ["remove", "r"]:
-                generation.remove_tool(args.name)
-            else:
-                tools_parser.print_help()
         elif args.command in ['export', 'e']:
             export_template(args.filename)
-        elif args.command in ['login']:
-            auth.login()
-        elif args.command in ['update', 'u']:
-            pass  # Update check already done
         else:
             parser.print_help()
+
+    except conf.NoProjectException as e:
+        update_telemetry(telemetry_id, result=1, message=str(e))
+        print(term_color(str(e), "red"))
+        sys.exit(1)
+
     except Exception as e:
         update_telemetry(telemetry_id, result=1, message=str(e))
         print(term_color("An error occurred while running your AgentStack command:", "red"))
