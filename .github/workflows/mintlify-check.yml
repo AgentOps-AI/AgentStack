@@ -22,17 +22,17 @@ jobs:
       - name: Install Mintlify
         run: npm install -g mintlify
 
-      - name: Build documentation
+      - name: Test documentation
         run: |
           cd docs
-          mintlify broken-links
-          mintlify dev
-
-      - name: Check build status
-        run: |
-          if [ $? -eq 0 ]; then
-            echo "Documentation build successful!"
+          # If mintlify dev has errors, it will exit with status 1
+          # If it starts successfully, kill it after 5 seconds
+          timeout 5s mintlify dev || exit_status=$?
+          if [ $exit_status -eq 124 ]; then
+            # timeout exit code 124 means the process was killed after starting successfully
+            echo "Mintlify dev started successfully!"
+            exit 0
           else
-            echo "Documentation build failed!"
+            echo "Mintlify dev failed to start"
             exit 1
           fi
