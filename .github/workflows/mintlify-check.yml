@@ -25,7 +25,8 @@ jobs:
       - name: Build documentation
         run: |
           cd docs
-          mintlify build
+          mintlify broken-links
+          mintlify dev
 
       - name: Check build status
         run: |
