@@ -30,9 +30,9 @@ jobs:
           timeout 5s mintlify dev || exit_status=$?
           if [ $exit_status -eq 124 ]; then
             # timeout exit code 124 means the process was killed after starting successfully
-            echo "Mintlify dev started successfully!"
+            echo "Documentation built successfully!"
             exit 0
           else
-            echo "Mintlify dev failed to start"
+            echo "Documentation failed to build! Try running `mintlify dev` from the docs dir locally"
             exit 1
           fi
