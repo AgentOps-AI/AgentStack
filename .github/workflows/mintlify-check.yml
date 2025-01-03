@@ -18,33 +18,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
 
       - name: Install Mintlify
         run: npm install -g mintlify
 
-      - name: Build documentation
+      - name: Test documentation
         run: |
           cd docs
-          mintlify build
-
-      - name: Check build status
-        run: |
-          if [ $? -eq 0 ]; then
-            echo "Documentation build successful!"
+          # If mintlify dev has errors, it will exit with status 1
+          # If it starts successfully, kill it after 5 seconds
+          timeout 5s mintlify dev || exit_status=$?
+          if [ $exit_status -eq 124 ]; then
+            # timeout exit code 124 means the process was killed after starting successfully
+            echo "Documentation built successfully!"
+            exit 0
           else
-            echo "Documentation build failed!"
+            echo "Documentation failed to build! Try running `mintlify dev` from the docs dir locally"
             exit 1
           fi
-
-      - name: Comment on PR if build fails
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '❌ Mintlify documentation build failed. Please check the build logs for details.'
-            })

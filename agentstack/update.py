@@ -112,7 +112,7 @@ def check_for_updates(update_requested: bool = False):
     if not update_requested and not should_update():
         return
 
-    print("Checking for updates...\n")
+    print("Checking for updates...")
 
     try:
         latest_version: Version = get_latest_version(AGENTSTACK_PACKAGE)
