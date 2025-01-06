@@ -46,16 +46,13 @@ def init_project_builder(
     use_wizard: bool = False,
 ):
     if not slug_name and not use_wizard:
-        print(term_color("Project name is required. Use `agentstack init <project_name>`", 'red'))
-        return
+        raise Exception("Project name is required. Use `agentstack init <project_name>`")
 
     if slug_name and not is_snake_case(slug_name):
-        print(term_color("Project name must be snake case", 'red'))
-        return
+        raise Exception("Project slug name must be snake_case")
 
     if template is not None and use_wizard:
-        print(term_color("Template and wizard flags cannot be used together", 'red'))
-        return
+        raise Exception("Template and wizard flags cannot be used together")
 
     template_data = None
     if template is not None:
