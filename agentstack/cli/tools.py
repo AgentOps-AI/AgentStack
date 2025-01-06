@@ -12,14 +12,19 @@ def list_tools():
     List all available tools by category.
     """
     tools = get_all_tools()
-    curr_category = None
-
+    categories = {}
+    
+    # Group tools by category
+    for tool in tools:
+        if tool.category not in categories:
+            categories[tool.category] = []
+        categories[tool.category].append(tool)
+    
     print("\n\nAvailable AgentStack Tools:")
-    for category, tools in itertools.groupby(tools, lambda x: x.category):
-        if curr_category != category:
-            print(f"\n{category}:")
-            curr_category = category
-        for tool in tools:
+    # Display tools by category
+    for category in sorted(categories.keys()):
+        print(f"\n{category}:")
+        for tool in categories[category]:
             print("  - ", end='')
             print(term_color(f"{tool.name}", 'blue'), end='')
             print(f": {tool.url if tool.url else 'AgentStack default tool'}")

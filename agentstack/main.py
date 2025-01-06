@@ -213,8 +213,7 @@ def main():
     except Exception as e:
         update_telemetry(telemetry_id, result=1, message=str(e))
         print(term_color("An error occurred while running your AgentStack command:", "red"))
-        print(e)
-        sys.exit(1)
+        raise e
 
     update_telemetry(telemetry_id, result=0)
 
