@@ -22,10 +22,10 @@ class AgentConfigTest(unittest.TestCase):
     def test_empty_file(self):
         config = AgentConfig("agent_name")
         assert config.name == "agent_name"
-        assert config.role is ""
-        assert config.goal is ""
-        assert config.backstory is ""
-        assert config.llm is ""
+        assert config.role == ""
+        assert config.goal == ""
+        assert config.backstory == ""
+        assert config.llm == ""
 
     def test_read_minimal_yaml(self):
         shutil.copy(BASE_PATH / "fixtures/agents_min.yaml", self.project_dir / AGENTS_FILENAME)
