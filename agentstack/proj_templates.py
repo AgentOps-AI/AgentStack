@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Optional, Literal
 import os, sys
 from pathlib import Path
 import pydantic
