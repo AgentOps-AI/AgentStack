@@ -1,0 +1,10 @@
+{
+    "framework": "crewai",
+    "tools": [
+        "agentql"
+    ],
+    "default_model": "openai/gpt-4o",
+    "agentstack_version": "0.2.2.1",
+    "template": "none",
+    "template_version": "0"
+}

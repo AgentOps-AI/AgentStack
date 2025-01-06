@@ -1,8 +1,8 @@
 from typing import Optional
-import os, sys
+import os
+import sys
 import time
 from datetime import datetime
-from pathlib import Path
 
 import json
 import shutil
@@ -26,8 +26,9 @@ from agentstack import generation
 from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
-from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework
+from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework, validator_not_empty
 from agentstack.proj_templates import TemplateConfig
+from agentstack.exceptions import ValidationError
 
 
 PREFERRED_MODELS = [
@@ -184,6 +185,75 @@ def ask_framework() -> str:
     return framework
 
 
+def get_validated_input(
+    message: str,
+    validate_func=None,
+    min_length: int = 0,
+    snake_case: bool = False,
+) -> str:
+    """Helper function to get validated input from user.
+
+    Args:
+        message: The prompt message to display
+        validate_func: Optional custom validation function
+        min_length: Minimum length requirement (0 for no requirement)
+        snake_case: Whether to enforce snake_case naming
+    """
+    while True:
+        try:
+            value = inquirer.text(
+                message=message,
+                validate=validate_func or validator_not_empty(min_length) if min_length else None,
+            )
+            if snake_case and not is_snake_case(value):
+                raise ValidationError("Input must be in snake_case")
+            return value
+        except ValidationError as e:
+            print(term_color(f"Error: {str(e)}", 'red'))
+
+
+def ask_agent_details():
+    agent = {}
+
+    agent['name'] = get_validated_input(
+        "What's the name of this agent? (snake_case)", min_length=3, snake_case=True
+    )
+
+    agent['role'] = get_validated_input("What role does this agent have?", min_length=3)
+
+    agent['goal'] = get_validated_input("What is the goal of the agent?", min_length=10)
+
+    agent['backstory'] = get_validated_input("Give your agent a backstory", min_length=10)
+
+    agent['model'] = inquirer.list_input(
+        message="What LLM should this agent use?", choices=PREFERRED_MODELS, default=PREFERRED_MODELS[0]
+    )
+
+    return agent
+
+
+def ask_task_details(agents: list[dict]) -> dict:
+    task = {}
+
+    task['name'] = get_validated_input(
+        "What's the name of this task? (snake_case)", min_length=3, snake_case=True
+    )
+
+    task['description'] = get_validated_input("Describe the task in more detail", min_length=10)
+
+    task['expected_output'] = get_validated_input(
+        "What do you expect the result to look like? (ex: A 5 bullet point summary of the email)",
+        min_length=10,
+    )
+
+    task['agent'] = inquirer.list_input(
+        message="Which agent should be assigned this task?",
+        choices=[a['name'] for a in agents],
+    )
+
+    return task
+
+
 def ask_design() -> dict:
     use_wizard = inquirer.confirm(
         message="Would you like to use the CLI wizard to set up agents and tasks?",
@@ -208,39 +278,10 @@ First we need to create the agents that will work together to accomplish tasks:
     while make_agent:
         print('---')
         print(f"Agent #{len(agents)+1}")
-
-        agent_incomplete = True
         agent = None
-        while agent_incomplete:
-            agent = inquirer.prompt(
-                [
-                    inquirer.Text("name", message="What's the name of this agent? (snake_case)"),
-                    inquirer.Text("role", message="What role does this agent have?"),
-                    inquirer.Text("goal", message="What is the goal of the agent?"),
-                    inquirer.Text("backstory", message="Give your agent a backstory"),
-                    # TODO: make a list - #2
-                    inquirer.Text(
-                        'model',
-                        message="What LLM should this agent use? (any LiteLLM provider)",
-                        default="openai/gpt-4",
-                    ),
-                    # inquirer.List("model", message="What LLM should this agent use? (any LiteLLM provider)", choices=[
-                    #     'mixtral_llm',
-                    #     'mixtral_llm',
-                    # ]),
-                ]
-            )
-
-            if not agent['name'] or agent['name'] == '':
-                print(term_color("Error: Agent name is required - Try again", 'red'))
-                agent_incomplete = True
-            elif not is_snake_case(agent['name']):
-                print(term_color("Error: Agent name must be snake case - Try again", 'red'))
-            else:
-                agent_incomplete = False
-
-        make_agent = inquirer.confirm(message="Create another agent?")
+        agent = ask_agent_details()
         agents.append(agent)
+        make_agent = inquirer.confirm(message="Create another agent?")
 
     print('')
     for x in range(3):
@@ -257,35 +298,9 @@ First we need to create the agents that will work together to accomplish tasks:
     while make_task:
         print('---')
         print(f"Task #{len(tasks) + 1}")
-
-        task_incomplete = True
-        task = None
-        while task_incomplete:
-            task = inquirer.prompt(
-                [
-                    inquirer.Text("name", message="What's the name of this task? (snake_case)"),
-                    inquirer.Text("description", message="Describe the task in more detail"),
-                    inquirer.Text(
-                        "expected_output",
-                        message="What do you expect the result to look like? (ex: A 5 bullet point summary of the email)",
-                    ),
-                    inquirer.List(
-                        "agent",
-                        message="Which agent should be assigned this task?",
-                        choices=[a['name'] for a in agents],  # type: ignore
-                    ),
-                ]
-            )
-
-            if not task['name'] or task['name'] == '':
-                print(term_color("Error: Task name is required - Try again", 'red'))
-            elif not is_snake_case(task['name']):
-                print(term_color("Error: Task name must be snake case - Try again", 'red'))
-            else:
-                task_incomplete = False
-
-        make_task = inquirer.confirm(message="Create another task?")
+        task = ask_task_details(agents)
         tasks.append(task)
+        make_task = inquirer.confirm(message="Create another task?")
 
     print('')
     for x in range(3):
