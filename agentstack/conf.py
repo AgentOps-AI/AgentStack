@@ -16,7 +16,7 @@ def assert_project() -> None:
         ConfigFile()
         return
     except FileNotFoundError:
-        raise NoProjectException("Could not find agentstack.json, are you in an AgentStack project directory?")
+        raise Exception("Could not find agentstack.json, are you in an AgentStack project directory?")
 
 def set_path(path: Union[str, Path, None]):
     """Set the path to the project directory."""
@@ -102,7 +102,3 @@ class ConfigFile(BaseModel):
 
     def __exit__(self, *args):
         self.write()
-
-
-class NoProjectException(Exception):
-    pass

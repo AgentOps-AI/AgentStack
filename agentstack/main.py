@@ -205,11 +205,6 @@ def main():
         else:
             parser.print_help()
 
-    except conf.NoProjectException as e:
-        update_telemetry(telemetry_id, result=1, message=str(e))
-        print(term_color(str(e), "red"))
-        sys.exit(1)
-
     except Exception as e:
         update_telemetry(telemetry_id, result=1, message=str(e))
         print(term_color("An error occurred while running your AgentStack command:", "red"))
