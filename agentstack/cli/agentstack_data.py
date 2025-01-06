@@ -51,10 +51,16 @@ class ProjectMetadata:
 
 
 class ProjectStructure:
-    def __init__(self):
+    def __init__(
+        self,
+        method: str = "sequential",
+        manager_agent: Optional[str] = None,
+    ):
         self.agents = []
         self.tasks = []
         self.inputs = {}
+        self.method = method
+        self.manager_agent = manager_agent
 
     def add_agent(self, agent):
         self.agents.append(agent)
@@ -67,6 +73,8 @@ class ProjectStructure:
 
     def to_dict(self):
         return {
+            'method': self.method,
+            'manager_agent': self.manager_agent,
             'agents': self.agents,
             'tasks': self.tasks,
             'inputs': self.inputs,
