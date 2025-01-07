@@ -36,7 +36,7 @@ def deploy():
             'http://localhost:3000/deploy/build',
             files={'code': ('code.zip', open(tmp.name, 'rb'))},
             params={'projectId': project_id},
-            headers={'Authorization': bearer_token}
+            headers={'Authorization': f'Bearer {bearer_token}'}
         )
 
     if response.status_code != 200:
@@ -44,6 +44,7 @@ def deploy():
         print(response.text)
         return
 
+    print(term_color("🚀 Successfully deployed with AgentStack.sh! Opening in browser...", "green"))
     webbrowser.open(f"http://localhost:5173/project/{project_id}")
 
 
