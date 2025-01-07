@@ -46,16 +46,13 @@ def init_project_builder(
     use_wizard: bool = False,
 ):
     if not slug_name and not use_wizard:
-        print(term_color("Project name is required. Use `agentstack init <project_name>`", 'red'))
-        return
+        raise Exception("Project name is required. Use `agentstack init <project_name>`")
 
     if slug_name and not is_snake_case(slug_name):
-        print(term_color("Project name must be snake case", 'red'))
-        return
+        raise Exception("Project slug name must be snake_case")
 
     if template is not None and use_wizard:
-        print(term_color("Template and wizard flags cannot be used together", 'red'))
-        return
+        raise Exception("Template and wizard flags cannot be used together")
 
     template_data = None
     if template is not None:
@@ -388,7 +385,10 @@ def insert_template(
         template_version=template_data.template_version if template_data else 0,
     )
 
-    project_structure = ProjectStructure()
+    project_structure = ProjectStructure(
+        method=template_data.method if template_data else "sequential",
+        manager_agent=template_data.manager_agent if template_data else None,
+    )
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
     project_structure.inputs = design["inputs"]
@@ -471,6 +471,7 @@ def export_template(output_filename: str):
                 role=agent.role,
                 goal=agent.goal,
                 backstory=agent.backstory,
+                allow_delegation=False,  # TODO
                 model=agent.llm,  # TODO consistent naming (llm -> model)
             )
         )
@@ -507,11 +508,12 @@ def export_template(output_filename: str):
         )
 
     template = TemplateConfig(
-        template_version=2,
+        template_version=3,
         name=metadata.project_name,
         description=metadata.project_description,
         framework=get_framework(),
         method="sequential",  # TODO this needs to be stored in the project somewhere
+        manager_agent=None,  # TODO
         agents=agents,
         tasks=tasks,
         tools=tools,

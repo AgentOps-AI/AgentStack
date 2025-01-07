@@ -1,5 +1,5 @@
 from typing import Optional, Union
-import os, sys
+import os
 import json
 from pathlib import Path
 from pydantic import BaseModel
@@ -11,6 +11,12 @@ CONFIG_FILENAME = "agentstack.json"
 
 PATH: Path = Path()
 
+def assert_project() -> None:
+    try:
+        ConfigFile()
+        return
+    except FileNotFoundError:
+        raise Exception("Could not find agentstack.json, are you in an AgentStack project directory?")
 
 def set_path(path: Union[str, Path, None]):
     """Set the path to the project directory."""
