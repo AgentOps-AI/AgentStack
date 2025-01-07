@@ -162,12 +162,16 @@ def main():
         # outside of project
         if args.command in ["docs"]:
             webbrowser.open("https://docs.agentstack.sh/")
+            return
         elif args.command in ["quickstart"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
+            return
         elif args.command in ["templates"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
+            return
         elif args.command in ["init", "i"]:
             init_project_builder(args.slug_name, args.template, args.wizard)
+            return
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()
@@ -181,10 +185,12 @@ def main():
                 generation.remove_tool(args.name)
             else:
                 tools_parser.print_help()
+            return
         elif args.command in ['login']:
             auth.login()
+            return
         elif args.command in ['update', 'u']:
-            pass  # Update check already done
+            return  # Update check already done
 
         # inside project dir commands only
         conf.assert_project()
