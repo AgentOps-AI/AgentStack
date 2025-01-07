@@ -162,16 +162,12 @@ def main():
         # outside of project
         if args.command in ["docs"]:
             webbrowser.open("https://docs.agentstack.sh/")
-            return
         elif args.command in ["quickstart"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
-            return
         elif args.command in ["templates"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
-            return
         elif args.command in ["init", "i"]:
             init_project_builder(args.slug_name, args.template, args.wizard)
-            return
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()
@@ -185,19 +181,17 @@ def main():
                 generation.remove_tool(args.name)
             else:
                 tools_parser.print_help()
-            return
         elif args.command in ['login']:
             auth.login()
-            return
         elif args.command in ['update', 'u']:
-            return  # Update check already done
+            pass  # Update check already done
 
         # inside project dir commands only
-        conf.assert_project()
-
-        if args.command in ["run", "r"]:
+        elif args.command in ["run", "r"]:
+            conf.assert_project()
             run_project(command=args.function, debug=args.debug, cli_args=extra_args)
         elif args.command in ['generate', 'g']:
+            conf.assert_project()
             if args.generate_command in ['agent', 'a']:
                 if not args.llm:
                     configure_default_model()
@@ -207,6 +201,7 @@ def main():
             else:
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:
+            conf.assert_project()
             export_template(args.filename)
         else:
             parser.print_help()
