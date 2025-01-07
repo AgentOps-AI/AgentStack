@@ -1,3 +1,4 @@
+import importlib
 from typing import Optional
 import os
 import sys
@@ -19,17 +20,16 @@ from .agentstack_data import (
 from agentstack.logger import log
 from agentstack import conf
 from agentstack.conf import ConfigFile
-from agentstack.utils import get_package_path
+from agentstack.utils import get_package_path, get_framework, validator_not_empty
 from agentstack.generation.files import ProjectFile
 from agentstack import frameworks
 from agentstack import generation
 from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
-from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework, validator_not_empty
 from agentstack.proj_templates import TemplateConfig
 from agentstack.exceptions import ValidationError
-
+from agentstack.utils import open_json_file, term_color, is_snake_case, verify_agentstack_project
 
 PREFERRED_MODELS = [
     'openai/gpt-4o',
@@ -526,3 +526,14 @@ def export_template(output_filename: str):
     except Exception as e:
         print(term_color(f"Failed to write template to file: {e}", 'red'))
         sys.exit(1)
+
+
+def serve_project():
+    verify_agentstack_project()
+
+    # TODO: only silence output conditionally - maybe a debug or verbose option
+    os.system("docker stop agentstack-local > /dev/null 2>&1")
+    os.system("docker rm agentstack-local > /dev/null 2>&1")
+    with importlib.resources.path('agentstack.deploy', 'Dockerfile') as path:
+        os.system(f"docker build -t agent-service -f {path} .")
+    os.system("docker run --name agentstack-local -p 6969:6969 agent-service")

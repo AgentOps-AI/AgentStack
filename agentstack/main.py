@@ -1,4 +1,5 @@
 import sys
+from agentstack.cli import init_project_builder, list_tools, configure_default_model, serve_project
 import argparse
 import webbrowser
 
@@ -143,6 +144,9 @@ def main():
 
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
 
+    # 'serve' command
+    serve_parser = subparsers.add_parser('serve', aliases=['s'], help='Serve your agent')
+
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()
 
@@ -190,6 +194,9 @@ def main():
         elif args.command in ["run", "r"]:
             conf.assert_project()
             run_project(command=args.function, debug=args.debug, cli_args=extra_args)
+        elif args.command in ['serve', 's']:
+            conf.assert_project()
+            serve_project()
         elif args.command in ['generate', 'g']:
             conf.assert_project()
             if args.generate_command in ['agent', 'a']:
