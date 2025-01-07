@@ -19,48 +19,21 @@ class TemplateConfig_v1(pydantic.BaseModel):
     tools: list[dict]
     inputs: list[str]
 
-    def to_v2(self) -> 'TemplateConfig':
-        return TemplateConfig(
+    def to_v2(self) -> 'TemplateConfig_v2':
+        return TemplateConfig_v2(
             name=self.name,
             description=self.description,
             template_version=2,
             framework=self.framework,
             method=self.method,
-            agents=[TemplateConfig.Agent(**agent) for agent in self.agents],
-            tasks=[TemplateConfig.Task(**task) for task in self.tasks],
-            tools=[TemplateConfig.Tool(**tool) for tool in self.tools],
+            agents=[TemplateConfig_v2.Agent(**agent) for agent in self.agents],
+            tasks=[TemplateConfig_v2.Task(**task) for task in self.tasks],
+            tools=[TemplateConfig_v2.Tool(**tool) for tool in self.tools],
             inputs={key: "" for key in self.inputs},
         )
 
 
-class TemplateConfig(pydantic.BaseModel):
-    """
-    Interface for interacting with template configuration files.
-
-    Templates are read-only.
-
-    Template Schema
-    -------------
-    name: str
-        The name of the project.
-    description: str
-        A description of the template.
-    template_version: int
-        The version of the template.
-    framework: str
-        The framework the template is for.
-    method: str
-        The method used by the project. ie. "sequential"
-    agents: list[TemplateConfig.Agent]
-        A list of agents used by the project.
-    tasks: list[TemplateConfig.Task]
-        A list of tasks used by the project.
-    tools: list[TemplateConfig.Tool]
-        A list of tools used by the project.
-    inputs: list[str]
-        A list of inputs used by the project.
-    """
-
+class TemplateConfig_v2(pydantic.BaseModel):
     class Agent(pydantic.BaseModel):
         name: str
         role: str
@@ -88,6 +61,80 @@ class TemplateConfig(pydantic.BaseModel):
     tools: list[Tool]
     inputs: dict[str, str]
 
+    def to_v3(self) -> 'TemplateConfig':
+        return TemplateConfig(
+            name=self.name,
+            description=self.description,
+            template_version=3,
+            framework=self.framework,
+            method=self.method,
+            manager_agent=None,
+            agents=[TemplateConfig.Agent(**agent.dict()) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task.dict()) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool.dict()) for tool in self.tools],
+            inputs=self.inputs,
+        )
+
+
+class TemplateConfig(pydantic.BaseModel):
+    """
+    Interface for interacting with template configuration files.
+
+    Templates are read-only.
+
+    Template Schema
+    -------------
+    name: str
+        The name of the project.
+    description: str
+        A description of the template.
+    template_version: int
+        The version of the template.
+    framework: str
+        The framework the template is for.
+    method: str
+        The method used by the project. ie. "sequential"
+    manager_agent: Optional[str]
+        The name of the agent that manages the project.
+    agents: list[TemplateConfig.Agent]
+        A list of agents used by the project.
+    tasks: list[TemplateConfig.Task]
+        A list of tasks used by the project.
+    tools: list[TemplateConfig.Tool]
+        A list of tools used by the project.
+    inputs: list[str]
+        A list of inputs used by the project.
+    """
+
+    class Agent(pydantic.BaseModel):
+        name: str
+        role: str
+        goal: str
+        backstory: str
+        allow_delegation: bool = False
+        model: str
+
+    class Task(pydantic.BaseModel):
+        name: str
+        description: str
+        expected_output: str
+        agent: str
+
+    class Tool(pydantic.BaseModel):
+        name: str
+        agents: list[str]
+
+    name: str
+    description: str
+    template_version: Literal[3]
+    framework: str
+    method: str
+    manager_agent: Optional[str]
+    agents: list[Agent]
+    tasks: list[Task]
+    tools: list[Tool]
+    inputs: dict[str, str]
+
     def write_to_file(self, filename: Path):
         if not filename.suffix == '.json':
             filename = filename.with_suffix('.json')
@@ -98,6 +145,16 @@ class TemplateConfig(pydantic.BaseModel):
 
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':
+        # if url
+        if name.startswith('https://'):
+            return cls.from_url(name)
+
+        # if .json file
+        if name.endswith('.json'):
+            path = os.getcwd() / Path(name)
+            return cls.from_file(path)
+
+        # if named template
         path = get_package_path() / f'templates/proj_templates/{name}.json'
         if not name in get_all_template_names():
             raise ValidationError(f"Template {name} not bundled with agentstack.")
@@ -124,8 +181,10 @@ class TemplateConfig(pydantic.BaseModel):
         try:
             match data.get('template_version'):
                 case 1:
-                    return TemplateConfig_v1(**data).to_v2()
+                    return TemplateConfig_v1(**data).to_v2().to_v3()
                 case 2:
+                    return TemplateConfig_v2(**data).to_v3()
+                case 3:
                     return cls(**data)  # current version
                 case _:
                     raise ValidationError(f"Unsupported template version: {data.get('template_version')}")

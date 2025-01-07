@@ -148,7 +148,7 @@ def main():
 
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
 
-    # 'deploy' command
+    # 'serve' command
     serve_parser = subparsers.add_parser('serve', aliases=['s'], help='Serve your agent')
 
     # Parse known args and store unknown args in extras; some commands use them later on
@@ -167,6 +167,7 @@ def main():
 
     # Handle commands
     try:
+        # outside of project
         if args.command in ["docs"]:
             webbrowser.open("https://docs.agentstack.sh/")
         elif args.command in ["quickstart"]:
@@ -175,9 +176,33 @@ def main():
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["init", "i"]:
             init_project_builder(args.slug_name, args.template, args.wizard)
+        elif args.command in ["tools", "t"]:
+            if args.tools_command in ["list", "l"]:
+                list_tools()
+            elif args.tools_command in ["add", "a"]:
+                conf.assert_project()
+                agents = [args.agent] if args.agent else None
+                agents = args.agents.split(",") if args.agents else agents
+                add_tool(args.name, agents)
+            elif args.tools_command in ["remove", "r"]:
+                conf.assert_project()
+                generation.remove_tool(args.name)
+            else:
+                tools_parser.print_help()
+        elif args.command in ['login']:
+            auth.login()
+        elif args.command in ['update', 'u']:
+            pass  # Update check already done
+
+        # inside project dir commands only
         elif args.command in ["run", "r"]:
+            conf.assert_project()
             run_project(command=args.function, debug=args.debug, cli_args=extra_args)
+        elif args.command in ['serve', 's']:
+            conf.assert_project()
+            serve_project()
         elif args.command in ['generate', 'g']:
+            conf.assert_project()
             if args.generate_command in ['agent', 'a']:
                 if not args.llm:
                     configure_default_model()
@@ -186,32 +211,16 @@ def main():
                 generation.add_task(args.name, args.description, args.expected_output, args.agent)
             else:
                 generate_parser.print_help()
-        elif args.command in ["tools", "t"]:
-            if args.tools_command in ["list", "l"]:
-                list_tools()
-            elif args.tools_command in ["add", "a"]:
-                agents = [args.agent] if args.agent else None
-                agents = args.agents.split(",") if args.agents else agents
-                add_tool(args.name, agents)
-            elif args.tools_command in ["remove", "r"]:
-                generation.remove_tool(args.name)
-            else:
-                tools_parser.print_help()
         elif args.command in ['export', 'e']:
+            conf.assert_project()
             export_template(args.filename)
-        elif args.command in ['login']:
-            auth.login()
-        elif args.command in ['update', 'u']:
-            pass  # Update check already done
-        if args.command in ['serve', 's']:
-            serve_project()
         else:
             parser.print_help()
+
     except Exception as e:
         update_telemetry(telemetry_id, result=1, message=str(e))
         print(term_color("An error occurred while running your AgentStack command:", "red"))
-        print(e)
-        sys.exit(1)
+        raise e
 
     update_telemetry(telemetry_id, result=0)
 
