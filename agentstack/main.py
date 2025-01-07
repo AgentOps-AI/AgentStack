@@ -1,9 +1,5 @@
 import sys
 from agentstack.cli import init_project_builder, list_tools, configure_default_model, serve_project
-from agentstack.telemetry import track_cli_command
-from agentstack.utils import get_version, get_framework
-import agentstack.generation as generation
-from agentstack.update import check_for_updates
 import argparse
 import webbrowser
 

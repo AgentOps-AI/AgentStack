@@ -1,3 +1,4 @@
+import importlib
 from typing import Optional
 import os
 import sys
@@ -19,16 +20,15 @@ from .agentstack_data import (
 from agentstack.logger import log
 from agentstack import conf
 from agentstack.conf import ConfigFile
-from agentstack.utils import get_package_path, open_json_file, term_color, is_snake_case, get_framework, validator_not_empty
+from agentstack.utils import get_package_path, get_framework, validator_not_empty
 from agentstack.generation.files import ProjectFile
 from agentstack import frameworks
-from agentstack import packaging, generation
+from agentstack import generation
 from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
 from agentstack.proj_templates import TemplateConfig
 from agentstack.exceptions import ValidationError
-from agentstack.generation.files import ConfigFile
 from agentstack.utils import open_json_file, term_color, is_snake_case, verify_agentstack_project
 
 PREFERRED_MODELS = [

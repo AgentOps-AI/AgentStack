@@ -75,4 +75,9 @@ def process_agent():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 6969))
+
+    print("🚧 Running your agent on a development server")
+    print(f"Send agent requests to http://localhost:{port}")
+    print("Learn more about agent requests at https://docs.agentstack.sh/") # TODO: add docs for this
+
     app.run(host='0.0.0.0', port=port)
