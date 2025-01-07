@@ -26,7 +26,7 @@ dependencies = [
     "astor==0.8.1",
     "asttokens",
     "pydantic>=2.10",
-    "packaging==23.2",
+    "packaging>=23.2",
     "requests>=2.32",
     "appdirs>=1.4.4",
     "python-dotenv>=1.0.1",
@@ -44,6 +44,9 @@ test = [
 crewai = [
     "crewai==0.83.0",
     "crewai-tools==0.14.0",
+]
+langgraph = [
+    "langgraph==0.2.61",
 ]
 
 

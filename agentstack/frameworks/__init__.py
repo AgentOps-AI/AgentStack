@@ -11,7 +11,8 @@ from agentstack.tasks import TaskConfig
 
 
 CREWAI = 'crewai'
-SUPPORTED_FRAMEWORKS = [CREWAI, ]
+LANGGRAPH = 'langgraph'
+SUPPORTED_FRAMEWORKS = [CREWAI, LANGGRAPH, ]
 
 class FrameworkModule(Protocol):
     """
