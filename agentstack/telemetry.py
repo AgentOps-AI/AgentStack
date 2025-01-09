@@ -5,13 +5,11 @@
 #
 # i really hate to put this functionality in and was very
 # resistant to it. as a human, i value privacy as a fundamental
-# human right. but i also value my time.
+# human right. but i also value what we're building.
 #
-# i have been putting a lot of my time into building out
-# agentstack. i have strong conviction for what this project
-# can be. it's showing some great progress, but for me to justify
-# spending days and nights building this, i need to know that
-# people are actually using it and not just starring the repo
+# i have strong conviction for what AgentStack is and will be.
+# it's showing some great progress, but for us to know how to
+# build it best, i need to know if and how people are using it
 #
 # if you want to opt-out of telemetry, you can add the following
 # configuration to your agentstack.json file:
@@ -23,12 +21,14 @@
 # cool of you to allow telemetry <3
 #
 # - braelyn
-
+import os
 import platform
 import socket
+from typing import Optional
 import psutil
 import requests
 from agentstack import conf
+from agentstack.auth import get_stored_token
 from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
 
 TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
@@ -53,6 +53,9 @@ def collect_machine_telemetry(command: str):
     else:
         telemetry_data['framework'] = "n/a"
 
+    if telemetry_data['framework'] is None:
+        telemetry_data['framework'] = "n/a"
+
     # Attempt to get general location based on public IP
     try:
         response = requests.get('https://ipinfo.io/json')
@@ -72,9 +75,26 @@ def collect_machine_telemetry(command: str):
     return telemetry_data
 
 
-def track_cli_command(command: str):
+def track_cli_command(command: str, args: Optional[str] = None):
+    if bool(os.environ['AGENTSTATCK_IS_TEST_ENV']):
+        return
+
     try:
         data = collect_machine_telemetry(command)
-        requests.post(TELEMETRY_URL, json={"command": command, **data})
+        headers = {}
+        token = get_stored_token()
+        if token:
+            headers['Authorization'] = f'Bearer {token}'
+
+        return requests.post(TELEMETRY_URL, json={"command": command, "args":args, **data}, headers=headers).json().get('id')
+    except Exception:
+        pass
+
+def update_telemetry(id: int, result: int, message: Optional[str] = None):
+    if bool(os.environ['AGENTSTATCK_IS_TEST_ENV']):
+        return
+
+    try:
+        requests.put(TELEMETRY_URL, json={"id": id, "result": result, "message": message})
     except Exception:
         pass
