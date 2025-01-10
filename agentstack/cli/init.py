@@ -16,11 +16,11 @@ def require_uv():
         uv_bin = packaging.get_uv_bin()
         assert os.path.exists(uv_bin)
     except (AssertionError, ImportError):
-        message = "Error: uv is not installed."
-        message += "Full installation instructions at: https://docs.astral.sh/uv/getting-started/installation"
+        message = "Error: uv is not installed.\n"
+        message += "Full installation instructions at: https://docs.astral.sh/uv/getting-started/installation\n"
         match sys.platform:
             case 'linux' | 'darwin':
-                message += "Hint: run `curl -LsSf https://astral.sh/uv/install.sh | sh`"
+                message += "Hint: run `curl -LsSf https://astral.sh/uv/install.sh | sh`\n"
             case _:
                 pass
         raise EnvironmentError(message)
