@@ -3,7 +3,7 @@
     "category": "database",
     "url": "https://github.com/neondatabase/neon",
     "env": {
-        "NEON_API_KEY": "..."
+        "NEON_API_KEY": null
     },
     "dependencies": [
         "neon-api>=0.1.5",

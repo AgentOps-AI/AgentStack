@@ -1,0 +1,54 @@
+{
+    "name": "reasoning",
+    "description": "Implement test time compute using an agentic framework to emulate o1 with Claude.",
+    "template_version": 3,
+    "framework": "crewai",
+    "agents": [{
+        "name": "manager",
+        "role": "Manager",
+        "goal": "Delegate requests to multiple sub-agents to find the best solution to the user's request using the best resources available. Break up the user's request into very small tasks and delegate them to the right agents. <user_input>{query}</user_input>",
+        "backstory": "You are responsible for delegating tasks to the right AI agents and ensuring that the team works together to achieve the best results.",
+        "allow_delegation": true,
+        "model": "anthropic/claude-3-5-sonnet-20240620"
+    }, {
+        "name": "triage", 
+        "role": "Triage",
+        "goal": "You are responsible for interpreting the request and exploring possible ways of solving the problem. Delegate the actual problem solving to one of your workers. <original_user_input>{query}</original_user_input>",
+        "backstory": "You are responsible for interpreting the user's request and deciding which agent is best suited to solve the problem. You are the first point of contact for the system.",
+        "model": "anthropic/claude-3-5-sonnet-20240620"
+    }, {
+        "name": "worker", 
+        "role": "Worker",
+        "goal": "You are responsible for solving the problem that the triage agent has delegated to you. You should use your knowledge and skills to find the best solution to the user's request.",
+        "backstory": "You are responsible for solving the problem that the triage agent has delegated to you. You are an expert in your field and you should use your knowledge and skills to find the best solution to the user's request.",
+        "model": "anthropic/claude-3-5-sonnet-20240620"
+    }, {
+        "name": "fact_checker", 
+        "role": "Fact Checker",
+        "goal": "You are responsible for checking the solution that the worker agent has come up with. You should make sure that the solution is correct and that it meets the user's requirements. Evaluate the response in regards to the user's original question, and provide a concise answer that is factually correct. Now is a great time to omit any questionable statements and inconclusive data. <user_original_input>{query}</user_original_input>",
+        "backstory": "You are responsible for checking the solution that the worker agent has come up with. You should make sure that the solution is correct and that it meets the user's requirements. You are the last line of defense before the solution is presented to the user.",
+        "model": "anthropic/claude-3-5-sonnet-20240620"
+    }],
+    "tasks": [{
+        "name": "identify_plan_of_action",
+        "description": "Identify the problem being presented and come up with steps to solve it. Restate the problem in your own words, and identify 3 to 12 steps you can take to explore possible solutions. Do not actually present solutions to the problem yourself, but pass it to a new agent to do so.",
+        "expected_output": "A detailed description of the problem being presented and a list of possible steps that can be taken to explore possible solutions.",
+        "agent": "triage"
+    }, {
+        "name": "find_solution",
+        "description": "Identify the problem being presented to you and come up with the best solution you can think of. After you have come up with a solution, pass it to a new agent to check it.",
+        "expected_output": "A concise, complete solution to the problem being presented.",
+        "agent": "worker"
+    }, {
+        "name": "check_solution",
+        "description": "Review the problem and solution being presented and determine wether you think it is correct or not.",
+        "expected_output": "Reiterate the solution to be factually correct.",
+        "agent": "fact_checker"
+    }],
+    "tools": [],
+    "method": "hierarchical",
+    "manager_agent": "manager",
+    "inputs": {
+        "query": "What is the meaning of life, the universe, and everything?"
+    }
+}

@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentstack"
-version = "0.2.2.2"
+version = "0.2.3"
 description = "The fastest way to build robust AI agents"
 authors = [
-    { name="Braelyn Boynton", email="bboynton97@gmail.com" }
+    { name="Braelyn Boynton", email="bboynton97@gmail.com" },
+    { name="Travis Dent", email="	root@a10k.co" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
@@ -29,6 +30,7 @@ dependencies = [
     "requests>=2.32",
     "appdirs>=1.4.4",
     "python-dotenv>=1.0.1",
+    "uv>=0.5.6",
 ]
 
 [project.optional-dependencies]

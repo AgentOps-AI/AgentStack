@@ -1,6 +1,7 @@
 from typing import Optional, Union
 import string
 import os, sys
+import string
 from pathlib import Path
 
 if sys.version_info >= (3, 11):
@@ -10,7 +11,7 @@ else:
 from agentstack import conf
 
 
-ENV_FILEMANE = ".env"
+ENV_FILENAME = ".env"
 PYPROJECT_FILENAME = "pyproject.toml"
 
 
@@ -18,13 +19,14 @@ class EnvFile:
     """
     Interface for interacting with the .env file inside a project directory.
     Unlike the ConfigFile, we do not re-write the entire file on every change,
-    and instead just append new lines to the end of the file. This preseres
+    and instead just append new lines to the end of the file. This preserves
     comments and other formatting that the user may have added and prevents
     opportunities for data loss.
 
     If the value of a variable is None, it will be commented out when it is written
     to the file. This gives the user a suggestion, but doesn't override values that
-    may have been set by the user via other means.
+    may have been set by the user via other means (for example, but the user's shell).
+    Commented variable are not re-parsed when the file is read.
 
     `path` is the directory where the .env file is located. Defaults to the
     current working directory.
@@ -39,14 +41,14 @@ class EnvFile:
 
     variables: dict[str, str]
 
-    def __init__(self, filename: str = ENV_FILEMANE):
+    def __init__(self, filename: str = ENV_FILENAME):
         self._filename = filename
         self.read()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> str:
         return self.variables[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         if key in self.variables:
             raise ValueError("EnvFile does not allow overwriting values.")
         self.append_if_new(key, value)
@@ -54,24 +56,33 @@ class EnvFile:
     def __contains__(self, key) -> bool:
         return key in self.variables
 
-    def append_if_new(self, key, value):
+    def append_if_new(self, key, value) -> None:
+        """Setting a non-existent key will append it to the end of the file."""
         if key not in self.variables:
             self.variables[key] = value
             self._new_variables[key] = value
 
-    def read(self):
-        def parse_line(line):
+    def read(self) -> None:
+        def parse_line(line) -> tuple[str, str]:
+            """
+            Parse a line from the .env file.
+            Pairs are split on the first '=' character, and stripped of whitespace & quotes.
+            Only the last occurrence of a variable is stored.
+            """
             key, value = line.split('=')
-            return key.strip(string.whitespace + '#'), value.strip(string.whitespace + '"')
+            return key.strip(), value.strip(string.whitespace + '"')
 
         if os.path.exists(conf.PATH / self._filename):
             with open(conf.PATH / self._filename, 'r') as f:
-                self.variables = dict([parse_line(line) for line in f.readlines() if '=' in line])
+                self.variables = dict(
+                    [parse_line(line) for line in f.readlines() if '=' in line and not line.startswith('#')]
+                )
         else:
             self.variables = {}
         self._new_variables = {}
 
-    def write(self):
+    def write(self) -> None:
+        """Append new variables to the end of the file."""
         with open(conf.PATH / self._filename, 'a') as f:
             for key, value in self._new_variables.items():
                 if value is None:
@@ -82,7 +93,7 @@ class EnvFile:
     def __enter__(self) -> 'EnvFile':
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args) -> None:
         self.write()
 
 

@@ -3,7 +3,7 @@
   "url": "https://www.firecrawl.dev/",
   "category": "browsing",
   "env": {
-    "FIRECRAWL_API_KEY": "..."
+    "FIRECRAWL_API_KEY": null
   },
   "dependencies": [
     "firecrawl-py>=1.6.4"
