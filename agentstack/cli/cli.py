@@ -115,7 +115,7 @@ def init_project_builder(
 
 
 def welcome_message():
-    os.system("cls" if os.name == "nt" else "clear")
+    #os.system("cls" if os.name == "nt" else "clear")
     title = text2art("AgentStack", font="smisome1")
     tagline = "The easiest way to build a robust agent application!"
     border = "-" * len(tagline)
@@ -191,16 +191,13 @@ def get_validated_input(
         snake_case: Whether to enforce snake_case naming
     """
     while True:
-        try:
-            value = inquirer.text(
-                message=message,
-                validate=validate_func or validator_not_empty(min_length) if min_length else None,
-            )
-            if snake_case and not is_snake_case(value):
-                raise ValidationError("Input must be in snake_case")
-            return value
-        except ValidationError as e:
-            print(term_color(f"Error: {str(e)}", 'red'))
+        value = inquirer.text(
+            message=message,
+            validate=validate_func or validator_not_empty(min_length) if min_length else None,
+        )
+        if snake_case and not is_snake_case(value):
+            raise ValidationError("Input must be in snake_case")
+        return value
 
 
 def ask_agent_details():
@@ -403,10 +400,7 @@ def insert_template(
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env',
     )
-
-    if os.path.exists(project_details['name']):
-        raise Exception(f"Directory {project_details['name']} already exists. Project directory must not exist.")
-
+    
     cookiecutter(str(template_path), no_input=True, extra_context=None)
 
     # TODO: inits a git repo in the directory the command was run in
