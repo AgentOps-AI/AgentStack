@@ -3,7 +3,7 @@
   "url": "https://composio.dev/",
   "category": "unified-apis",
   "env": {
-    "COMPOSIO_API_KEY": "..."
+    "COMPOSIO_API_KEY": null
   },
   "tools": [
     "execute_action",
