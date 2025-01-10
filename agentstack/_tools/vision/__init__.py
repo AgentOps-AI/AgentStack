@@ -42,7 +42,7 @@ def _analyze_web_image(client: OpenAI, image_path_url: str) -> str:
         ],
         max_tokens=300,
     )
-    return response.choices[0].message.content
+    return response.choices[0].message.content  # type: ignore[return-value]
 
 
 def _analyze_local_image(client: OpenAI, image_path: str) -> str:

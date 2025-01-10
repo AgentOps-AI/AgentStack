@@ -55,8 +55,9 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
 
     # TODO ensure other agents are not using the tool
     tool = ToolConfig.from_tool_name(tool_name)
-    for dependency in tool.dependencies:
-        packaging.remove(dependency)
+    if tool.dependencies:
+        for dependency in tool.dependencies:
+            packaging.remove(dependency)
 
     # Edit the framework entrypoint file to exclude the tool in the agent definition
     if not agents:  # If no agents are specified, remove the tool from all agents
