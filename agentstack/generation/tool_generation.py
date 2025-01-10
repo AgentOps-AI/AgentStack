@@ -1,6 +1,5 @@
 import os, sys
 from typing import Optional
-
 from agentstack import conf
 from agentstack.conf import ConfigFile
 from agentstack.exceptions import ValidationError
@@ -56,9 +55,8 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
 
     # TODO ensure other agents are not using the tool
     tool = ToolConfig.from_tool_name(tool_name)
-    if tool.dependencies:
-        # TODO split on "==", ">=", etc. and only remove by package name
-        packaging.remove(' '.join(tool.dependencies))
+    for dependency in tool.dependencies:
+        packaging.remove(dependency)
 
     # Edit the framework entrypoint file to exclude the tool in the agent definition
     if not agents:  # If no agents are specified, remove the tool from all agents

@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 import subprocess
 import select
+from packaging.requirements import Requirement
 from agentstack import conf
 
 
@@ -56,7 +57,9 @@ def install_project():
 
 def remove(package: str):
     """Uninstall a package with `uv`."""
-
+    # If `package` has been provided with a version, it will be stripped. 
+    requirement = Requirement(package)
+    
     # TODO it may be worth considering removing unused sub-dependencies as well
     def on_progress(line: str):
         if RE_UV_PROGRESS.match(line):
@@ -66,7 +69,7 @@ def remove(package: str):
         print(f"uv: [error]\n {line.strip()}")
 
     _wrap_command_with_callbacks(
-        [get_uv_bin(), 'remove', '--python', '.venv/bin/python', package],
+        [get_uv_bin(), 'remove', '--python', '.venv/bin/python', requirement.name],
         on_progress=on_progress,
         on_error=on_error,
     )
