@@ -21,7 +21,7 @@
 # cool of you to allow telemetry <3
 #
 # - braelyn
-
+import os
 import platform
 import socket
 from typing import Optional
@@ -76,6 +76,9 @@ def collect_machine_telemetry(command: str):
 
 
 def track_cli_command(command: str, args: Optional[str] = None):
+    if bool(os.getenv('AGENTSTACK_IS_TEST_ENV')):
+        return
+
     try:
         data = collect_machine_telemetry(command)
         headers = {}
@@ -88,6 +91,9 @@ def track_cli_command(command: str, args: Optional[str] = None):
         pass
 
 def update_telemetry(id: int, result: int, message: Optional[str] = None):
+    if bool(os.getenv('AGENTSTACK_IS_TEST_ENV')):
+        return
+
     try:
         requests.put(TELEMETRY_URL, json={"id": id, "result": result, "message": message})
     except Exception:

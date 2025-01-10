@@ -4,7 +4,7 @@ import webbrowser
 
 from agentstack import conf, auth
 from agentstack.cli import (
-    init_project_builder,
+    init_project,
     add_tool,
     list_tools,
     configure_default_model,
@@ -167,7 +167,7 @@ def main():
         elif args.command in ["templates"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["init", "i"]:
-            init_project_builder(args.slug_name, args.template, args.wizard)
+            init_project(args.slug_name, args.template, args.wizard)
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()
@@ -187,11 +187,11 @@ def main():
             pass  # Update check already done
 
         # inside project dir commands only
-        conf.assert_project()
-
-        if args.command in ["run", "r"]:
+        elif args.command in ["run", "r"]:
+            conf.assert_project()
             run_project(command=args.function, debug=args.debug, cli_args=extra_args)
         elif args.command in ['generate', 'g']:
+            conf.assert_project()
             if args.generate_command in ['agent', 'a']:
                 if not args.llm:
                     configure_default_model()
@@ -201,6 +201,7 @@ def main():
             else:
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:
+            conf.assert_project()
             export_template(args.filename)
         else:
             parser.print_help()

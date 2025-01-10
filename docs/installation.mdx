@@ -4,28 +4,50 @@ description: 'Installing AgentStack is super easy!'
 icon: 'cloud-arrow-down'
 ---
 
-Use your favorite package manager
-
-<CodeGroup>
-
-```bash PIP
-pip install agentstack
-```
-```bash brew
-brew tap agentstack-ai/tap
+## Installing with Brew
+```bash
+brew tap agentops-ai/tap
 brew install agentstack
 ```
-```bash uv
-uv install agentstack
-```
-</CodeGroup>
 
-<Note>
-    Conda is not supported at this time. AgentStack uses Poetry in your project which [does not play well with Conda](https://github.com/AgentOps-AI/AgentStack/issues/40).
-</Note>
+## Installing with pipx
+```bash
+pipx install agentstack
+```
+
+## Installing with UV
+
+<Steps>
+    <Step title="Install UV with their bash install script">
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+    </Step>
+    <Step title="Create a virtual environment">
+```bash
+uv venv
+```
+    </Step>
+    <Step title="Install AgentStack">
+        ```bash
+        uv pip install agentstack
+        ```
+    </Step>
+</Steps>
+
 
 ## After installing
 
 Run `agentstack --version` to verify that the CLI is installed and accessible.
 
 **Congrats! You now have AgentStack installed in your environment**
+
+<CardGroup cols={1}>
+  <Card
+    title="Quickstart"
+    icon="circle-play"
+    href="/quickstart"
+  >
+    A quickstart guide to using the CLI
+  </Card>
+</CardGroup>
