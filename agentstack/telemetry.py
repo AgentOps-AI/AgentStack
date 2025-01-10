@@ -76,7 +76,7 @@ def collect_machine_telemetry(command: str):
 
 
 def track_cli_command(command: str, args: Optional[str] = None):
-    if bool(os.environ['AGENTSTATCK_IS_TEST_ENV']):
+    if bool(os.getenv('AGENTSTACK_IS_TEST_ENV')):
         return
 
     try:
@@ -91,7 +91,7 @@ def track_cli_command(command: str, args: Optional[str] = None):
         pass
 
 def update_telemetry(id: int, result: int, message: Optional[str] = None):
-    if bool(os.environ['AGENTSTATCK_IS_TEST_ENV']):
+    if bool(os.getenv('AGENTSTACK_IS_TEST_ENV')):
         return
 
     try:

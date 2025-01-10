@@ -86,7 +86,6 @@ def init_project_builder(
         tools = [tools.model_dump() for tools in template_data.tools]
 
     elif use_wizard:
-        welcome_message()
         project_details = ask_project_details(slug_name)
         welcome_message()
         framework = ask_framework()
@@ -94,7 +93,6 @@ def init_project_builder(
         tools = ask_tools()
 
     else:
-        welcome_message()
         # the user has started a new project; let's give them something to work with
         default_project = TemplateConfig.from_template_name('hello_alex')
         project_details = {
@@ -114,9 +112,6 @@ def init_project_builder(
 
     log.debug(f"project_details: {project_details}" f"framework: {framework}" f"design: {design}")
     insert_template(project_details, framework, design, template_data)
-
-    # we have an agentstack.json file in the directory now
-    conf.set_path(project_details['name'])
 
     for tool_data in tools:
         generation.add_tool(tool_data['name'], agents=tool_data['agents'])
@@ -410,14 +405,14 @@ def insert_template(
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env',
     )
 
-    if os.path.isdir(project_details['name']):
-        print(
-            term_color(
-                f"Directory {template_path} already exists. Please check this and try again",
-                "red",
-            )
-        )
-        sys.exit(1)
+    # if os.path.isdir(project_details['name']):
+    #     print(
+    #         term_color(
+    #             f"Directory {template_path} already exists. Please check this and try again",
+    #             "red",
+    #         )
+    #     )
+    #     sys.exit(1)
 
     cookiecutter(str(template_path), no_input=True, extra_context=None)
 
@@ -430,26 +425,6 @@ def insert_template(
         # subprocess.check_output(["git", "add", "."])
     except:
         print("Failed to initialize git repository. Maybe you're already in one? Do this with: git init")
-
-    # TODO: check if poetry is installed and if so, run poetry install in the new directory
-    # os.system("poetry install")
-    # os.system("cls" if os.name == "nt" else "clear")
-    # TODO: add `agentstack docs` command
-    print(
-        "\n"
-        "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
-        "  Next, run:\n"
-        f"    cd {project_metadata.project_slug}\n"
-        "    python -m venv .venv\n"
-        "    source .venv/bin/activate\n\n"
-        "  Make sure you have the latest version of poetry installed:\n"
-        "    pip install -U poetry\n\n"
-        "  You'll need to install the project's dependencies with:\n"
-        "    poetry install\n\n"
-        "  Finally, try running your agent with:\n"
-        "    agentstack run\n\n"
-        "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
-    )
 
 
 def export_template(output_filename: str):

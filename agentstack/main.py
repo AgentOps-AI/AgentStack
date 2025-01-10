@@ -4,7 +4,7 @@ import webbrowser
 
 from agentstack import conf, auth
 from agentstack.cli import (
-    init_project_builder,
+    init_project,
     add_tool,
     list_tools,
     configure_default_model,
@@ -167,7 +167,7 @@ def main():
         elif args.command in ["templates"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["init", "i"]:
-            init_project_builder(args.slug_name, args.template, args.wizard)
+            init_project(args.slug_name, args.template, args.wizard)
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()
