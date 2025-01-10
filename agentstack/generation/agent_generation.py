@@ -1,6 +1,6 @@
 import sys
 from typing import Optional
-from pathlib import Path
+from agentstack import log
 from agentstack.exceptions import ValidationError
 from agentstack.conf import ConfigFile
 from agentstack import frameworks
@@ -27,9 +27,8 @@ def add_agent(
 
     try:
         frameworks.add_agent(agent)
-        print(f"    > Added to {AGENTS_FILENAME}")
+        log.info(f"Added agent \"{agent_name}\" to project.")
     except ValidationError as e:
-        print(f"Error adding agent to project:\n{e}")
-        sys.exit(1)
+        raise ValidationError(f"Error adding agent to project:\n{e}")
 
-    print(f"Added agent \"{agent_name}\" to your AgentStack project successfully!")
+    log.success(f"Added agent \"{agent_name}\" to your AgentStack project successfully!")

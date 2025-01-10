@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from packaging.version import parse as parse_version, Version
 import inquirer
+from agentstack import log
 from agentstack.utils import term_color, get_version, get_framework
 from agentstack import packaging
 from appdirs import user_data_dir
@@ -115,32 +116,24 @@ def check_for_updates(update_requested: bool = False):
     if not update_requested and not should_update():
         return
 
-    print("Checking for updates...")
+    log.info("Checking for updates...\n")
 
     try:
         latest_version: Version = get_latest_version(AGENTSTACK_PACKAGE)
     except Exception as e:
-        print(term_color("Failed to retrieve package index.", 'red'))
-        return
+        raise Exception(f"Failed to retrieve package index: {e}")
 
     installed_version: Version = parse_version(get_version(AGENTSTACK_PACKAGE))
     if latest_version > installed_version:
-        print('')  # newline
+        log.info('')  # newline
         if inquirer.confirm(
             f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"
         ):
             packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
-            print(
-                term_color(
-                    f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.", 'green'
-                )
-            )
-            sys.exit(0)
+            log.success(f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.")
         else:
-            print(
-                term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue')
-            )
+            log.info("Skipping update. Run `agentstack update` to install the latest version.")
     else:
-        print(f"{AGENTSTACK_PACKAGE} is up to date ({installed_version})")
+        log.info(f"{AGENTSTACK_PACKAGE} is up to date ({installed_version})")
 
     record_update_check()

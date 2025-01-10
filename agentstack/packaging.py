@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 import subprocess
 import select
-from agentstack import conf
+from agentstack import conf, log
 
 
 DEFAULT_PYTHON_VERSION = "3.12"
@@ -25,10 +25,10 @@ def install(package: str):
 
     def on_progress(line: str):
         if RE_UV_PROGRESS.match(line):
-            print(line.strip())
+            log.info(line.strip())
 
     def on_error(line: str):
-        print(f"uv: [error]\n {line.strip()}")
+        log.error(f"uv: [error]\n {line.strip()}")
 
     _wrap_command_with_callbacks(
         [get_uv_bin(), 'add', '--python', '.venv/bin/python', package],
@@ -42,10 +42,10 @@ def install_project():
 
     def on_progress(line: str):
         if RE_UV_PROGRESS.match(line):
-            print(line.strip())
+            log.info(line.strip())
 
     def on_error(line: str):
-        print(f"uv: [error]\n {line.strip()}")
+        log.error(f"uv: [error]\n {line.strip()}")
 
     _wrap_command_with_callbacks(
         [get_uv_bin(), 'pip', 'install', '--python', '.venv/bin/python', '.'],
@@ -60,10 +60,10 @@ def remove(package: str):
     # TODO it may be worth considering removing unused sub-dependencies as well
     def on_progress(line: str):
         if RE_UV_PROGRESS.match(line):
-            print(line.strip())
+            log.info(line.strip())
 
     def on_error(line: str):
-        print(f"uv: [error]\n {line.strip()}")
+        log.error(f"uv: [error]\n {line.strip()}")
 
     _wrap_command_with_callbacks(
         [get_uv_bin(), 'remove', '--python', '.venv/bin/python', package],
@@ -78,10 +78,10 @@ def upgrade(package: str):
     # TODO should we try to update the project's pyproject.toml as well?
     def on_progress(line: str):
         if RE_UV_PROGRESS.match(line):
-            print(line.strip())
+            log.info(line.strip())
 
     def on_error(line: str):
-        print(f"uv: [error]\n {line.strip()}")
+        log.error(f"uv: [error]\n {line.strip()}")
 
     _wrap_command_with_callbacks(
         [get_uv_bin(), 'pip', 'install', '-U', '--python', '.venv/bin/python', package],
@@ -99,10 +99,10 @@ def create_venv(python_version: str = DEFAULT_PYTHON_VERSION):
 
     def on_progress(line: str):
         if RE_VENV_PROGRESS.match(line):
-            print(line.strip())
+            log.info(line.strip())
 
     def on_error(line: str):
-        print(f"uv: [error]\n {line.strip()}")
+        log.error(f"uv: [error]\n {line.strip()}")
 
     _wrap_command_with_callbacks(
         [get_uv_bin(), 'venv', '--python', python_version],

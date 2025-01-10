@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 import pydantic
+from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path, open_json_file, term_color
 
 
@@ -26,9 +27,8 @@ class ToolConfig(pydantic.BaseModel):
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
         path = get_package_path() / f'tools/{name}.json'
-        if not os.path.exists(path):  # TODO raise exceptions and handle message/exit in cli
-            print(term_color(f'No known agentstack tool: {name}', 'red'))
-            sys.exit(1)
+        if not os.path.exists(path):
+            raise ValidationError(f'No known agentstack tool: {name}')
         return cls.from_json(path)
 
     @classmethod
@@ -37,11 +37,10 @@ class ToolConfig(pydantic.BaseModel):
         try:
             return cls(**data)
         except pydantic.ValidationError as e:
-            # TODO raise exceptions and handle message/exit in cli
-            print(term_color(f"Error validating tool config JSON: \n{path}", 'red'))
+            error_str = "Error validating tool config:\n"
             for error in e.errors():
-                print(f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}")
-            sys.exit(1)
+                error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
+            raise ValidationError(f"Error loading tool from {path}.\n{error_str}")
 
     @property
     def module_name(self) -> str:
