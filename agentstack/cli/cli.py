@@ -56,18 +56,7 @@ def init_project_builder(
 
     template_data = None
     if template is not None:
-        if template.startswith("https://"):
-            try:
-                template_data = TemplateConfig.from_url(template)
-            except Exception as e:
-                print(term_color(f"Failed to fetch template data from {template}.\n{e}", 'red'))
-                sys.exit(1)
-        else:
-            try:
-                template_data = TemplateConfig.from_template_name(template)
-            except Exception as e:
-                print(term_color(f"Failed to load template {template}.\n{e}", 'red'))
-                sys.exit(1)
+        template_data = TemplateConfig.from_user_input(template)
 
     if template_data:
         project_details = {
