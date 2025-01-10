@@ -1,0 +1,48 @@
+
+## Tool Configuration
+Each tool gets a directory inside `agentstack/_tools/<tool_name>` where the tool's 
+source code and configuration will be stored.
+
+The directory should contain the following files:
+
+`config.json`
+-------------
+This contains the configuration for the tool for use by AgentStack, including
+metadata, dependencies, configuration & functions exposed by the tool.
+
+`__init__.py`
+---------
+Python package which contains the framework-agnostic tool implementation. Tools 
+are simple packages which exponse functions; when a tool is loaded into a user's 
+project, it will be wrapped in the framework-specific tool format by AgentStack. 
+
+
+`config.json` Format
+--------------------
+
+### `name` (string) [required]
+The name of the tool in snake_case. This is used to identify the tool in the system.
+
+### `url` (string) [optional]
+The URL of the tool's repository. This is provided to the user to allow them to 
+learn more about the tool. 
+
+### `category` (string) [required]
+The category of the tool. This is used to group tools together in the CLI.
+
+### `cta` (string) [optional]
+String to print in the terminal when the tool is installed that provides a call to action.
+
+### `env` (list[dict(str, Any)]) [optional]
+Definitions for environment variables that will be appended to the local `.env` file.
+This is a list of key-value pairs ie. `[{"ENV_VAR": "value"}, ...]`.
+In cases where the user is expected to provide their own information, the value is
+set to `null` which adds it to the project's `.env` file as a comment. 
+
+### `dependencies` (list[str]) [optional]
+List of dependencies that will be installed in the user's project. It is 
+encouraged that versions are specified, which use the `package>=version` format.
+
+### `tools` (list[str]) [required]
+List of public functions that are accessible in the tool implementation.
+
