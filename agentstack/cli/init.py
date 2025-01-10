@@ -20,7 +20,7 @@ def require_uv():
         message += "Full installation instructions at: https://docs.astral.sh/uv/getting-started/installation"
         match sys.platform:
             case 'linux' | 'darwin':
-                messsage += "Hint: run `curl -LsSf https://astral.sh/uv/install.sh | sh`"
+                message += "Hint: run `curl -LsSf https://astral.sh/uv/install.sh | sh`"
             case _:
                 pass
         raise EnvironmentError(message)
