@@ -57,6 +57,8 @@ class ConfigFile(BaseModel):
 
     Config Schema
     -------------
+    project_name: str
+        The name of the project.
     framework: str
         The framework used in the project. Defaults to 'crewai'.
     tools: list[str]
@@ -71,8 +73,11 @@ class ConfigFile(BaseModel):
         The template used to generate the project.
     template_version: Optional[str]
         The version of the template system used to generate the project.
+    hosted_project_id: Optional[str]
+        The ID of the deployed project on https://AgentStack.sh
     """
 
+    project_name: str
     framework: str = DEFAULT_FRAMEWORK  # TODO this should probably default to None
     tools: list[str] = []
     telemetry_opt_out: Optional[bool] = None
@@ -80,6 +85,7 @@ class ConfigFile(BaseModel):
     agentstack_version: Optional[str] = get_version()
     template: Optional[str] = None
     template_version: Optional[str] = None
+    hosted_project_id: Optional[int] = None
 
     def __init__(self):
         if os.path.exists(PATH / CONFIG_FILENAME):
