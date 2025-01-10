@@ -1,0 +1,12 @@
+{
+  "name": "directory_search",
+  "category": "computer-control",
+  "description": "Search through files in a directory using embedchain's DirectoryLoader",
+  "env": {
+    "DIRECTORY_SEARCH_TOOL_PATH": null
+  },
+  "dependencies": [
+    "embedchain>=0.1.0"
+  ],
+  "tools": ["search_directory", "search_fixed_directory"]
+}

@@ -3,13 +3,15 @@
     "category": "category",
     "tools": ["tool1", "tool2"],
     "url": "https://example.com",
-    "tools_bundled": true,
     "cta": "Click me!",
     "env": {
         "ENV_VAR1": "value1",
         "ENV_VAR2": "value2"
     },
-    "packages": ["package1", "package2"],
+    "dependencies": [
+        "dependency1>=1.0.0",
+        "dependency2>=2.0.0"
+    ],
     "post_install": "install.sh",
     "post_remove": "remove.sh"
 }

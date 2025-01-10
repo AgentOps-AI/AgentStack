@@ -1,6 +1,6 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-import tools
+import agentstack
 
 @CrewBase
 class {{cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize}}Crew():
