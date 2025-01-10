@@ -162,11 +162,8 @@ def _build_logger() -> logging.Logger:
 
     try:
         # `conf.PATH` can change during startup, so defer building the path
+        # log file only gets written to if it exists, which happens on project init
         log_filename = conf.PATH / LOG_FILENAME
-        if not os.path.exists(log_filename):
-            os.makedirs(log_filename.parent, exist_ok=True)
-            log_filename.touch()
-
         file_handler = logging.FileHandler(log_filename)
         file_handler.setFormatter(FileFormatter())
         file_handler.setLevel(DEBUG)
