@@ -1,12 +1,13 @@
 import os, sys
 from typing import Optional
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.conf import ConfigFile
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack import packaging
 from agentstack.utils import term_color
 from agentstack._tools import ToolConfig
+from agentstack.generation import asttools
 from agentstack.generation.files import EnvFile
 
 
@@ -15,7 +16,7 @@ def add_tool(tool_name: str, agents: Optional[list[str]] = []):
     tool = ToolConfig.from_tool_name(tool_name)
 
     if tool_name in agentstack_config.tools:
-        print(term_color(f'Tool {tool_name} is already installed', 'blue'))
+        log.notify(f'Tool {tool_name} is already installed')
     else:  # handle install
         if tool.dependencies:
             packaging.install(' '.join(tool.dependencies))
@@ -38,20 +39,19 @@ def add_tool(tool_name: str, agents: Optional[list[str]] = []):
     if not agents:  # If no agents are specified, add the tool to all agents
         agents = frameworks.get_agent_names()
     for agent_name in agents:
-        print(f'Adding tool {tool.name} to agent {agent_name}')
+        log.info(f'Adding tool {tool.name} to agent {agent_name}')
         frameworks.add_tool(tool, agent_name)
 
-    print(term_color(f'🔨 Tool {tool.name} added to agentstack project successfully', 'green'))
+    log.success(f'🔨 Tool {tool.name} added to agentstack project successfully')
     if tool.cta:
-        print(term_color(f'🪩  {tool.cta}', 'blue'))
+        log.notify(f'🪩  {tool.cta}')
 
 
 def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
     agentstack_config = ConfigFile()
 
     if tool_name not in agentstack_config.tools:
-        print(term_color(f'Tool {tool_name} is not installed', 'red'))
-        sys.exit(1)
+        raise ValidationError(f'Tool {tool_name} is not installed')
 
     # TODO ensure other agents are not using the tool
     tool = ToolConfig.from_tool_name(tool_name)
@@ -72,8 +72,4 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
     with agentstack_config as config:
         config.tools.remove(tool.name)
 
-    print(
-        term_color(f'🔨 Tool {tool_name}', 'green'),
-        term_color('removed', 'red'),
-        term_color('from agentstack project successfully', 'green'),
-    )
+    log.success(f'🔨 Tool {tool_name} removed from agentstack project successfully')

@@ -4,7 +4,7 @@ from pathlib import Path
 import pydantic
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 
 
@@ -72,6 +72,7 @@ class TaskConfig(pydantic.BaseModel):
         return {self.name: dump}
 
     def write(self):
+        log.debug(f"Writing task {self.name} to {TASKS_FILENAME}")
         filename = conf.PATH / TASKS_FILENAME
 
         with open(filename, 'r') as f:
@@ -92,6 +93,7 @@ class TaskConfig(pydantic.BaseModel):
 def get_all_task_names() -> list[str]:
     filename = conf.PATH / TASKS_FILENAME
     if not os.path.exists(filename):
+        log.debug(f"Project does not have an {TASKS_FILENAME} file.")
         return []
     with open(filename, 'r') as f:
         data = yaml.load(f) or {}

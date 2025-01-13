@@ -9,7 +9,7 @@ from pathlib import Path
 
 import inquirer
 from appdirs import user_data_dir
-from agentstack.logger import log
+from agentstack import log
 
 
 try:
@@ -95,7 +95,7 @@ def login():
         # check if already logged in
         token = get_stored_token()
         if token:
-            print("You are already authenticated!")
+            log.success("You are already authenticated!")
             if not inquirer.confirm('Would you like to log in with a different account?'):
                 return
 
@@ -120,7 +120,7 @@ def login():
         server.shutdown()
         server_thread.join()
 
-        print("🔐 Authentication successful! Token has been stored.")
+        log.success("🔐 Authentication successful! Token has been stored.")
         return True
 
     except Exception as e:
