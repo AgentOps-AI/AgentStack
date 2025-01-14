@@ -167,7 +167,6 @@ class TemplateConfig(pydantic.BaseModel):
 
     @classmethod
     def from_file(cls, path: Path) -> 'TemplateConfig':
-        print(path)
         if not os.path.exists(path):
             raise ValidationError(f"Template {path} not found.")
         try:
