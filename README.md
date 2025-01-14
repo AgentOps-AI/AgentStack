@@ -24,9 +24,10 @@ pip install agentstack
 agentstack init <project_name>
 ```
 
+AgentStack scaffolds your _agent stack_ - the tech stack that collectively is your agent
 
 <p align='center'>
-<img src='https://raw.githubusercontent.com/agentops-ai/agentstack/main/stack.png' width='600' alt='agentstack init'>
+<img src='https://raw.githubusercontent.com/agentops-ai/agentstack/docs/images/the_agent_stack.png' width='600' alt='agentstack init'>
 </p>
 
 ### Get Started Immediately
