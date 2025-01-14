@@ -83,6 +83,7 @@ def init_project_builder(
         design = {
             'agents': [agent.model_dump() for agent in template_data.agents],
             'tasks': [task.model_dump() for task in template_data.tasks],
+            'graph': [[node[0].model_dump(), node[1].model_dump()] for node in template_data.graph],
             'inputs': template_data.inputs,
         }
         tools = [tools.model_dump() for tools in template_data.tools]
@@ -109,6 +110,7 @@ def init_project_builder(
         design = {
             'agents': [agent.model_dump() for agent in default_project.agents],
             'tasks': [task.model_dump() for task in default_project.tasks],
+            'graph': [[node[0].model_dump(), node[1].model_dump()] for node in default_project.graph],
             'inputs': default_project.inputs,
         }
         tools = [tools.model_dump() for tools in default_project.tools]
@@ -390,6 +392,7 @@ def insert_template(
     project_structure.agents = design["agents"]
     project_structure.tasks = design["tasks"]
     project_structure.inputs = design["inputs"]
+    project_structure.graph = design.get("graph", [])
 
     cookiecutter_data = CookiecutterData(
         project_metadata=project_metadata,

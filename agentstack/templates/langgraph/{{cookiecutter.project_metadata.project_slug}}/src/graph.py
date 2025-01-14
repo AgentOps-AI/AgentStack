@@ -61,11 +61,17 @@ class {{ cookiecutter.project_metadata.project_name|replace('-', '')|replace('_'
         self.graph.add_node("{{ agent.name }}_tools", {{ agent.name }}_tools)
         self.graph.add_edge("{{ agent.name }}", "{{ agent.name }}_tools")
         self.graph.add_conditional_edges("{{ agent.name }}", tools_condition)
-    {%- for task in cookiecutter.structure.tasks %}
-        self.graph.add_node("{{ task.name }}", "{{ agent.name }}")
-    {%- endfor %}
 {% endfor %}
-        self.graph.add_edge(START, "{{ cookiecutter.structure.tasks[-1].name }}")
+
+{%- for edge in cookiecutter.structure.graph %}
+    {%- if edge[0].type == 'special' %}
+        self.graph.add_edge({{ edge[0].name }}, "{{ edge[1].name }}")
+    {%- elif edge[1].type == 'special' %}
+        self.graph.add_edge("{{ edge[0].name }}", {{ edge[1].name }})
+    {%- else %}
+        self.graph.add_edge("{{ edge[0].name }}", "{{ edge[1].name }}")
+    {%- endif %}
+{%- endfor %}
 
         app = self.graph.compile()
         result = app.invoke({

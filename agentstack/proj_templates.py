@@ -19,16 +19,18 @@ class TemplateConfig_v1(pydantic.BaseModel):
     tools: list[dict]
     inputs: list[str]
 
-    def to_v2(self) -> 'TemplateConfig_v2':
-        return TemplateConfig_v2(
+    def to_v4(self) -> 'TemplateConfig':
+        return TemplateConfig(
             name=self.name,
             description=self.description,
-            template_version=2,
+            template_version=4,
             framework=self.framework,
             method=self.method,
-            agents=[TemplateConfig_v2.Agent(**agent) for agent in self.agents],
-            tasks=[TemplateConfig_v2.Task(**task) for task in self.tasks],
-            tools=[TemplateConfig_v2.Tool(**tool) for tool in self.tools],
+            manager_agent=None,
+            agents=[TemplateConfig.Agent(**agent) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool) for tool in self.tools],
+            graph=[],
             inputs={key: "" for key in self.inputs},
         )
 
@@ -76,36 +78,7 @@ class TemplateConfig_v2(pydantic.BaseModel):
         )
 
 
-class TemplateConfig(pydantic.BaseModel):
-    """
-    Interface for interacting with template configuration files.
-
-    Templates are read-only.
-
-    Template Schema
-    -------------
-    name: str
-        The name of the project.
-    description: str
-        A description of the template.
-    template_version: int
-        The version of the template.
-    framework: str
-        The framework the template is for.
-    method: str
-        The method used by the project. ie. "sequential"
-    manager_agent: Optional[str]
-        The name of the agent that manages the project.
-    agents: list[TemplateConfig.Agent]
-        A list of agents used by the project.
-    tasks: list[TemplateConfig.Task]
-        A list of tasks used by the project.
-    tools: list[TemplateConfig.Tool]
-        A list of tools used by the project.
-    inputs: list[str]
-        A list of inputs used by the project.
-    """
-
+class TemplateConfig_v3(pydantic.BaseModel):
     class Agent(pydantic.BaseModel):
         name: str
         role: str
@@ -134,6 +107,96 @@ class TemplateConfig(pydantic.BaseModel):
     tasks: list[Task]
     tools: list[Tool]
     inputs: dict[str, str]
+    
+    def to_v4(self) -> 'TemplateConfig':
+        return TemplateConfig(
+            name=self.name,
+            description=self.description,
+            template_version=4,
+            framework=self.framework,
+            method=self.method,
+            manager_agent=self.manager_agent,
+            agents=[TemplateConfig.Agent(**agent.dict()) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task.dict()) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool.dict()) for tool in self.tools],
+            graph=[],
+            inputs=self.inputs,
+        )
+
+
+class TemplateConfig(pydantic.BaseModel):
+    """
+    Interface for interacting with template configuration files.
+
+    Templates are read-only.
+
+    Template Schema
+    -------------
+    name: str
+        The name of the project.
+    description: str
+        A description of the template.
+    template_version: int
+        The version of the template.
+    framework: str
+        The framework the template is for.
+    method: str
+        The method used by the project. ie. "sequential"
+    manager_agent: Optional[str]
+        The name of the agent that manages the project.
+    agents: list[TemplateConfig.Agent]
+        A list of agents used by the project.
+    tasks: list[TemplateConfig.Task]
+        A list of tasks used by the project.
+    tools: list[TemplateConfig.Tool]
+        A list of tools used by the project.
+    graph: list[list[TemplateConfig.Node]]
+        A list of graph relationships. Each edge must have exactly 2 nodes.
+    inputs: list[str]
+        A list of inputs used by the project.
+    """
+
+    class Agent(pydantic.BaseModel):
+        name: str
+        role: str
+        goal: str
+        backstory: str
+        allow_delegation: bool = False
+        model: str
+
+    class Task(pydantic.BaseModel):
+        name: str
+        description: str
+        expected_output: str
+        agent: str  # TODO this is redundant with the graph
+
+    class Tool(pydantic.BaseModel):
+        name: str
+        agents: list[str]
+
+    class Node(pydantic.BaseModel):
+        type: Literal["agent", "task", "special"]
+        name: str
+
+    name: str
+    description: str
+    template_version: Literal[4]
+    framework: str
+    method: str
+    manager_agent: Optional[str] = None
+    agents: list[Agent]
+    tasks: list[Task]
+    tools: list[Tool]
+    graph: list[list[Node]]
+    inputs: Optional[dict[str, str]] = {}
+
+    @pydantic.field_validator('graph')
+    @classmethod
+    def validate_graph_edges(cls, value: list[list[Node]]) -> list[list[Node]]:
+        for i, edge in enumerate(value):
+            if len(edge) != 2:
+                raise ValueError(f"Graph edge {i} must have exactly 2 nodes.")
+        return value
 
     def write_to_file(self, filename: Path):
         if not filename.suffix == '.json':
@@ -181,10 +244,12 @@ class TemplateConfig(pydantic.BaseModel):
         try:
             match data.get('template_version'):
                 case 1:
-                    return TemplateConfig_v1(**data).to_v2().to_v3()
+                    return TemplateConfig_v1(**data).to_v4()
                 case 2:
-                    return TemplateConfig_v2(**data).to_v3()
+                    return TemplateConfig_v2(**data).to_v3().to_v4()
                 case 3:
+                    return TemplateConfig_v3(**data).to_v4()
+                case 4:
                     return cls(**data)  # current version
                 case _:
                     raise ValidationError(f"Unsupported template version: {data.get('template_version')}")
