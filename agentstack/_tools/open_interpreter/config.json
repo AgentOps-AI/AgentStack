@@ -1,0 +1,12 @@
+{
+  "name": "open_interpreter",
+  "url": "https://github.com/OpenInterpreter/open-interpreter",
+  "category": "code-execution",
+  "env": {
+    "OPEN_INTERPRETER_LLM_MODEL": "gpt-4o"
+  },
+  "dependencies": [
+    "open-interpreter>=0.3.7"
+  ],
+  "tools": ["execute_code"]
+}

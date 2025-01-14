@@ -9,13 +9,14 @@ Adding tools is easy once you understand the project structure. A few things nee
 
 <Steps>
   <Step title="Create a config for your tool">
-      - Create a new tool config at `agentstack/tools/<your_tool>.json`
+      - Create a new tool config at `agentstack/_tools/<your_tool>/config.json`
       - As an example, look at our [tool config fixture](https://github.com/AgentOps-AI/AgentStack/blob/main/tests/fixtures/tool_config_max.json)
       - AgentStack uses this to know what code to insert where. Follow the structure to add your tool.
   </Step>
-  <Step title="Create your implementation for each framework">
-      - In `agentstack/templates/<framework>/tools`, you'll see other implementations of tools.
-      - Build your tool implementation for that framework. This file will be inserted in the user's project.
+  <Step title="Create your implementation">
+      - In `agentstack/_tools`, you'll see other implementations of tools.
+      - Create a file `agentstack/_tools/<your_tool>/__init__.py`,
+      - Build your tool implementation simply as python functions in this file. The functions that are to be exposed to the agent as a *tool* should contain detailed docstrings and have typed parameters.
       - The tools that are exported from this file should be listed in the tool's config json.
   </Step>
   <Step title="Test your tool">

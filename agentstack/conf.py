@@ -9,6 +9,9 @@ from agentstack.utils import get_version
 DEFAULT_FRAMEWORK = "crewai"
 CONFIG_FILENAME = "agentstack.json"
 
+DEBUG: bool = False
+
+# The path to the project directory ie. working directory.
 PATH: Path = Path()
 
 def assert_project() -> None:
@@ -22,6 +25,15 @@ def set_path(path: Union[str, Path, None]):
     """Set the path to the project directory."""
     global PATH
     PATH = Path(path) if path else Path()
+
+
+def set_debug(debug: bool):
+    """
+    Set the debug flag in the project's configuration for the session; does not
+    get saved to the project's configuration file.
+    """
+    global DEBUG
+    DEBUG = debug
 
 
 def get_framework() -> Optional[str]:

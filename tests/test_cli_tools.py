@@ -4,13 +4,12 @@ import unittest
 from parameterized import parameterized
 from pathlib import Path
 import shutil
-from agentstack.tools import get_all_tool_names
+from agentstack._tools import get_all_tool_names
 from cli_test_utils import run_cli
 from agentstack.utils import validator_not_empty
 from agentstack.cli.cli import get_validated_input
 from unittest.mock import patch
 from inquirer.errors import ValidationError
-from agentstack.utils import validator_not_empty
 
 
 BASE_PATH = Path(__file__).parent

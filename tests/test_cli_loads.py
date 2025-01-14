@@ -13,9 +13,6 @@ class TestAgentStackCLI(unittest.TestCase):
     def test_version(self):
         """Test the --version command."""
         result = run_cli("--version")
-        print(result.stdout)
-        print(result.stderr)
-        print(result.returncode)
         self.assertEqual(result.returncode, 0)
         self.assertIn("AgentStack CLI version:", result.stdout)
 
@@ -38,8 +35,8 @@ class TestAgentStackCLI(unittest.TestCase):
 
         os.chdir(test_dir)
         result = run_cli('run')
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Project validation failed", result.stdout)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("An error occurred", result.stderr)
 
         shutil.rmtree(test_dir, ignore_errors=True)
 
