@@ -69,9 +69,9 @@ class TemplateConfig_v2(pydantic.BaseModel):
             framework=self.framework,
             method=self.method,
             manager_agent=None,
-            agents=[TemplateConfig.Agent(**agent.dict()) for agent in self.agents],
-            tasks=[TemplateConfig.Task(**task.dict()) for task in self.tasks],
-            tools=[TemplateConfig.Tool(**tool.dict()) for tool in self.tools],
+            agents=[TemplateConfig.Agent(**agent.model_dump()) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task.model_dump()) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool.model_dump()) for tool in self.tools],
             inputs=self.inputs,
         )
 
@@ -144,17 +144,22 @@ class TemplateConfig(pydantic.BaseModel):
             f.write(json.dumps(model_dump, indent=4))
 
     @classmethod
-    def from_template_name(cls, name: str) -> 'TemplateConfig':
-        # if url
-        if name.startswith('https://'):
-            return cls.from_url(name)
+    def from_user_input(cls, identifier: str):
+        """
+        Load a template from a user-provided identifier.
+        Three cases will be tried: A URL, a file path, or a template name.
+        """
+        if identifier.startswith('https://'):
+            return cls.from_url(identifier)
 
-        # if .json file
-        if name.endswith('.json'):
-            path = os.getcwd() / Path(name)
+        if identifier.endswith('.json'):
+            path = Path() / identifier
             return cls.from_file(path)
 
-        # if named template
+        return cls.from_template_name(identifier)
+
+    @classmethod
+    def from_template_name(cls, name: str) -> 'TemplateConfig':
         path = get_package_path() / f'templates/proj_templates/{name}.json'
         if not name in get_all_template_names():
             raise ValidationError(f"Template {name} not bundled with agentstack.")
@@ -164,8 +169,11 @@ class TemplateConfig(pydantic.BaseModel):
     def from_file(cls, path: Path) -> 'TemplateConfig':
         if not os.path.exists(path):
             raise ValidationError(f"Template {path} not found.")
-        with open(path, 'r') as f:
-            return cls.from_json(json.load(f))
+        try:
+            with open(path, 'r') as f:
+                return cls.from_json(json.load(f))
+        except json.JSONDecodeError as e:
+            raise ValidationError(f"Error decoding template JSON.\n{e}")
 
     @classmethod
     def from_url(cls, url: str) -> 'TemplateConfig':
@@ -174,7 +182,10 @@ class TemplateConfig(pydantic.BaseModel):
         response = requests.get(url)
         if response.status_code != 200:
             raise ValidationError(f"Failed to fetch template from {url}")
-        return cls.from_json(response.json())
+        try:
+            return cls.from_json(response.json())
+        except json.JSONDecodeError as e:
+            raise ValidationError(f"Error decoding template JSON.\n{e}")
 
     @classmethod
     def from_json(cls, data: dict) -> 'TemplateConfig':
@@ -193,8 +204,6 @@ class TemplateConfig(pydantic.BaseModel):
             for error in e.errors():
                 err_msg += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(err_msg)
-        except json.JSONDecodeError as e:
-            raise ValidationError(f"Error decoding template JSON.\n{e}")
 
 
 def get_all_template_paths() -> list[Path]:

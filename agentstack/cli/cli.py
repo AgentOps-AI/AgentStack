@@ -55,16 +55,7 @@ def init_project_builder(
 
     template_data = None
     if template is not None:
-        if template.startswith("https://"):
-            try:
-                template_data = TemplateConfig.from_url(template)
-            except Exception as e:
-                raise Exception(f"Failed to fetch template data from {template}.\n{e}")
-        else:
-            try:
-                template_data = TemplateConfig.from_template_name(template)
-            except Exception as e:
-                raise Exception(f"Failed to load template {template}.\n{e}")
+        template_data = TemplateConfig.from_user_input(template)
 
     if template_data:
         project_details = {
@@ -115,7 +106,6 @@ def init_project_builder(
 
 
 def welcome_message():
-    #os.system("cls" if os.name == "nt" else "clear")
     title = text2art("AgentStack", font="smisome1")
     tagline = "The easiest way to build a robust agent application!"
     border = "-" * len(tagline)
@@ -400,7 +390,7 @@ def insert_template(
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env.example',
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env',
     )
-    
+
     cookiecutter(str(template_path), no_input=True, extra_context=None)
 
     # TODO: inits a git repo in the directory the command was run in
