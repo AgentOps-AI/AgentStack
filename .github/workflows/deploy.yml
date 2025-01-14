@@ -18,7 +18,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: pip install build twine
+        run: pip install build twine toml
 
       - name: Build the package
         run: python -m build
