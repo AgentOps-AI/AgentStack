@@ -1,0 +1,14 @@
+{
+  "name": "example_tool",
+  "url": "https://www.youtube.com/watch?v=xvFZjo5PgG0",
+  "category": "example_category",
+  "env": {
+    "ENV_VAR_1": "foo",
+    "ENV_VAR_2": "bar"
+  },
+  "dependencies": [
+    "dep1>=0.4.20"
+  ],
+  "tools": ["function_to_be_exposed", "function_2_to_be_exposed"],
+  "cta": "A string to be printed after tool install instructing the user on next steps (often a link to implementation docs)"
+}

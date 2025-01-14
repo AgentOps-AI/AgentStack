@@ -46,7 +46,9 @@ crewai = [
     "crewai==0.83.0",
     "crewai-tools==0.14.0",
 ]
-
+all = [
+    "agentstack[dev,test,crewai]",
+]
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
@@ -67,8 +69,7 @@ exclude = [
     "dist",
     "*.egg-info",
     "agentstack/templates/",
-    "examples",
-    "__init__.py"
+    "examples"
 ]
 line-length = 110
 
