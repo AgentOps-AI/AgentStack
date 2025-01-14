@@ -27,7 +27,7 @@ agentstack init <project_name>
 AgentStack scaffolds your _agent stack_ - the tech stack that collectively is your agent
 
 <p align='center'>
-<img src='https://raw.githubusercontent.com/agentops-ai/agentstack/docs/images/the_agent_stack.png' width='600' alt='agentstack init'>
+<img src='https://github.com/AgentOps-AI/AgentStack/blob/7b40e53bf7300f69e3291c62d5b45e46ff818245/docs/images/the_agent_stack.png?raw=true' width='600' alt='agentstack init'>
 </p>
 
 ### Get Started Immediately
