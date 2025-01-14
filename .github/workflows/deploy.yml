@@ -23,6 +23,38 @@ jobs:
       - name: Build the package
         run: python -m build
 
+      - name: Check version matches
+        run: |
+          import toml
+          import os
+          import sys
+
+          # Read pyproject.toml
+          with open('pyproject.toml', 'r') as f:
+              pyproject = toml.load(f)
+
+          # Get version from pyproject.toml
+          project_version = pyproject['project']['version']
+
+          # Get release tag (strip 'v' prefix if present)
+          github_ref = os.environ['GITHUB_REF']
+          tag_version = github_ref.split('/')[-1]
+          if tag_version.startswith('v'):
+              tag_version = tag_version[1:]
+
+          print(f"pyproject.toml version: {project_version}")
+          print(f"Release tag version: {tag_version}")
+
+          # Compare versions
+          if project_version != tag_version:
+              print("Version mismatch!")
+              print(f"pyproject.toml version ({project_version}) does not match")
+              print(f"release tag version ({tag_version})")
+              sys.exit(1)
+
+          print("Versions match!")
+        shell: python
+
       - name: Upload to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
