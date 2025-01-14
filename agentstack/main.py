@@ -60,6 +60,7 @@ def main():
     init_parser.add_argument("slug_name", nargs="?", help="The directory name to place the project in")
     init_parser.add_argument("--wizard", "-w", action="store_true", help="Use the setup wizard")
     init_parser.add_argument("--template", "-t", help="Agent template to use")
+    init_parser.add_argument("--framework", "-f", help="Framework to use")
 
     # 'run' command
     run_parser = subparsers.add_parser(
@@ -167,7 +168,7 @@ def main():
         elif args.command in ["templates"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["init", "i"]:
-            init_project(args.slug_name, args.template, args.wizard)
+            init_project(args.slug_name, args.template, args.framework, args.wizard)
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()

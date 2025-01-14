@@ -7,14 +7,33 @@ end user inside of their project.
 from pathlib import Path
 from agentstack import conf
 from agentstack.utils import get_framework
+from agentstack.agents import get_agent
+from agentstack.tasks import get_task
 from agentstack.inputs import get_inputs
 
 ___all___ = [
     "conf", 
+    "agent", 
+    "task", 
     "get_tags", 
     "get_framework", 
+    "get_agent", 
+    "get_task", 
     "get_inputs", 
 ]
+
+def agent():
+    """
+    The `agent` decorator is used to mark a method that implements an Agent. 
+    """
+    pass
+
+
+def task():
+    """
+    The `task` decorator is used to mark a method that implements a Task.
+    """
+    pass
 
 
 def get_tags() -> list[str]:

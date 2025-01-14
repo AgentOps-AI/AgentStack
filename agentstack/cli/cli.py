@@ -43,6 +43,7 @@ PREFERRED_MODELS = [
 def init_project_builder(
     slug_name: Optional[str] = None,
     template: Optional[str] = None,
+    framework: Optional[str] = None,
     use_wizard: bool = False,
 ):
     if not slug_name and not use_wizard:
@@ -77,7 +78,8 @@ def init_project_builder(
             "author": "Name <Email>",
             "license": "MIT",
         }
-        framework = template_data.framework
+        if framework is None:
+            framework = template_data.framework
         design = {
             'agents': [agent.model_dump() for agent in template_data.agents],
             'tasks': [task.model_dump() for task in template_data.tasks],
@@ -102,7 +104,8 @@ def init_project_builder(
             "author": "Name <Email>",
             "license": "MIT",
         }
-        framework = default_project.framework
+        if framework is None:
+            framework = default_project.framework
         design = {
             'agents': [agent.model_dump() for agent in default_project.agents],
             'tasks': [task.model_dump() for task in default_project.tasks],

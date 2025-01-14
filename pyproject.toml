@@ -47,7 +47,8 @@ crewai = [
     "crewai-tools==0.14.0",
 ]
 langgraph = [
-    "langgraph==0.2.61",
+    "langgraph>=0.2.61",
+    "langchain_anthropic>=0.31"
 ]
 
 

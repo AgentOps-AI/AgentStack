@@ -55,9 +55,6 @@ class CrewFile(asttools.File):
     def add_task_method(self, task: TaskConfig):
         """Add a new task method to the CrewAI entrypoint."""
         task_methods = self.get_task_methods()
-        if task.name in [method.name for method in task_methods]:
-            # TODO this should check all methods in the class for duplicates
-            raise ValidationError(f"Task `{task.name}` already exists in {ENTRYPOINT}")
         if task_methods:
             # Add after the existing task methods
             _, pos = self.get_node_range(task_methods[-1])
@@ -71,6 +68,7 @@ class CrewFile(asttools.File):
         return Task(
             config=self.tasks_config['{task.name}'],
         )"""
+        
         if not self.source[:pos].endswith('\n'):
             code = '\n\n' + code
         if not self.source[pos:].startswith('\n'):
@@ -85,9 +83,6 @@ class CrewFile(asttools.File):
         """Add a new agent method to the CrewAI entrypoint."""
         # TODO do we want to pre-populate any tools?
         agent_methods = self.get_agent_methods()
-        if agent.name in [method.name for method in agent_methods]:
-            # TODO this should check all methods in the class for duplicates
-            raise ValidationError(f"Agent `{agent.name}` already exists in {ENTRYPOINT}")
         if agent_methods:
             # Add after the existing agent methods
             _, pos = self.get_node_range(agent_methods[-1])
@@ -103,6 +98,7 @@ class CrewFile(asttools.File):
             tools=[], # add tools here or use `agentstack tools add <tool_name>
             verbose=True,
         )"""
+        
         if not self.source[:pos].endswith('\n'):
             code = '\n\n' + code
         if not self.source[pos:].startswith('\n'):
@@ -236,6 +232,15 @@ def validate_project() -> None:
             f"`@agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
             "Create a new agent using `agentstack generate agent <agent_name>`."
         )
+
+
+def parse_llm(llm: str) -> tuple[str, str]:
+    """
+    Parse the llm string into a `LLM` dataclass.
+    Crew separates providers and models with a forward slash.
+    """
+    provider, model = llm.split('/')
+    return provider, model
 
 
 def get_task_names() -> list[str]:

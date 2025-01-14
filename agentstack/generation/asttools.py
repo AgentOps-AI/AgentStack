@@ -9,7 +9,7 @@ unwieldy, but since our use-cases are well-defined, we can provide a set of
 functions that are useful for the specific tasks we need to accomplish.
 """
 
-from typing import TypeVar, Optional, Union, Iterable, Any
+from typing import TypeVar, Optional, Union, Iterable, Pattern, Any
 from pathlib import Path
 import ast
 import astor
@@ -158,6 +158,27 @@ def find_class_with_decorator(tree: ast.Module, decorator_name: str) -> list[ast
             for decorator in node.decorator_list:
                 if isinstance(decorator, ast.Name) and decorator.id == decorator_name:
                     nodes.append(node)
+    return nodes
+
+
+def find_class_with_regex(tree: ast.Module, expr: Pattern) -> list[ast.ClassDef]:
+    """Find a class definition with a name that matches the regex. """
+    nodes = []
+    pattern = re.compile(expr)
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ClassDef):
+            if pattern.match(node.name):
+                nodes.append(node)
+    return nodes
+
+
+def find_method_in_class(classdef: ast.ClassDef, method_name: str) -> list[ast.FunctionDef]:
+    """Find all methods named `method_name`."""
+    nodes = []
+    for node in ast.iter_child_nodes(classdef):
+        if isinstance(node, ast.FunctionDef):
+            if node.name == method_name:
+                nodes.append(node)
     return nodes
 
 

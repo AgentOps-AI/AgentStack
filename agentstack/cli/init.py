@@ -3,6 +3,7 @@ from typing import Optional
 from pathlib import Path
 from agentstack import conf
 from agentstack import packaging
+from agentstack import frameworks
 from agentstack.cli import welcome_message, init_project_builder
 from agentstack.utils import term_color
 
@@ -28,6 +29,7 @@ def require_uv():
 def init_project(
     slug_name: Optional[str] = None,
     template: Optional[str] = None,
+    framework: Optional[str] = None,
     use_wizard: bool = False,
 ):
     """
@@ -55,8 +57,14 @@ def init_project(
     print(term_color("🦾 Creating a new AgentStack project...", 'blue'))
     print(f"Using project directory: {conf.PATH.absolute()}")
 
+    if framework:
+        if not framework in frameworks.SUPPORTED_FRAMEWORKS:
+            print(f"Error: Framework '{framework}' is not supported.")
+            sys.exit(1)
+        print(f"Using framework: {framework}")
+
     # copy the project skeleton, create a virtual environment, and install dependencies
-    init_project_builder(slug_name, template, use_wizard)
+    init_project_builder(slug_name, template, framework, use_wizard)
     packaging.create_venv()
     packaging.install_project()
 
