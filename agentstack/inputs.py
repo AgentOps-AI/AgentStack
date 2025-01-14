@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 
 
@@ -62,6 +62,7 @@ class InputsConfig:
         return dump
 
     def write(self):
+        log.debug(f"Writing inputs to {INPUTS_FILENAME}")
         with open(conf.PATH / INPUTS_FILENAME, 'w') as f:
             yaml.dump(self.model_dump(), f)
 

@@ -2,9 +2,10 @@ import sys
 import argparse
 import webbrowser
 
-from agentstack import conf, auth
+from agentstack import conf, log
+from agentstack import auth
 from agentstack.cli import (
-    init_project_builder,
+    init_project,
     add_tool,
     list_tools,
     configure_default_model,
@@ -17,7 +18,7 @@ from agentstack import generation
 from agentstack.update import check_for_updates
 
 
-def main():
+def _main():
     global_parser = argparse.ArgumentParser(add_help=False)
     global_parser.add_argument(
         "--path",
@@ -148,11 +149,13 @@ def main():
 
     # Set the project path from --path if it is provided in the global_parser
     conf.set_path(args.project_path)
+    # Set the debug flag
+    conf.set_debug(args.debug)
 
     # Handle version
     if args.version:
-        print(f"AgentStack CLI version: {get_version()}")
-        sys.exit(0)
+        log.info(f"AgentStack CLI version: {get_version()}")
+        return
 
     telemetry_id = track_cli_command(args.command, " ".join(sys.argv[1:]))
     check_for_updates(update_requested=args.command in ('update', 'u'))
@@ -167,7 +170,7 @@ def main():
         elif args.command in ["templates"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["init", "i"]:
-            init_project_builder(args.slug_name, args.template, args.wizard)
+            init_project(args.slug_name, args.template, args.wizard)
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()
@@ -187,11 +190,11 @@ def main():
             pass  # Update check already done
 
         # inside project dir commands only
-        conf.assert_project()
-
-        if args.command in ["run", "r"]:
-            run_project(command=args.function, debug=args.debug, cli_args=extra_args)
+        elif args.command in ["run", "r"]:
+            conf.assert_project()
+            run_project(command=args.function, cli_args=extra_args)
         elif args.command in ['generate', 'g']:
+            conf.assert_project()
             if args.generate_command in ['agent', 'a']:
                 if not args.llm:
                     configure_default_model()
@@ -201,22 +204,44 @@ def main():
             else:
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:
+            conf.assert_project()
             export_template(args.filename)
         else:
             parser.print_help()
 
     except Exception as e:
         update_telemetry(telemetry_id, result=1, message=str(e))
-        print(term_color("An error occurred while running your AgentStack command:", "red"))
         raise e
 
     update_telemetry(telemetry_id, result=0)
 
 
-if __name__ == "__main__":
+def main() -> int:
+    """
+    Main entry point for the AgentStack CLI.
+    """
+    # display logging messages in the console
+    log.set_stdout(sys.stdout)
+    log.set_stderr(sys.stderr)
+
     try:
-        main()
+        _main()
+        return 0
+    except Exception as e:
+        log.error(f"An error occurred: \n{e}")
+        if not conf.DEBUG:
+            log.info("Run again with --debug for more information.")
+        log.debug("Full traceback:", exc_info=e)
+        return 1
     except KeyboardInterrupt:
         # Handle Ctrl+C (KeyboardInterrupt)
         print("\nTerminating AgentStack CLI")
-        sys.exit(1)
+        return 1
+
+
+if __name__ == "__main__":
+    # Note that since we primarily interact with the CLI through a bin, all logic
+    # needs to reside within the main() function.
+    # Module syntax is typically only used by tests.
+    # see `project.scripts.agentstack` in pyproject.toml for the bin config.
+    sys.exit(main())

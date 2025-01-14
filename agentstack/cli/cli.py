@@ -16,8 +16,7 @@ from .agentstack_data import (
     ProjectStructure,
     CookiecutterData,
 )
-from agentstack.logger import log
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.conf import ConfigFile
 from agentstack.utils import get_package_path
 from agentstack.generation.files import ProjectFile
@@ -75,7 +74,6 @@ def init_project_builder(
         tools = [tools.model_dump() for tools in template_data.tools]
 
     elif use_wizard:
-        welcome_message()
         project_details = ask_project_details(slug_name)
         welcome_message()
         framework = ask_framework()
@@ -83,7 +81,6 @@ def init_project_builder(
         tools = ask_tools()
 
     else:
-        welcome_message()
         # the user has started a new project; let's give them something to work with
         default_project = TemplateConfig.from_template_name('hello_alex')
         project_details = {
@@ -104,33 +101,30 @@ def init_project_builder(
     log.debug(f"project_details: {project_details}" f"framework: {framework}" f"design: {design}")
     insert_template(project_details, framework, design, template_data)
 
-    # we have an agentstack.json file in the directory now
-    conf.set_path(project_details['name'])
-
     for tool_data in tools:
         generation.add_tool(tool_data['name'], agents=tool_data['agents'])
 
 
 def welcome_message():
-    os.system("cls" if os.name == "nt" else "clear")
     title = text2art("AgentStack", font="smisome1")
     tagline = "The easiest way to build a robust agent application!"
     border = "-" * len(tagline)
 
     # Print the welcome message with ASCII art
-    print(title)
-    print(border)
-    print(tagline)
-    print(border)
+    log.info(title)
+    log.info(border)
+    log.info(tagline)
+    log.info(border)
 
 
 def configure_default_model():
     """Set the default model"""
     agentstack_config = ConfigFile()
     if agentstack_config.default_model:
+        log.debug("Using default model from project config.")
         return  # Default model already set
 
-    print("Project does not have a default model configured.")
+    log.info("Project does not have a default model configured.")
     other_msg = "Other (enter a model name)"
     model = inquirer.list_input(
         message="Which model would you like to use?",
@@ -138,9 +132,10 @@ def configure_default_model():
     )
 
     if model == other_msg:  # If the user selects "Other", prompt for a model name
-        print('A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+        log.info('A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
         model = inquirer.text(message="Enter the model name")
 
+    log.debug("Writing default model to project config.")
     with ConfigFile() as agentstack_config:
         agentstack_config.default_model = model
 
@@ -166,7 +161,7 @@ def ask_framework() -> str:
     #         choices=["CrewAI", "Autogen", "LiteLLM"],
     #     )
 
-    print("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
+    log.success("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
 
     return framework
 
@@ -186,16 +181,13 @@ def get_validated_input(
         snake_case: Whether to enforce snake_case naming
     """
     while True:
-        try:
-            value = inquirer.text(
-                message=message,
-                validate=validate_func or validator_not_empty(min_length) if min_length else None,
-            )
-            if snake_case and not is_snake_case(value):
-                raise ValidationError("Input must be in snake_case")
-            return value
-        except ValidationError as e:
-            print(term_color(f"Error: {str(e)}", 'red'))
+        value = inquirer.text(
+            message=message,
+            validate=validate_func or validator_not_empty(min_length) if min_length else None,
+        )
+        if snake_case and not is_snake_case(value):
+            raise ValidationError("Input must be in snake_case")
+        return value
 
 
 def ask_agent_details():
@@ -325,10 +317,10 @@ def ask_tools() -> list:
 
         tools_to_add.append(tool_selection.split(' - ')[0])
 
-        print("Adding tools:")
+        log.info("Adding tools:")
         for t in tools_to_add:
-            print(f'  - {t}')
-        print('')
+            log.info(f'  - {t}')
+        log.info('')
         adding_tools = inquirer.confirm("Add another tool?")
 
     return tools_to_add
@@ -338,7 +330,7 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
     name = inquirer.text(message="What's the name of your project (snake_case)", default=slug_name or '')
 
     if not is_snake_case(name):
-        print(term_color("Project name must be snake case", 'red'))
+        log.error("Project name must be snake case")
         return ask_project_details(slug_name)
 
     questions = inquirer.prompt(
@@ -399,15 +391,6 @@ def insert_template(
         f'{template_path}/{"{{cookiecutter.project_metadata.project_slug}}"}/.env',
     )
 
-    if os.path.isdir(project_details['name']):
-        print(
-            term_color(
-                f"Directory {template_path} already exists. Please check this and try again",
-                "red",
-            )
-        )
-        sys.exit(1)
-
     cookiecutter(str(template_path), no_input=True, extra_context=None)
 
     # TODO: inits a git repo in the directory the command was run in
@@ -420,26 +403,6 @@ def insert_template(
     except:
         print("Failed to initialize git repository. Maybe you're already in one? Do this with: git init")
 
-    # TODO: check if poetry is installed and if so, run poetry install in the new directory
-    # os.system("poetry install")
-    # os.system("cls" if os.name == "nt" else "clear")
-    # TODO: add `agentstack docs` command
-    print(
-        "\n"
-        "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
-        "  Next, run:\n"
-        f"    cd {project_metadata.project_slug}\n"
-        "    python -m venv .venv\n"
-        "    source .venv/bin/activate\n\n"
-        "  Make sure you have the latest version of poetry installed:\n"
-        "    pip install -U poetry\n\n"
-        "  You'll need to install the project's dependencies with:\n"
-        "    poetry install\n\n"
-        "  Finally, try running your agent with:\n"
-        "    agentstack run\n\n"
-        "  Run `agentstack quickstart` or `agentstack docs` for next steps.\n"
-    )
-
 
 def export_template(output_filename: str):
     """
@@ -448,8 +411,7 @@ def export_template(output_filename: str):
     try:
         metadata = ProjectFile()
     except Exception as e:
-        print(term_color(f"Failed to load project metadata: {e}", 'red'))
-        sys.exit(1)
+        raise Exception(f"Failed to load project metadata: {e}")
 
     # Read all the agents from the project's agents.yaml file
     agents: list[TemplateConfig.Agent] = []
@@ -511,7 +473,6 @@ def export_template(output_filename: str):
 
     try:
         template.write_to_file(conf.PATH / output_filename)
-        print(term_color(f"Template saved to: {conf.PATH / output_filename}", 'green'))
+        log.success(f"Template saved to: {conf.PATH / output_filename}")
     except Exception as e:
-        print(term_color(f"Failed to write template to file: {e}", 'red'))
-        sys.exit(1)
+        raise Exception(f"Failed to write template to file: {e}")

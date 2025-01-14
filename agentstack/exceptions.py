@@ -5,3 +5,12 @@ class ValidationError(Exception):
     """
 
     pass
+
+
+class EnvironmentError(Exception):
+    """
+    Raised when an error occurs in the execution environment ie. a command is
+    not present or the environment is not configured as expected.
+    """
+
+    pass

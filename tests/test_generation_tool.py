@@ -7,8 +7,8 @@ import ast
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack import frameworks
-from agentstack.tools import get_all_tools, ToolConfig
-from agentstack.generation.tool_generation import add_tool, remove_tool, TOOLS_INIT_FILENAME
+from agentstack._tools import get_all_tools, ToolConfig
+from agentstack.generation.tool_generation import add_tool, remove_tool
 
 
 BASE_PATH = Path(__file__).parent
@@ -24,7 +24,6 @@ class TestGenerationTool(unittest.TestCase):
         os.makedirs(self.project_dir / 'src')
         os.makedirs(self.project_dir / 'src' / 'tools')
         (self.project_dir / 'src' / '__init__.py').touch()
-        (self.project_dir / TOOLS_INIT_FILENAME).touch()
 
         # set the framework in agentstack.json
         shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')
@@ -45,13 +44,10 @@ class TestGenerationTool(unittest.TestCase):
 
         entrypoint_path = frameworks.get_entrypoint_path(self.framework)
         entrypoint_src = open(entrypoint_path).read()
-        ast.parse(entrypoint_src)
-        tools_init_src = open(self.project_dir / TOOLS_INIT_FILENAME).read()
+        ast.parse(entrypoint_src)  # validate syntax
 
         # TODO verify tool is added to all agents (this is covered in test_frameworks.py)
         # assert 'agent_connect' in entrypoint_src
-        assert f'from .{tool_conf.module_name} import' in tools_init_src
-        assert (self.project_dir / 'src' / 'tools' / f'{tool_conf.module_name}.py').exists()
         assert 'agent_connect' in open(self.project_dir / 'agentstack.json').read()
 
     def test_remove_tool(self):
@@ -61,11 +57,8 @@ class TestGenerationTool(unittest.TestCase):
 
         entrypoint_path = frameworks.get_entrypoint_path(self.framework)
         entrypoint_src = open(entrypoint_path).read()
-        ast.parse(entrypoint_src)
-        tools_init_src = open(self.project_dir / TOOLS_INIT_FILENAME).read()
+        ast.parse(entrypoint_src)  # validate syntax
 
         # TODO verify tool is removed from all agents (this is covered in test_frameworks.py)
         # assert 'agent_connect' not in entrypoint_src
-        assert f'from .{tool_conf.module_name} import' not in tools_init_src
-        assert not (self.project_dir / 'src' / 'tools' / f'{tool_conf.module_name}.py').exists()
         assert 'agent_connect' not in open(self.project_dir / 'agentstack.json').read()

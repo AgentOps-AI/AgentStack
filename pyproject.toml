@@ -30,6 +30,7 @@ dependencies = [
     "requests>=2.32",
     "appdirs>=1.4.4",
     "python-dotenv>=1.0.1",
+    "uv>=0.5.6",
 ]
 
 [project.optional-dependencies]
@@ -45,7 +46,9 @@ crewai = [
     "crewai==0.83.0",
     "crewai-tools==0.14.0",
 ]
-
+all = [
+    "agentstack[dev,test,crewai]",
+]
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
@@ -66,8 +69,7 @@ exclude = [
     "dist",
     "*.egg-info",
     "agentstack/templates/",
-    "examples",
-    "__init__.py"
+    "examples"
 ]
 line-length = 110
 
