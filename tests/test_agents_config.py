@@ -44,7 +44,7 @@ class AgentConfigTest(unittest.TestCase):
         assert config.role == "role"
         assert config.goal == "this is a goal"
         assert config.backstory == "backstory"
-        assert config.llm == "provider/model"
+        assert config.llm == "openai/gpt-4o"
 
     def test_write_yaml(self):
         with AgentConfig("agent_name") as config:

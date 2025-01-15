@@ -8,6 +8,8 @@ from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack._tools import ToolConfig
+from agentstack.agents import AgentConfig
+from agentstack.tasks import TaskConfig
 
 BASE_PATH = Path(__file__).parent
 
@@ -20,10 +22,9 @@ class TestFrameworks(unittest.TestCase):
         os.makedirs(self.project_dir)
         os.chdir(self.project_dir)  # importing the crewai module requires us to be in a working directory
         os.makedirs(self.project_dir / 'src')
-        os.makedirs(self.project_dir / 'src' / 'tools')
+        os.makedirs(self.project_dir / 'src' / 'config')
 
         (self.project_dir / 'src' / '__init__.py').touch()
-        (self.project_dir / 'src' / 'tools' / '__init__.py').touch()
 
         shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')
         set_path(self.project_dir)
@@ -42,6 +43,14 @@ class TestFrameworks(unittest.TestCase):
         """This entrypoint has tools and agents."""
         entrypoint_path = frameworks.get_entrypoint_path(self.framework)
         shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
+
+    def _get_test_agent(self) -> AgentConfig:
+        shutil.copy(BASE_PATH / 'fixtures' / 'agents_max.yaml', self.project_dir / 'src' / 'config' / 'agents.yaml')
+        return AgentConfig('agent_name')
+
+    def _get_test_task(self) -> TaskConfig:
+        shutil.copy(BASE_PATH / 'fixtures' / 'tasks_max.yaml', self.project_dir / 'src' / 'config' / 'tasks.yaml')
+        return TaskConfig('task_name')
 
     def _get_test_tool(self) -> ToolConfig:
         return ToolConfig(name='test_tool', category='test', tools=['test_tool'])
@@ -66,12 +75,38 @@ class TestFrameworks(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             frameworks.validate_project()
 
+    def test_validate_project_has_agent_no_task_invalid(self):
+        self._populate_min_entrypoint()
+        frameworks.add_agent(self._get_test_agent())
+        with self.assertRaises(ValidationError) as context:
+            frameworks.validate_project()
+
+    def test_validate_project_has_task_no_agent_invalid(self):
+        self._populate_min_entrypoint()
+        frameworks.add_task(self._get_test_task())
+        with self.assertRaises(ValidationError) as context:
+            frameworks.validate_project()
+
+    def test_get_agent_tool_names(self):
+        self._populate_max_entrypoint()
+        frameworks.add_tool(self._get_test_tool(), 'test_agent')
+        tool_names = frameworks.get_agent_tool_names('test_agent')
+        assert tool_names == ['test_tool']
+
     def test_add_tool(self):
         self._populate_max_entrypoint()
         frameworks.add_tool(self._get_test_tool(), 'test_agent')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert "*agentstack.tools['test_tool']" in entrypoint_src
+
+    def test_add_tool_duplicate(self):
+        """Repeated calls to add_tool should not duplicate the tool."""
+        self._populate_max_entrypoint()
+        frameworks.add_tool(self._get_test_tool(), 'test_agent')
+        frameworks.add_tool(self._get_test_tool(), 'test_agent')
+        
+        assert len(frameworks.get_agent_tool_names('test_agent')) == 1
 
     def test_add_tool_invalid(self):
         self._populate_min_entrypoint()

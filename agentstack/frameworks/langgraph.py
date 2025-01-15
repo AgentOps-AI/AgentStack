@@ -8,7 +8,7 @@ from agentstack._tools import ToolConfig
 from agentstack.agents import AgentConfig
 from agentstack.tasks import TaskConfig
 
-ENTRYPOINT: Path = Path('src/graph.py')  # Adjust this path as needed for langgraph
+ENTRYPOINT: Path = Path('src/graph.py')
 
 
 class LangGraphFile(asttools.File):
@@ -29,9 +29,13 @@ class LangGraphFile(asttools.File):
         """A method named `run`."""
         try:
             base_class = self.get_base_class()
-            return asttools.find_method_in_class(base_class, 'run')[0]
+            node = asttools.find_method_in_class(base_class, 'run')[0]
+            assert 'inputs' in (arg.arg for arg in node.args.args)
+            return node
         except IndexError:
             raise ValidationError(f"`run` method not found in `{base_class.name} class in {ENTRYPOINT}.")
+        except AssertionError:
+            raise ValidationError(f"Method `run` of `{base_class.name}` must accept `inputs` as a keyword argument.")
 
     def get_task_methods(self) -> list[ast.FunctionDef]:
         """A `task` method is a method decorated with `@task`."""
@@ -67,6 +71,22 @@ class LangGraphFile(asttools.File):
         """An `agent` method is a method decorated with `@agent`."""
         return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
 
+    def get_agent_provider_class_name(self, provider: str) -> str:
+        """LangGraph uses separate classes for each LLM provider."""
+        # TODO import supporting classes into the entrypoint
+        # TODO providers may need dependencies to be installed
+        provider_class = {
+            'openai': 'ChatOpenAI',
+            'anthropic': 'ChatAnthropic',
+        }
+        try:
+            return provider_class[provider]
+        except KeyError:
+            raise ValidationError(
+                f"LangGraph provider '{provider}' has not been implemented. "
+                f"AgentStack currently supports: {', '.join(provider_class.keys())} "
+            )
+
     def add_agent_method(self, agent: AgentConfig):
         """Add a new agent method to the LangGraph entrypoint."""
         agent_methods = self.get_agent_methods()
@@ -78,13 +98,7 @@ class LangGraphFile(asttools.File):
             main_method = self.get_run_method()
             pos, _ = self.get_node_range(main_method)
 
-        if agent.provider == 'openai':
-            agent_class_name = 'ChatOpenAI'
-        elif agent.provider == 'anthropic':
-            agent_class_name = 'ChatAnthropic'
-        else:
-            raise ValidationError(f"Unsupported provider {agent.provider}")
-
+        agent_class_name = self.get_agent_provider_class_name(agent.provider)
         code = f"""    @agentstack.agent
     def {agent.name}(self, state: State) -> Agent:
         agent_config = agentstack.get_agent('{agent.name}')
@@ -240,25 +254,16 @@ def validate_project() -> None:
     Validate that a langgraph project is ready to run.
     Raises an `agentstack.ValidationError` if the project is not valid.
     """
-    try:
-        graph_file = LangGraphFile(conf.PATH / ENTRYPOINT)
-    except ValidationError as e:
-        raise e
+    graph_file = LangGraphFile(conf.PATH / ENTRYPOINT)
     
     # A valid project must have a class in the graph.py file that is named <Foo>Graph.
-    try:
-        class_node = graph_file.get_base_class()
-    except ValidationError as e:
-        raise e
+    # will raise a ValidationError if the class is not found
+    class_node = graph_file.get_base_class()
     
     # The base class must implement a method called `run` that accepts `inputs`
     # as a keyword argument. 
-    try:
-        node = graph_file.get_run_method()
-        assert 'inputs' in (arg.arg for arg in node.args.args), \
-            f"Method `run` of `{class_node.name}` must accept `inputs` as a keyword argument."
-    except (AssertionError, ValidationError) as e:
-        raise e
+    # will raise a ValidationError if the method is not found or does not have the correct signature
+    _ = graph_file.get_run_method()
 
     # The base class must have one or more methods decorated with `@task`
     if len(graph_file.get_task_methods()) < 1:
@@ -313,8 +318,7 @@ def get_agent_tool_names(agent_name: str) -> list[Any]:
     Get a list of tools used by an agent.
     """
     with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
-        tools = entrypoint.get_agent_tools(agent_name)
-    return [asttools.get_node_value(node) for node in tools.elts]
+        return entrypoint.get_agent_tool_names(agent_name)
 
 
 def add_agent(agent: AgentConfig) -> None:
