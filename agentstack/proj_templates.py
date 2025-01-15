@@ -8,7 +8,7 @@ from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path
 
 
-CURRENT_VERSION: int = 4
+CURRENT_VERSION: Literal[4] = 4
 
 class TemplateConfig_v1(pydantic.BaseModel):
     name: str
@@ -183,7 +183,7 @@ class TemplateConfig(pydantic.BaseModel):
 
     name: str
     description: str
-    template_version: Literal[CURRENT_VERSION]
+    template_version: Literal[4]
     framework: str
     method: str
     manager_agent: Optional[str] = None
