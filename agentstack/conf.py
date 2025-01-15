@@ -93,6 +93,7 @@ class ConfigFile(BaseModel):
     template: Optional[str] = None
     template_version: Optional[str] = None
 
+    print('hello tests')
     def __init__(self):
         if os.path.exists(PATH / CONFIG_FILENAME):
             with open(PATH / CONFIG_FILENAME, 'r') as f:
