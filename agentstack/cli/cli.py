@@ -465,7 +465,7 @@ def export_template(output_filename: str):
         )
 
     template = TemplateConfig(
-        template_version=3,
+        template_version=4,
         name=metadata.project_name,
         description=metadata.project_description,
         framework=get_framework(),
@@ -475,6 +475,7 @@ def export_template(output_filename: str):
         tasks=tasks,
         tools=tools,
         inputs=inputs.get_inputs(),
+        graph=[],  # TODO
     )
 
     try:

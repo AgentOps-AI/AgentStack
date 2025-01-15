@@ -63,17 +63,18 @@ class TemplateConfig_v2(pydantic.BaseModel):
     tools: list[Tool]
     inputs: dict[str, str]
 
-    def to_v3(self) -> 'TemplateConfig':
+    def to_v4(self) -> 'TemplateConfig':
         return TemplateConfig(
             name=self.name,
             description=self.description,
-            template_version=3,
+            template_version=4,
             framework=self.framework,
             method=self.method,
             manager_agent=None,
             agents=[TemplateConfig.Agent(**agent.model_dump()) for agent in self.agents],
             tasks=[TemplateConfig.Task(**task.model_dump()) for task in self.tasks],
             tools=[TemplateConfig.Tool(**tool.model_dump()) for tool in self.tools],
+            graph=[],
             inputs=self.inputs,
         )
 
@@ -257,7 +258,7 @@ class TemplateConfig(pydantic.BaseModel):
                 case 1:
                     return TemplateConfig_v1(**data).to_v4()
                 case 2:
-                    return TemplateConfig_v2(**data).to_v3().to_v4()
+                    return TemplateConfig_v2(**data).to_v4()
                 case 3:
                     return TemplateConfig_v3(**data).to_v4()
                 case 4:

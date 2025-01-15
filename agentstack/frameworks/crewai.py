@@ -144,27 +144,8 @@ class CrewFile(asttools.File):
         """
         Get a list of all ast nodes that define agentstack tools used by the agent.
         """
-        tool_nodes: list[ast.Starred] = []
         agent_tools_node = self.get_agent_tools(agent_name)
-        for node in agent_tools_node.elts:
-            try:
-                # we need to find nodes that look like:
-                #   `*agentstack.tools['tool_name']`
-                assert isinstance(node, ast.Starred)
-                assert isinstance(node.value, ast.Subscript)
-                assert isinstance(node.value.slice, ast.Constant)
-                name_node = node.value.value
-                assert isinstance(name_node, ast.Attribute)
-                assert isinstance(name_node.value, ast.Name)
-                assert name_node.value.id == 'agentstack'
-                assert name_node.attr == 'tools'
-
-                # This is a starred subscript node referencing agentstack.tools with
-                # a string slice, so it must be an agentstack tool
-                tool_nodes.append(node)
-            except AssertionError:
-                continue  # not a matched node; that's ok
-        return tool_nodes
+        return asttools.find_tool_nodes(agent_tools_node)
 
     def get_agent_tool_names(self, agent_name: str) -> list[str]:
         """
@@ -195,16 +176,7 @@ class CrewFile(asttools.File):
 
         new_tool_nodes: list[ast.expr] = []
         if not tool.name in self.get_agent_tool_names(agent_name):
-            # we need to create a node that looks like:
-            #   `*agentstack.tools['tool_name']`
-            # we always get a list of callables from the `agentstack.tools` module,
-            # so we need to wrap the node in a `Starred` node to unpack it.
-            node = ast.Subscript(
-                value=asttools.create_attribute('agentstack', 'tools'),
-                slice=ast.Constant(tool.name),
-                ctx=ast.Load(),
-            )
-            existing_elts.append(ast.Starred(value=node, ctx=ast.Load()))
+            existing_elts.append(asttools.create_tool_node(tool.name))
 
         new_node = ast.List(elts=existing_elts, ctx=ast.Load())
         start, end = self.get_node_range(existing_node)

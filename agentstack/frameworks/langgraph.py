@@ -1,7 +1,10 @@
-from typing import Optional
+from typing import Optional, Any
 from pathlib import Path
+import ast
+from agentstack import conf
 from agentstack.exceptions import ValidationError
-from agentstack.tools import ToolConfig
+from agentstack.generation import asttools
+from agentstack._tools import ToolConfig
 from agentstack.agents import AgentConfig
 from agentstack.tasks import TaskConfig
 
@@ -21,22 +24,21 @@ class LangGraphFile(asttools.File):
         """
         if self._base_class is None:  # gets cached to save repeat iteration
             try:
-                self._base_class = asttools.find_class_with_regex(self.tree, re.compile(r'\w+Graph$'))[0]
+                self._base_class = asttools.find_class_with_regex(self.tree, r'\w+Graph$')[0]
             except IndexError:
                 raise ValidationError(f"`<FooBar>Graph` class not found in {ENTRYPOINT}")
         return self._base_class
 
-    def get_main_method(self) -> ast.FunctionDef:
-        """A method named `main`."""
+    def get_run_method(self) -> ast.FunctionDef:
+        """A method named `run`."""
         try:
             base_class = self.get_base_class()
-            return asttools.find_method_in_class(base_class, 'main')[0]
+            return asttools.find_method_in_class(base_class, 'run')[0]
         except IndexError:
-            raise ValidationError(f"`main` method not found in `{base_class.name} class in {ENTRYPOINT}.")
+            raise ValidationError(f"`run` method not found in `{base_class.name} class in {ENTRYPOINT}.")
 
     def get_task_methods(self) -> list[ast.FunctionDef]:
         """A `task` method is a method decorated with `@task`."""
-        # TODO in practice, the decorator is `agentstack.task`
         return asttools.find_decorated_method_in_class(self.get_base_class(), 'task')
 
     def add_task_method(self, task: TaskConfig):
@@ -47,7 +49,7 @@ class LangGraphFile(asttools.File):
             _, pos = self.get_node_range(task_methods[-1])
         else:
             # Add before the `main` method
-            main_method = self.get_main_method()
+            main_method = self.get_run_method()
             pos, _ = self.get_node_range(main_method)
 
         code = f"""    @agentstack.task
@@ -67,7 +69,6 @@ class LangGraphFile(asttools.File):
 
     def get_agent_methods(self) -> list[ast.FunctionDef]:
         """An `agent` method is a method decorated with `@agent`."""
-        # TODO in practice, the decorator is `agentstack.agent`
         return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
 
     def add_agent_method(self, agent: AgentConfig):
@@ -78,15 +79,15 @@ class LangGraphFile(asttools.File):
             _, pos = self.get_node_range(agent_methods[-1])
         else:
             # Add before the `main` method
-            main_method = self.get_main_method()
+            main_method = self.get_run_method()
             pos, _ = self.get_node_range(main_method)
 
-        if agent.llm.provider == 'openai':
+        if agent.provider == 'openai':
             agent_class_name = 'ChatOpenAI'
-        elif agent.llm.provider == 'anthropic':
+        elif agent.provider == 'anthropic':
             agent_class_name = 'ChatAnthropic'
         else:
-            raise ValidationError(f"Unsupported provider {agent.llm.provider}")
+            raise ValidationError(f"Unsupported provider {agent.provider}")
 
         code = f"""    @agentstack.agent
     def {agent.name}(self, state: State) -> Agent:
@@ -108,50 +109,66 @@ class LangGraphFile(asttools.File):
             code += '\n\n'
         self.edit_node_range(pos, pos, code)
     
+    def get_global_tools(self) -> ast.List:
+        method = asttools.find_method_call(self.get_run_method(), 'ToolNode')
+        if method is None:
+            raise ValidationError(f"`run` method does not instantiate `ToolNode` in {ENTRYPOINT}")
+        
+        try:
+            assert isinstance(method.args[0], ast.List)
+            tools_list: ast.List = method.args[0]
+        except (IndexError, AssertionError):
+            raise ValidationError(f"`run` method does not pass a list to `ToolNode` in {ENTRYPOINT}")
+        return tools_list
+    
+    def get_global_tool_nodes(self) -> list[ast.Starred]:
+        """
+        Get a list of all ast nodes that define global tools used by the project.
+        """
+        global_tools_node = self.get_global_tools()
+        return asttools.find_tool_nodes(global_tools_node)
+    
+    def get_global_tool_names(self) -> list[str]:
+        """
+        Get a list of all tools used by the project.
+
+        Tools are identified by the item name of an `agentstack.tools` attribute node.
+        """
+        tool_names: list[str] = []
+        for node in self.get_global_tool_nodes():
+            tool_names.append(node.value.slice.value)  # type: ignore[attr-defined]
+        return tool_names
+    
     def get_agent_tools(self, agent_name: str) -> ast.List:
+        """
+        Get the tools used by an agent as AST nodes.
+
+        Tool definitions are inside of the methods marked with an `@agent` decorator.
+        The method `bind_tools` is called with a list of tools to bind to the agent.
+        """
         method = asttools.find_method(self.get_agent_methods(), agent_name)
         if method is None:
             raise ValidationError(f"Agent method `{agent_name}` does not exist in {ENTRYPOINT}")
 
         # find the `bind_tools` method call
-        bind_tools = asttools.find_method(method, 'bind_tools')
+        bind_tools = asttools.find_method_call(method, 'bind_tools')
         if bind_tools is None:
             raise ValidationError(f"Method `{agent_name}` does not call `bind_tools` in {ENTRYPOINT}")
 
         try:
-            tools_list_arg = bind_tools.args[0]
-        except IndexError:
+            assert isinstance(bind_tools.args[0], ast.List)
+            tools_list: ast.List = bind_tools.args[0]
+        except (IndexError, AssertionError):
             raise ValidationError(f"Method `{agent_name}` does not pass a list to `bind_tools` in {ENTRYPOINT}")
         
-        return tools_list_arg.value
-
+        return tools_list
+    
     def get_agent_tool_nodes(self, agent_name: str) -> list[ast.Starred]:
         """
         Get a list of all ast nodes that define agentstack tools used by the agent.
         """
-        # TODO LangGraph passes tools to the graph in two places: once to associate
-        # it with an agent, and another to define the ToolsNode for all agents. 
-        tool_nodes: list[ast.Starred] = []
         agent_tools_node = self.get_agent_tools(agent_name)
-        for node in agent_tools_node.elts:
-            try:
-                # we need to find nodes that look like:
-                #   `*agentstack.tools['tool_name']`
-                assert isinstance(node, ast.Starred)
-                assert isinstance(node.value, ast.Subscript)
-                assert isinstance(node.value.slice, ast.Constant)
-                name_node = node.value.value
-                assert isinstance(name_node, ast.Attribute)
-                assert isinstance(name_node.value, ast.Name)
-                assert name_node.value.id == 'agentstack'
-                assert name_node.attr == 'tools'
-
-                # This is a starred subscript node referencing agentstack.tools with
-                # a string slice, so it must be an agentstack tool
-                tool_nodes.append(node)
-            except AssertionError:
-                continue  # not a matched node; that's ok
-        return tool_nodes
+        return asttools.find_tool_nodes(agent_tools_node)
 
     def get_agent_tool_names(self, agent_name: str) -> list[str]:
         """
@@ -164,10 +181,11 @@ class LangGraphFile(asttools.File):
             # ignore type checking here since `get_agent_tool_nodes` is exhaustive
             tool_names.append(node.value.slice.value)  # type: ignore[attr-defined]
         return tool_names
-
+    
     def add_agent_tools(self, agent_name: str, tool: ToolConfig):
         """
-        Add new tools to be used by an agent.
+        Add new tools to be used by an agent to the agent's tool list and the 
+        global ToolNode list.
         """
         method = asttools.find_method(self.get_agent_methods(), agent_name)
         if method is None:
@@ -178,28 +196,31 @@ class LangGraphFile(asttools.File):
 
         new_tool_nodes: list[ast.expr] = []
         if not tool.name in self.get_agent_tool_names(agent_name):
-            # we need to create a node that looks like:
-            #   `*agentstack.tools['tool_name']`
-            # we always get a list of callables from the `agentstack.tools` module,
-            # so we need to wrap the node in a `Starred` node to unpack it.
-            node = ast.Subscript(
-                value=asttools.create_attribute('agentstack', 'tools'),
-                slice=ast.Constant(tool.name),
-                ctx=ast.Load(),
-            )
-            existing_elts.append(ast.Starred(value=node, ctx=ast.Load()))
+            existing_elts.append(asttools.create_tool_node(tool.name))
 
         new_node = ast.List(elts=existing_elts, ctx=ast.Load())
         start, end = self.get_node_range(existing_node)
         self.edit_node_range(start, end, new_node)
+        
+        # add the tool to the global tools list
+        existing_global_node: ast.List = self.get_global_tools()
+        existing_global_elts: list[ast.expr] = existing_global_node.elts
+        
+        new_global_tool_nodes: list[ast.expr] = []
+        if not tool.name in self.get_global_tool_names():
+            existing_global_elts.append(asttools.create_tool_node(tool.name))
+        
+        new_global_node = ast.List(elts=existing_global_elts, ctx=ast.Load())
+        start, end = self.get_node_range(existing_global_node)
+        self.edit_node_range(start, end, new_global_node)
 
     def remove_agent_tools(self, agent_name: str, tool: ToolConfig):
         """
-        Remove tools from an agent belonging to `tool`.
+        Remove tools from an agent belonging to `tool` from the agent's tool list
+        and the global ToolNode list.
         """
         existing_node: ast.List = self.get_agent_tools(agent_name)
         start, end = self.get_node_range(existing_node)
-
         # modify the existing node to remove any matching tools
         # we're referencing the internal node list from two directions here,
         # so it's important that the node tree doesn't get re-parsed in between
@@ -207,8 +228,15 @@ class LangGraphFile(asttools.File):
             # ignore type checking here since `get_agent_tool_nodes` is exhaustive
             if tool.name == node.value.slice.value:  # type: ignore[attr-defined]
                 existing_node.elts.remove(node)
-
         self.edit_node_range(start, end, existing_node)
+        
+        # remove the tool from the global tools list
+        existing_global_node: ast.List = self.get_global_tools()
+        start, end = self.get_node_range(existing_global_node)
+        for node in self.get_global_tool_nodes():
+            if tool.name == node.value.slice.value:  # type: ignore[attr-defined]
+                existing_global_node.elts.remove(node)
+        self.edit_node_range(start, end, existing_global_node)
 
 
 def validate_project() -> None:
@@ -230,9 +258,9 @@ def validate_project() -> None:
     # The base class must implement a method called `run` that accepts `inputs`
     # as a keyword argument. 
     try:
-        node = graph_file.get_main_method()
+        node = graph_file.get_run_method()
         assert 'inputs' in (arg.arg for arg in node.args.kwonlyargs), \
-            f"Method `main` of `{class_node.name}` must accept `inputs` as a keyword argument."
+            f"Method `run` of `{class_node.name}` must accept `inputs` as a keyword argument."
     except (AssertionError, ValidationError) as e:
         raise e
 

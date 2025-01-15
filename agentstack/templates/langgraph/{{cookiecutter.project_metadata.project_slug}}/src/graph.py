@@ -55,11 +55,12 @@ class {{ cookiecutter.project_metadata.project_name|replace('-', '')|replace('_'
     def run(self, inputs: list[str]):
         self.graph = StateGraph(State)
 
+        tools = ToolNode([])
+        self.graph.add_node("tools", tools)
+
 {%- for agent in cookiecutter.structure.agents %}
         self.graph.add_node("{{ agent.name }}", self.{{ agent.name }})
-        {{ agent.name }}_tools = ToolNode(tools=[])
-        self.graph.add_node("{{ agent.name }}_tools", {{ agent.name }}_tools)
-        self.graph.add_edge("{{ agent.name }}", "{{ agent.name }}_tools")
+        self.graph.add_edge("{{ agent.name }}", "tools")
         self.graph.add_conditional_edges("{{ agent.name }}", tools_condition)
 {% endfor %}
 

@@ -169,18 +169,20 @@ def add_agent(agent: AgentConfig):
     """
     Add an agent to the user's project.
     """
+    framework = get_framework()
     if agent.name in get_agent_names():
-        raise ValidationError(f"Agent `{agent.name}` already exists in {get_entrypoint_path()}")
-    return get_framework_module(get_framework()).add_agent(agent)
+        raise ValidationError(f"Agent `{agent.name}` already exists in {get_entrypoint_path(framework)}")
+    return get_framework_module(framework).add_agent(agent)
 
 
 def add_task(task: TaskConfig):
     """
     Add a task to the user's project.
     """
+    framework = get_framework()
     if task.name in get_task_names():
-        raise ValidationError(f"Task `{task.name}` already exists in {get_entrypoint_path()}")
-    return get_framework_module(get_framework()).add_task(task)
+        raise ValidationError(f"Task `{task.name}` already exists in {get_entrypoint_path(framework)}")
+    return get_framework_module(framework).add_task(task)
 
 
 def get_task_names() -> list[str]:
