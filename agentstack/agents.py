@@ -4,7 +4,7 @@ from pathlib import Path
 import pydantic
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 
 
@@ -96,6 +96,7 @@ class AgentConfig(pydantic.BaseModel):
         return {self.name: dump}
 
     def write(self):
+        log.debug(f"Writing agent {self.name} to {AGENTS_FILENAME}")
         filename = conf.PATH / AGENTS_FILENAME
 
         with open(filename, 'r') as f:
@@ -116,6 +117,7 @@ class AgentConfig(pydantic.BaseModel):
 def get_all_agent_names() -> list[str]:
     filename = conf.PATH / AGENTS_FILENAME
     if not os.path.exists(filename):
+        log.debug(f"Project does not have an {AGENTS_FILENAME} file.")
         return []
     with open(filename, 'r') as f:
         data = yaml.load(f) or {}

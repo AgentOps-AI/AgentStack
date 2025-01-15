@@ -1,0 +1,13 @@
+{
+  "name": "exa",
+  "url": "https://exa.ai",
+  "category": "web-retrieval",
+  "env": {
+    "EXA_API_KEY": null
+  },
+  "dependencies": [
+    "exa-py>=1.7.0"
+  ],
+  "tools": ["search_and_contents"],
+  "cta": "Get your Exa API key at https://dashboard.exa.ai/api-keys"
+}

@@ -1,7 +1,8 @@
 import os, sys
 from typing import Optional
 from pathlib import Path
-from agentstack import conf
+from agentstack import conf, log
+from agentstack.exceptions import EnvironmentError
 from agentstack import packaging
 from agentstack import frameworks
 from agentstack.cli import welcome_message, init_project_builder
@@ -16,14 +17,14 @@ def require_uv():
         uv_bin = packaging.get_uv_bin()
         assert os.path.exists(uv_bin)
     except (AssertionError, ImportError):
-        print(term_color("Error: uv is not installed.", 'red'))
-        print("Full installation instructions at: https://docs.astral.sh/uv/getting-started/installation")
+        message = "Error: uv is not installed.\n"
+        message += "Full installation instructions at: https://docs.astral.sh/uv/getting-started/installation\n"
         match sys.platform:
             case 'linux' | 'darwin':
-                print("Hint: run `curl -LsSf https://astral.sh/uv/install.sh | sh`")
+                message += "Hint: run `curl -LsSf https://astral.sh/uv/install.sh | sh`\n"
             case _:
                 pass
-        sys.exit(1)
+        raise EnvironmentError(message)
 
 
 def init_project(
@@ -45,17 +46,14 @@ def init_project(
     if slug_name:
         conf.set_path(conf.PATH / slug_name)
     else:
-        print("Error: No project directory specified.")
-        print("Run `agentstack init <project_name>`")
-        sys.exit(1)
+        raise Exception("Error: No project directory specified.\n Run `agentstack init <project_name>`")
 
     if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
-        print(f"Error: Directory already exists: {conf.PATH}")
-        sys.exit(1)
+        raise Exception(f"Error: Directory already exists: {conf.PATH}")
 
     welcome_message()
-    print(term_color("🦾 Creating a new AgentStack project...", 'blue'))
-    print(f"Using project directory: {conf.PATH.absolute()}")
+    log.notify("🦾 Creating a new AgentStack project...")
+    log.info(f"Using project directory: {conf.PATH.absolute()}")
 
     if framework:
         if not framework in frameworks.SUPPORTED_FRAMEWORKS:
@@ -68,9 +66,8 @@ def init_project(
     packaging.create_venv()
     packaging.install_project()
 
-    print(
-        "\n"
-        "🚀 \033[92mAgentStack project generated successfully!\033[0m\n\n"
+    log.success("🚀 AgentStack project generated successfully!\n")
+    log.info(
         "  To get started, activate the virtual environment with:\n"
         f"    cd {conf.PATH}\n"
         "    source .venv/bin/activate\n\n"

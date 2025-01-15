@@ -54,7 +54,7 @@ class TestGenerationAgent(unittest.TestCase):
         ast.parse(entrypoint_src)
 
     def test_add_agent_exists(self):
-        with self.assertRaises(SystemExit) as context:
+        with self.assertRaises(Exception) as context:
             add_agent(
                 'test_agent',
                 role='role',

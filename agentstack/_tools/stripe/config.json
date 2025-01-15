@@ -1,0 +1,20 @@
+{
+  "name": "stripe",
+  "url": "https://github.com/stripe/agent-toolkit",
+  "category": "application-specific",
+  "env": {
+    "STRIPE_SECRET_KEY": null
+  },
+  "dependencies": [
+    "stripe-agent-toolkit==0.2.0",
+    "stripe>=11.0.0"
+  ],
+  "tools": [
+    "create_payment_link",
+    "create_product",
+    "list_products",
+    "create_price",
+    "list_prices"
+  ],
+  "cta": "🔑 Create your Stripe API key here: https://dashboard.stripe.com/account/apikeys"
+}

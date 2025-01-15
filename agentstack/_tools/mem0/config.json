@@ -1,0 +1,13 @@
+{
+  "name": "mem0",
+  "url": "https://github.com/mem0ai/mem0",
+  "category": "storage",
+  "env": {
+    "MEM0_API_KEY": null
+  },
+  "dependencies": [
+    "mem0ai>=0.1.35"
+  ],
+  "tools": ["write_to_memory", "read_from_memory"],
+  "cta": "Create your mem0 API key at https://mem0.ai/"
+}

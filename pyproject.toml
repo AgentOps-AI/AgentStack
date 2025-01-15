@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentstack"
-version = "0.2.3"
+version = "0.2.5"
 description = "The fastest way to build robust AI agents"
 authors = [
     { name="Braelyn Boynton", email="bboynton97@gmail.com" },
@@ -50,7 +50,9 @@ langgraph = [
     "langgraph>=0.2.61",
     "langchain_anthropic>=0.31"
 ]
-
+all = [
+    "agentstack[dev,test,crewai,langgraph]",
+]
 
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
@@ -71,8 +73,7 @@ exclude = [
     "dist",
     "*.egg-info",
     "agentstack/templates/",
-    "examples",
-    "__init__.py"
+    "examples"
 ]
 line-length = 110
 

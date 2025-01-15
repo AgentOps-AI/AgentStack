@@ -1,0 +1,19 @@
+{
+  "name": "weaviate",
+  "url": "https://github.com/weaviate/weaviate-python-client",
+  "category": "vector-store",
+  "env": {
+    "WEAVIATE_URL": null,
+    "WEAVIATE_API_KEY": null,
+    "WEAVIATE_OPENAI_API_KEY": null
+  },
+  "dependencies": [
+    "weaviate-client>=3.0.0",
+    "openai>=1.0.0"
+  ],
+  "tools": [
+    "search_collection",
+    "create_collection"
+  ],
+  "cta": "🔗 Create your Weaviate cluster here: https://console.weaviate.cloud/"
+}
