@@ -5,17 +5,17 @@ from pathlib import Path
 import importlib.util
 from dotenv import load_dotenv
 
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack import inputs
 from agentstack import frameworks
-from agentstack.utils import term_color, get_framework
+from agentstack.utils import term_color, get_framework, verify_agentstack_project
 
 MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
 
 
-def _format_friendy_error_message(exception: Exception):
+def _format_friendly_error_message(exception: Exception):
     """
     Projects will throw various errors, especially on first runs, so we catch
     them here and print a more helpful message.
@@ -68,7 +68,11 @@ def _format_friendy_error_message(exception: Exception):
                 "Ensure all tasks referenced in your code are defined in the tasks.yaml file."
             )
         case (_, _, _):
-            return f"{name}: {message}, {tracebacks[-1]}"
+            log.debug(
+                f"Unhandled exception; if this is a common error, consider adding it to "
+                f"`cli.run._format_friendly_error_message`. Exception: {exception}"
+            )
+            raise exception  # re-raise the original exception so we preserve context
 
 
 def _import_project_module(path: Path):
@@ -84,22 +88,22 @@ def _import_project_module(path: Path):
     assert spec.loader is not None  # appease type checker
 
     project_module = importlib.util.module_from_spec(spec)
-    sys.path.append(str((path / MAIN_FILENAME).parent))
+    sys.path.insert(0, str((path / MAIN_FILENAME).parent))
     spec.loader.exec_module(project_module)
     return project_module
 
 
-def run_project(command: str = 'run', debug: bool = False, cli_args: Optional[str] = None):
+def run_project(command: str = 'run', cli_args: Optional[str] = None):
     """Validate that the project is ready to run and then run it."""
+    verify_agentstack_project()
+    
     if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
-        print(term_color(f"Framework {conf.get_framework()} is not supported by agentstack.", 'red'))
-        sys.exit(1)
+        raise ValidationError(f"Framework {conf.get_framework()} is not supported by agentstack.")
 
     try:
         frameworks.validate_project()
     except ValidationError as e:
-        print(term_color(f"Project validation failed:\n{e}", 'red'))
-        sys.exit(1)
+        raise e
 
     # Parse extra --input-* arguments for runtime overrides of the project's inputs
     if cli_args:
@@ -107,6 +111,7 @@ def run_project(command: str = 'run', debug: bool = False, cli_args: Optional[st
             if not arg.startswith('--input-'):
                 continue
             key, value = arg[len('--input-') :].split('=')
+            log.debug(f"Using CLI input override: {key}={value}")
             inputs.add_input_for_run(key, value)
 
     load_dotenv(Path.home() / '.env')  # load the user's .env file
@@ -114,16 +119,10 @@ def run_project(command: str = 'run', debug: bool = False, cli_args: Optional[st
 
     # import src/main.py from the project path and run `command` from the project's main.py
     try:
-        print("Running your agent...")
+        log.notify("Running your agent...")
         project_main = _import_project_module(conf.PATH)
         getattr(project_main, command)()
     except ImportError as e:
-        print(term_color(f"Failed to import project. Does '{MAIN_FILENAME}' exist?:\n{e}", 'red'))
-        sys.exit(1)
-    except Exception as exception:
-        if debug:
-            raise exception
-        print(term_color("\nAn error occurred while running your project:\n", 'red'))
-        print(_format_friendy_error_message(exception))
-        print(term_color("\nRun `agentstack run --debug` for a full traceback.", 'blue'))
-        sys.exit(1)
+        raise ValidationError(f"Failed to import project. Does '{MAIN_FILENAME}' exist?:\n{e}")
+    except Exception as e:
+        raise Exception(_format_friendly_error_message(e))

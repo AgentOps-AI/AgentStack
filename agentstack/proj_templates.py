@@ -19,48 +19,21 @@ class TemplateConfig_v1(pydantic.BaseModel):
     tools: list[dict]
     inputs: list[str]
 
-    def to_v2(self) -> 'TemplateConfig':
-        return TemplateConfig(
+    def to_v2(self) -> 'TemplateConfig_v2':
+        return TemplateConfig_v2(
             name=self.name,
             description=self.description,
             template_version=2,
             framework=self.framework,
             method=self.method,
-            agents=[TemplateConfig.Agent(**agent) for agent in self.agents],
-            tasks=[TemplateConfig.Task(**task) for task in self.tasks],
-            tools=[TemplateConfig.Tool(**tool) for tool in self.tools],
+            agents=[TemplateConfig_v2.Agent(**agent) for agent in self.agents],
+            tasks=[TemplateConfig_v2.Task(**task) for task in self.tasks],
+            tools=[TemplateConfig_v2.Tool(**tool) for tool in self.tools],
             inputs={key: "" for key in self.inputs},
         )
 
 
-class TemplateConfig(pydantic.BaseModel):
-    """
-    Interface for interacting with template configuration files.
-
-    Templates are read-only.
-
-    Template Schema
-    -------------
-    name: str
-        The name of the project.
-    description: str
-        A description of the template.
-    template_version: int
-        The version of the template.
-    framework: str
-        The framework the template is for.
-    method: str
-        The method used by the project. ie. "sequential"
-    agents: list[TemplateConfig.Agent]
-        A list of agents used by the project.
-    tasks: list[TemplateConfig.Task]
-        A list of tasks used by the project.
-    tools: list[TemplateConfig.Tool]
-        A list of tools used by the project.
-    inputs: list[str]
-        A list of inputs used by the project.
-    """
-
+class TemplateConfig_v2(pydantic.BaseModel):
     class Agent(pydantic.BaseModel):
         name: str
         role: str
@@ -88,6 +61,80 @@ class TemplateConfig(pydantic.BaseModel):
     tools: list[Tool]
     inputs: dict[str, str]
 
+    def to_v3(self) -> 'TemplateConfig':
+        return TemplateConfig(
+            name=self.name,
+            description=self.description,
+            template_version=3,
+            framework=self.framework,
+            method=self.method,
+            manager_agent=None,
+            agents=[TemplateConfig.Agent(**agent.model_dump()) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task.model_dump()) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool.model_dump()) for tool in self.tools],
+            inputs=self.inputs,
+        )
+
+
+class TemplateConfig(pydantic.BaseModel):
+    """
+    Interface for interacting with template configuration files.
+
+    Templates are read-only.
+
+    Template Schema
+    -------------
+    name: str
+        The name of the project.
+    description: str
+        A description of the template.
+    template_version: int
+        The version of the template.
+    framework: str
+        The framework the template is for.
+    method: str
+        The method used by the project. ie. "sequential"
+    manager_agent: Optional[str]
+        The name of the agent that manages the project.
+    agents: list[TemplateConfig.Agent]
+        A list of agents used by the project.
+    tasks: list[TemplateConfig.Task]
+        A list of tasks used by the project.
+    tools: list[TemplateConfig.Tool]
+        A list of tools used by the project.
+    inputs: list[str]
+        A list of inputs used by the project.
+    """
+
+    class Agent(pydantic.BaseModel):
+        name: str
+        role: str
+        goal: str
+        backstory: str
+        allow_delegation: bool = False
+        model: str
+
+    class Task(pydantic.BaseModel):
+        name: str
+        description: str
+        expected_output: str
+        agent: str
+
+    class Tool(pydantic.BaseModel):
+        name: str
+        agents: list[str]
+
+    name: str
+    description: str
+    template_version: Literal[3]
+    framework: str
+    method: str
+    manager_agent: Optional[str]
+    agents: list[Agent]
+    tasks: list[Task]
+    tools: list[Tool]
+    inputs: dict[str, str]
+
     def write_to_file(self, filename: Path):
         if not filename.suffix == '.json':
             filename = filename.with_suffix('.json')
@@ -95,6 +142,21 @@ class TemplateConfig(pydantic.BaseModel):
         with open(filename, 'w') as f:
             model_dump = self.model_dump()
             f.write(json.dumps(model_dump, indent=4))
+
+    @classmethod
+    def from_user_input(cls, identifier: str):
+        """
+        Load a template from a user-provided identifier.
+        Three cases will be tried: A URL, a file path, or a template name.
+        """
+        if identifier.startswith('https://'):
+            return cls.from_url(identifier)
+
+        if identifier.endswith('.json'):
+            path = Path() / identifier
+            return cls.from_file(path)
+
+        return cls.from_template_name(identifier)
 
     @classmethod
     def from_template_name(cls, name: str) -> 'TemplateConfig':
@@ -107,8 +169,11 @@ class TemplateConfig(pydantic.BaseModel):
     def from_file(cls, path: Path) -> 'TemplateConfig':
         if not os.path.exists(path):
             raise ValidationError(f"Template {path} not found.")
-        with open(path, 'r') as f:
-            return cls.from_json(json.load(f))
+        try:
+            with open(path, 'r') as f:
+                return cls.from_json(json.load(f))
+        except json.JSONDecodeError as e:
+            raise ValidationError(f"Error decoding template JSON.\n{e}")
 
     @classmethod
     def from_url(cls, url: str) -> 'TemplateConfig':
@@ -117,15 +182,20 @@ class TemplateConfig(pydantic.BaseModel):
         response = requests.get(url)
         if response.status_code != 200:
             raise ValidationError(f"Failed to fetch template from {url}")
-        return cls.from_json(response.json())
+        try:
+            return cls.from_json(response.json())
+        except json.JSONDecodeError as e:
+            raise ValidationError(f"Error decoding template JSON.\n{e}")
 
     @classmethod
     def from_json(cls, data: dict) -> 'TemplateConfig':
         try:
             match data.get('template_version'):
                 case 1:
-                    return TemplateConfig_v1(**data).to_v2()
+                    return TemplateConfig_v1(**data).to_v2().to_v3()
                 case 2:
+                    return TemplateConfig_v2(**data).to_v3()
+                case 3:
                     return cls(**data)  # current version
                 case _:
                     raise ValidationError(f"Unsupported template version: {data.get('template_version')}")
@@ -134,8 +204,6 @@ class TemplateConfig(pydantic.BaseModel):
             for error in e.errors():
                 err_msg += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(err_msg)
-        except json.JSONDecodeError as e:
-            raise ValidationError(f"Error decoding template JSON.\n{e}")
 
 
 def get_all_template_paths() -> list[Path]:

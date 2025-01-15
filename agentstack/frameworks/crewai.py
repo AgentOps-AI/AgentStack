@@ -3,7 +3,7 @@ from pathlib import Path
 import ast
 from agentstack import conf
 from agentstack.exceptions import ValidationError
-from agentstack.tools import ToolConfig
+from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
@@ -117,7 +117,7 @@ class CrewFile(asttools.File):
         """
         Get the tools used by an agent as AST nodes.
 
-        Tool definitons are inside of the methods marked with an `@agent` decorator.
+        Tool definitions are inside of the methods marked with an `@agent` decorator.
         The method returns a new class instance with the tools as a list of callables
         under the kwarg `tools`.
         """
@@ -186,7 +186,7 @@ class CrewFile(asttools.File):
         """
         Add new tools to be used by an agent.
 
-        Tool definitons are inside of the methods marked with an `@agent` decorator.
+        Tool definitions are inside of the methods marked with an `@agent` decorator.
         The method returns a new class instance with the tools as a list of callables
         under the kwarg `tools`.
         """
@@ -235,7 +235,7 @@ class CrewFile(asttools.File):
 def validate_project() -> None:
     """
     Validate that a CrewAI project is ready to run.
-    Raises an `agentstack.VaidationError` if the project is not valid.
+    Raises an `agentstack.ValidationError` if the project is not valid.
     """
     try:
         crew_file = CrewFile(conf.PATH / ENTRYPOINT)

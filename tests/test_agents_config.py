@@ -5,7 +5,8 @@ import unittest
 import importlib.resources
 from pathlib import Path
 from agentstack import conf
-from agentstack.agents import AgentConfig, AGENTS_FILENAME
+from agentstack.agents import AgentConfig, AGENTS_FILENAME, get_all_agent_names, get_all_agents
+from agentstack.exceptions import ValidationError
 
 BASE_PATH = Path(__file__).parent
 
@@ -22,10 +23,10 @@ class AgentConfigTest(unittest.TestCase):
     def test_empty_file(self):
         config = AgentConfig("agent_name")
         assert config.name == "agent_name"
-        assert config.role is ""
-        assert config.goal is ""
-        assert config.backstory is ""
-        assert config.llm is ""
+        assert config.role == ""
+        assert config.goal == ""
+        assert config.backstory == ""
+        assert config.llm == ""
 
     def test_read_minimal_yaml(self):
         shutil.copy(BASE_PATH / "fixtures/agents_min.yaml", self.project_dir / AGENTS_FILENAME)
@@ -83,3 +84,58 @@ class AgentConfigTest(unittest.TestCase):
   llm:
 """
         )
+
+    def test_yaml_error(self):
+        # Create an invalid YAML file
+        with open(self.project_dir / AGENTS_FILENAME, 'w') as f:
+            f.write("""
+agent_name:
+  role: "This is a valid line"
+  invalid_yaml: "This line is missing a colon"
+    nested_key: "This will cause a YAML error"
+""")
+
+        # Attempt to load the config, which should raise a ValidationError
+        with self.assertRaises(ValidationError) as context:
+            AgentConfig("agent_name")
+
+    def test_pydantic_validation_error(self):
+        # Create a YAML file with an invalid field type
+        with open(self.project_dir / AGENTS_FILENAME, 'w') as f:
+            f.write("""
+agent_name:
+  role: "This is a valid role"
+  goal: "This is a valid goal"
+  backstory: "This is a valid backstory"
+  llm: 123  # This should be a string, not an integer
+""")
+
+        # Attempt to load the config, which should raise a ValidationError
+        with self.assertRaises(ValidationError) as context:
+            AgentConfig("agent_name")
+
+    def test_get_all_agent_names(self):
+        shutil.copy(BASE_PATH / "fixtures/agents_max.yaml", self.project_dir / AGENTS_FILENAME)
+
+        agent_names = get_all_agent_names()
+        self.assertEqual(set(agent_names), {"agent_name", "second_agent_name"})
+        self.assertEqual(agent_names, ["agent_name", "second_agent_name"])
+
+    def test_get_all_agent_names_missing_file(self):
+        if os.path.exists(self.project_dir / AGENTS_FILENAME):
+            os.remove(self.project_dir / AGENTS_FILENAME)
+        non_existent_file_agent_names = get_all_agent_names()
+        self.assertEqual(non_existent_file_agent_names, [])
+
+    def test_get_all_agent_names_empty_file(self):
+        with open(self.project_dir / AGENTS_FILENAME, 'w') as f:
+            f.write("")
+        
+        empty_agent_names = get_all_agent_names()
+        self.assertEqual(empty_agent_names, [])
+
+    def test_get_all_agents(self):
+        shutil.copy(BASE_PATH / "fixtures/agents_max.yaml", self.project_dir / AGENTS_FILENAME)
+
+        for agent in get_all_agents():
+            self.assertIsInstance(agent, AgentConfig)

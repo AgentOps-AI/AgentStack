@@ -4,42 +4,46 @@ import time
 from pathlib import Path
 from packaging.version import parse as parse_version, Version
 import inquirer
+from agentstack import log
 from agentstack.utils import term_color, get_version, get_framework
 from agentstack import packaging
 from appdirs import user_data_dir
 
+
+def _get_base_dir():
+    """Try to get appropriate directory for storing update file"""
+    try:
+        base_dir = Path(user_data_dir("agentstack", "agency"))
+        # Test if we can write to directory
+        test_file = base_dir / '.test_write_permission'
+        test_file.touch()
+        test_file.unlink()
+    except (RuntimeError, OSError, PermissionError):
+        # In CI or when directory is not writable, use temp directory
+        base_dir = Path(os.getenv('TEMP', '/tmp'))
+    return base_dir
+
+
 AGENTSTACK_PACKAGE = 'agentstack'
+CI_ENV_VARS = [
+    'CI',
+    'GITHUB_ACTIONS',
+    'GITLAB_CI',
+    'TRAVIS',
+    'CIRCLECI',
+    'JENKINS_URL',
+    'TEAMCITY_VERSION',
+]
+
+LAST_CHECK_FILE_PATH = _get_base_dir() / ".cli-last-update"
+INSTALL_PATH = Path(sys.executable).parent.parent
+ENDPOINT_URL = "https://pypi.org/simple"
+CHECK_EVERY = 3600  # hour
 
 
 def _is_ci_environment():
     """Detect if we're running in a CI environment"""
-    ci_env_vars = [
-        'CI',
-        'GITHUB_ACTIONS',
-        'GITLAB_CI',
-        'TRAVIS',
-        'CIRCLECI',
-        'JENKINS_URL',
-        'TEAMCITY_VERSION',
-    ]
-    return any(os.getenv(var) for var in ci_env_vars)
-
-
-# Try to get appropriate directory for storing update file
-try:
-    base_dir = Path(user_data_dir("agentstack", "agency"))
-    # Test if we can write to directory
-    test_file = base_dir / '.test_write_permission'
-    test_file.touch()
-    test_file.unlink()
-except (RuntimeError, OSError, PermissionError):
-    # In CI or when directory is not writable, use temp directory
-    base_dir = Path(os.getenv('TEMP', '/tmp'))
-
-LAST_CHECK_FILE_PATH = base_dir / ".cli-last-update"
-INSTALL_PATH = Path(sys.executable).parent.parent
-ENDPOINT_URL = "https://pypi.org/simple"
-CHECK_EVERY = 3600  # hour
+    return any(os.getenv(var) for var in CI_ENV_VARS)
 
 
 def get_latest_version(package: str) -> Version:
@@ -112,32 +116,24 @@ def check_for_updates(update_requested: bool = False):
     if not update_requested and not should_update():
         return
 
-    print("Checking for updates...\n")
+    log.info("Checking for updates...\n")
 
     try:
         latest_version: Version = get_latest_version(AGENTSTACK_PACKAGE)
     except Exception as e:
-        print(term_color("Failed to retrieve package index.", 'red'))
-        return
+        raise Exception(f"Failed to retrieve package index: {e}")
 
     installed_version: Version = parse_version(get_version(AGENTSTACK_PACKAGE))
     if latest_version > installed_version:
-        print('')  # newline
+        log.info('')  # newline
         if inquirer.confirm(
             f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"
         ):
             packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
-            print(
-                term_color(
-                    f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.", 'green'
-                )
-            )
-            sys.exit(0)
+            log.success(f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.")
         else:
-            print(
-                term_color("Skipping update. Run `agentstack update` to install the latest version.", 'blue')
-            )
+            log.info("Skipping update. Run `agentstack update` to install the latest version.")
     else:
-        print(f"{AGENTSTACK_PACKAGE} is up to date ({installed_version})")
+        log.info(f"{AGENTSTACK_PACKAGE} is up to date ({installed_version})")
 
     record_update_check()

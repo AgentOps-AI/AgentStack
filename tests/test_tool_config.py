@@ -1,7 +1,7 @@
 import json
 import unittest
 from pathlib import Path
-from agentstack.tools import ToolConfig, get_all_tool_paths, get_all_tool_names
+from agentstack._tools import ToolConfig, get_all_tool_paths, get_all_tool_names
 
 BASE_PATH = Path(__file__).parent
 
