@@ -8,6 +8,8 @@ from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path
 
 
+CURRENT_VERSION: int = 4
+
 class TemplateConfig_v1(pydantic.BaseModel):
     name: str
     description: str
@@ -23,7 +25,7 @@ class TemplateConfig_v1(pydantic.BaseModel):
         return TemplateConfig(
             name=self.name,
             description=self.description,
-            template_version=4,
+            template_version=CURRENT_VERSION,
             framework=self.framework,
             method=self.method,
             manager_agent=None,
@@ -67,7 +69,7 @@ class TemplateConfig_v2(pydantic.BaseModel):
         return TemplateConfig(
             name=self.name,
             description=self.description,
-            template_version=4,
+            template_version=CURRENT_VERSION,
             framework=self.framework,
             method=self.method,
             manager_agent=None,
@@ -113,13 +115,13 @@ class TemplateConfig_v3(pydantic.BaseModel):
         return TemplateConfig(
             name=self.name,
             description=self.description,
-            template_version=4,
+            template_version=CURRENT_VERSION,
             framework=self.framework,
             method=self.method,
             manager_agent=self.manager_agent,
-            agents=[TemplateConfig.Agent(**agent.dict()) for agent in self.agents],
-            tasks=[TemplateConfig.Task(**task.dict()) for task in self.tasks],
-            tools=[TemplateConfig.Tool(**tool.dict()) for tool in self.tools],
+            agents=[TemplateConfig.Agent(**agent.model_dump()) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task.model_dump()) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool.model_dump()) for tool in self.tools],
             graph=[],
             inputs=self.inputs,
         )
@@ -181,7 +183,7 @@ class TemplateConfig(pydantic.BaseModel):
 
     name: str
     description: str
-    template_version: Literal[4]
+    template_version: Literal[CURRENT_VERSION]
     framework: str
     method: str
     manager_agent: Optional[str] = None

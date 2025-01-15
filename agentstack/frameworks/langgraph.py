@@ -15,19 +15,15 @@ class LangGraphFile(asttools.File):
     """
     Parses and manipulates the LangGraph entrypoint file. 
     """
-    _base_class: Optional[ast.ClassDef] = None
-
     def get_base_class(self) -> ast.ClassDef:
         """
         A base class is the first class inside of the file that follows the 
         naming convention: `<FooBar>Graph`
         """
-        if self._base_class is None:  # gets cached to save repeat iteration
-            try:
-                self._base_class = asttools.find_class_with_regex(self.tree, r'\w+Graph$')[0]
-            except IndexError:
-                raise ValidationError(f"`<FooBar>Graph` class not found in {ENTRYPOINT}")
-        return self._base_class
+        try:
+            return asttools.find_class_with_regex(self.tree, r'\w+Graph$')[0]
+        except IndexError:
+            raise ValidationError(f"`<FooBar>Graph` class not found in {ENTRYPOINT}")
 
     def get_run_method(self) -> ast.FunctionDef:
         """A method named `run`."""
@@ -211,8 +207,8 @@ class LangGraphFile(asttools.File):
             existing_global_elts.append(asttools.create_tool_node(tool.name))
         
         new_global_node = ast.List(elts=existing_global_elts, ctx=ast.Load())
-        start, end = self.get_node_range(existing_global_node)
-        self.edit_node_range(start, end, new_global_node)
+        global_start, global_end = self.get_node_range(existing_global_node)
+        self.edit_node_range(global_start, global_end, new_global_node)
 
     def remove_agent_tools(self, agent_name: str, tool: ToolConfig):
         """
@@ -232,11 +228,11 @@ class LangGraphFile(asttools.File):
         
         # remove the tool from the global tools list
         existing_global_node: ast.List = self.get_global_tools()
-        start, end = self.get_node_range(existing_global_node)
+        global_start, global_end = self.get_node_range(existing_global_node)
         for node in self.get_global_tool_nodes():
             if tool.name == node.value.slice.value:  # type: ignore[attr-defined]
                 existing_global_node.elts.remove(node)
-        self.edit_node_range(start, end, existing_global_node)
+        self.edit_node_range(global_start, global_end, existing_global_node)
 
 
 def validate_project() -> None:
@@ -259,7 +255,7 @@ def validate_project() -> None:
     # as a keyword argument. 
     try:
         node = graph_file.get_run_method()
-        assert 'inputs' in (arg.arg for arg in node.args.kwonlyargs), \
+        assert 'inputs' in (arg.arg for arg in node.args.args), \
             f"Method `run` of `{class_node.name}` must accept `inputs` as a keyword argument."
     except (AssertionError, ValidationError) as e:
         raise e

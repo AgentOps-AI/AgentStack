@@ -48,7 +48,7 @@ crewai = [
 ]
 langgraph = [
     "langgraph>=0.2.61",
-    "langchain_anthropic>=0.31"
+    "langchain_anthropic>=0.3.1"
 ]
 all = [
     "agentstack[dev,test,crewai,langgraph]",

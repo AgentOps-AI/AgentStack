@@ -71,8 +71,7 @@ class TestFrameworks(unittest.TestCase):
         frameworks.add_tool(self._get_test_tool(), 'test_agent')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
-        # TODO these asserts are not framework agnostic
-        assert "tools=[*agentstack.tools['test_tool']" in entrypoint_src
+        assert "*agentstack.tools['test_tool']" in entrypoint_src
 
     def test_add_tool_invalid(self):
         self._populate_min_entrypoint()
@@ -85,7 +84,7 @@ class TestFrameworks(unittest.TestCase):
         frameworks.remove_tool(self._get_test_tool(), 'test_agent')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
-        assert "tools=[*agentstack.tools['test_tool']" not in entrypoint_src
+        assert "*agentstack.tools['test_tool']" not in entrypoint_src
 
     def test_add_multiple_tools(self):
         self._populate_max_entrypoint()
@@ -94,8 +93,8 @@ class TestFrameworks(unittest.TestCase):
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert (  # ordering is not guaranteed
-            "tools=[*agentstack.tools['test_tool'], *agentstack.tools['test_tool_alt']" in entrypoint_src
-            or "tools=[*agentstack.tools['test_tool_alt'], *agentstack.tools['test_tool']" in entrypoint_src
+            "*agentstack.tools['test_tool'], *agentstack.tools['test_tool_alt']" in entrypoint_src
+            or "*agentstack.tools['test_tool_alt'], *agentstack.tools['test_tool']" in entrypoint_src
         )
 
     def test_remove_one_tool_of_multiple(self):
@@ -106,4 +105,4 @@ class TestFrameworks(unittest.TestCase):
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert "*agentstack.tools['test_tool']" not in entrypoint_src
-        assert "tools=[*agentstack.tools['test_tool_alt']" in entrypoint_src
+        assert "*agentstack.tools['test_tool_alt']" in entrypoint_src

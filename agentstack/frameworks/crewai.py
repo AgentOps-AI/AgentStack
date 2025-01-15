@@ -21,9 +21,6 @@ class CrewFile(asttools.File):
     Parses and manipulates the CrewAI entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
-
-    _base_class: Optional[ast.ClassDef] = None
-
     def write(self):
         """
         Early versions of the crew entrypoint file used tabs instead of spaces.
@@ -35,12 +32,10 @@ class CrewFile(asttools.File):
 
     def get_base_class(self) -> ast.ClassDef:
         """A base class is a class decorated with `@CrewBase`."""
-        if self._base_class is None:  # Gets cached to save repeat iteration
-            try:
-                self._base_class = asttools.find_class_with_decorator(self.tree, 'CrewBase')[0]
-            except IndexError:
-                raise ValidationError(f"`@CrewBase` decorated class not found in {ENTRYPOINT}")
-        return self._base_class
+        try:
+            return asttools.find_class_with_decorator(self.tree, 'CrewBase')[0]
+        except IndexError:
+            raise ValidationError(f"`@CrewBase` decorated class not found in {ENTRYPOINT}")
 
     def get_crew_method(self) -> ast.FunctionDef:
         """A `crew` method is a method decorated with `@crew`."""

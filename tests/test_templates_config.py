@@ -7,6 +7,7 @@ from unittest.mock import patch
 from parameterized import parameterized
 from agentstack.exceptions import ValidationError
 from agentstack.proj_templates import (
+    CURRENT_VERSION, 
     TemplateConfig,
     get_all_template_names,
     get_all_template_paths,
@@ -88,12 +89,12 @@ class TemplateConfigTest(unittest.TestCase):
     def test_from_user_input_url(self):
         config = TemplateConfig.from_user_input(VALID_TEMPLATE_URL)
         self.assertEqual(config.name, "content_creator")
-        self.assertEqual(config.template_version, 3)
+        self.assertEqual(config.template_version, CURRENT_VERSION)
 
     def test_from_user_input_name(self):
         config = TemplateConfig.from_user_input('content_creator')
         self.assertEqual(config.name, "content_creator")
-        self.assertEqual(config.template_version, 3)
+        self.assertEqual(config.template_version, CURRENT_VERSION)
 
     def test_from_user_input_local_file(self):
         test_file = self.project_dir / 'test_local_template.json'
@@ -116,7 +117,7 @@ class TemplateConfigTest(unittest.TestCase):
 
         config = TemplateConfig.from_user_input(str(test_file))
         self.assertEqual(config.name, "test_local")
-        self.assertEqual(config.template_version, 3)
+        self.assertEqual(config.template_version, CURRENT_VERSION)
 
     def test_from_file_missing_file(self):
         non_existent_path = Path("/path/to/non_existent_file.json")
@@ -158,7 +159,7 @@ class TemplateConfigTest(unittest.TestCase):
         invalid_template = {
             "name": "invalid_template",
             "description": "A template with invalid data",
-            "template_version": 3,
+            "template_version": CURRENT_VERSION,
             "framework": "test",
             "method": "test",
             "manager_agent": None,

@@ -42,7 +42,7 @@ class TestGenerationAgent(unittest.TestCase):
             role='role',
             goal='goal',
             backstory='backstory',
-            llm='llm',
+            llm='openai/gpt-4o',
         )
 
         entrypoint_path = frameworks.get_entrypoint_path(self.framework)
@@ -60,5 +60,5 @@ class TestGenerationAgent(unittest.TestCase):
                 role='role',
                 goal='goal',
                 backstory='backstory',
-                llm='llm',
+                llm='openai/gpt-4o',
             )
