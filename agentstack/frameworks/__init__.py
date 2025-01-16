@@ -42,12 +42,6 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def get_tool_names(self) -> list[str]:
-        """
-        Get a list of tool names in the user's project.
-        """
-        ...
-
     def add_tool(self, tool: ToolConfig, agent_name: str) -> None:
         """
         Add a tool to an agent in the user's project.

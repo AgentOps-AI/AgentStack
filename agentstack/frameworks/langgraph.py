@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, Callable, Any
 from pathlib import Path
 import ast
 from agentstack import conf
@@ -344,3 +344,13 @@ def remove_tool(tool: ToolConfig, agent_name: str):
     """
     with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
         entrypoint.remove_agent_tools(agent_name, tool)
+
+
+def get_tool_callables(self, tool_name: str) -> list[Callable]:
+    """
+    Get a tool by name and return it as a list of framework-native callables.
+    """
+    # LangGraph accepts functions as tools, so we can return them directly
+    tool_config = ToolConfig.from_tool_name(tool_name)
+    return tool_config.tools
+
