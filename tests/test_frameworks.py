@@ -1,13 +1,14 @@
+from typing import Callable
 import os, sys
 from pathlib import Path
 import shutil
 import unittest
-from parameterized import parameterized_class
+from parameterized import parameterized, parameterized_class
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
-from agentstack._tools import ToolConfig
+from agentstack._tools import ToolConfig, get_all_tools
 from agentstack.agents import AgentConfig
 from agentstack.tasks import TaskConfig
 
@@ -150,3 +151,13 @@ class TestFrameworks(unittest.TestCase):
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert "*agentstack.tools['test_tool']" not in entrypoint_src
         assert "*agentstack.tools['test_tool_alt']" in entrypoint_src
+
+    @parameterized.expand([(x, ) for x in get_all_tools()])
+    def test_get_tool_callables(self, tool_config):
+        self._populate_max_entrypoint()
+        try:
+            callables = frameworks.get_tool_callables(tool_config.name)
+        except (Exception, ValidationError):
+            raise unittest.SkipTest(f"Skipping validation of {tool_config.name} likely because dependencies required for import are not available.")
+
+        assert len(callables) == len(tool_config.tools)

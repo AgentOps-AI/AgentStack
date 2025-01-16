@@ -346,7 +346,7 @@ def remove_tool(tool: ToolConfig, agent_name: str):
         entrypoint.remove_agent_tools(agent_name, tool)
 
 
-def get_tool_callables(self, tool_name: str) -> list[Callable]:
+def get_tool_callables(tool_name: str) -> list[Callable]:
     """
     Get a tool by name and return it as a list of framework-native callables.
     """
