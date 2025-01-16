@@ -1,4 +1,4 @@
-from typing import Optional, Protocol, Callable
+from typing import TYPE_CHECKING, Optional, Protocol, Callable
 from types import ModuleType
 from importlib import import_module
 from pathlib import Path
@@ -6,8 +6,9 @@ from agentstack import conf
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_framework
 from agentstack._tools import ToolConfig
-from agentstack.agents import AgentConfig
-from agentstack.tasks import TaskConfig
+if TYPE_CHECKING:
+    from agentstack.agents import AgentConfig
+    from agentstack.tasks import TaskConfig
 
 
 CREWAI = 'crewai'
@@ -72,13 +73,13 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def add_agent(self, agent: AgentConfig) -> None:  # pragma: no cover
+    def add_agent(self, agent: 'AgentConfig') -> None:  # pragma: no cover
         """
         Add an agent to the user's project.
         """
         ...
 
-    def add_task(self, task: TaskConfig) -> None:  # pragma: no cover
+    def add_task(self, task: 'TaskConfig') -> None:  # pragma: no cover
         """
         Add a task to the user's project.
         """
@@ -159,7 +160,7 @@ def get_agent_tool_names(agent_name: str) -> list[str]:
     return get_framework_module(get_framework()).get_agent_tool_names(agent_name)
 
 
-def add_agent(agent: AgentConfig):
+def add_agent(agent: 'AgentConfig'):
     """
     Add an agent to the user's project.
     """
@@ -169,7 +170,7 @@ def add_agent(agent: AgentConfig):
     return get_framework_module(framework).add_agent(agent)
 
 
-def add_task(task: TaskConfig):
+def add_task(task: 'TaskConfig'):
     """
     Add a task to the user's project.
     """
