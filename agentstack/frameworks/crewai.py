@@ -1,12 +1,13 @@
 from typing import Optional, Any, Callable
 from pathlib import Path
 import ast
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
+from agentstack import graph
 
 ENTRYPOINT: Path = Path('src/crew.py')
 
@@ -335,3 +336,10 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
         tool_funcs.append(crewai_wrapped)
 
     return tool_funcs
+
+
+def get_graph() -> list[graph.Edge]:
+    """Get the graph of the user's project."""
+    log.debug("CrewAI does not support graph generation.")
+    return []
+

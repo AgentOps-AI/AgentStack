@@ -114,24 +114,32 @@ def find_method(tree: Union[Iterable[ASTT], ASTT], method_name: str) -> Optional
     return None
 
 
-def find_method_call(tree: Union[Iterable[ASTT], ASTT], method_name: str) -> Optional[ast.Call]:
+def find_method_calls(tree: Union[Iterable[ASTT], ASTT], method_name: str) -> list[ast.Call]:
     """Find a method call in an AST."""
     if isinstance(tree, ast.AST):
         _tree = list(ast.iter_child_nodes(tree))
     else:
         _tree = list(tree)
 
+    calls = []
     for node in _tree:
         if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+            # our desired method call is not being stored in a variable
             if isinstance(node.value.func, ast.Name) and node.value.func.id == method_name:
-                return node.value
+                calls.append(node.value)
+            elif isinstance(node.value.func, ast.Attribute) and node.value.func.attr == method_name:
+                calls.append(node.value)
         elif isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
             # our desired method call is being assigned to a variable
             if isinstance(node.value.func, ast.Attribute) and node.value.func.attr == method_name:
-                return node.value
+                calls.append(node.value)
             elif isinstance(node.value.func, ast.Name) and node.value.func.id == method_name:
-                return node.value
-    return None
+                calls.append(node.value)
+        elif isinstance(node, ast.Return) and isinstance(node.value, ast.Call):
+            # our desired method call is being returned
+            if isinstance(node.value.func, ast.Name) and node.value.func.id == method_name:
+                calls.append(node.value)
+    return calls
 
 
 def find_kwarg_in_method_call(node: ast.Call, kwarg_name: str) -> Optional[ast.keyword]:

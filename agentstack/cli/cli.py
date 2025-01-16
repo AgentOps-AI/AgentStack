@@ -463,6 +463,22 @@ def export_template(output_filename: str):
                 agents=agent_names,
             )
         )
+    
+    # Export the graph structure from the project
+    graph: list[list[TemplateConfig.Node]] = []
+    for node in frameworks.get_graph():
+        graph.append(
+            [
+                TemplateConfig.Node(
+                    name=node.source.name,
+                    type=node.source.type.value
+                ),
+                TemplateConfig.Node(
+                    name=node.target.name,
+                    type=node.target.type.value
+                ),
+            ]
+        )
 
     template = TemplateConfig(
         template_version=4,
@@ -475,7 +491,7 @@ def export_template(output_filename: str):
         tasks=tasks,
         tools=tools,
         inputs=inputs.get_inputs(),
-        graph=[],  # TODO
+        graph=graph,
     )
 
     try:

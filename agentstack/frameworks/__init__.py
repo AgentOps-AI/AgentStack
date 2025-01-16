@@ -6,6 +6,7 @@ from agentstack import conf
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_framework
 from agentstack._tools import ToolConfig
+from agentstack import graph
 if TYPE_CHECKING:
     from agentstack.agents import AgentConfig
     from agentstack.tasks import TaskConfig
@@ -88,6 +89,12 @@ class FrameworkModule(Protocol):
     def get_task_names(self) -> list[str]:  # pragma: no cover
         """
         Get a list of task names in the user's project.
+        """
+        ...
+    
+    def get_graph(self) -> list[graph.Edge]:  # pragma: no cover
+        """
+        Get the graph of the user's project.
         """
         ...
 
@@ -185,3 +192,11 @@ def get_task_names() -> list[str]:
     Get a list of task names in the user's project.
     """
     return get_framework_module(get_framework()).get_task_names()
+
+
+def get_graph() -> list[graph.Edge]:
+    """
+    Get the graph of the user's project.
+    """
+    return get_framework_module(get_framework()).get_graph()
+
