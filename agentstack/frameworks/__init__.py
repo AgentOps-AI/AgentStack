@@ -116,7 +116,7 @@ def validate_project():
 def add_tool(tool: ToolConfig, agent_name: str):
     """
     Add a tool to the user's project.
-    The tool will have aready been installed in the user's application and have
+    The tool will have already been installed in the user's application and have
     all dependencies installed. We're just handling code generation here.
     """
     return get_framework_module(get_framework()).add_tool(tool, agent_name)
