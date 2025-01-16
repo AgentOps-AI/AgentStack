@@ -1,0 +1,61 @@
+---
+title: Neon
+description: Postgres for agents
+---
+
+## Description
+Neon is a serverless Postgres platform that lets your agents create and manage databases on demand. It supports ephemeral or long-lived Postgres instances for storing structured data.
+
+## Prerequisites
+1. A Neon account. If you do not have one, sign up at [Neon](https://neon.tech).
+2. Get your API key from the [Neon Console](https://console.neon.tech/app/settings/api-keys).
+3. The tool will automatically install required dependencies:
+   - neon-api
+   - psycopg2-binary
+
+## Installation
+
+```bash
+agentstack tools add neon
+```
+
+## Configuration
+```bash
+NEON_API_KEY=...
+```
+
+## Available Tools
+Out of the box, these tools are ready to use:
+
+1. **`create_database`**  
+   Creates a new Neon project and returns a connection URI. Default settings create a database called `neondb` with the `neondb_owner` role.
+
+   <Note>The agent's response to errors will depend on its reasoning about the specific situation. It may retry a failed action, but this behavior is probabilistic rather than deterministic.</Note>
+
+2. **`execute_sql_ddl`**  
+   Run schema commands (e.g., `CREATE TABLE`) using a connection URI and SQL command. Transactions are automatically handled.
+
+3. **`run_sql_query`**  
+   Run data queries (e.g., `SELECT`, `INSERT`) using a connection URI and SQL query. Results are returned as formatted strings.
+
+## Using the Tools
+Add the tools you need to your agent:
+```python
+@agent
+def db_writer(self) -> Agent:
+    return Agent(
+        config=self.agents_config['db_writer'],
+        tools=[tools.create_database, tools.execute_sql_ddl, tools.run_sql_query],
+        verbose=True,
+    )
+```
+
+For a complete example, see `AgentStack/examples/web_researcher` where an agent stores collected data in Postgres as part of a multi-agent workflow.
+
+## Usage Note
+When you add the Neon tool to an existing project, all its tools will be added to every agent in the `agents.yaml` file. You may need to remove unused tools to keep each agent’s scope clear.
+
+## Customization
+When you run `agentstack tools add neon`, the tool is added to your project as source code, not as a dependency. This means you can add more capabilities, like Neon's database [branching](https://neon.tech/docs/introduction/branching).
+
+For examples of how to implement additional tools, see the existing implementation in `neon_tool.py`. For more on Neon's API capabilities, refer to the [neon.tech/docs/reference/api-reference](https://neon.tech/docs/reference/api-reference).
