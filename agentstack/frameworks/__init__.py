@@ -29,62 +29,62 @@ class FrameworkModule(Protocol):
     ie. `src/crewai.py`
     """
 
-    def validate_project(self) -> None:
+    def validate_project(self) -> None:  # pragma: no cover
         """
         Validate that a user's project is ready to run.
         Raises a `ValidationError` if the project is not valid.
         """
         ...
 
-    def parse_llm(self, llm: str) -> tuple[str, str]:
+    def parse_llm(self, llm: str) -> tuple[str, str]:  # pragma: no cover
         """
         Parse a language model string into a provider and model.
         """
         ...
 
-    def add_tool(self, tool: ToolConfig, agent_name: str) -> None:
+    def add_tool(self, tool: ToolConfig, agent_name: str) -> None:  # pragma: no cover
         """
         Add a tool to an agent in the user's project.
         """
         ...
 
-    def remove_tool(self, tool: ToolConfig, agent_name: str) -> None:
+    def remove_tool(self, tool: ToolConfig, agent_name: str) -> None:  # pragma: no cover
         """
         Remove a tool from an agent in user's project.
         """
         ...
 
-    def get_tool_callables(self, tool_name: str) -> list[Callable]:
+    def get_tool_callables(self, tool_name: str) -> list[Callable]:  # pragma: no cover
         """
         Get a tool by name and return it as a list of framework-native callables.
         """
         ...
 
-    def get_agent_names(self) -> list[str]:
+    def get_agent_names(self) -> list[str]:  # pragma: no cover
         """
         Get a list of agent names in the user's project.
         """
         ...
 
-    def get_agent_tool_names(self, agent_name: str) -> list[str]:
+    def get_agent_tool_names(self, agent_name: str) -> list[str]:  # pragma: no cover
         """
         Get a list of tool names in an agent in the user's project.
         """
         ...
 
-    def add_agent(self, agent: AgentConfig) -> None:
+    def add_agent(self, agent: AgentConfig) -> None:  # pragma: no cover
         """
         Add an agent to the user's project.
         """
         ...
 
-    def add_task(self, task: TaskConfig) -> None:
+    def add_task(self, task: TaskConfig) -> None:  # pragma: no cover
         """
         Add a task to the user's project.
         """
         ...
 
-    def get_task_names(self) -> list[str]:
+    def get_task_names(self) -> list[str]:  # pragma: no cover
         """
         Get a list of task names in the user's project.
         """
