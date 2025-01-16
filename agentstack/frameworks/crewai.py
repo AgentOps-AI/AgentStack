@@ -8,11 +8,6 @@ from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 
-try:
-    from crewai.tools import tool as _crewai_tool_decorator
-except ImportError:
-    raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
-
 ENTRYPOINT: Path = Path('src/crew.py')
 
 
@@ -158,7 +153,7 @@ class CrewFile(asttools.File):
         """
         Add new tools to be used by an agent.
 
-        Tool definitions are inside of the methods marked with an `@agent` decorator.
+        Tool definitions are inside the methods marked with an `@agent` decorator.
         The method returns a new class instance with the tools as a list of callables
         under the kwarg `tools`.
         """
@@ -302,6 +297,29 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     """
     Get a tool implementations for use directly by a CrewAI agent.
     """
+    try:
+        from crewai.tools import tool as _crewai_tool_decorator
+    except ImportError:
+        raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
+
+    # TODO: remove after agentops fixes their issue
+    # wrap method with agentops tool event
+    def wrap_method(method: Callable) -> Callable:
+        def wrapped_method(*args, **kwargs):
+            import agentops
+            tool_event = agentops.ToolEvent(method.__name__)
+            result = method(*args, **kwargs)
+            agentops.record(tool_event)
+            return result
+
+        # Preserve all original attributes
+        wrapped_method.__name__ = method.__name__
+        wrapped_method.__doc__ = method.__doc__
+        wrapped_method.__module__ = method.__module__
+        wrapped_method.__qualname__ = method.__qualname__
+        wrapped_method.__annotations__ = getattr(method, '__annotations__', {})
+        return wrapped_method
+
     tool_funcs = []
     tool_config = ToolConfig.from_tool_name(tool_name)
     for tool_func_name in tool_config.tools:
@@ -310,6 +328,10 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
         assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
         assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
 
-        # apply the CrewAI tool decorator to the tool function
-        tool_funcs.append(_crewai_tool_decorator(tool_func))
+        # First wrap with agentops
+        agentops_wrapped = wrap_method(tool_func)
+        # Then apply CrewAI decorator last so it properly inherits from BaseTool
+        crewai_wrapped = _crewai_tool_decorator(agentops_wrapped)
+        tool_funcs.append(crewai_wrapped)
+
     return tool_funcs

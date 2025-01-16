@@ -2,7 +2,7 @@
 This it the beginning of the agentstack public API.
 
 Methods that have been imported into this file are expected to be used by the
-end user inside of their project.
+end user inside their project.
 """
 
 from typing import Callable
@@ -58,6 +58,5 @@ class ToolLoader:
 
     def __getitem__(self, tool_name: str) -> list[Callable]:
         return frameworks.get_tool_callables(tool_name)
-
 
 tools = ToolLoader()
