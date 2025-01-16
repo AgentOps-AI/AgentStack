@@ -8,11 +8,6 @@ from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 
-try:
-    from crewai.tools import tool as _crewai_tool_decorator
-except ImportError:
-    raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
-
 ENTRYPOINT: Path = Path('src/crew.py')
 
 
@@ -330,6 +325,11 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     """
     Get a tool implementations for use directly by a CrewAI agent.
     """
+    try:
+        from crewai.tools import tool as _crewai_tool_decorator
+    except ImportError:
+        raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
+
     tool_funcs = []
     tool_config = ToolConfig.from_tool_name(tool_name)
     for tool_func_name in tool_config.tools:
