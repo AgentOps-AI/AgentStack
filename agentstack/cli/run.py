@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 import sys
 import traceback
 from pathlib import Path
@@ -93,7 +93,7 @@ def _import_project_module(path: Path):
     return project_module
 
 
-def run_project(command: str = 'run', cli_args: Optional[str] = None):
+def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
     """Validate that the project is ready to run and then run it."""
     verify_agentstack_project()
     
