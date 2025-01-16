@@ -351,6 +351,14 @@ def get_tool_callables(self, tool_name: str) -> list[Callable]:
     Get a tool by name and return it as a list of framework-native callables.
     """
     # LangGraph accepts functions as tools, so we can return them directly
+    tool_funcs = []
     tool_config = ToolConfig.from_tool_name(tool_name)
-    return tool_config.tools
+    for tool_func_name in tool_config.tools:
+        tool_func = getattr(tool_config.module, tool_func_name)
+        
+        assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
+        assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
+        
+        tool_funcs.append(tool_func)
+    return tool_funcs
 
