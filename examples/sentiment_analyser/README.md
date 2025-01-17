@@ -1,7 +1,5 @@
 # sentiment_analyser
-New agentstack project
-
-~~ Built with AgentStack ~~
+This is the start of your AgentStack project.
 
 ## How to build your Crew
 ### With the CLI
@@ -15,13 +13,13 @@ This will automatically create a new agent in the `agents.yaml` config as well a
 
 Similarly, tasks can be created with `agentstack g t <tool_name>`
 
-Add tools with `agentstack tools add <tool_name>` and view tools available with `agentstack tools list`
+Add tools with `agentstack tools add` and view tools available with `agentstack tools list`
 
 ## How to use your Crew
 In this directory, run `poetry install`  
 
 To run your project, use the following command:  
-`crewai run` or `python src/main.py`
+`agentstack run`
 
 This will initialize your crew of AI agents and begin task execution as defined in your configuration in the main.py file.
 
@@ -36,3 +34,4 @@ If you need to reset the memory of your crew before running it again, you can do
 `crewai reset-memory`  
 This will clear the crew's memory, allowing for a fresh start.
 
+> 🪩 Project built with [AgentStack](https://github.com/AgentOps-AI/AgentStack)

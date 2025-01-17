@@ -1,6 +1,6 @@
 scrape_data:
   description: >-
-    Scrape the main discussion topic and all the comments from this reddit post: https://www.reddit.com/r/OpenAI/comments/1h7fm9k/its_official_theres_a_200_chatgpt_pro/
+    Scrape the main discussion topic and all the comments from this reddit post: https://ihsoyct.github.io/index.html?mode=comments&author=umarmnaq
   expected_output: >-
     One json
   agent: >-
@@ -9,8 +9,8 @@ sentiment_analysis:
   description: >-
     Analyse the reddit comments and provide the sentiment analysis on the topic
   expected_output: >-
-    Assessement of positive, neutral or negative sentiment(one word) on the the following axies with a one sentence explanation: 
-    1. Price: too expensive/resonable/good price for value 
+    Assessment of positive, neutral or negative sentiment(one word) on the the following axis with a one sentence explanation: 
+    1. Price: too expensive/reasonable/good price for value 
     2. Functionality: does the new price model justify the advanced features? 
     3. Competitive sentiment: is the new price model competitive with other providers?
   agent: >-
