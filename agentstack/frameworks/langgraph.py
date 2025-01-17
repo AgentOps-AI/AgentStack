@@ -281,22 +281,6 @@ class LangGraphFile(asttools.File):
                 nodes.remove(node)
         return nodes
 
-    def get_graph_start_edge_node(self) -> ast.Call:
-        """Get the edge node that defines the start of the graph."""
-        for edge in self.get_graph_edge_nodes():
-            source, target = edge.args
-            if isinstance(source, ast.Str) and source.s == GRAPH_NODE_START:
-                return edge
-        raise ValidationError(f"`add_edge({GRAPH_NODE_START}, ...)` not found in {ENTRYPOINT}")
-
-    def get_graph_end_edge_node(self) -> ast.Call:
-        """Get the edge node that defines the end of the graph."""
-        for edge in self.get_graph_edge_nodes():
-            source, target = edge.args
-            if isinstance(target, ast.Str) and target.s == GRAPH_NODE_END:
-                return edge
-        raise ValidationError(f"`add_edge(..., {GRAPH_NODE_END})` not found in {ENTRYPOINT}")
-
     def get_graph(self) -> list[graph.Edge]:
         """Get all of the edge definitions from the graph configuration."""
         graph_edges = self.get_graph_edge_nodes()
