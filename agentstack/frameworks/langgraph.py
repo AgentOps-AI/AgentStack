@@ -318,8 +318,9 @@ class LangGraphFile(asttools.File):
         if len(existing_edges):
             _, end = self.get_node_range(existing_edges[-1])
         else:
-            # TODO add the edge after the graph is instantiated
-            raise ValidationError(f"Existing graph `add_edge` call not found in {ENTRYPOINT}")
+            # find the instantiation of `StateGraph`
+            graph_instance = asttools.find_method_calls(self.get_run_method(), 'StateGraph')[0]
+            _, end = self.get_node_range(graph_instance)
 
         source, target = edge.source.name, edge.target.name
         # wrap the node names in quotes if they are not special nodes
@@ -364,8 +365,11 @@ class LangGraphFile(asttools.File):
         if len(existing_nodes):
             _, end = self.get_node_range(existing_nodes[-1])
         else:
-            # TODO add the node after the graph is instantiated
-            raise ValidationError(f"Existing graph `add_node` call not found in {ENTRYPOINT}")
+            # find the instantiation of `StateGraph`
+            graph_instance = asttools.find_method_calls(self.get_run_method(), 'StateGraph')[0]
+            _, end = self.get_node_range(graph_instance)
+        
+        # node is always either an Agent or a Task so we can make this assumption
         code = f"""
         self.graph.add_node("{node_config.name}", self.{node_config.name})"""
         self.edit_node_range(end, end, code)
