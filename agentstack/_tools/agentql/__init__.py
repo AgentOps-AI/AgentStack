@@ -3,9 +3,6 @@ import httpx
 
 from typing import Optional
 
-from dotenv import load_dotenv
-load_dotenv()
-
 QUERY_DATA_ENDPOINT = "https://api.agentql.com/v1/query-data"
 API_TIMEOUT_SECONDS = 900
 
