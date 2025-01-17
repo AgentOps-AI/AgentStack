@@ -237,7 +237,7 @@ def parse_llm(llm: str) -> tuple[str, str]:
     return provider, model
 
 
-def get_task_names() -> list[str]:
+def get_task_method_names() -> list[str]:
     """
     Get a list of task names (methods with an @task decorator).
     """
@@ -253,7 +253,7 @@ def add_task(task: TaskConfig) -> None:
         crew_file.add_task_method(task)
 
 
-def get_agent_names() -> list[str]:
+def get_agent_method_names() -> list[str]:
     """
     Get a list of agent names (methods with an @agent decorator).
     """

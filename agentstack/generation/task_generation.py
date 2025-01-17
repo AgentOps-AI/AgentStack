@@ -15,7 +15,7 @@ def add_task(
 ):
     verify_agentstack_project()
 
-    agents = frameworks.get_agent_names()
+    agents = frameworks.get_agent_method_names()
     if not agent and len(agents) == 1:
         # if there's only one agent, use it by default
         agent = agents[0]

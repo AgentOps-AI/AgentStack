@@ -62,7 +62,7 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def get_agent_names(self) -> list[str]:  # pragma: no cover
+    def get_agent_method_names(self) -> list[str]:  # pragma: no cover
         """
         Get a list of agent names in the user's project.
         """
@@ -86,7 +86,7 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def get_task_names(self) -> list[str]:  # pragma: no cover
+    def get_task_method_names(self) -> list[str]:  # pragma: no cover
         """
         Get a list of task names in the user's project.
         """
@@ -153,11 +153,11 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     return get_framework_module(get_framework()).get_tool_callables(tool_name)
 
 
-def get_agent_names() -> list[str]:
+def get_agent_method_names() -> list[str]:
     """
     Get a list of agent names in the user's project.
     """
-    return get_framework_module(get_framework()).get_agent_names()
+    return get_framework_module(get_framework()).get_agent_method_names()
 
 
 def get_agent_tool_names(agent_name: str) -> list[str]:
@@ -172,7 +172,7 @@ def add_agent(agent: 'AgentConfig'):
     Add an agent to the user's project.
     """
     framework = get_framework()
-    if agent.name in get_agent_names():
+    if agent.name in get_agent_method_names():
         raise ValidationError(f"Agent `{agent.name}` already exists in {get_entrypoint_path(framework)}")
     return get_framework_module(framework).add_agent(agent)
 
@@ -182,16 +182,16 @@ def add_task(task: 'TaskConfig'):
     Add a task to the user's project.
     """
     framework = get_framework()
-    if task.name in get_task_names():
+    if task.name in get_task_method_names():
         raise ValidationError(f"Task `{task.name}` already exists in {get_entrypoint_path(framework)}")
     return get_framework_module(framework).add_task(task)
 
 
-def get_task_names() -> list[str]:
+def get_task_method_names() -> list[str]:
     """
     Get a list of task names in the user's project.
     """
-    return get_framework_module(get_framework()).get_task_names()
+    return get_framework_module(get_framework()).get_task_method_names()
 
 
 def get_graph() -> list[graph.Edge]:

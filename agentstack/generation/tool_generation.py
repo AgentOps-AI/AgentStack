@@ -37,7 +37,7 @@ def add_tool(tool_name: str, agents: Optional[list[str]] = []):
 
     # Edit the framework entrypoint file to include the tool in the agent definition
     if not agents:  # If no agents are specified, add the tool to all agents
-        agents = frameworks.get_agent_names()
+        agents = frameworks.get_agent_method_names()
     for agent_name in agents:
         log.info(f'Adding tool {tool.name} to agent {agent_name}')
         frameworks.add_tool(tool, agent_name)
@@ -61,7 +61,7 @@ def remove_tool(tool_name: str, agents: Optional[list[str]] = []):
 
     # Edit the framework entrypoint file to exclude the tool in the agent definition
     if not agents:  # If no agents are specified, remove the tool from all agents
-        agents = frameworks.get_agent_names()
+        agents = frameworks.get_agent_method_names()
     for agent_name in agents:
         frameworks.remove_tool(tool, agent_name)
 

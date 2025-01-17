@@ -447,7 +447,7 @@ def export_template(output_filename: str):
 
     # Export all of the configured tools from the project
     tools_agents: dict[str, list[str]] = {}
-    for agent_name in frameworks.get_agent_names():
+    for agent_name in frameworks.get_agent_method_names():
         for tool_name in frameworks.get_agent_tool_names(agent_name):
             if not tool_name:
                 continue

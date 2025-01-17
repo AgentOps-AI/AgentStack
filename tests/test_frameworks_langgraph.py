@@ -161,16 +161,18 @@ class TestGraph:
         entrypoint_src = """
 class TestGraph:
     @agentstack.agent
-    def test_agent(self, state: State):
+    def agent_name(self, state: State):
         pass
     @agentstack.task
-    def test_task(self, state: State):
+    def task_name(self, state: State):
         pass
     def run(self, inputs: list):
         self.graph = Graph()
-        self.graph.add_node("test_agent", self.test_agent)
-        self.graph.add_node("test_task", self.test_task)
-        self.graph.add_edge("test_agent", "test_task")
+        self.graph.add_node("agent_name", self.agent_name)
+        self.graph.add_node("task_name", self.task_name)
+        self.graph.add_edge(START, "agent_name")
+        self.graph.add_edge("agent_name", "task_name")
+        self.graph.add_edge("task_name", END)
         """
         with open(self.project_dir / ENTRYPOINT, 'w') as f:
             f.write(entrypoint_src)
@@ -191,13 +193,15 @@ class TestGraph:
         
         entrypoint = LangGraphFile(self.project_dir / ENTRYPOINT)
         nodes = entrypoint.get_graph_edge_nodes()
-        assert len(nodes) == 1
+        assert len(nodes) == 3
         for node in nodes:
             assert isinstance(node, ast.Call)
     
     def test_get_graph(self):
         """Test getting the graph object"""
         self._populate_graph_entrypoint()
+        shutil.copy(BASE_PATH / "fixtures/agents_max.yaml", self.project_dir / AGENTS_FILENAME)
+        shutil.copy(BASE_PATH / "fixtures/tasks_max.yaml", self.project_dir / TASKS_FILENAME)
         
         entrypoint = LangGraphFile(self.project_dir / ENTRYPOINT)
         graph_nodes = entrypoint.get_graph()
@@ -205,38 +209,52 @@ class TestGraph:
             assert isinstance(node, graph.Edge)
             assert isinstance(node.source, graph.Node)
             assert isinstance(node.target, graph.Node)
-            assert node.source.name in ['test_agent']
-            assert node.target.name in ['test_task']
+            assert node.source.name in ['START', 'agent_name', 'task_name']
+            assert node.target.name in ['agent_name', 'task_name', 'END']
+            if node.source.name in ['agent_name', ]:
+                assert node.source.type is graph.NodeType.AGENT
+            if node.target.name in ['task_name', ]:
+                assert node.target.type is graph.NodeType.TASK
+            if node.source.name in ['START', 'END']:
+                assert node.source.type is graph.NodeType.SPECIAL
+            if node.target.name in ['START', 'END']:
+                assert node.target.type is graph.NodeType.SPECIAL
     
     def test_add_graph_edge(self):
         """Test adding an edge to the graph"""
         self._populate_graph_entrypoint()
+        shutil.copy(BASE_PATH / "fixtures/agents_max.yaml", self.project_dir / AGENTS_FILENAME)
+        shutil.copy(BASE_PATH / "fixtures/tasks_max.yaml", self.project_dir / TASKS_FILENAME)
         
         entrypoint = LangGraphFile(self.project_dir / ENTRYPOINT)
         entrypoint.add_graph_edge(graph.Edge(
-            source=graph.Node(name='test_agent2'),
-            target=graph.Node(name='test_task2')
+            # agent and task name must exist in the agents and tasks fixtures. 
+            source=graph.Node(name='second_agent_name', type=graph.NodeType.AGENT),
+            target=graph.Node(name='task_name_two', type=graph.NodeType.TASK)
         ))
         graph_nodes = entrypoint.get_graph()
-        assert len(graph_nodes) == 2
+        assert len(graph_nodes) == 4
         for node in graph_nodes:
             assert isinstance(node, graph.Edge)
             assert isinstance(node.source, graph.Node)
             assert isinstance(node.target, graph.Node)
-            assert node.source.name in ['test_agent', 'test_agent2']
-            assert node.target.name in ['test_task', 'test_task2']
+            assert node.source.name in ['START', 'agent_name', 'task_name', 'second_agent_name']
+            assert node.target.name in ['END', 'agent_name', 'task_name', 'task_name_two']
     
     def test_remove_graph_edge(self):
         """Test removing an edge from the graph"""
         self._populate_graph_entrypoint()
+        shutil.copy(BASE_PATH / "fixtures/agents_max.yaml", self.project_dir / AGENTS_FILENAME)
+        shutil.copy(BASE_PATH / "fixtures/tasks_max.yaml", self.project_dir / TASKS_FILENAME)
         
         entrypoint = LangGraphFile(self.project_dir / ENTRYPOINT)
         entrypoint.remove_graph_edge(graph.Edge(
-            source=graph.Node(name='test_agent'),
-            target=graph.Node(name='test_task')
+            # agent and task name must exist in the agents and tasks fixtures. 
+            source=graph.Node(name='agent_name', type=graph.NodeType.AGENT),
+            target=graph.Node(name='task_name', type=graph.NodeType.TASK)
         ))
         graph_nodes = entrypoint.get_graph()
-        assert len(graph_nodes) == 0
+        assert len(graph_nodes) == 2  # START -> test_agent, test_task -> END
     
     def test_add_graph_node_agent(self):
         """Test adding a node to the graph"""
@@ -251,7 +269,7 @@ class TestGraph:
         for node in graph_nodes:
             assert isinstance(node, ast.Call)
             assert node.func.attr == 'add_node'
-            assert node.args[0].s in ['test_agent', 'test_task', 'agent_name']
+            assert node.args[0].s in ['agent_name', 'task_name', 'agent_name']
     
     def test_add_graph_node_task(self):
         """Test adding a node to the graph"""
@@ -266,7 +284,6 @@ class TestGraph:
         for node in graph_nodes:
             assert isinstance(node, ast.Call)
             assert node.func.attr == 'add_node'
-            assert node.args[0].s in ['test_agent', 'test_task', 'task_name']
     
     def test_remove_graph_node(self):
         """Test removing a node from the graph"""

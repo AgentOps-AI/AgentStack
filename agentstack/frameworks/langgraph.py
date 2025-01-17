@@ -5,8 +5,8 @@ from agentstack import conf
 from agentstack.exceptions import ValidationError
 from agentstack.generation import asttools
 from agentstack._tools import ToolConfig
-from agentstack.agents import AgentConfig
-from agentstack.tasks import TaskConfig
+from agentstack.agents import AgentConfig, get_all_agent_names
+from agentstack.tasks import TaskConfig, get_all_task_names
 from agentstack import graph
 
 ENTRYPOINT: Path = Path('src/graph.py')
@@ -269,37 +269,44 @@ class LangGraphFile(asttools.File):
         # TODO filter out tool nodes
         nodes = asttools.find_method_calls(self.get_run_method(), 'add_edge')
         for node in nodes:
-            assert isinstance(node.args[0], ast.Str)
-            assert isinstance(node.args[1], ast.Str)
-            
-            if node.args[0].s == 'tools' or node.args[1].s == 'tools':  # TODO this is a bit brittle
+            if not len(node.args) == 2:
+                raise ValidationError(f"Invalid `add_edge` call in {ENTRYPOINT}")
+
+            source, target = node.args
+            if isinstance(source, ast.Str) and source.s == 'tools':
+                nodes.remove(node)
+            if isinstance(target, ast.Str) and target.s == 'tools':
                 nodes.remove(node)
         return nodes
 
     def get_graph(self) -> list[graph.Edge]:
         """Get all of the edge definitions from the graph configuration."""
         graph_edges = self.get_graph_edge_nodes()
-        agent_names = get_agent_names()
-        task_names = get_task_names()
         
         def _get_type(name: str) -> graph.NodeType:
-            if name in agent_names:
+            if name in ('START', 'END'):
+                return graph.NodeType.SPECIAL
+            if name in get_all_agent_names():
                 return graph.NodeType.AGENT
-            if name in task_names:
+            if name in get_all_task_names():
                 return graph.NodeType.TASK
-            return graph.NodeType.SPECIAL
+            raise ValidationError(f"Could not determine type of node `{name}` in {ENTRYPOINT}")
+        
+        def _get_node(node: ast.expr) -> graph.Node:
+            if isinstance(node, ast.Str):  # a string
+                return graph.Node(name=node.s, type=_get_type(node.s))
+            if isinstance(node, ast.Name):  # a variable
+                return graph.Node(name=node.id, type=_get_type(node.id))
+            if isinstance(node, ast.Constant):  # a constant
+                return graph.Node(name=node.value, type=_get_type(node.value))
+            raise ValidationError(f"Could not determine type of node `{node}` in {ENTRYPOINT}")
         
         edges = []
         for edge in graph_edges:
-            assert isinstance(edge.args[0], ast.Str)
-            assert isinstance(edge.args[1], ast.Str)
-            
-            source_name = edge.args[0].s
-            target_name = edge.args[1].s
-            
+            source, target = edge.args
             edges.append(graph.Edge(
-                source=graph.Node(name=source_name, type=_get_type(source_name)), 
-                target=graph.Node(name=target_name, type=_get_type(target_name))
+                source=_get_node(source),
+                target=_get_node(target),
             ))
         return edges
 
@@ -313,23 +320,41 @@ class LangGraphFile(asttools.File):
         else:
             # TODO add the edge after the graph is instantiated
             raise ValidationError(f"Existing graph `add_edge` call not found in {ENTRYPOINT}")
+
+        source, target = edge.source.name, edge.target.name
+        # wrap the node names in quotes if they are not special nodes
+        if edge.source.type != graph.NodeType.SPECIAL:
+            source = f'"{source}"'
+        if edge.target.type != graph.NodeType.SPECIAL:
+            target = f'"{target}"'
+        
         code = f"""
-        self.graph.add_edge("{edge.source.name}", "{edge.target.name}")"""
+        self.graph.add_edge({source}, {target})"""
         self.edit_node_range(end, end, code)
 
     def remove_graph_edge(self, edge: graph.Edge):
         """Remove an edge from the graph configuration."""
         # we need to replace the connection between the removed node with the 
         # existing upstream and downstream nodes
+        def _get_node_name(node: ast.expr) -> str:
+            if isinstance(node, ast.Str):
+                return node.s
+            if isinstance(node, ast.Name):
+                return node.id
+            if isinstance(node, ast.Constant):
+                return node.value
+            raise ValidationError(f"Could not determine name of node `{node}` in {ENTRYPOINT}")
+        
         existing_edges: list[ast.Call] = self.get_graph_edge_nodes()
         for edge_node in existing_edges:
-            assert isinstance(edge_node.args[0], ast.Str)
-            assert isinstance(edge_node.args[1], ast.Str)
-            if edge_node.args[0].s == edge.source.name and edge_node.args[1].s == edge.target.name:
+            source_node, target_node = edge_node.args
+            source, target = _get_node_name(source_node), _get_node_name(target_node)
+            
+            if source == edge.source.name and target == edge.target.name:
                 start, end = self.get_node_range(edge_node)
                 self.edit_node_range(start, end, '')
                 return
-        raise ValidationError(f"Graph `add_edge({edge.source.name}, {edge.target.name})` not found in {ENTRYPOINT}")
+        raise ValidationError(f"Graph `add_edge({edge.source.name}, {edge.target.name})` not found for removal in {ENTRYPOINT}")
 
     def add_graph_node(self, node_config: Union[AgentConfig, TaskConfig]):
         """Add a new node to the graph configuration."""
@@ -398,7 +423,7 @@ def parse_llm(llm: str) -> tuple[str, str]:
     return provider, model
 
 
-def get_task_names() -> list[str]:
+def get_task_method_names() -> list[str]:
     """
     Get a list of task names (methods with an @task decorator).
     """
@@ -414,7 +439,7 @@ def add_task(task: TaskConfig) -> None:
         entrypoint.add_task_method(task)
 
 
-def get_agent_names() -> list[str]:
+def get_agent_method_names() -> list[str]:
     """
     Get a list of agent names (methods with an @agent decorator).
     """
