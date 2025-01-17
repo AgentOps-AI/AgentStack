@@ -1,7 +1,9 @@
 from typing import Optional, Union, Callable, Any
+from dataclasses import dataclass
 from pathlib import Path
 import ast
 from agentstack import conf, log
+from agentstack import packaging
 from agentstack.exceptions import ValidationError
 from agentstack.generation import asttools, InsertionPoint
 from agentstack._tools import ToolConfig
@@ -16,10 +18,73 @@ GRAPH_NODE_END = 'END'
 GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END)
 
 
+@dataclass
+class LangGraphProvider:
+    """An LLM provider for the LangGraph framework."""
+    class_name: str
+    module_name: str
+    dependency: str
+
+
+PROVIDERS = {
+    'openai': LangGraphProvider(
+        class_name='ChatOpenAI',
+        module_name='langchain_openai',
+        dependency='langchain-openai>=0.3.0',
+    ),
+    'anthropic': LangGraphProvider(
+        class_name='ChatAnthropic',
+        module_name='langchain_anthropic',
+        dependency='langchain-anthropic>=0.3.1',
+    ),
+    'google': LangGraphProvider(
+        class_name='ChatGoogleGenerativeAI',
+        module_name='langchain_google_genai',
+        dependency='langchain-google-genai>=2.0.8',
+    ),
+    'huggingface': LangGraphProvider(
+        class_name='ChatHuggingFace',
+        module_name='langchain_huggingface',
+        dependency='langchain-huggingface',
+    ),
+    'microsoft': LangGraphProvider(
+        class_name='AzureChatOpenAI',
+        module_name='langchain_openai',
+        dependency='langchain-openai',
+    ),
+    'mistral': LangGraphProvider(
+        class_name='ChatMistralAI',
+        module_name='langchain_mistralai.chat_models',
+        dependency='langchain-mistralai',
+    ),
+    'ollama': LangGraphProvider(
+        class_name='ChatOllama',
+        module_name='langchain_ollama.chat_models',
+        dependency='langchain-ollama',
+    ),
+}
+
 class LangGraphFile(asttools.File):
     """
     Parses and manipulates the LangGraph entrypoint file. 
     """
+    def get_import(self, module_name: str, attributes: str) -> Optional[ast.Import]:
+        """
+        Check if an import statement for a module and class exists in the file.
+        """
+        for node in asttools.get_all_imports(self.tree):
+            names = node.names[0]
+            if names.asname == attributes and names.name == class_name:
+                return node
+        return None
+    
+    def add_import(self, module_name: str, attributes: str):
+        """
+        Add an import statement for a module and class to the file.
+        """
+        code = f"from {module_name} import {attributes}\n"
+        self.edit_node_range(0, 0, code)  # TODO could place this better
+    
     def get_base_class(self) -> ast.ClassDef:
         """
         A base class is the first class inside of the file that follows the 
@@ -48,7 +113,6 @@ class LangGraphFile(asttools.File):
 
     def add_task_method(self, task: TaskConfig):
         """Add a new task method to the LangGraph entrypoint."""
-        # TODO add the task to the graph
         task_methods = self.get_task_methods()
         if task_methods:
             # Add after the existing task methods
@@ -77,25 +141,8 @@ class LangGraphFile(asttools.File):
         """An `agent` method is a method decorated with `@agent`."""
         return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
 
-    def get_agent_provider_class_name(self, provider: str) -> str:
-        """LangGraph uses separate classes for each LLM provider."""
-        # TODO import supporting classes into the entrypoint
-        # TODO providers may need dependencies to be installed
-        provider_class = {
-            'openai': 'ChatOpenAI',
-            'anthropic': 'ChatAnthropic',
-        }
-        try:
-            return provider_class[provider]
-        except KeyError:
-            raise ValidationError(
-                f"LangGraph provider '{provider}' has not been implemented. "
-                f"AgentStack currently supports: {', '.join(provider_class.keys())} "
-            )
-
     def add_agent_method(self, agent: AgentConfig):
         """Add a new agent method to the LangGraph entrypoint."""
-        # TODO add the agent to the graph
         agent_methods = self.get_agent_methods()
         if agent_methods:
             # Add after the existing agent methods
@@ -104,8 +151,9 @@ class LangGraphFile(asttools.File):
             # Add before the `main` method
             main_method = self.get_run_method()
             pos, _ = self.get_node_range(main_method)
-
-        agent_class_name = self.get_agent_provider_class_name(agent.provider)
+        
+        assert agent.provider in PROVIDERS.keys()  # this gets validated in `add_agent`
+        agent_class_name = PROVIDERS[agent.provider].class_name
         code = f"""    @agentstack.agent
     def {agent.name}(self, state: State) -> Agent:
         agent_config = agentstack.get_agent('{agent.name}')
@@ -466,7 +514,19 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
     """
     Add an agent method to the LangGraph entrypoint.
     """
+    try:
+        provider = PROVIDERS[agent.provider]
+        packaging.install(provider.dependency)
+    except KeyError:
+        raise ValidationError(
+            f"LangGraph provider '{provider}' has not been implemented. "
+            f"AgentStack currently supports: {', '.join(PROVIDERS.keys())} "
+        )
+    
     with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
+        if not entrypoint.get_import(provider.module_name, provider.class_name):
+            entrypoint.add_import(provider.module_name, provider.class_name)
+        
         entrypoint.add_agent_method(agent)
         entrypoint.add_graph_node(agent)
         

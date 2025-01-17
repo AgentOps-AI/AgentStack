@@ -23,23 +23,6 @@ class FrameworksLanggraphTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.project_dir)
 
-    @parameterized.parameterized.expand([
-        ('openai', "ChatOpenAI"), 
-        ('anthropic', "ChatAnthropic"),
-    ])
-    def test_get_agent_provider_class_name(self, provider, class_name):
-        """Test getting the agent provider class name"""
-        (self.project_dir / ENTRYPOINT).touch()
-        entrypoint = LangGraphFile(self.project_dir / ENTRYPOINT)
-        assert entrypoint.get_agent_provider_class_name(provider) == class_name
-
-    def test_get_agent_provider_class_name_invalid(self):
-        """Test getting the agent provider class name with an invalid provider"""
-        (self.project_dir / ENTRYPOINT).touch()
-        entrypoint = LangGraphFile(self.project_dir / ENTRYPOINT)
-        with self.assertRaises(ValidationError):
-            entrypoint.get_agent_provider_class_name('invalid')
-
     def test_missing_base_class(self):
         """A class with the name *Graph does not exist in the entrypoint"""
         entrypoint_src = """
