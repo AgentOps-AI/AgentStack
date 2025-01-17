@@ -1,4 +1,4 @@
-from typing import Optional, Any, Callable
+from typing import TYPE_CHECKING, Optional, Any, Callable
 from pathlib import Path
 import ast
 from agentstack import conf, log
@@ -8,6 +8,8 @@ from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 from agentstack import graph
+if TYPE_CHECKING:
+    from agentstack.generation import InsertionPoint
 
 ENTRYPOINT: Path = Path('src/crew.py')
 
@@ -245,10 +247,13 @@ def get_task_method_names() -> list[str]:
     return [method.name for method in crew_file.get_task_methods()]
 
 
-def add_task(task: TaskConfig) -> None:
+def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> None:
     """
     Add a task method to the CrewAI entrypoint.
     """
+    if position is not None:
+        raise NotImplementedError("Task insertion points are not supported in CrewAI.")
+
     with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.add_task_method(task)
 
@@ -269,10 +274,13 @@ def get_agent_tool_names(agent_name: str) -> list[Any]:
         return crew_file.get_agent_tool_names(agent_name)
 
 
-def add_agent(agent: AgentConfig) -> None:
+def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -> None:
     """
     Add an agent method to the CrewAI entrypoint.
     """
+    if position is not None:
+        raise NotImplementedError("Agent insertion points are not supported in CrewAI.")
+    
     with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.add_agent_method(agent)
 

@@ -18,8 +18,8 @@ class State(TypedDict):
 
 class TestGraph:
     @agentstack.agent
-    def test_agent(self, state: State):
-        agent_config = agentstack.get_agent('test_agent')
+    def agent_name(self, state: State):
+        agent_config = agentstack.get_agent('agent_name')
         messages = ChatPromptTemplate.from_messages([
             ("user", agent_config.prompt), 
         ])
@@ -32,8 +32,8 @@ class TestGraph:
         return {'messages': [response, ]}
 
     @agentstack.task
-    def test_task(self, state: State):
-        task_config = agentstack.get_task('test_task')
+    def task_name(self, state: State):
+        task_config = agentstack.get_task('task_name')
         messages = ChatPromptTemplate.from_messages([
             ("user", task_config.prompt), 
         ])
@@ -45,13 +45,15 @@ class TestGraph:
         tools = ToolNode([])
         self.graph.add_node("tools", tools)
         
-        self.graph.add_node("test_agent", self.test_agent)
-        self.graph.add_edge("test_agent", "tools")
-        self.graph.add_conditional_edges("test_agent", tools_condition)
+        self.graph.add_node("agent_name", self.agent_name)
+        self.graph.add_edge("agent_name", "tools")
+        self.graph.add_conditional_edges("agent_name", tools_condition)
 
-        self.graph.add_edge(START, "test_task")
-        self.graph.add_edge("test_task", "test_agent")
-        self.graph.add_edge("test_agent", END)
+        self.graph.add_node("task_name", self.task_name)
+
+        self.graph.add_edge(START, "task_name")
+        self.graph.add_edge("task_name", "agent_name")
+        self.graph.add_edge("agent_name", END)
 
         app = self.graph.compile()
         result = app.invoke({

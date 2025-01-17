@@ -85,6 +85,11 @@ class File:
         else:
             raise ValidationError(f"Failed to parse {self.filename} after edit")
 
+    def remove_node(self, node: ast.AST) -> None:
+        """Remove a node from the source code."""
+        start, end = self.get_node_range(node)
+        self.edit_node_range(start, end, '')
+
     def __enter__(self: FileT) -> FileT:
         return self
 

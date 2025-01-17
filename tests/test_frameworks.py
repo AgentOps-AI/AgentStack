@@ -99,13 +99,13 @@ class TestFrameworks(unittest.TestCase):
 
     def test_get_agent_tool_names(self):
         self._populate_max_entrypoint()
-        frameworks.add_tool(self._get_test_tool(), 'test_agent')
-        tool_names = frameworks.get_agent_tool_names('test_agent')
+        frameworks.add_tool(self._get_test_tool(), 'agent_name')
+        tool_names = frameworks.get_agent_tool_names('agent_name')
         assert tool_names == ['test_tool']
 
     def test_add_tool(self):
         self._populate_max_entrypoint()
-        frameworks.add_tool(self._get_test_tool(), 'test_agent')
+        frameworks.add_tool(self._get_test_tool(), 'agent_name')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert "*agentstack.tools['test_tool']" in entrypoint_src
@@ -113,28 +113,28 @@ class TestFrameworks(unittest.TestCase):
     def test_add_tool_duplicate(self):
         """Repeated calls to add_tool should not duplicate the tool."""
         self._populate_max_entrypoint()
-        frameworks.add_tool(self._get_test_tool(), 'test_agent')
-        frameworks.add_tool(self._get_test_tool(), 'test_agent')
+        frameworks.add_tool(self._get_test_tool(), 'agent_name')
+        frameworks.add_tool(self._get_test_tool(), 'agent_name')
         
-        assert len(frameworks.get_agent_tool_names('test_agent')) == 1
+        assert len(frameworks.get_agent_tool_names('agent_name')) == 1
 
     def test_add_tool_invalid(self):
         self._populate_min_entrypoint()
         with self.assertRaises(ValidationError) as context:
-            frameworks.add_tool(self._get_test_tool(), 'test_agent')
+            frameworks.add_tool(self._get_test_tool(), 'agent_name')
 
     def test_remove_tool(self):
         self._populate_max_entrypoint()
-        frameworks.add_tool(self._get_test_tool(), 'test_agent')
-        frameworks.remove_tool(self._get_test_tool(), 'test_agent')
+        frameworks.add_tool(self._get_test_tool(), 'agent_name')
+        frameworks.remove_tool(self._get_test_tool(), 'agent_name')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert "*agentstack.tools['test_tool']" not in entrypoint_src
 
     def test_add_multiple_tools(self):
         self._populate_max_entrypoint()
-        frameworks.add_tool(self._get_test_tool(), 'test_agent')
-        frameworks.add_tool(self._get_test_tool_alternate(), 'test_agent')
+        frameworks.add_tool(self._get_test_tool(), 'agent_name')
+        frameworks.add_tool(self._get_test_tool_alternate(), 'agent_name')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert (  # ordering is not guaranteed
@@ -144,9 +144,9 @@ class TestFrameworks(unittest.TestCase):
 
     def test_remove_one_tool_of_multiple(self):
         self._populate_max_entrypoint()
-        frameworks.add_tool(self._get_test_tool(), 'test_agent')
-        frameworks.add_tool(self._get_test_tool_alternate(), 'test_agent')
-        frameworks.remove_tool(self._get_test_tool(), 'test_agent')
+        frameworks.add_tool(self._get_test_tool(), 'agent_name')
+        frameworks.add_tool(self._get_test_tool_alternate(), 'agent_name')
+        frameworks.remove_tool(self._get_test_tool(), 'agent_name')
 
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
         assert "*agentstack.tools['test_tool']" not in entrypoint_src

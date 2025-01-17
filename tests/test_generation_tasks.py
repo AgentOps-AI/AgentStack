@@ -57,7 +57,7 @@ class TestGenerationAgent(unittest.TestCase):
     def test_add_agent_exists(self):
         with self.assertRaises(Exception) as context:
             add_task(
-                'test_task',
+                'task_name',
                 description='description',
                 expected_output='expected_output',
                 agent='agent',
@@ -65,10 +65,10 @@ class TestGenerationAgent(unittest.TestCase):
 
     def test_add_task_selects_single_agent(self):
         add_task(
-            'task_test',
+            'task_test_two',
             description='description',
             expected_output='expected_output',
         )
 
-        task_config = TaskConfig('task_test')
-        assert task_config.agent == 'test_agent'  # defined in entrypoint_max.py
+        task_config = TaskConfig('task_test_two')
+        assert task_config.agent == 'agent_name'  # defined in entrypoint_max.py

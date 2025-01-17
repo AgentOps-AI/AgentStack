@@ -103,6 +103,7 @@ def _main():
     agent_parser.add_argument("--goal", "-g", help="Goal of the agent")
     agent_parser.add_argument("--backstory", "-b", help="Backstory of the agent")
     agent_parser.add_argument("--llm", "-l", help="Language model to use")
+    agent_parser.add_argument("--position", help="Position to add the agent in the stack.")
 
     # 'task' command under 'generate'
     task_parser = generate_subparsers.add_parser(
@@ -199,7 +200,7 @@ def _main():
             if args.generate_command in ['agent', 'a']:
                 if not args.llm:
                     configure_default_model()
-                generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm)
+                generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm, args.position)
             elif args.generate_command in ['task', 't']:
                 generation.add_task(args.name, args.description, args.expected_output, args.agent)
             else:

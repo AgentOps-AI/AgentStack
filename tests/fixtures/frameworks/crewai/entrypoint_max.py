@@ -6,13 +6,13 @@ import tools
 @CrewBase
 class TestCrew:
     @agent
-    def test_agent(self) -> Agent:
-        return Agent(config=self.agents_config['test_agent'], tools=[], verbose=True)
+    def agent_name(self) -> Agent:
+        return Agent(config=self.agents_config['agent_name'], tools=[], verbose=True)
 
     @task
-    def test_task(self) -> Task:
+    def task_name(self) -> Task:
         return Task(
-            config=self.tasks_config['test_task'],
+            config=self.tasks_config['task_name'],
         )
 
     @crew

@@ -3,13 +3,17 @@ from pathlib import Path
 import ast
 from agentstack import conf
 from agentstack.exceptions import ValidationError
-from agentstack.generation import asttools
+from agentstack.generation import asttools, InsertionPoint
 from agentstack._tools import ToolConfig
 from agentstack.agents import AgentConfig, get_all_agent_names
 from agentstack.tasks import TaskConfig, get_all_task_names
 from agentstack import graph
 
 ENTRYPOINT: Path = Path('src/graph.py')
+
+GRAPH_NODE_START = 'START'
+GRAPH_NODE_END = 'END'
+GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END)
 
 
 class LangGraphFile(asttools.File):
@@ -68,7 +72,6 @@ class LangGraphFile(asttools.File):
         if not self.source[pos:].startswith('\n'):
             code += '\n\n'
         self.edit_node_range(pos, pos, code)
-        self.add_graph_node(task)
 
     def get_agent_methods(self) -> list[ast.FunctionDef]:
         """An `agent` method is a method decorated with `@agent`."""
@@ -122,7 +125,6 @@ class LangGraphFile(asttools.File):
         if not self.source[pos:].startswith('\n'):
             code += '\n\n'
         self.edit_node_range(pos, pos, code)
-        self.add_graph_node(agent)
     
     def get_global_tools(self) -> ast.List:
         try:
@@ -266,7 +268,7 @@ class LangGraphFile(asttools.File):
 
     def get_graph_edge_nodes(self) -> list[ast.Call]:
         """Get all of the AST Call nodes that create the graph edges."""
-        # TODO filter out tool nodes
+        # TODO do we need to exclude the tools?
         nodes = asttools.find_method_calls(self.get_run_method(), 'add_edge')
         for node in nodes:
             if not len(node.args) == 2:
@@ -284,7 +286,7 @@ class LangGraphFile(asttools.File):
         graph_edges = self.get_graph_edge_nodes()
         
         def _get_type(name: str) -> graph.NodeType:
-            if name in ('START', 'END'):
+            if name in GRAPH_NODES_SPECIAL:
                 return graph.NodeType.SPECIAL
             if name in get_all_agent_names():
                 return graph.NodeType.AGENT
@@ -352,8 +354,7 @@ class LangGraphFile(asttools.File):
             source, target = _get_node_name(source_node), _get_node_name(target_node)
             
             if source == edge.source.name and target == edge.target.name:
-                start, end = self.get_node_range(edge_node)
-                self.edit_node_range(start, end, '')
+                self.remove_node(edge_node)
                 return
         raise ValidationError(f"Graph `add_edge({edge.source.name}, {edge.target.name})` not found for removal in {ENTRYPOINT}")
 
@@ -381,8 +382,7 @@ class LangGraphFile(asttools.File):
         for node in existing_nodes:
             assert isinstance(node.args[0], ast.Str)
             if node.args[0].s == node_config.name:
-                start, end = self.get_node_range(node)
-                self.edit_node_range(start, end, '')
+                self.remove_node(node)
                 return
         raise ValidationError(f"Node `{node_config.name}` not found in {ENTRYPOINT}")
 
@@ -435,10 +435,13 @@ def get_task_method_names() -> list[str]:
     return [method.name for method in entrypoint.get_task_methods()]
 
 
-def add_task(task: TaskConfig) -> None:
+def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add a task method to the LangGraph entrypoint.
     """
+    if position is not None:
+        raise NotImplementedError("Task insertion points are not yet supported for LangGraph.")
+
     with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
         entrypoint.add_task_method(task)
 
@@ -459,12 +462,59 @@ def get_agent_tool_names(agent_name: str) -> list[Any]:
         return entrypoint.get_agent_tool_names(agent_name)
 
 
-def add_agent(agent: AgentConfig) -> None:
+def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add an agent method to the LangGraph entrypoint.
     """
     with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
         entrypoint.add_agent_method(agent)
+        entrypoint.add_graph_node(agent)
+        
+        existing_nodes = entrypoint.get_graph()
+        if position in (None, InsertionPoint.END):
+            # replace the existing END node with the new agent, and insert the 
+            # previous END node's source as the new agent's source
+            prev_source = None
+            for node in existing_nodes:
+                source, target = node.source, node.target
+                if target.type == graph.NodeType.SPECIAL and target.name == GRAPH_NODE_END:
+                    prev_source = source
+                    entrypoint.remove_graph_edge(node)
+                    break
+            
+            if not prev_source:
+                raise ValidationError(f"Could not find {GRAPH_NODE_END} node to replace in {ENTRYPOINT}")
+            
+            entrypoint.add_graph_edge(graph.Edge(
+                source=graph.Node(name=prev_source.name, type=prev_source.type),
+                target=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+            ))
+            entrypoint.add_graph_edge(graph.Edge(
+                source=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+                target=graph.Node(name=GRAPH_NODE_END, type=graph.NodeType.SPECIAL),
+            ))
+        elif position == InsertionPoint.BEGIN:
+            # replace the existing START node with the new agent, and insert the
+            # new agent as the source of the previous START node
+            prev_target = None
+            for node in existing_nodes:
+                source, target = node.source, node.target
+                if source.type == graph.NodeType.SPECIAL and source.name == GRAPH_NODE_START:
+                    prev_target = target
+                    entrypoint.remove_graph_edge(node)
+                    break
+            
+            if not prev_target:
+                raise ValidationError(f"Could not find {GRAPH_NODE_START} node to replace in {ENTRYPOINT}")
+            
+            entrypoint.add_graph_edge(graph.Edge(
+                source=graph.Node(name=GRAPH_NODE_START, type=graph.NodeType.SPECIAL),
+                target=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+            ))
+            entrypoint.add_graph_edge(graph.Edge(
+                source=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+                target=graph.Node(name=prev_target.name, type=prev_target.type),
+            ))
 
 
 def add_tool(tool: ToolConfig, agent_name: str):

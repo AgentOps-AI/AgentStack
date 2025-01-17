@@ -8,6 +8,7 @@ from agentstack.utils import get_framework
 from agentstack._tools import ToolConfig
 from agentstack import graph
 if TYPE_CHECKING:
+    from agentstack.generation import InsertionPoint
     from agentstack.agents import AgentConfig
     from agentstack.tasks import TaskConfig
 
@@ -74,13 +75,13 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def add_agent(self, agent: 'AgentConfig') -> None:  # pragma: no cover
+    def add_agent(self, agent: 'AgentConfig', position: Optional['InsertionPoint'] = None) -> None:  # pragma: no cover
         """
         Add an agent to the user's project.
         """
         ...
 
-    def add_task(self, task: 'TaskConfig') -> None:  # pragma: no cover
+    def add_task(self, task: 'TaskConfig', position: Optional['InsertionPoint'] = None) -> None:  # pragma: no cover
         """
         Add a task to the user's project.
         """
@@ -167,24 +168,24 @@ def get_agent_tool_names(agent_name: str) -> list[str]:
     return get_framework_module(get_framework()).get_agent_tool_names(agent_name)
 
 
-def add_agent(agent: 'AgentConfig'):
+def add_agent(agent: 'AgentConfig', position: Optional['InsertionPoint'] = None):
     """
     Add an agent to the user's project.
     """
     framework = get_framework()
     if agent.name in get_agent_method_names():
         raise ValidationError(f"Agent `{agent.name}` already exists in {get_entrypoint_path(framework)}")
-    return get_framework_module(framework).add_agent(agent)
+    return get_framework_module(framework).add_agent(agent, position)
 
 
-def add_task(task: 'TaskConfig'):
+def add_task(task: 'TaskConfig', position: Optional['InsertionPoint'] = None):
     """
     Add a task to the user's project.
     """
     framework = get_framework()
     if task.name in get_task_method_names():
         raise ValidationError(f"Task `{task.name}` already exists in {get_entrypoint_path(framework)}")
-    return get_framework_module(framework).add_task(task)
+    return get_framework_module(framework).add_task(task, position)
 
 
 def get_task_method_names() -> list[str]:
