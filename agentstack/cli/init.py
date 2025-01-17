@@ -46,10 +46,10 @@ def init_project(
     if slug_name:
         conf.set_path(conf.PATH / slug_name)
     else:
-        raise Exception("Error: No project directory specified.\n Run `agentstack init <project_name>`")
+        raise Exception("No project directory specified.\n Run `agentstack init <project_name>`")
 
     if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
-        raise Exception(f"Error: Directory already exists: {conf.PATH}")
+        raise Exception(f"Directory already exists: {conf.PATH}")
 
     welcome_message()
     log.notify("🦾 Creating a new AgentStack project...")
@@ -57,9 +57,8 @@ def init_project(
 
     if framework:
         if not framework in frameworks.SUPPORTED_FRAMEWORKS:
-            print(f"Error: Framework '{framework}' is not supported.")
-            sys.exit(1)
-        print(f"Using framework: {framework}")
+            raise Exception(f"Framework '{framework}' is not supported.")
+        log.info(f"Using framework: {framework}")
 
     # copy the project skeleton, create a virtual environment, and install dependencies
     init_project_builder(slug_name, template, framework, use_wizard)
