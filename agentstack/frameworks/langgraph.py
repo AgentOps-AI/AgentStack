@@ -1,7 +1,7 @@
 from typing import Optional, Union, Callable, Any
 from pathlib import Path
 import ast
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack.generation import asttools, InsertionPoint
 from agentstack._tools import ToolConfig
@@ -281,6 +281,22 @@ class LangGraphFile(asttools.File):
                 nodes.remove(node)
         return nodes
 
+    def get_graph_start_edge_node(self) -> ast.Call:
+        """Get the edge node that defines the start of the graph."""
+        for edge in self.get_graph_edge_nodes():
+            source, target = edge.args
+            if isinstance(source, ast.Str) and source.s == GRAPH_NODE_START:
+                return edge
+        raise ValidationError(f"`add_edge({GRAPH_NODE_START}, ...)` not found in {ENTRYPOINT}")
+
+    def get_graph_end_edge_node(self) -> ast.Call:
+        """Get the edge node that defines the end of the graph."""
+        for edge in self.get_graph_edge_nodes():
+            source, target = edge.args
+            if isinstance(target, ast.Str) and target.s == GRAPH_NODE_END:
+                return edge
+        raise ValidationError(f"`add_edge(..., {GRAPH_NODE_END})` not found in {ENTRYPOINT}")
+
     def get_graph(self) -> list[graph.Edge]:
         """Get all of the edge definitions from the graph configuration."""
         graph_edges = self.get_graph_edge_nodes()
@@ -482,13 +498,13 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
                     entrypoint.remove_graph_edge(node)
                     break
             
-            if not prev_source:
-                raise ValidationError(f"Could not find {GRAPH_NODE_END} node to replace in {ENTRYPOINT}")
-            
-            entrypoint.add_graph_edge(graph.Edge(
-                source=graph.Node(name=prev_source.name, type=prev_source.type),
-                target=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
-            ))
+            if prev_source:
+                entrypoint.add_graph_edge(graph.Edge(
+                    source=graph.Node(name=prev_source.name, type=prev_source.type),
+                    target=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+                ))
+            else:
+                log.warning(f"Could not find {GRAPH_NODE_END} node to replace in {ENTRYPOINT}")
             entrypoint.add_graph_edge(graph.Edge(
                 source=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
                 target=graph.Node(name=GRAPH_NODE_END, type=graph.NodeType.SPECIAL),
@@ -504,17 +520,17 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
                     entrypoint.remove_graph_edge(node)
                     break
             
-            if not prev_target:
-                raise ValidationError(f"Could not find {GRAPH_NODE_START} node to replace in {ENTRYPOINT}")
-            
             entrypoint.add_graph_edge(graph.Edge(
                 source=graph.Node(name=GRAPH_NODE_START, type=graph.NodeType.SPECIAL),
                 target=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
             ))
-            entrypoint.add_graph_edge(graph.Edge(
-                source=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
-                target=graph.Node(name=prev_target.name, type=prev_target.type),
-            ))
+            if prev_target:
+                entrypoint.add_graph_edge(graph.Edge(
+                    source=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+                    target=graph.Node(name=prev_target.name, type=prev_target.type),
+                ))
+            else:
+                log.warning(f"Could not find {GRAPH_NODE_START} node to replace in {ENTRYPOINT}")
 
 
 def add_tool(tool: ToolConfig, agent_name: str):
