@@ -113,6 +113,7 @@ def _main():
     task_parser.add_argument("--description", "-d", help="Description of the task")
     task_parser.add_argument("--expected_output", "-e", help="Expected output of the task")
     task_parser.add_argument("--agent", "-a", help="Agent associated with the task")
+    task_parser.add_argument("--position", help="Position to add the task in the stack.")
 
     # 'tools' command
     tools_parser = subparsers.add_parser("tools", aliases=["t"], help="Manage tools")
@@ -202,7 +203,9 @@ def _main():
                     configure_default_model()
                 generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm, args.position)
             elif args.generate_command in ['task', 't']:
-                generation.add_task(args.name, args.description, args.expected_output, args.agent)
+                generation.add_task(
+                    args.name, args.description, args.expected_output, args.agent, args.position
+                )
             else:
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:

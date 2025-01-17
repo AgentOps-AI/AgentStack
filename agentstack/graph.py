@@ -17,5 +17,3 @@ class Node(pydantic.BaseModel):
 class Edge(pydantic.BaseModel):
     source: Node
     target: Node
-
-

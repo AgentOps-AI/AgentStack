@@ -3,6 +3,7 @@ from typing import Optional
 from agentstack import log
 from agentstack.exceptions import ValidationError
 from agentstack.conf import ConfigFile
+from agentstack.generation import parse_insertion_point
 from agentstack import frameworks
 from agentstack.utils import verify_agentstack_project
 from agentstack.agents import AgentConfig, AGENTS_FILENAME
@@ -26,7 +27,6 @@ def add_agent(
         config.backstory = backstory or "Add your backstory here"
         config.llm = llm or agentstack_config.default_model or ""
 
-    from agentstack.generation import parse_insertion_point
     _position = parse_insertion_point(position)
     try:
         frameworks.add_agent(agent, _position)

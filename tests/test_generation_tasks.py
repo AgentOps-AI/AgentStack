@@ -8,7 +8,8 @@ import ast
 from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
-from agentstack.tasks import TaskConfig
+from agentstack.agents import AGENTS_FILENAME
+from agentstack.tasks import TASKS_FILENAME, TaskConfig
 from agentstack.generation.task_generation import add_task
 from agentstack.generation.agent_generation import add_agent
 
@@ -24,6 +25,10 @@ class TestGenerationAgent(unittest.TestCase):
         os.makedirs(self.project_dir / 'src')
         os.makedirs(self.project_dir / 'src' / 'config')
         (self.project_dir / 'src' / '__init__.py').touch()
+
+        # copy agents.yaml and tasks.yaml
+        shutil.copy(BASE_PATH / 'fixtures/agents_max.yaml', self.project_dir / AGENTS_FILENAME)
+        shutil.copy(BASE_PATH / 'fixtures/tasks_max.yaml', self.project_dir / TASKS_FILENAME)
 
         # set the framework in agentstack.json
         shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')

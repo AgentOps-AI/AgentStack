@@ -9,8 +9,9 @@ from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack._tools import ToolConfig, get_all_tools
-from agentstack.agents import AgentConfig
-from agentstack.tasks import TaskConfig
+from agentstack.agents import AGENTS_FILENAME, AgentConfig
+from agentstack.tasks import TASKS_FILENAME, TaskConfig
+from agentstack import graph
 
 BASE_PATH = Path(__file__).parent
 
@@ -46,11 +47,11 @@ class TestFrameworks(unittest.TestCase):
         shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
 
     def _get_test_agent(self) -> AgentConfig:
-        shutil.copy(BASE_PATH / 'fixtures' / 'agents_max.yaml', self.project_dir / 'src' / 'config' / 'agents.yaml')
+        shutil.copy(BASE_PATH / 'fixtures/agents_max.yaml', self.project_dir / AGENTS_FILENAME)
         return AgentConfig('agent_name')
 
     def _get_test_task(self) -> TaskConfig:
-        shutil.copy(BASE_PATH / 'fixtures' / 'tasks_max.yaml', self.project_dir / 'src' / 'config' / 'tasks.yaml')
+        shutil.copy(BASE_PATH / 'fixtures/tasks_max.yaml', self.project_dir / TASKS_FILENAME)
         return TaskConfig('task_name')
 
     def _get_test_tool(self) -> ToolConfig:
@@ -115,7 +116,7 @@ class TestFrameworks(unittest.TestCase):
         self._populate_max_entrypoint()
         frameworks.add_tool(self._get_test_tool(), 'agent_name')
         frameworks.add_tool(self._get_test_tool(), 'agent_name')
-        
+
         assert len(frameworks.get_agent_tool_names('agent_name')) == 1
 
     def test_add_tool_invalid(self):
@@ -152,12 +153,25 @@ class TestFrameworks(unittest.TestCase):
         assert "*agentstack.tools['test_tool']" not in entrypoint_src
         assert "*agentstack.tools['test_tool_alt']" in entrypoint_src
 
-    @parameterized.expand([(x, ) for x in get_all_tools()])
+    @parameterized.expand([(x,) for x in get_all_tools()])
     def test_get_tool_callables(self, tool_config):
         self._populate_max_entrypoint()
         try:
             callables = frameworks.get_tool_callables(tool_config.name)
         except (Exception, ValidationError):
-            raise unittest.SkipTest(f"Skipping validation of {tool_config.name} likely because dependencies required for import are not available.")
+            raise unittest.SkipTest(
+                f"Skipping validation of {tool_config.name} likely because dependencies required for import are not available."
+            )
 
         assert len(callables) == len(tool_config.tools)
+
+    def test_get_graph(self):
+        self._populate_max_entrypoint()
+        self._get_test_agent()
+        self._get_test_task()
+
+        graph_ = frameworks.get_graph()
+        # graph can be empty if the project is not using the graph, but should still return a list
+        assert isinstance(graph_, list)
+        for edge in graph_:
+            assert isinstance(edge, graph.Edge)
