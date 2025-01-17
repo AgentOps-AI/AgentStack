@@ -1,29 +1,30 @@
 #!/usr/bin/env python
 import sys
 from crew import SentimentanalyserCrew
+import agentstack
 import agentops
 
-agentops.init(default_tags=['crewai', 'agentstack'])
+agentops.init(default_tags=agentstack.get_tags())
 
+instance = SentimentanalyserCrew().crew()
 
 def run():
     """
     Run the crew.
     """
-    inputs = {
-    }
-    SentimentanalyserCrew().crew().kickoff(inputs=inputs)
+    instance.kickoff(inputs=agentstack.get_inputs())
 
 
 def train():
     """
     Train the crew for a given number of iterations.
     """
-    inputs = {
-    }
     try:
-        SentimentanalyserCrew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
-
+        instance.train(
+            n_iterations=int(sys.argv[1]), 
+            filename=sys.argv[2], 
+            inputs=agentstack.get_inputs(), 
+        )
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
 
@@ -33,8 +34,7 @@ def replay():
     Replay the crew execution from a specific task.
     """
     try:
-        SentimentanalyserCrew().crew().replay(task_id=sys.argv[1])
-
+        instance.replay(task_id=sys.argv[1])
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
@@ -43,11 +43,12 @@ def test():
     """
     Test the crew execution and returns the results.
     """
-    inputs = {
-    }
     try:
-        SentimentanalyserCrew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
-
+        instance.test(
+            n_iterations=int(sys.argv[1]), 
+            openai_model_name=sys.argv[2], 
+            inputs=agentstack.get_inputs(), 
+        )
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
 
