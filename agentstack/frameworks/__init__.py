@@ -32,68 +32,68 @@ class FrameworkModule(Protocol):
     ie. `src/crewai.py`
     """
 
-    def validate_project(self) -> None:  # pragma: no cover
+    def validate_project(self) -> None:
         """
         Validate that a user's project is ready to run.
         Raises a `ValidationError` if the project is not valid.
         """
         ...
 
-    def parse_llm(self, llm: str) -> tuple[str, str]:  # pragma: no cover
+    def parse_llm(self, llm: str) -> tuple[str, str]:
         """
         Parse a language model string into a provider and model.
         """
         ...
 
-    def add_tool(self, tool: ToolConfig, agent_name: str) -> None:  # pragma: no cover
+    def add_tool(self, tool: ToolConfig, agent_name: str) -> None:
         """
         Add a tool to an agent in the user's project.
         """
         ...
 
-    def remove_tool(self, tool: ToolConfig, agent_name: str) -> None:  # pragma: no cover
+    def remove_tool(self, tool: ToolConfig, agent_name: str) -> None:
         """
         Remove a tool from an agent in user's project.
         """
         ...
 
-    def get_tool_callables(self, tool_name: str) -> list[Callable]:  # pragma: no cover
+    def get_tool_callables(self, tool_name: str) -> list[Callable]:
         """
         Get a tool by name and return it as a list of framework-native callables.
         """
         ...
 
-    def get_agent_method_names(self) -> list[str]:  # pragma: no cover
+    def get_agent_method_names(self) -> list[str]:
         """
         Get a list of agent names in the user's project.
         """
         ...
 
-    def get_agent_tool_names(self, agent_name: str) -> list[str]:  # pragma: no cover
+    def get_agent_tool_names(self, agent_name: str) -> list[str]:
         """
         Get a list of tool names in an agent in the user's project.
         """
         ...
 
-    def add_agent(self, agent: 'AgentConfig', position: Optional['InsertionPoint'] = None) -> None:  # pragma: no cover
+    def add_agent(self, agent: 'AgentConfig', position: Optional['InsertionPoint'] = None) -> None:
         """
         Add an agent to the user's project.
         """
         ...
 
-    def add_task(self, task: 'TaskConfig', position: Optional['InsertionPoint'] = None) -> None:  # pragma: no cover
+    def add_task(self, task: 'TaskConfig', position: Optional['InsertionPoint'] = None) -> None:
         """
         Add a task to the user's project.
         """
         ...
 
-    def get_task_method_names(self) -> list[str]:  # pragma: no cover
+    def get_task_method_names(self) -> list[str]:
         """
         Get a list of task names in the user's project.
         """
         ...
     
-    def get_graph(self) -> list[graph.Edge]:  # pragma: no cover
+    def get_graph(self) -> list[graph.Edge]:
         """
         Get the graph of the user's project.
         """
