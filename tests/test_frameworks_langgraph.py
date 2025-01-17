@@ -23,6 +23,35 @@ class FrameworksLanggraphTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.project_dir)
 
+    def test_get_import(self):
+        """Test getting the import statement"""
+        entrypoint_src = """
+from agentstack import agent"""
+        with open(self.project_dir / ENTRYPOINT, 'w') as f:
+            f.write(entrypoint_src)
+        
+        entrypoint = LangGraphFile(self.project_dir / ENTRYPOINT)
+        import_ = entrypoint.get_import('agentstack', 'agent')
+        assert isinstance(import_, ast.ImportFrom)
+        
+        missing = entrypoint.get_import('agentstack', 'task')
+        assert missing is None
+
+    def test_add_import(self):
+        """Test adding an import statement"""
+        entrypoint_src = """
+from agentstack import agent"""
+        with open(self.project_dir / ENTRYPOINT, 'w') as f:
+            f.write(entrypoint_src)
+        
+        with LangGraphFile(self.project_dir / ENTRYPOINT) as entrypoint:
+            entrypoint.add_import('agentstack', 'task')
+        with open(self.project_dir / ENTRYPOINT, 'r') as f:
+            new_src = f.read()
+        
+        assert 'from agentstack import task' in new_src
+        assert 'from agentstack import agent' in new_src
+
     def test_missing_base_class(self):
         """A class with the name *Graph does not exist in the entrypoint"""
         entrypoint_src = """
@@ -179,6 +208,21 @@ class TestGraph:
         assert len(nodes) == 3
         for node in nodes:
             assert isinstance(node, ast.Call)
+    
+    def test_get_graph_edge_nodes_invalid(self):
+        """Test getting the graph edge nodes with an invalid edge"""
+        entrypoint_src = """
+class TestGraph:
+    def run(self, inputs: list):
+        self.graph = Graph()
+        self.graph.add_edge(START, "agent_name", "foo")
+        """
+        with open(self.project_dir / ENTRYPOINT, 'w') as f:
+            f.write(entrypoint_src)
+        
+        entrypoint = LangGraphFile(self.project_dir / ENTRYPOINT)
+        with self.assertRaises(ValidationError):
+            entrypoint.get_graph_edge_nodes()
     
     def test_get_graph(self):
         """Test getting the graph object"""

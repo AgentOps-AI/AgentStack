@@ -73,17 +73,23 @@ class LangGraphFile(asttools.File):
         Check if an import statement for a module and class exists in the file.
         """
         for node in asttools.get_all_imports(self.tree):
-            names = node.names[0]
-            if names.asname == attributes and names.name == module_name:
+            names_str = ', '.join(alias.name for alias in node.names)
+            if node.module == module_name and names_str == attributes:
                 return node
         return None
     
     def add_import(self, module_name: str, attributes: str):
         """
-        Add an import statement for a module and class to the file.
+        Add an import statement to the file.
         """
+        all_imports = asttools.get_all_imports(self.tree)
+        _, end = self.get_node_range(all_imports[-1]) if all_imports else (0, 0)
+        
         code = f"from {module_name} import {attributes}\n"
-        self.edit_node_range(0, 0, code)  # TODO could place this better
+        if not self.source[:end].endswith('\n'):
+            code = '\n' + code
+        
+        self.edit_node_range(end, end, code)
     
     def get_base_class(self) -> ast.ClassDef:
         """
