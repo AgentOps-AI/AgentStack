@@ -68,13 +68,13 @@ class LangGraphFile(asttools.File):
     """
     Parses and manipulates the LangGraph entrypoint file. 
     """
-    def get_import(self, module_name: str, attributes: str) -> Optional[ast.Import]:
+    def get_import(self, module_name: str, attributes: str) -> Optional[ast.ImportFrom]:
         """
         Check if an import statement for a module and class exists in the file.
         """
         for node in asttools.get_all_imports(self.tree):
             names = node.names[0]
-            if names.asname == attributes and names.name == class_name:
+            if names.asname == attributes and names.name == module_name:
                 return node
         return None
     
