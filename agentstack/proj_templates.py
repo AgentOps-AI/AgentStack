@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 import os, sys
 from pathlib import Path
 import pydantic
@@ -7,8 +7,21 @@ import json
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path
 
-
 CURRENT_VERSION: Literal[4] = 4
+
+
+def _model_dump_agent(agent: Union[dict, pydantic.BaseModel]) -> dict:
+    """Between template version 3 and 4 we fixed the naming of the model/llm field. """
+    if isinstance(agent, pydantic.BaseModel):
+        agent = agent.model_dump()
+    return {
+        "name": agent['name'],
+        "role": agent['role'],
+        "goal": agent['goal'],
+        "backstory": agent['backstory'],
+        "llm": agent['model'],  # model -> llm
+    }
+
 
 class TemplateConfig_v1(pydantic.BaseModel):
     name: str
@@ -29,7 +42,7 @@ class TemplateConfig_v1(pydantic.BaseModel):
             framework=self.framework,
             method=self.method,
             manager_agent=None,
-            agents=[TemplateConfig.Agent(**agent) for agent in self.agents],
+            agents=[TemplateConfig.Agent(**_model_dump_agent(agent)) for agent in self.agents],
             tasks=[TemplateConfig.Task(**task) for task in self.tasks],
             tools=[TemplateConfig.Tool(**tool) for tool in self.tools],
             graph=[],
@@ -73,7 +86,7 @@ class TemplateConfig_v2(pydantic.BaseModel):
             framework=self.framework,
             method=self.method,
             manager_agent=None,
-            agents=[TemplateConfig.Agent(**agent.model_dump()) for agent in self.agents],
+            agents=[TemplateConfig.Agent(**_model_dump_agent(agent)) for agent in self.agents],
             tasks=[TemplateConfig.Task(**task.model_dump()) for task in self.tasks],
             tools=[TemplateConfig.Tool(**tool.model_dump()) for tool in self.tools],
             graph=[],
@@ -119,7 +132,7 @@ class TemplateConfig_v3(pydantic.BaseModel):
             framework=self.framework,
             method=self.method,
             manager_agent=self.manager_agent,
-            agents=[TemplateConfig.Agent(**agent.model_dump()) for agent in self.agents],
+            agents=[TemplateConfig.Agent(**_model_dump_agent(agent)) for agent in self.agents],
             tasks=[TemplateConfig.Task(**task.model_dump()) for task in self.tasks],
             tools=[TemplateConfig.Tool(**tool.model_dump()) for tool in self.tools],
             graph=[],
@@ -165,7 +178,7 @@ class TemplateConfig(pydantic.BaseModel):
         goal: str
         backstory: str
         allow_delegation: bool = False
-        model: str
+        llm: str
 
     class Task(pydantic.BaseModel):
         name: str
@@ -191,7 +204,7 @@ class TemplateConfig(pydantic.BaseModel):
     tasks: list[Task]
     tools: list[Tool]
     graph: list[list[Node]]
-    inputs: Optional[dict[str, str]] = {}
+    inputs: dict[str, str] = {}
 
     @pydantic.field_validator('graph')
     @classmethod
@@ -240,6 +253,8 @@ class TemplateConfig(pydantic.BaseModel):
                 return cls.from_json(json.load(f))
         except json.JSONDecodeError as e:
             raise ValidationError(f"Error decoding template JSON.\n{e}")
+        except ValidationError as e:
+            raise ValidationError(f"{e}\nTemplateConfig.from_file({path})")
 
     @classmethod
     def from_url(cls, url: str) -> 'TemplateConfig':
@@ -252,6 +267,8 @@ class TemplateConfig(pydantic.BaseModel):
             return cls.from_json(response.json())
         except json.JSONDecodeError as e:
             raise ValidationError(f"Error decoding template JSON.\n{e}")
+        except ValidationError as e:
+            raise ValidationError(f"{e}\nTemplateConfig.from_url({url})")
 
     @classmethod
     def from_json(cls, data: dict) -> 'TemplateConfig':

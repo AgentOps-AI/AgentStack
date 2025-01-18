@@ -6,5 +6,5 @@
       {{agent.goal}}
     backstory: >
       {{agent.backstory}}
-    llm: {{agent.model}}
+    llm: {{agent.llm}}
 {%- endfor %}

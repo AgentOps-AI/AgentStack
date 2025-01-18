@@ -15,7 +15,8 @@ ENTRYPOINT: Path = Path('src/graph.py')
 
 GRAPH_NODE_START = 'START'
 GRAPH_NODE_END = 'END'
-GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END)
+GRAPH_NODE_TOOLS = 'tools'  # references the `ToolNode` instance
+GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END, )
 
 
 @dataclass
@@ -166,7 +167,7 @@ class LangGraphFile(asttools.File):
         assert agent.provider in PROVIDERS.keys()  # this gets validated in `add_agent`
         agent_class_name = PROVIDERS[agent.provider].class_name
         code = f"""    @agentstack.agent
-    def {agent.name}(self, state: State) -> Agent:
+    def {agent.name}(self, state: State):
         agent_config = agentstack.get_agent('{agent.name}')
         messages = ChatPromptTemplate.from_messages([
             ("user", agent_config.prompt), 
@@ -330,7 +331,7 @@ class LangGraphFile(asttools.File):
         for node in nodes:
             source, target = node.args
             source_name = _get_node_name(source)
-            if source_name == 'tools':  # TODO this is a bit brittle
+            if source_name == GRAPH_NODE_TOOLS:  # TODO this is a bit brittle
                 nodes.remove(node)
         return nodes
 
@@ -345,7 +346,7 @@ class LangGraphFile(asttools.File):
             source, target = node.args
             # if isinstance(source, ast.Str) and source.s == 'tools':
             #     nodes.remove(node)
-            if isinstance(target, ast.Str) and target.s == 'tools':
+            if isinstance(target, ast.Str) and target.s == GRAPH_NODE_TOOLS:
                 nodes.remove(node)
         return nodes
 
@@ -356,6 +357,8 @@ class LangGraphFile(asttools.File):
         def _get_type(name: str) -> graph.NodeType:
             if name in GRAPH_NODES_SPECIAL:
                 return graph.NodeType.SPECIAL
+            if name == GRAPH_NODE_TOOLS:
+                return graph.NodeType.TOOLS
             if name in get_all_agent_names():
                 return graph.NodeType.AGENT
             if name in get_all_task_names():
@@ -613,6 +616,14 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
 
         entrypoint.add_agent_method(agent)
         entrypoint.add_graph_node(agent)
+
+        # add graph edge for `tools`
+        entrypoint.add_graph_edge(
+            graph.Edge(
+                source=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+                target=graph.Node(name=GRAPH_NODE_TOOLS, type=graph.NodeType.TOOLS),
+            )
+        )
 
         existing_nodes = entrypoint.get_graph()
         if position == InsertionPoint.END:

@@ -6,6 +6,7 @@ import pydantic
 class NodeType(Enum):
     AGENT = 'agent'
     TASK = 'task'
+    TOOLS = 'tools'
     SPECIAL = 'special'
 
 

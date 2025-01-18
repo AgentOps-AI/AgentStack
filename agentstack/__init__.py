@@ -26,18 +26,24 @@ ___all___ = [
     "get_inputs", 
 ]
 
-def agent():
+def agent(func):
     """
     The `agent` decorator is used to mark a method that implements an Agent. 
     """
-    pass
+    def wrap(*args, **kwargs):
+        """Does not alter the function's behavior; this is just a marker."""
+        return func(*args, **kwargs)
+    return wrap
 
 
-def task():
+def task(func):
     """
     The `task` decorator is used to mark a method that implements a Task.
     """
-    pass
+    def wrap(*args, **kwargs):
+        """Does not alter the function's behavior; this is just a marker."""
+        return func(*args, **kwargs)
+    return wrap
 
 
 def get_tags() -> list[str]:

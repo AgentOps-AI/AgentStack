@@ -9,7 +9,7 @@ from agentstack.tasks import TaskConfig, TASKS_FILENAME
 
 
 def add_task(
-    task_name: str,
+    name: str,
     description: Optional[str] = None,
     expected_output: Optional[str] = None,
     agent: Optional[str] = None,
@@ -22,7 +22,7 @@ def add_task(
         # if there's only one agent, use it by default
         agent = agents[0]
 
-    task = TaskConfig(task_name)
+    task = TaskConfig(name)
     with task as config:
         config.description = description or "Add your description here"
         config.expected_output = expected_output or "Add your expected_output here"
@@ -31,8 +31,7 @@ def add_task(
     _position = parse_insertion_point(position)
     try:
         frameworks.add_task(task, _position)
-        log.info(f"Added task \"{task_name}\" to project.")
     except ValidationError as e:
         raise ValidationError(f"Error adding task to project:\n{e}")
 
-    log.success(f"Added task \"{task_name}\" to your AgentStack project successfully!")
+    log.success(f"Added task \"{task.name}\" to your AgentStack project successfully!")
