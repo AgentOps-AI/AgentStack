@@ -23,7 +23,19 @@ def deploy():
 
     project_id = get_project_id()
     pyproject = load_pyproject()
-    files = list(Path('.').rglob('*.py'))
+
+    def should_skip_dir(path: Path) -> bool:
+        skip_dirs = {'.venv', '__pycache__', '.git', 'build', 'dist'}
+        return path.name in skip_dirs
+
+    files = []
+    for path in Path('.').iterdir():
+        if path.is_dir():
+            if should_skip_dir(path):
+                continue
+            files.extend(p for p in path.rglob('*.py'))
+        elif path.suffix == '.py':
+            files.append(path)
 
     with tempfile.NamedTemporaryFile(suffix='.zip') as tmp:
         with zipfile.ZipFile(tmp.name, 'w') as zf:
