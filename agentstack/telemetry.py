@@ -34,8 +34,7 @@ from agentstack import conf
 from agentstack.auth import get_stored_token
 from agentstack.utils import get_telemetry_opt_out, get_framework, get_version, get_base_dir
 
-# TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
-TELEMETRY_URL = 'http://localhost:3000/telemetry'
+TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
 USER_GUID_FILE_PATH = get_base_dir() / ".cli-user-guid"
 
 
