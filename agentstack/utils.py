@@ -8,6 +8,7 @@ from pathlib import Path
 import importlib.resources
 from agentstack import conf
 from inquirer import errors as inquirer_errors
+from appdirs import user_data_dir
 
 
 def get_version(package: str = 'agentstack'):
@@ -118,3 +119,16 @@ def validator_not_empty(min_length=1):
         return True
 
     return validator
+
+def get_base_dir():
+    """Try to get appropriate directory for storing update file"""
+    try:
+        base_dir = Path(user_data_dir("agentstack", "agency"))
+        # Test if we can write to directory
+        test_file = base_dir / '.test_write_permission'
+        test_file.touch()
+        test_file.unlink()
+    except (RuntimeError, OSError, PermissionError):
+        # In CI or when directory is not writable, use temp directory
+        base_dir = Path(os.getenv('TEMP', '/tmp'))
+    return base_dir
