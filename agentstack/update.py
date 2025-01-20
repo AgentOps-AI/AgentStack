@@ -116,8 +116,6 @@ def check_for_updates(update_requested: bool = False):
     if not update_requested and not should_update():
         return
 
-    log.info("Checking for updates...\n")
-
     try:
         latest_version: Version = get_latest_version(AGENTSTACK_PACKAGE)
     except Exception as e:
@@ -133,7 +131,5 @@ def check_for_updates(update_requested: bool = False):
             log.success(f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.")
         else:
             log.info("Skipping update. Run `agentstack update` to install the latest version.")
-    else:
-        log.info(f"{AGENTSTACK_PACKAGE} is up to date ({installed_version})")
 
     record_update_check()
