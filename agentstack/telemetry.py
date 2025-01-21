@@ -123,4 +123,4 @@ def _get_cli_user_guid() -> str:
         return guid
     except (OSError, PermissionError):
         # Silently fail in CI or when we can't write
-        pass
+        return "unknown"
