@@ -1,6 +1,14 @@
+import os
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
-from agentstack.utils import clean_input, is_snake_case, validator_not_empty
+from agentstack.utils import (
+    clean_input,
+    is_snake_case,
+    validator_not_empty,
+    get_base_dir
+)
 from inquirer import errors as inquirer_errors
 
 
@@ -37,3 +45,28 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(inquirer_errors.ValidationError):
             validator(None, "ab")
 
+    @patch('agentstack.utils.user_data_dir')
+    def test_get_base_dir_not_writable(self, mock_user_data_dir):
+        """
+        Test that get_base_dir() falls back to a temporary directory when user_data_dir is not writable.
+        """
+        mock_user_data_dir.side_effect = PermissionError
+
+        result = get_base_dir()
+
+        self.assertIsInstance(result, Path)
+        self.assertTrue(result.is_absolute())
+        self.assertIn(str(result), ['/tmp', os.environ.get('TEMP', '/tmp')])
+
+    @patch('agentstack.utils.user_data_dir')
+    def test_get_base_dir_writable(self, mock_user_data_dir):
+        """
+        Test that get_base_dir() returns a writable Path when user_data_dir is accessible.
+        """
+        mock_path = '/mock/user/data/dir'
+        mock_user_data_dir.return_value = mock_path
+
+        result = get_base_dir()
+
+        self.assertIsInstance(result, Path)
+        self.assertTrue(result.is_absolute())
