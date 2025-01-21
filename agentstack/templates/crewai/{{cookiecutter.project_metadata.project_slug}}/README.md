@@ -1,7 +1,7 @@
 # {{ cookiecutter.project_metadata.project_name }}
 {{ cookiecutter.project_metadata.description }}
 
-## How to build your Crew
+## How to build your Crew Agent
 ### With the CLI
 Add an agent using AgentStack with the CLI:  
 `agentstack generate agent <agent_name>`  
@@ -15,8 +15,8 @@ Similarly, tasks can be created with `agentstack g t <tool_name>`
 
 Add tools with `agentstack tools add` and view tools available with `agentstack tools list`
 
-## How to use your Crew
-In this directory, run `poetry install`  
+## How to use your Agent
+In this directory, run `uv pip install`  
 
 To run your project, use the following command:  
 `agentstack run`
