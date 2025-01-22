@@ -1,3 +1,4 @@
+import importlib
 from typing import Optional
 import os
 import sys
@@ -476,3 +477,14 @@ def export_template(output_filename: str):
         log.success(f"Template saved to: {conf.PATH / output_filename}")
     except Exception as e:
         raise Exception(f"Failed to write template to file: {e}")
+
+
+def serve_project():
+    verify_agentstack_project()
+
+    # TODO: only silence output conditionally - maybe a debug or verbose option
+    os.system("docker stop agentstack-local > /dev/null 2>&1")
+    os.system("docker rm agentstack-local > /dev/null 2>&1")
+    with importlib.resources.path('agentstack.deploy', 'Dockerfile') as path:
+        os.system(f"docker build -t agent-service -f {path} .")
+    os.system("docker run --name agentstack-local -p 6969:6969 agent-service")

@@ -12,6 +12,7 @@ from agentstack.cli import (
     configure_default_model,
     run_project,
     export_template,
+    serve_project
 )
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
@@ -151,6 +152,9 @@ def _main():
     # 'deploy'
     deploy_ = subparsers.add_parser('deploy', aliases=['d'], help='Deploy your agent to AgentStack.sh', parents=[global_parser])
 
+    # 'serve' command
+    serve_parser = subparsers.add_parser('serve', aliases=['s'], help='Serve your agent')
+
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()
 
@@ -203,6 +207,9 @@ def _main():
         elif args.command in ['deploy', 'd']:
             conf.assert_project()
             asyncio.run(deploy())
+        elif args.command in ['serve', 's']:
+            conf.assert_project()
+            serve_project()
         elif args.command in ['generate', 'g']:
             conf.assert_project()
             if args.generate_command in ['agent', 'a']:
