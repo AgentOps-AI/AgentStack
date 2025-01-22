@@ -1,5 +1,6 @@
+import asyncio
+import json
 import os
-import sys
 import tempfile
 import time
 import tomllib
@@ -13,9 +14,29 @@ from agentstack.conf import ConfigFile
 from agentstack.utils import term_color
 from agentstack import log
 import requests
+import websockets
 
 
-def deploy():
+async def connect_websocket(project_id):
+    uri = f"ws://localhost:3000/ws/build/{project_id}"
+    async with websockets.connect(uri) as websocket:
+        try:
+            while True:
+                message = await websocket.recv()
+                data = json.loads(message)
+                if data['type'] == 'build':
+                    log.info(f"🏗️  {data.get('data','')}")
+                elif data['type'] == 'push':
+                    log.info(f"📤 {data}")
+                elif data['type'] == 'connected':
+                    log.info(f"\n\n~~ Build stream connected! ~~")
+                elif data['type'] == 'error':
+                    raise Exception(f"Failed to deploy: {data.get('data')}")
+        except websockets.ConnectionClosed:
+            raise Exception("Websocket connection closed unexpectedly")
+
+
+async def deploy():
     log.info("Deploying your agentstack agent!")
     bearer_token = get_stored_token()
     if not bearer_token:
@@ -27,21 +48,7 @@ def deploy():
             return
 
     project_id = get_project_id()
-    pyproject = load_pyproject()
-
-    # def should_skip_dir(path: Path) -> bool:
-    #     skip_dirs = {'.venv', '__pycache__', '.git', 'build', 'dist'}
-    #     return path.name in skip_dirs
-
-    # files = list(Path('.').rglob('*.py'))
-    # with tempfile.NamedTemporaryFile(suffix='.zip') as tmp:
-    #     with zipfile.ZipFile(tmp.name, 'w') as zf:
-    #         for file in files:
-    #             zf.write(file)
-    #         if pyproject:
-    #             zf.write("pyproject.toml")
-
-    zip_file = None
+    websocket_task = asyncio.create_task(connect_websocket(project_id))
 
     with Spinner() as spinner:
         time.sleep(0.1)
@@ -65,14 +72,18 @@ def deploy():
                 headers={'Authorization': f'Bearer {bearer_token}'}
             )
 
-            spinner.clear_and_log("  📡 Uploaded to server")
+            spinner.clear_and_log("  📡  Uploaded to server")
 
             if response.status_code != 200:
                 raise Exception(response.text)
 
-            spinner.stop()
+            spinner.update_message("Building your agent")
+
+            # Wait for build completion
+            await websocket_task
+
             log.success("\n🚀 Successfully deployed with AgentStack.sh! Opening in browser...")
-            webbrowser.open(f"http://localhost:5173/project/{project_id}")
+            # webbrowser.open(f"http://localhost:5173/project/{project_id}")
 
         except Exception as e:
             spinner.stop()

@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import argparse
 import webbrowser
@@ -201,7 +202,7 @@ def _main():
             run_project(command=args.function, debug=args.debug, cli_args=extra_args)
         elif args.command in ['deploy', 'd']:
             conf.assert_project()
-            deploy()
+            asyncio.run(deploy())
         elif args.command in ['generate', 'g']:
             conf.assert_project()
             if args.generate_command in ['agent', 'a']:
