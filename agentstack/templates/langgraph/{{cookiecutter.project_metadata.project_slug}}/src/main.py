@@ -10,7 +10,7 @@ instance = {{cookiecutter.project_metadata.project_name|replace('-', '')|replace
 
 def run():
     """
-    Run the crew.
+    Run the agent.
     """
     instance.run(inputs=agentstack.get_inputs())
 

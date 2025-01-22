@@ -16,7 +16,7 @@ Similarly, tasks can be created with `agentstack g t <tool_name>`
 Add tools with `agentstack tools add` and view tools available with `agentstack tools list`
 
 ## How to use your Agent
-In this directory, run `uv pip install`  
+In this directory, run `uv pip install --requirements pyproject.toml`
 
 To run your project, use the following command:  
 `agentstack run`
