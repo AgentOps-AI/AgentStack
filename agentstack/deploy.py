@@ -70,12 +70,13 @@ def deploy():
             if response.status_code != 200:
                 raise Exception(response.text)
 
-            spinner.clear_and_log("🚀 Successfully deployed with AgentStack.sh! Opening in browser...")
+            spinner.stop()
+            log.success("\n🚀 Successfully deployed with AgentStack.sh! Opening in browser...")
             webbrowser.open(f"http://localhost:5173/project/{project_id}")
 
         except Exception as e:
             spinner.stop()
-            log.error(f"🙃 Failed to deploy with AgentStack.sh: {e}")
+            log.error(f"\n🙃 Failed to deploy with AgentStack.sh: {e}")
             return
 
 def load_pyproject():
