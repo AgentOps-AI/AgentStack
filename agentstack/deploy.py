@@ -1,64 +1,82 @@
 import os
+import sys
 import tempfile
+import time
 import tomllib
 import webbrowser
 import zipfile
 from pathlib import Path
 
 from agentstack.auth import get_stored_token, login
+from agentstack.cli.spinner import Spinner
 from agentstack.conf import ConfigFile
 from agentstack.utils import term_color
+from agentstack import log
 import requests
 
 
 def deploy():
+    log.info("Deploying your agentstack agent!")
     bearer_token = get_stored_token()
     if not bearer_token:
         success = login()
         if success:
             bearer_token = get_stored_token()
         else:
-            print(term_color("Failed to authenticate with AgentStack.sh", "red"))
+            log.error(term_color("Failed to authenticate with AgentStack.sh", "red"))
             return
 
     project_id = get_project_id()
     pyproject = load_pyproject()
 
-    def should_skip_dir(path: Path) -> bool:
-        skip_dirs = {'.venv', '__pycache__', '.git', 'build', 'dist'}
-        return path.name in skip_dirs
+    # def should_skip_dir(path: Path) -> bool:
+    #     skip_dirs = {'.venv', '__pycache__', '.git', 'build', 'dist'}
+    #     return path.name in skip_dirs
 
-    files = []
-    for path in Path('.').iterdir():
-        if path.is_dir():
-            if should_skip_dir(path):
-                continue
-            files.extend(p for p in path.rglob('*.py'))
-        elif path.suffix == '.py':
-            files.append(path)
+    # files = list(Path('.').rglob('*.py'))
+    # with tempfile.NamedTemporaryFile(suffix='.zip') as tmp:
+    #     with zipfile.ZipFile(tmp.name, 'w') as zf:
+    #         for file in files:
+    #             zf.write(file)
+    #         if pyproject:
+    #             zf.write("pyproject.toml")
 
-    with tempfile.NamedTemporaryFile(suffix='.zip') as tmp:
-        with zipfile.ZipFile(tmp.name, 'w') as zf:
-            for file in files:
-                zf.write(file)
-            if pyproject:
-                zf.write("pyproject.toml")
+    zip_file = None
 
-        response = requests.post(
-            'http://localhost:3000/deploy/build',
-            files={'code': ('code.zip', open(tmp.name, 'rb'))},
-            params={'projectId': project_id},
-            headers={'Authorization': f'Bearer {bearer_token}'}
-        )
+    with Spinner() as spinner:
+        time.sleep(0.1)
+        try:
+            spinner.update_message("Collecting files")
+            spinner.clear_and_log("  🗄️ Files collected")
+            files = collect_files(str(Path('.')), ('.py', '.toml', '.yaml', '.json'))
+            if not files:
+                raise Exception("No files found to deploy")
 
-    if response.status_code != 200:
-        print(term_color("Failed to deploy with AgentStack.sh", "red"))
-        print(response.text)
-        return
+            spinner.update_message("Creating zip file")
+            zip_file = create_zip_in_memory(files, spinner)
+            spinner.clear_and_log("  🗜️ Created zip file")
 
-    print(term_color("🚀 Successfully deployed with AgentStack.sh! Opening in browser...", "green"))
-    webbrowser.open(f"http://localhost:5173/project/{project_id}")
+            spinner.update_message("Uploading to server")
 
+            response = requests.post(
+                'http://localhost:3000/deploy/build',
+                files={'code': ('code.zip', zip_file)},
+                params={'projectId': project_id},
+                headers={'Authorization': f'Bearer {bearer_token}'}
+            )
+
+            spinner.clear_and_log("  📡 Uploaded to server")
+
+            if response.status_code != 200:
+                raise Exception(response.text)
+
+            spinner.clear_and_log("🚀 Successfully deployed with AgentStack.sh! Opening in browser...")
+            webbrowser.open(f"http://localhost:5173/project/{project_id}")
+
+        except Exception as e:
+            spinner.stop()
+            log.error(f"🙃 Failed to deploy with AgentStack.sh: {e}")
+            return
 
 def load_pyproject():
    if os.path.exists("pyproject.toml"):
@@ -76,7 +94,7 @@ def get_project_id():
     bearer_token = get_stored_token()
 
     # if not in config, create project and store it
-    print(term_color("🚧 Creating AgentStack.sh Project", "green"))
+    log.info("🚧 Creating AgentStack.sh Project")
     headers = {
         'Authorization': f'Bearer {bearer_token}',
         'Content-Type': 'application/json'
@@ -102,6 +120,77 @@ def get_project_id():
         return project_id
 
     except requests.exceptions.RequestException as e:
-        print(f"Error making request: {e}")
+        log.error(f"Error making request: {e}")
         return None
 
+
+def collect_files(root_path='.', file_types=('.py', '.toml', '.yaml', '.json')):
+    """Collect files of specified types from directory tree."""
+    files = set()  # Using set for faster lookups and unique entries
+    root = Path(root_path)
+
+    def should_process_dir(path):
+        """Check if directory should be processed."""
+        skip_dirs = {'.git', '.venv', 'venv', '__pycache__', 'node_modules', '.pytest_cache'}
+        return path.name not in skip_dirs
+
+    def process_directory(path):
+        """Process a directory and collect matching files."""
+        if not should_process_dir(path):
+            return set()
+
+        matching_files = set()
+        try:
+            for file_path in path.iterdir():
+                if file_path.is_file() and file_path.suffix in file_types:
+                    matching_files.add(file_path)
+                elif file_path.is_dir():
+                    matching_files.update(process_directory(file_path))
+        except PermissionError:
+            log.error(f"Permission denied accessing {path}")
+        except Exception as e:
+            log.error(f"Error processing {path}: {e}")
+
+        return matching_files
+
+    # Start with files in root directory
+    files.update(f for f in root.iterdir() if f.is_file() and f.suffix in file_types)
+
+    # Process subdirectories
+    for path in root.iterdir():
+        if path.is_dir():
+            files.update(process_directory(path))
+
+    return sorted(files)  # Convert back to sorted list for consistent ordering
+
+
+def create_zip_in_memory(files, spinner):
+    """Create a ZIP file in memory with progress updates."""
+    tmp = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
+    total_files = len(files)
+
+    with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for i, file in enumerate(files, 1):
+            try:
+                spinner.update_message(f"Adding files to zip ({i}/{total_files})")
+                zf.write(file)
+            except Exception as e:
+                log.error(f"Error adding {file} to zip: {e}")
+
+    tmp.seek(0)
+
+    # Get final zip size
+    current_pos = tmp.tell()
+    tmp.seek(0, 2)  # Seek to end
+    zip_size = tmp.tell()
+    tmp.seek(current_pos)  # Restore position
+
+    def format_size(size_bytes):
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size_bytes < 1024 or unit == 'GB':
+                return f"{size_bytes:.1f}{unit}"
+            size_bytes /= 1024
+
+    # log.info(f"    > Zip created: {format_size(zip_size)}")
+
+    return tmp
