@@ -10,7 +10,6 @@ from agentstack.update import (
     _is_ci_environment,
     CI_ENV_VARS,
     should_update,
-    _get_base_dir,
     get_latest_version,
     AGENTSTACK_PACKAGE,
     load_update_data,
@@ -45,32 +44,6 @@ class TestUpdate(unittest.TestCase):
         """
         with patch.dict('os.environ', {'AGENTSTACK_UPDATE_DISABLE': 'true'}):
             self.assertFalse(should_update())
-
-    @patch('agentstack.update.user_data_dir')
-    def test_get_base_dir_writable(self, mock_user_data_dir):
-        """
-        Test that _get_base_dir() returns a writable Path when user_data_dir is accessible.
-        """
-        mock_path = '/mock/user/data/dir'
-        mock_user_data_dir.return_value = mock_path
-
-        result = _get_base_dir()
-
-        self.assertIsInstance(result, Path)
-        self.assertTrue(result.is_absolute())
-
-    @patch('agentstack.update.user_data_dir')
-    def test_get_base_dir_not_writable(self, mock_user_data_dir):
-        """
-        Test that _get_base_dir() falls back to a temporary directory when user_data_dir is not writable.
-        """
-        mock_user_data_dir.side_effect = PermissionError
-
-        result = _get_base_dir()
-
-        self.assertIsInstance(result, Path)
-        self.assertTrue(result.is_absolute())
-        self.assertIn(str(result), ['/tmp', os.environ.get('TEMP', '/tmp')])
 
     def test_get_latest_version(self):
         """
