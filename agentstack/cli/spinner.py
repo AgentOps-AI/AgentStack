@@ -3,6 +3,8 @@ import shutil
 import sys
 import threading
 import time
+from typing import Optional, Literal
+
 from agentstack import log
 
 
@@ -73,9 +75,12 @@ class Spinner:
             self._clear_line()
             self.message = message
 
-    def clear_and_log(self, message):
+    def clear_and_log(self, message, color: Literal['success','info'] = 'success'):
         """Temporarily clear spinner, print message, and resume spinner."""
         with self._lock:
             self._clear_line()
-            log.success(message)
+            if color == 'success':
+                log.success(message)
+            else:
+                log.info(message)
             sys.stdout.flush()

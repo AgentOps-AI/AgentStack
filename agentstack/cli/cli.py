@@ -19,7 +19,7 @@ from .agentstack_data import (
 )
 from agentstack import conf, log
 from agentstack.conf import ConfigFile
-from agentstack.utils import get_package_path
+from agentstack.utils import get_package_path, verify_agentstack_project
 from agentstack.generation.files import ProjectFile
 from agentstack import frameworks
 from agentstack import generation

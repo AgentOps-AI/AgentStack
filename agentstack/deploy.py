@@ -17,7 +17,7 @@ import requests
 import websockets
 
 
-async def connect_websocket(project_id):
+async def connect_websocket(project_id, spinner):
     uri = f"ws://localhost:3000/ws/build/{project_id}"
     async with websockets.connect(uri) as websocket:
         try:
@@ -25,11 +25,11 @@ async def connect_websocket(project_id):
                 message = await websocket.recv()
                 data = json.loads(message)
                 if data['type'] == 'build':
-                    log.info(f"🏗️  {data.get('data','')}")
+                    spinner.clear_and_log(f"🏗️  {data.get('data','')}", 'info')
                 elif data['type'] == 'push':
-                    log.info(f"📤 {data}")
+                    spinner.clear_and_log(f"📤 {data.get('data','')}", 'info')
                 elif data['type'] == 'connected':
-                    log.info(f"\n\n~~ Build stream connected! ~~")
+                    spinner.clear_and_log(f"\n\n~~ Build stream connected! ~~")
                 elif data['type'] == 'error':
                     raise Exception(f"Failed to deploy: {data.get('data')}")
         except websockets.ConnectionClosed:
@@ -48,9 +48,9 @@ async def deploy():
             return
 
     project_id = get_project_id()
-    websocket_task = asyncio.create_task(connect_websocket(project_id))
 
     with Spinner() as spinner:
+        websocket_task = asyncio.create_task(connect_websocket(project_id, spinner))
         time.sleep(0.1)
         try:
             spinner.update_message("Collecting files")
