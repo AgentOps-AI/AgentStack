@@ -23,9 +23,14 @@ class {{ cookiecutter.project_metadata.project_name|replace('-', '')|replace('_'
         self.graph.add_edge(START, END)
 
         app = self.graph.compile()
-        result = app.invoke({
-            'inputs': inputs, 
-            'messages': [], 
+        result_generator = app.stream({
+            'inputs': inputs,
+            'messages': [],
         })
-        print(result['messages'][-1].content)
+
+        for message in result_generator:
+            for k, item in message.items():
+                for m in item['messages']:
+                    agentstack.log.notify(f"\n\n{k}:")
+                    agentstack.log.info(m.content)
 
