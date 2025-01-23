@@ -17,7 +17,8 @@ ENTRYPOINT: Path = Path('src/graph.py')
 GRAPH_NODE_START = 'START'
 GRAPH_NODE_END = 'END'
 GRAPH_NODE_TOOLS = 'tools'  # references the `ToolNode` instance
-GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END, )
+GRAPH_NODE_TOOLS_CONDITION = 'tools_condition'
+GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END, GRAPH_NODE_TOOLS_CONDITION, )
 
 
 @dataclass
@@ -332,8 +333,11 @@ class LangGraphFile(asttools.File):
         for node in nodes:
             source, target = node.args
             source_name = _get_node_name(source)
+            #target_name = _get_node_name(target)
             if source_name == GRAPH_NODE_TOOLS:  # TODO this is a bit brittle
                 nodes.remove(node)
+            # if target_name == GRAPH_NODE_TOOLS:
+            #     nodes.remove(node)
         return nodes
 
     def get_graph_edge_nodes(self) -> list[ast.Call]:
@@ -345,8 +349,8 @@ class LangGraphFile(asttools.File):
                 raise ValidationError(f"Invalid `add_edge` call in {ENTRYPOINT}")
 
             source, target = node.args
-            # if isinstance(source, ast.Str) and source.s == 'tools':
-            #     nodes.remove(node)
+            if isinstance(source, ast.Str) and source.s == GRAPH_NODE_TOOLS:
+                nodes.remove(node)
             if isinstance(target, ast.Str) and target.s == GRAPH_NODE_TOOLS:
                 nodes.remove(node)
         return nodes
@@ -402,6 +406,26 @@ class LangGraphFile(asttools.File):
 
         code = f"""
         self.graph.add_edge({source}, {target})"""
+        self.edit_node_range(end, end, code)
+
+    def add_conditional_edge(self, edge: graph.Edge):
+        """Add a new conditional edge to the graph configuration."""
+        existing_edges: list[ast.Call] = self.get_graph_edge_nodes()
+        if len(existing_edges):
+            _, end = self.get_node_range(existing_edges[-1])
+        else:
+            graph_instance = asttools.find_method_calls(self.get_run_method(), 'StateGraph')[0]
+            _, end = self.get_node_range(graph_instance)
+        
+        source, target = edge.source.name, edge.target.name
+        # wrap the node names in quotes if they are not special nodes
+        if edge.source.type != graph.NodeType.SPECIAL:
+            source = f'"{source}"'
+        if edge.target.type != graph.NodeType.SPECIAL:
+            target = f'"{target}"'
+
+        code = f"""
+        self.graph.add_conditional_edges({source}, {target})"""
         self.edit_node_range(end, end, code)
 
     def remove_graph_edge(self, edge: graph.Edge):
@@ -618,11 +642,18 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
         entrypoint.add_agent_method(agent)
         entrypoint.add_graph_node(agent)
 
-        # add graph edge for `tools`
+        # add graph edge to get back from the `tools` to the Agent
         entrypoint.add_graph_edge(
             graph.Edge(
+                source=graph.Node(name=GRAPH_NODE_TOOLS, type=graph.NodeType.TOOLS),
+                target=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+            )
+        )
+        # add conditional edge for `tools_condition`
+        entrypoint.add_conditional_edge(
+            graph.Edge(
                 source=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
-                target=graph.Node(name=GRAPH_NODE_TOOLS, type=graph.NodeType.TOOLS),
+                target=graph.Node(name=GRAPH_NODE_TOOLS_CONDITION, type=graph.NodeType.SPECIAL),
             )
         )
 
