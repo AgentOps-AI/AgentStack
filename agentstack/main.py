@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import argparse
 import webbrowser
@@ -11,11 +12,13 @@ from agentstack.cli import (
     configure_default_model,
     run_project,
     export_template,
+    serve_project
 )
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
 from agentstack import generation
 from agentstack.update import check_for_updates
+from agentstack.deploy import deploy
 
 
 def _main():
@@ -137,12 +140,20 @@ def _main():
     )
     tools_remove_parser.add_argument("name", help="Name of the tool to remove")
 
+    # 'export'
     export_parser = subparsers.add_parser(
         'export', aliases=['e'], help='Export your agent as a template', parents=[global_parser]
     )
     export_parser.add_argument('filename', help='The name of the file to export to')
 
+    # 'update'
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
+
+    # 'deploy'
+    deploy_ = subparsers.add_parser('deploy', aliases=['d'], help='Deploy your agent to AgentStack.sh', parents=[global_parser])
+
+    # 'serve' command
+    serve_parser = subparsers.add_parser('serve', aliases=['s'], help='Serve your agent')
 
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()
@@ -192,7 +203,13 @@ def _main():
         # inside project dir commands only
         elif args.command in ["run", "r"]:
             conf.assert_project()
-            run_project(command=args.function, cli_args=extra_args)
+            run_project(command=args.function, debug=args.debug, cli_args=extra_args)
+        elif args.command in ['deploy', 'd']:
+            conf.assert_project()
+            asyncio.run(deploy())
+        elif args.command in ['serve', 's']:
+            conf.assert_project()
+            serve_project()
         elif args.command in ['generate', 'g']:
             conf.assert_project()
             if args.generate_command in ['agent', 'a']:
