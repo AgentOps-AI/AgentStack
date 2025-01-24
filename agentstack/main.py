@@ -61,6 +61,7 @@ def _main():
     init_parser.add_argument("slug_name", nargs="?", help="The directory name to place the project in")
     init_parser.add_argument("--wizard", "-w", action="store_true", help="Use the setup wizard")
     init_parser.add_argument("--template", "-t", help="Agent template to use")
+    init_parser.add_argument("--framework", "-f", help="Framework to use")
 
     # 'run' command
     run_parser = subparsers.add_parser(
@@ -102,6 +103,7 @@ def _main():
     agent_parser.add_argument("--goal", "-g", help="Goal of the agent")
     agent_parser.add_argument("--backstory", "-b", help="Backstory of the agent")
     agent_parser.add_argument("--llm", "-l", help="Language model to use")
+    agent_parser.add_argument("--position", help="Position to add the agent in the stack.")
 
     # 'task' command under 'generate'
     task_parser = generate_subparsers.add_parser(
@@ -111,6 +113,7 @@ def _main():
     task_parser.add_argument("--description", "-d", help="Description of the task")
     task_parser.add_argument("--expected_output", "-e", help="Expected output of the task")
     task_parser.add_argument("--agent", "-a", help="Agent associated with the task")
+    task_parser.add_argument("--position", help="Position to add the task in the stack.")
 
     # 'tools' command
     tools_parser = subparsers.add_parser("tools", aliases=["t"], help="Manage tools")
@@ -170,7 +173,7 @@ def _main():
         elif args.command in ["templates"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["init", "i"]:
-            init_project(args.slug_name, args.template, args.wizard)
+            init_project(args.slug_name, args.template, args.framework, args.wizard)
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()
@@ -198,9 +201,11 @@ def _main():
             if args.generate_command in ['agent', 'a']:
                 if not args.llm:
                     configure_default_model()
-                generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm)
+                generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm, args.position)
             elif args.generate_command in ['task', 't']:
-                generation.add_task(args.name, args.description, args.expected_output, args.agent)
+                generation.add_task(
+                    args.name, args.description, args.expected_output, args.agent, args.position
+                )
             else:
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:

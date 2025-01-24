@@ -1,4 +1,4 @@
-from typing import Optional, Protocol, Callable
+from typing import TYPE_CHECKING, Optional, Protocol, Callable
 from types import ModuleType
 from importlib import import_module
 from pathlib import Path
@@ -6,13 +6,19 @@ from agentstack import conf
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_framework
 from agentstack._tools import ToolConfig
-from agentstack.agents import AgentConfig
-from agentstack.tasks import TaskConfig
+from agentstack import graph
+
+if TYPE_CHECKING:
+    from agentstack.generation import InsertionPoint
+    from agentstack.agents import AgentConfig
+    from agentstack.tasks import TaskConfig
 
 
 CREWAI = 'crewai'
+LANGGRAPH = 'langgraph'
 SUPPORTED_FRAMEWORKS = [
     CREWAI,
+    LANGGRAPH,
 ]
 
 
@@ -34,9 +40,9 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def get_tool_names(self) -> list[str]:
+    def parse_llm(self, llm: str) -> tuple[str, str]:
         """
-        Get a list of tool names in the user's project.
+        Parse a language model string into a provider and model.
         """
         ...
 
@@ -58,7 +64,7 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def get_agent_names(self) -> list[str]:
+    def get_agent_method_names(self) -> list[str]:
         """
         Get a list of agent names in the user's project.
         """
@@ -70,21 +76,27 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def add_agent(self, agent: AgentConfig) -> None:
+    def add_agent(self, agent: 'AgentConfig', position: Optional['InsertionPoint'] = None) -> None:
         """
         Add an agent to the user's project.
         """
         ...
 
-    def add_task(self, task: TaskConfig) -> None:
+    def add_task(self, task: 'TaskConfig', position: Optional['InsertionPoint'] = None) -> None:
         """
         Add a task to the user's project.
         """
         ...
 
-    def get_task_names(self) -> list[str]:
+    def get_task_method_names(self) -> list[str]:
         """
         Get a list of task names in the user's project.
+        """
+        ...
+
+    def get_graph(self) -> list[graph.Edge]:
+        """
+        Get the graph of the user's project.
         """
         ...
 
@@ -113,6 +125,13 @@ def validate_project():
     return get_framework_module(get_framework()).validate_project()
 
 
+def parse_llm(llm: str) -> tuple[str, str]:
+    """
+    Parse a language model string into a provider and model.
+    """
+    return get_framework_module(get_framework()).parse_llm(llm)
+
+
 def add_tool(tool: ToolConfig, agent_name: str):
     """
     Add a tool to the user's project.
@@ -136,11 +155,11 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     return get_framework_module(get_framework()).get_tool_callables(tool_name)
 
 
-def get_agent_names() -> list[str]:
+def get_agent_method_names() -> list[str]:
     """
     Get a list of agent names in the user's project.
     """
-    return get_framework_module(get_framework()).get_agent_names()
+    return get_framework_module(get_framework()).get_agent_method_names()
 
 
 def get_agent_tool_names(agent_name: str) -> list[str]:
@@ -150,22 +169,35 @@ def get_agent_tool_names(agent_name: str) -> list[str]:
     return get_framework_module(get_framework()).get_agent_tool_names(agent_name)
 
 
-def add_agent(agent: AgentConfig):
+def add_agent(agent: 'AgentConfig', position: Optional['InsertionPoint'] = None):
     """
     Add an agent to the user's project.
     """
-    return get_framework_module(get_framework()).add_agent(agent)
+    framework = get_framework()
+    if agent.name in get_agent_method_names():
+        raise ValidationError(f"Agent `{agent.name}` already exists in {get_entrypoint_path(framework)}")
+    return get_framework_module(framework).add_agent(agent, position)
 
 
-def add_task(task: TaskConfig):
+def add_task(task: 'TaskConfig', position: Optional['InsertionPoint'] = None):
     """
     Add a task to the user's project.
     """
-    return get_framework_module(get_framework()).add_task(task)
+    framework = get_framework()
+    if task.name in get_task_method_names():
+        raise ValidationError(f"Task `{task.name}` already exists in {get_entrypoint_path(framework)}")
+    return get_framework_module(framework).add_task(task, position)
 
 
-def get_task_names() -> list[str]:
+def get_task_method_names() -> list[str]:
     """
     Get a list of task names in the user's project.
     """
-    return get_framework_module(get_framework()).get_task_names()
+    return get_framework_module(get_framework()).get_task_method_names()
+
+
+def get_graph() -> list[graph.Edge]:
+    """
+    Get the graph of the user's project.
+    """
+    return get_framework_module(get_framework()).get_graph()

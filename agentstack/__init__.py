@@ -9,16 +9,41 @@ from typing import Callable
 from pathlib import Path
 from agentstack import conf
 from agentstack.utils import get_framework
+from agentstack.agents import get_agent
+from agentstack.tasks import get_task
 from agentstack.inputs import get_inputs
 from agentstack import frameworks
 
 ___all___ = [
-    "conf",
-    "tools",
-    "get_tags",
-    "get_framework",
-    "get_inputs",
+    "conf", 
+    "agent", 
+    "task", 
+    "tools", 
+    "get_tags", 
+    "get_framework", 
+    "get_agent", 
+    "get_task", 
+    "get_inputs", 
 ]
+
+def agent(func):
+    """
+    The `agent` decorator is used to mark a method that implements an Agent. 
+    """
+    def wrap(*args, **kwargs):
+        """Does not alter the function's behavior; this is just a marker."""
+        return func(*args, **kwargs)
+    return wrap
+
+
+def task(func):
+    """
+    The `task` decorator is used to mark a method that implements a Task.
+    """
+    def wrap(*args, **kwargs):
+        """Does not alter the function's behavior; this is just a marker."""
+        return func(*args, **kwargs)
+    return wrap
 
 
 def get_tags() -> list[str]:
