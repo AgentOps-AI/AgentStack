@@ -96,6 +96,22 @@ class Color:
         # Convert to color cube index (16-231)
         return int(16 + (r * self.COLOR_CUBE_SIZE * self.COLOR_CUBE_SIZE) + (g * self.COLOR_CUBE_SIZE) + b)
 
+    def hue(self, h: float) -> 'Color':
+        """Set the hue of the color."""
+        return Color(h, self.s, self.v, self.reversed, self.bold)
+    
+    def sat(self, s: float) -> 'Color':
+        """Set the saturation of the color."""
+        return Color(self.h, s, self.v, self.reversed, self.bold)
+
+    def val(self, v: float) -> 'Color':
+        """Set the value of the color."""
+        return Color(self.h, self.s, v, self.reversed, self.bold)
+
+    def reverse(self) -> 'Color':
+        """Set the reversed attribute of the color."""
+        return Color(self.h, self.s, self.v, True, self.bold)
+
     def _get_color_pair(self, pair_number: int) -> int:
         """Apply reversing to the color pair."""
         pair = curses.color_pair(pair_number)
@@ -144,7 +160,7 @@ class Color:
         cls._color_map = {}
 
 
-class AnimatedColor(Color):
+class ColorAnimation(Color):
     start: Color
     end: Color
     duration: float

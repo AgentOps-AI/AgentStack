@@ -79,6 +79,10 @@ class Key:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
     
     @property
+    def chr(self):
+        return chr(self.ch)
+    
+    @property
     def is_numeric(self):
         return self.ch >= 48 and self.ch <= 57
     
@@ -259,9 +263,9 @@ class Editable(NodeModule):
     def click(self, y, x):
         if not self.active and self.hit(y, x):
             self.activate()
-        elif self.active:  # click off; revert changes
+        elif self.active:  # click off
             self.deactivate()
-            self.value = self._original_value
+            self.save()
     
     def activate(self):
         """Make this module the active one; ie. editing or selected."""
@@ -286,7 +290,7 @@ class Editable(NodeModule):
         # TODO word wrap
         # TODO we probably don't need to filter as prohibitively
         if key.is_alpha or key.is_numeric or key.PERIOD or key.MINUS or key.SPACE:
-            self.value = str(self.value) + chr(ch)
+            self.value = str(self.value) + key.chr
         elif key.BACKSPACE:
             self.value = str(self.value)[:-1]
         elif key.ESC:
@@ -326,22 +330,24 @@ class TextInput(Editable):
     """
     H, V, BR = "━", "┃", "┛"
     padding: tuple[int, int] = (2, 1)
+    border_color: 'Color'
+    active_color: 'Color'
+    word_wrap: bool = True
     
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], node: Node, color: Optional['Color'] = None, format: callable=None):
+    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], node: Node, color: Optional['Color'] = None, border: Optional['Color'] = None, active: Optional['Color'] = None, format: callable=None):
         super().__init__(coords, dims, node=node, color=color, format=format)
         self.width, self.height = (dims[1]-1, dims[0]-1)
-        from agentstack.tui.color import Color
-        self.border_color = Color(0, 100, 100)
+        self.border_color = border or self.color
+        self.active_color = active or self.color
     
     def activate(self):
         # change the border color to a highlight
         self._original_border_color = self.border_color
-        from agentstack.tui.color import Color
-        self.border_color = Color(90, 70, 100)
+        self.border_color = self.active_color
         super().activate()
     
     def deactivate(self):
-        if self.active:
+        if self.active and hasattr(self, '_original_border_color'):
             self.border_color = self._original_border_color
         super().deactivate()
     
@@ -363,16 +369,17 @@ class Button(Module):
     active: bool = False
     selected: bool = False
     highlight: Optional['Color'] = None
-    # callback: Optional[callable] = None
+    on_confirm: Optional[callable] = None
     
-    def __init__( self, coords: tuple[int, int], dims: tuple[int, int], value: Optional[Any] = "", color: Optional['Color'] = None, highlight: Optional['Color'] = None):
+    def __init__( self, coords: tuple[int, int], dims: tuple[int, int], value: Optional[Any] = "", color: Optional['Color'] = None, highlight: Optional['Color'] = None, on_confirm: Optional[callable] = None):
         super().__init__(coords, dims, value=value, color=color)
-        from agentstack.tui.color import Color
-        self.highlight = highlight or Color(self.color.h, 80, self.color.v, reversed=self.color.reversed)
+        self.highlight = highlight or self.color.sat(80)
+        self.on_confirm = on_confirm
     
     def confirm(self):
         """Handle button confirmation."""
-        log.debug(f"CONFIRM {self}")
+        if self.on_confirm:
+            self.on_confirm()
     
     def activate(self):
         """Make this module the active one; ie. editing or selected."""
@@ -561,6 +568,10 @@ class RadioSelect(Select):
     """Allow one button to be `selected` at a time"""
     button_cls = RadioButton
 
+    def __init__(self, coords: Tuple[int, int], dims: Tuple[int, int], options: List[str], color: Optional['Color'] = None, highlight: Optional['Color'] = None, on_change: Optional[callable] = None) -> None:
+        super().__init__(coords, dims, options, color=color, highlight=highlight, on_change=on_change)
+        self.select(self.modules[0])
+
     def select(self, module: Module):
         for _module in self.modules:
             _module.selected = False
@@ -611,13 +622,17 @@ class View(Contains):
 
 
 class App:
+    stdscr: curses.window
+    frame_time: float = 1.0 / 60  # 30 FPS
     editing = False
     dims = property(lambda self: self.stdscr.getmaxyx())  # TODO remove this
+    view: Optional[View] = None  # the active view
+    views: dict[str, type[View]] = {}
+    shortcuts: dict[str, str] = {}
     
     def __init__(self, stdscr: curses.window) -> None:
         self.stdscr = stdscr
-        self.height, self.width = stdscr.getmaxyx()
-        self.modules = []
+        self.height, self.width = self.stdscr.getmaxyx()  # TODO dynamic resizing
         
         curses.curs_set(0)
         stdscr.nodelay(True)
@@ -626,23 +641,59 @@ class App:
         
         from agentstack.tui.color import Color
         Color.initialize()
-    
-    def append(self, module):
-        self.modules.append(module)
+
+    def add_view(self, name: str, view_cls: type[View], shortcut: Optional[str] = None) -> None:
+        self.views[name] = view_cls
+        if shortcut:
+            self.shortcuts[shortcut] = name
+
+    def load(self, name: str):
+        if self.view:
+            self.view.destroy()
+            self.view = None
+        
+        view_cls = self.views[name]
+        self.view = view_cls()
+        self.view.init(self.dims)
+
+    def run(self):
+        frame_time = 1.0 / 60  # 30 FPS
+        last_frame = time.time()
+        while True:
+            current_time = time.time()
+            delta = current_time - last_frame
+            ch = self.stdscr.getch()
+            
+            if ch == curses.KEY_MOUSE:
+                _, x, y, _, _ = curses.getmouse()
+                self.click(y, x)
+            elif ch != -1:
+                self.input(ch)
+            
+            if not App.editing:
+                if ch == ord('q'):
+                    break
+                elif ch in [ord(x) for x in self.shortcuts.keys()]:
+                    self.load(self.shortcuts[chr(ch)])
+            
+            if delta >= self.frame_time or ch != -1:
+                self.render()
+                delta = 0
+            if delta < self.frame_time:
+                time.sleep(frame_time - delta)
 
     def render(self):
-        for module in self.modules:
-            if not isinstance(module, Contains):
-                module.grid.erase()
-            module.render()
-            module.last_render = time.time()
-            module.grid.noutrefresh()
+        if self.view:
+            self.view.render()
+            self.view.last_render = time.time()
+            self.view.grid.noutrefresh()
+        
         curses.doupdate()
     
     def click(self, y, x):
         """Handle mouse click event."""
-        for module in self.modules:
-            module.click(y, x)
+        if self.view:
+            self.view.click(y, x)
 
     def input(self, ch: int):
         """Handle key input event."""
@@ -651,14 +702,8 @@ class App:
         if key.TAB:
             self._select_next_tabbable()
         
-        for module in self.modules:
-            module.input(key)
-
-    def destroy(self, module: View):
-        # TODO this should probably kill all modules
-        self.modules.remove(module)
-        module.destroy()
-        #curses.endwin()
+        if self.view:
+            self.view.input(key)
     
     def _get_tabbable_modules(self):
         """
@@ -670,7 +715,7 @@ class App:
                 yield module
             for submodule in getattr(module, 'modules', []):
                 yield from _get_activateable(submodule)
-        return list(_get_activateable(self))
+        return list(_get_activateable(self.view))
 
     def _select_next_tabbable(self):
         """
@@ -686,7 +731,7 @@ class App:
             return None
 
         modules = self._get_tabbable_modules()
-        active_module = _get_active_module(self)
+        active_module = _get_active_module(self.view)
         if active_module:
             for module in modules:
                 module.deactivate()

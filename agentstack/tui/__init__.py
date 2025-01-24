@@ -10,35 +10,51 @@ from enum import Enum
 from agentstack import conf, log
 from agentstack.cli import LOGO
 from agentstack.tui.module import *
-from agentstack.tui.color import Color, AnimatedColor, ColorWheel
+from agentstack.tui.color import Color, ColorAnimation, ColorWheel
 
 
-LOGO_ANTHROPIC = """  _                   
+# TODO this could be a dynamic module type
+LOGO_ANTHROPIC = """\
+  _                   
  /_/_ _/_/_ __  _  ._ 
 / // // / ///_//_///_ 
               /       """
 
-LOGO_OPENAI = """  _           _       
+LOGO_OPENAI = """\
+  _           _       
  / /_  _  _  /_//     
 /_//_//_'/ // //      
   /                  """
 
+COLOR_BORDER = Color(90)
+COLOR_MAIN = Color(220)
+COLOR_TITLE = Color(220, 100, 40, reversed=True)
+COLOR_FORM = Color(300)
+COLOR_BUTTON = Color(300, reversed=True)
+COLOR_FIELD_BG = Color(240, 20, 100, reversed=True)
+COLOR_FIELD_BORDER = Color(300, 100, 50)
+COLOR_FIELD_ACTIVE = Color(300, 80)
+FIELD_COLORS = {
+    'color': COLOR_FIELD_BG, 
+    'border': COLOR_FIELD_BORDER, 
+    'active': COLOR_FIELD_ACTIVE, 
+}
 
 class LogoModule(Text):
     #h_align = ALIGN_CENTER  # TODO center stars
     
     def __init__(self, coords: tuple[int, int], dims: tuple[int, int]):
         super().__init__(coords, dims)
-        self.color = Color(220, 100, 100)
+        self.color = COLOR_MAIN
         self.value = LOGO
         self.stars = [(3, 1), (25, 5), (34, 1), (52, 2), (79, 3), (97, 1)]
         self._star_colors = {}
     
     def _get_star_color(self, index: int) -> Color:
         if index not in self._star_colors:
-            self._star_colors[index] = AnimatedColor(
-                Color(randint(0, 150), 100, 100), 
-                Color(randint(200, 360), 100, 100), 
+            self._star_colors[index] = ColorAnimation(
+                Color(randint(0, 150)), 
+                Color(randint(200, 360)), 
                 duration=2.0, 
                 loop=True, 
             )
@@ -62,37 +78,76 @@ class HelpText(Text):
             "[space / enter] to confirm",
             "[q] to quit", 
         ])
+        if conf.DEBUG:
+            self.value += " | [d]ebug"
 
 
-AGENT_NAME = Node()
-AGENT_ROLE = Node()
-AGENT_GOAL = Node()
-AGENT_BACKSTORY = Node()
+class BannerView(View):
+    name = "banner"
+    title = "Welcome to AgentStack"
+    sparkle = "The fastest way to build AI agents."
+    subtitle = "Let's get started!"
+    color = ColorAnimation(
+        start=Color(90, 0, 0),  # TODO make this darker
+        end=Color(90),
+        duration=0.5
+    )
+    
+    def layout(self) -> list[Module]:
+        return [
+            Box((0, 0), (self.height, self.width), color=COLOR_BORDER, modules=[
+                Title((round(self.height / 2)-4, 1), (1, self.width-3), color=self.color, value=self.title),
+                Title((round(self.height / 2)-2, 1), (1, self.width-3), color=self.color, value=self.sparkle),
+                Title((round(self.height / 2), 1), (1, self.width-3), color=self.color, value=self.subtitle),
+            ]),
+        ]
+
+
+class AfterTaskView(BannerView):
+    title = "Let there be tasks!"
+    sparkle = "(ノ ˘_˘)ノ　ζ|||ζ　ζ|||ζ　ζ|||ζ"
+    subtitle = "Tasks are the heart of your agent's work. "
+
 
 class AgentView(View):
     name = "agent"
+    
+    agent_name = Node()
+    agent_role = Node()
+    agent_goal = Node()
+    agent_backstory = Node()
+    
+    def submit(self):
+        log.info("Agent defined: %s", self.agent_name.value)
+    
     def layout(self) -> list[Module]:
         return [
-            Box((0, 0), (self.height, self.width), color=Color(90, 100, 100), modules=[
+            Box((0, 0), (self.height-1, self.width), color=COLOR_BORDER, modules=[
                 LogoModule((1, 1), (7, self.width-2)),
-                Title((9, 1), (3, self.width-3), color=Color(220, 100, 40, reversed=True), value="Define An Agent"),
+                Title((9, 1), (1, self.width-3), color=COLOR_TITLE, value="Define An Agent"),
                 
-                # Text((12, 2), (1, 11), color=Color(0, 100, 100), value="Name"),
-                # TextInput((12, 13), (2, self.width - 16), AGENT_NAME, color=Color(240, 20, 100, reversed=True)), 
+                Text((11, 2), (1, 11), color=COLOR_FORM, value="Name"),
+                TextInput((11, 13), (2, self.width - 15), self.agent_name, **FIELD_COLORS), 
                 
-                # Text((15, 2), (1, 11), color=Color(0, 100, 100), value="Role"),
-                # TextInput((15, 13), (6, self.width - 16), AGENT_ROLE, color=Color(240, 20, 100, reversed=True)),
+                Text((13, 2), (1, 11), color=COLOR_FORM, value="Role"),
+                TextInput((13, 13), (5, self.width - 15), self.agent_role, **FIELD_COLORS),
                 
-                # Text((22, 2), (1, 11), color=Color(0, 100, 100), value="Goal"),
-                # TextInput((22, 13), (6, self.width - 16), AGENT_GOAL, color=Color(240, 20, 100, reversed=True)),
+                Text((18, 2), (1, 11), color=COLOR_FORM, value="Goal"),
+                TextInput((18, 13), (5, self.width - 15), self.agent_goal, **FIELD_COLORS),
                 
-                # Text((29, 2), (1, 11), color=Color(0, 100, 100), value="Backstory"),
-                # TextInput((29, 13), (6, self.width - 16), AGENT_BACKSTORY, color=Color(240, 20, 100, reversed=True)),
+                Text((23, 2), (1, 11), color=COLOR_FORM, value="Backstory"),
+                TextInput((23, 13), (5, self.width - 15), self.agent_backstory, **FIELD_COLORS),
                 
-                #Button((35, self.width-14), (3, 10), "Next", color=Color(0, 100, 100, reversed=True)),
-                
+                Button((self.height-6, self.width-17), (3, 15), "Next", color=COLOR_BUTTON, on_confirm=self.submit),
             ]),
+            HelpText((self.height-1, 0), (1, self.width)),
         ]
+
+
+class AfterAgentView(BannerView):
+    title = "Boom! We made some agents."
+    sparkle = "(ﾉ>ω<)ﾉ :｡･:*:･ﾟ’★,｡･:*:･ﾟ’☆"
+    subtitle = "Now lets make some tasks for the agents to accomplish!"
 
 
 class ModelView(View):
@@ -120,13 +175,16 @@ class ModelView(View):
     def get_model_options(self):
         return [model['value'] for model in self.MODEL_OPTIONS]
     
+    def submit(self):
+        log.info("Model selected: %s", self.model_choice.value)
+    
     def layout(self) -> list[Module]:
         return [
-            Box((0, 0), (self.height-1, self.width), color=Color(90), modules=[
+            Box((0, 0), (self.height-1, self.width), color=COLOR_BORDER, modules=[
                 LogoModule((1, 1), (7, self.width-2)),
                 Title((9, 1), (3, self.width-3), color=Color(220, 100, 40, reversed=True), value="Select A Default Model"),
                 
-                RadioSelect((13, 1), (self.height-20, round(self.width/2)-3), options=self.get_model_options(), color=Color(300, 50), highlight=AnimatedColor(
+                RadioSelect((13, 1), (self.height-20, round(self.width/2)-3), options=self.get_model_options(), color=Color(300, 50), highlight=ColorAnimation(
                     Color(300, 0, 100, reversed=True), Color(300, 70, 50, reversed=True), duration=0.2
                 ), on_change=self.set_model_choice),
                 Box((13, round(self.width/2)), (self.height-20, round(self.width/2)-3), color=Color(300, 50), modules=[
@@ -135,77 +193,76 @@ class ModelView(View):
                     WrappedText((8, 3), (5, round(self.width/2)-10), color=Color(300, 50), value=self.model_description),
                 ]),
                 
-                Button((self.height-6, self.width-17), (3, 15), "Next", color=Color(300, 100, 100, reversed=True)),
+                Button((self.height-6, self.width-17), (3, 15), "Next", color=COLOR_BUTTON, on_confirm=self.submit),
             ]),
             HelpText((self.height-1, 0), (1, self.width)),
         ]
 
 
-class ColorView(View):
-    name = "color"
+class DebugView(View):
+    name = "debug"
     def layout(self) -> list[Module]:
+        from agentstack.utils import get_version
+        
         return [
-            Box((0, 0), (self.height, self.width), color=Color(90, 100, 100), modules=[
-                LogoModule((1, 1), (7, self.width-2)),
-                ColorWheel((6, 1)),
+            Box((0, 0), (self.height-1, self.width), color=COLOR_BORDER, modules=[
+                ColorWheel((1, 1)),
+                Title((self.height-6, 3), (1, self.width-5), color=COLOR_MAIN, 
+                     value=f"AgentStack version {get_version()}"),
             ]),
+            HelpText((self.height-1, 0), (1, self.width)),
         ]
 
 
-def run(stdscr):
-    import io
-    log.set_stdout(io.StringIO())  # disable on-screen logging for now. 
-    
-    CMD_STR = f" [q]uit [m]odel"
-    frame_time = 1.0 / 60  # 30 FPS
-    app = App(stdscr)
-    view = None
-    
-    def load_view(view_cls):
-        nonlocal view
-        if view:
-            app.destroy(view)
-            view = None
+class WizardApp(App):
+    views = {
+        'welcome': BannerView,
+        'agent': AgentView,
+        'model_selection': ModelView,
+        'debug': DebugView,
+    }
+    shortcuts = {
+        'q': 'quit',
+        'd': 'debug',
         
-        view = view_cls()
-        view.init(app.dims)
-        app.append(view)
-        # underline rendered CMD_STR for the active command
-        # view_name = view.__class__.__name__
-        # cmd_i = CMD_STR.find(f"[{view_name[0]}]{view_name[1:]}")
-        # cmd_len = len(view_name)
-        # grid.append(ui.string((29, 0), (1, 80), " " * 80))
-        # grid.append(ui.string((29, cmd_i), (1, 80), "*" * (cmd_len + 2)))
+        # testing shortcuts
+        'a': 'agent',
+        'm': 'model_selection',
+    }
+    workflow = {
+        'root': [
+            'welcome',
+            'framework', 
+            'project', 
+            'after_project',
+            'router', 
+        ],
+        'agent': [
+            'agent_details', 
+            'model_selection', 
+            'tool_selection', 
+            'after_agent',
+            'router', 
+        ], 
+        'task': [
+            'task_details', 
+            'agent_selection', 
+            'after_task',
+            'router', 
+        ],
+    }
     
-    load_view(ModelView)
-    
-    last_frame = time.time()
-    while True:
-        current_time = time.time()
-        delta = current_time - last_frame
-        ch = stdscr.getch()
+    @classmethod
+    def wrapper(cls, stdscr):
+        app = cls(stdscr)
         
-        if ch == curses.KEY_MOUSE:
-            _, x, y, _, _ = curses.getmouse()
-            app.click(y, x)
-        elif ch != -1:
-            app.input(ch)
-        
-        if not App.editing:
-            if ch == ord('q'):
-                break
-            elif ch == ord('a'):
-                load_view(AgentView)
-            elif ch == ord('c'):
-                load_view(ColorView)
-            elif ch == ord('m'):
-                load_view(ModelView)
-        
-        if delta >= frame_time or ch != -1:
-            app.render()
-            delta = 0
-        if delta < frame_time:
-            time.sleep(frame_time - delta)
+        app.load('welcome')
+        app.run()
+
 
 def main():
-    curses.wrapper(run)
+    import io
+    log.set_stdout(io.StringIO())  # disable on-screen logging
+    
+    curses.wrapper(WizardApp.wrapper)
+
