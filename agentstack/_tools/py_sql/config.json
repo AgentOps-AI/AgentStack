@@ -1,5 +1,5 @@
 {
-    "name": "sql-queries",
+    "name": "py_sql",
     "url": "https://pypi.org/project/psycopg2/",
     "category": "database",
     "env": {
