@@ -176,7 +176,6 @@ class LangGraphFile(asttools.File):
         ])
         messages = messages.format_messages(**state['inputs'])
         agent = {agent_class_name}(model=agent_config.model)
-        agent = agent.bind_tools([])
         response = agent.invoke(
             messages + state['messages'],
         )
@@ -273,6 +272,21 @@ class LangGraphFile(asttools.File):
         method = asttools.find_method(self.get_agent_methods(), agent_name)
         if method is None:
             raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
+
+        try:
+            bind_tools = asttools.find_method_calls(method, 'bind_tools')[0]
+        except IndexError:
+            # create node for the `bind_tools` method call after the Agent instantiation
+            # we add this when we actually add the first tool to the Agent, since
+            # passing an empty list to `bind_tools` throws an error.
+            agent_conf = AgentConfig(agent_name)
+            agent_class_name = PROVIDERS[agent_conf.provider].class_name
+            agent_instantiation = asttools.find_method_calls(method, agent_class_name)[0]
+            _, pos = self.get_node_range(agent_instantiation)
+            # TODO we could dynamically find the Agent variable name
+            code = """
+        agent = agent.bind_tools([])"""
+            self.edit_node_range(pos, pos, code)
 
         existing_node: ast.List = self.get_agent_tools(agent_name)
         existing_elts: list[ast.expr] = existing_node.elts
