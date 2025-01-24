@@ -113,10 +113,25 @@ class ProjectFile:
 
     @property
     def project_metadata(self) -> dict:
+        """
+        [project]
+        name = "project_name"
+        version = "0.0.1"
+        description = "foo bar"
+        authors = [
+            { name = "Name <Email>" }
+        ]
+        license = { text = "MIT" }
+        requires-python = ">=3.10"
+
+        dependencies = [
+            ...
+        ]
+        """
         try:
-            return self._data['tool']['poetry']
+            return self._data['project']
         except KeyError:
-            raise KeyError("No poetry metadata found in pyproject.toml.")
+            raise KeyError("No project metadata found in pyproject.toml.")
 
     @property
     def project_name(self) -> str:
