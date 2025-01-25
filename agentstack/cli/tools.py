@@ -5,6 +5,9 @@ from agentstack.utils import term_color
 from agentstack import generation
 from agentstack._tools import get_all_tools
 from agentstack.agents import get_all_agents
+from pathlib import Path
+import sys
+import json
 
 
 def list_tools():
@@ -72,3 +75,47 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
 
     assert tool_name  # appease type checker
     generation.add_tool(tool_name, agents=agents)
+
+
+def create_tool(tool_name: str):
+    """Create a new custom tool.
+    
+    Args:
+        tool_name: Name of the tool to create (must be snake_case)
+    """
+    # Check if tool already exists
+    user_tools_dir = Path('src/tools').resolve()
+    tool_path = user_tools_dir / tool_name
+    if tool_path.exists():
+        print(term_color(f"Tool '{tool_name}' already exists.", 'yellow'))
+        sys.exit(1)
+
+    # Create tool directory
+    tool_path.mkdir(parents=True, exist_ok=False)
+
+    # Create __init__.py with basic function template
+    init_file = tool_path / '__init__.py'
+    init_content = f'''def define_your_tool():
+    """
+    Define your tool's functionality here.
+    """
+    pass
+'''
+    init_file.write_text(init_content)
+
+    # Create config.json with basic structure
+    config = {
+        "name": tool_name,
+        "category": "custom",
+        "tools": ["define_your_tool"],
+        "url": "",
+        "cta": "",
+        "env": {},
+        "dependencies": [],
+        "post_install": "",
+        "post_remove": ""
+    }
+    config_file = tool_path / 'config.json'
+    config_file.write_text(json.dumps(config, indent=4))
+
+    print(term_color(f"Tool '{tool_name}' has been created successfully in {user_tools_dir}.", 'green'))

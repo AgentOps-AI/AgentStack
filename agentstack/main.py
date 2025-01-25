@@ -8,6 +8,7 @@ from agentstack.cli import (
     init_project,
     add_tool,
     list_tools,
+    create_tool,
     configure_default_model,
     run_project,
     export_template,
@@ -131,6 +132,12 @@ def _main():
     )
     tools_add_parser.add_argument("--agent", help="Name of agent to add this tool to")
 
+    # 'create' command under 'tools'
+    tools_create_parser = tools_subparsers.add_parser(
+        "create", aliases=["c"], help="Create a new custom tool", parents=[global_parser]
+    )
+    tools_create_parser.add_argument("name", help="Name of the tool to create")
+
     # 'remove' command under 'tools'
     tools_remove_parser = tools_subparsers.add_parser(
         "remove", aliases=["r"], help="Remove a tool", parents=[global_parser]
@@ -179,6 +186,9 @@ def _main():
                 agents = [args.agent] if args.agent else None
                 agents = args.agents.split(",") if args.agents else agents
                 add_tool(args.name, agents)
+            elif args.tools_command in ["create", "c"]:
+                conf.assert_project()
+                create_tool(args.name)
             elif args.tools_command in ["remove", "r"]:
                 conf.assert_project()
                 generation.remove_tool(args.name)
