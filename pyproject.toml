@@ -48,6 +48,14 @@ crewai = [
     "crewai-tools==0.14.0",
 ]
 
+langgraph = [
+    "langgraph>=0.2.61",
+    "langchain>=0.3.14",
+]
+all = [
+    "agentstack[dev,test,crewai,langgraph]",
+]
+
 [tool.setuptools.package-data]
 agentstack = ["templates/**/*"]
 
