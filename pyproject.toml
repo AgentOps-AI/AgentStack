@@ -12,7 +12,7 @@ authors = [
 ]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<=3.13"
 
 dependencies = [
     "agentops>=0.3.18",
@@ -46,9 +46,6 @@ test = [
 crewai = [
     "crewai==0.83.0",
     "crewai-tools==0.14.0",
-]
-all = [
-    "agentstack[dev,test,crewai]",
 ]
 
 [tool.setuptools.package-data]

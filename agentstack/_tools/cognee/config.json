@@ -5,7 +5,11 @@
         "prune_data",
         "add_text",
         "cognify",
-        "search_insights"
+        "search_insights",
+        "search_summaries",
+        "search_chunks",
+        "search_completion",
+        "search_graph_completion"
     ],
     "url": "https://github.com/topoteretes/cognee",
     "tools_bundled": true,
@@ -52,7 +56,7 @@
       },
   
     "packages": [
-        "cognee[postgres,neo4j]"
+        "cognee"
     ],
     "post_install": "Now, you can start cognifying!",
     "post_remove": "Cognee is removed!"
