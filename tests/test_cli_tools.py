@@ -7,7 +7,7 @@ import shutil
 from agentstack._tools import get_all_tool_names
 from cli_test_utils import run_cli
 from agentstack.utils import validator_not_empty
-from agentstack.cli.cli import get_validated_input
+from agentstack.cli import get_validated_input
 from unittest.mock import patch
 from inquirer.errors import ValidationError
 

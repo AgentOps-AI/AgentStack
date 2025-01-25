@@ -5,7 +5,7 @@ agent_name:
     this is a goal
   backstory: >-
     backstory
-  llm: provider/model
+  llm: openai/gpt-4o
 second_agent_name:
   role: >-
     role
@@ -13,4 +13,4 @@ second_agent_name:
     this is a goal
   backstory: >-
     this is a backstory
-  llm: provider/model
+  llm: openai/gpt-4o
