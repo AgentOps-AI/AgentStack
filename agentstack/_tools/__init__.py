@@ -7,10 +7,14 @@ from importlib import import_module
 import pydantic
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path, open_json_file, term_color, snake_to_camel
+from agentstack import conf
+import logging
 
 
 TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir, also update MANIFEST.in
 TOOLS_CONFIG_FILENAME: str = 'config.json'
+
+log = logging.getLogger(__name__)
 
 
 class ToolConfig(pydantic.BaseModel):
@@ -31,12 +35,26 @@ class ToolConfig(pydantic.BaseModel):
     post_remove: Optional[str] = None
 
     @classmethod
-    def from_tool_name(cls, name: str) -> 'ToolConfig':
+    def from_tool_name(cls, name: str) -> Optional['ToolConfig']:
+        # First check in the user's project directory for custom tools
+        if conf.PATH:
+            custom_path = conf.PATH / 'src/tools' / name / TOOLS_CONFIG_FILENAME
+            if custom_path.exists():
+                try:
+                    return cls.from_json(custom_path)
+                except Exception as e:
+                    log.debug(f"Failed to load custom tool {name}: {e}")
+                    return None
+        
+        # Then check in the package's tools directory
         path = TOOLS_DIR / name / TOOLS_CONFIG_FILENAME
-        if not os.path.exists(path):  # TODO raise exceptions and handle message/exit in cli
-            print(term_color(f'No known agentstack tool: {name}', 'red'))
-            sys.exit(1)
-        return cls.from_json(path)
+        if not os.path.exists(path):
+            return None
+        try:
+            return cls.from_json(path)
+        except Exception as e:
+            log.debug(f"Failed to load tool {name}: {e}")
+            return None
 
     @classmethod
     def from_json(cls, path: Path) -> 'ToolConfig':
@@ -76,6 +94,13 @@ class ToolConfig(pydantic.BaseModel):
     @property
     def module_name(self) -> str:
         """Module name for the tool module."""
+        # Check if this is a custom tool in the user's project
+        if conf.PATH:
+            custom_path = conf.PATH / 'src/tools' / self.name / TOOLS_CONFIG_FILENAME
+            if custom_path.exists():
+                return f"src.tools.{self.name}"
+        
+        # Otherwise, it's a package tool
         return f"agentstack._tools.{self.name}"
 
     @property
@@ -106,20 +131,37 @@ def get_all_tool_paths() -> list[Path]:
     """
     Get all the paths to the tool configuration files.
     ie. agentstack/_tools/<tool_name>/
-    Tools are identified by having a `config.json` file inside the _tools/<tool_name> directory.
+    Tools are identified by having a `config.json` file inside the _tools/<tool_name> directory. 
+    Also checks the user's project directory for custom tools.
     """
     paths = []
+    
+    # Get package tools
     for tool_dir in TOOLS_DIR.iterdir():
         if tool_dir.is_dir():
             config_path = tool_dir / TOOLS_CONFIG_FILENAME
             if config_path.exists():
                 paths.append(tool_dir)
+    
+    # Get custom tools from user's project if in a project directory
+    if conf.PATH:
+        custom_tools_dir = conf.PATH / 'src/tools'
+        if custom_tools_dir.exists():
+            for tool_dir in custom_tools_dir.iterdir():
+                if tool_dir.is_dir():
+                    config_path = tool_dir / TOOLS_CONFIG_FILENAME
+                    if config_path.exists():
+                        paths.append(tool_dir)
+    
     return paths
 
 
 def get_all_tool_names() -> list[str]:
-    return [path.stem for path in get_all_tool_paths()]
+    """Get names of all available tools, including custom tools."""
+    return [path.name for path in get_all_tool_paths()]
 
 
-def get_all_tools() -> list[ToolConfig]:
-    return [ToolConfig.from_tool_name(path) for path in get_all_tool_names()]
+def get_all_tools() -> list[Optional[ToolConfig]]:
+    """Get all tool configs, including custom tools."""
+    tool_names = get_all_tool_names()
+    return [ToolConfig.from_tool_name(name) for name in tool_names]

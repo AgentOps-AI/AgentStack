@@ -14,14 +14,18 @@ def list_tools():
     """
     List all available tools by category.
     """
-    tools = get_all_tools()
+    tools = [t for t in get_all_tools() if t is not None]  # Filter out None values
     categories = {}
+    custom_tools = []
     
     # Group tools by category
     for tool in tools:
-        if tool.category not in categories:
-            categories[tool.category] = []
-        categories[tool.category].append(tool)
+        if tool.category == 'custom':
+            custom_tools.append(tool)
+        else:
+            if tool.category not in categories:
+                categories[tool.category] = []
+            categories[tool.category].append(tool)
     
     print("\n\nAvailable AgentStack Tools:")
     # Display tools by category
@@ -32,7 +36,16 @@ def list_tools():
             print(term_color(f"{tool.name}", 'blue'), end='')
             print(f": {tool.url if tool.url else 'AgentStack default tool'}")
 
+    # Display custom tools if any exist
+    if custom_tools:
+        print("\nCustom Tools:")
+        for tool in custom_tools:
+            print("  - ", end='')
+            print(term_color(f"{tool.name}", 'blue'), end='')
+            print(": Custom tool")
+
     print("\n\n✨ Add a tool with: agentstack tools add <tool_name>")
+    print("   Create a custom tool with: agentstack tools create <tool_name>")
     print("   https://docs.agentstack.sh/tools/core")
 
 
@@ -47,12 +60,16 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
         - add the tool to the specified agents or all agents if none are specified
     """
     if not tool_name:
+        # Get all available tools including custom ones
+        available_tools = [t for t in get_all_tools() if t is not None]
+        tool_names = [t.name for t in available_tools]
+        
         # ask the user for the tool name
         tools_list = [
             inquirer.List(
                 "tool_name",
                 message="Select a tool to add to your project",
-                choices=[tool.name for tool in get_all_tools()],
+                choices=tool_names,
             )
         ]
         try:

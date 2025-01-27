@@ -34,6 +34,14 @@ class FrameworkModule(Protocol):
         """
         ...
 
+    def create_tool(self, tool_name: str) -> None:
+        """
+        Create a new custom tool in the user's project.
+        Args:
+            tool_name: Name of the tool to create (must be snake_case)
+        """
+        ...
+
     def get_tool_names(self) -> list[str]:
         """
         Get a list of tool names in the user's project.
@@ -169,3 +177,11 @@ def get_task_names() -> list[str]:
     Get a list of task names in the user's project.
     """
     return get_framework_module(get_framework()).get_task_names()
+
+
+def create_tool(tool_name: str):
+    """
+    Create a new custom tool in the user's project.
+    The tool will be created with a basic structure and configuration.
+    """
+    return get_framework_module(get_framework()).create_tool(tool_name)

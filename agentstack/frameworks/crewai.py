@@ -7,6 +7,10 @@ from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
+from agentstack.proj_templates import TemplateConfig
+import os
+import json
+from agentstack.utils import term_color
 
 ENTRYPOINT: Path = Path('src/crew.py')
 
@@ -363,3 +367,80 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
         tool_funcs.append(crewai_wrapped)
 
     return tool_funcs
+
+
+def create_tool(tool_name: str) -> None:
+    """Create a new custom tool in the user's project.
+    
+    Args:
+        tool_name: Name of the tool to create (must be snake_case)
+    """
+    # Check if tool already exists
+    user_tools_dir = conf.PATH / 'src/tools'
+    tool_path = user_tools_dir / tool_name
+    if tool_path.exists():
+        raise ValidationError(f"Tool '{tool_name}' already exists.")
+
+    # Create tool directory
+    tool_path.mkdir(parents=True, exist_ok=False)
+
+    # Create __init__.py with basic function template
+    init_file = tool_path / '__init__.py'
+    init_content = f'''def {tool_name}_tool(input_str: str) -> str:
+    """
+    Define your tool's functionality here.
+    
+    Args:
+        input_str: Input string to process
+        
+    Returns:
+        str: Result of the tool's operation
+    """
+    # Add your tool's logic here
+    return f"Processed: {{input_str}}"
+'''
+    init_file.write_text(init_content)
+
+    # Create config.json with basic structure
+    config = {
+        "name": tool_name,
+        "category": "custom",
+        "tools": [f"{tool_name}_tool"],
+        "url": "",
+        "cta": "",
+        "env": {},
+        "dependencies": [],
+        "post_install": "",
+        "post_remove": ""
+    }
+    config_file = tool_path / 'config.json'
+    config_file.write_text(json.dumps(config, indent=4))
+
+    # Create TemplateConfig.Tool instance for the new tool
+    tool_config = TemplateConfig.Tool(
+        name=tool_name,
+        agents=[]  # Initially no agents are assigned to the tool
+    )
+
+    # Update the project's configuration with the new tool
+    agentstack_config = conf.ConfigFile()
+    if not hasattr(agentstack_config, 'tools'):
+        agentstack_config.tools = []
+    agentstack_config.tools.append(tool_config.model_dump())
+    agentstack_config.write()
+
+    # Update crew.py to import the new tool
+    crew_file = CrewFile(conf.PATH / ENTRYPOINT)
+    tools_import_line = f"from .tools.{tool_name} import {tool_name}_tool\n"
+    
+    # Add import after the last tool import or at the top if no tool imports exist
+    source_lines = crew_file.source.split('\n')
+    tool_import_marker = "# tool import"
+    
+    for i, line in enumerate(source_lines):
+        if tool_import_marker in line:
+            source_lines.insert(i + 1, tools_import_line)
+            break
+    
+    crew_file.source = '\n'.join(source_lines)
+    crew_file.write()

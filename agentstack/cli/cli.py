@@ -325,6 +325,42 @@ def ask_tools() -> list:
 
     return tools_to_add
 
+def create_tool(tool_name: str):
+    user_tools_dir = Path('src/tools').resolve()
+    tool_path = user_tools_dir / tool_name
+    if tool_path.exists():
+        print(term_color(f"Tool '{tool_name}' already exists.", 'yellow'))
+        sys.exit(1)
+
+    # Create tool directory
+    tool_path.mkdir(parents=True, exist_ok=False)
+
+    # Create __init__.py with CrewAI tool decorator
+    init_file = tool_path / '__init__.py'
+    init_content = f"""# {tool_name} tool module
+
+def main():
+    print("This is the {tool_name} tool. Implement your functionality here.")
+"""
+    init_file.write_text(init_content)
+
+    # Create config.json with placeholders
+    config = {
+        "name": tool_name,
+        "category": "general",  # default category
+        "tools": ["main"],      # default tool method
+        "url": "",
+        "cta": "",
+        "env": {},
+        "dependencies": [],
+        "post_install": "",
+        "post_remove": ""
+    }
+    config_file = tool_path / 'config.json'
+    config_file.write_text(json.dumps(config, indent=4))
+
+    print(term_color(f"Tool '{tool_name}' has been created successfully in {user_tools_dir}.", 'green'))
+
 
 def ask_project_details(slug_name: Optional[str] = None) -> dict:
     name = inquirer.text(message="What's the name of your project (snake_case)", default=slug_name or '')
