@@ -58,6 +58,7 @@ class ProjectStructure:
     ):
         self.agents = []
         self.tasks = []
+        self.graph = []
         self.inputs = {}
         self.method = method
         self.manager_agent = manager_agent
@@ -68,6 +69,9 @@ class ProjectStructure:
     def add_task(self, task):
         self.tasks.append(task)
 
+    def add_edge(self, edge):
+        self.graph.append(edge)
+
     def set_inputs(self, inputs):
         self.inputs = inputs
 
@@ -77,6 +81,7 @@ class ProjectStructure:
             'manager_agent': self.manager_agent,
             'agents': self.agents,
             'tasks': self.tasks,
+            'graph': self.graph,
             'inputs': self.inputs,
         }
 

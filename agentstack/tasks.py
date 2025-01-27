@@ -9,6 +9,10 @@ from agentstack.exceptions import ValidationError
 
 
 TASKS_FILENAME: Path = Path("src/config/tasks.yaml")
+TASKS_PROMPT_TPL: str = ("\nThis is the expect criteria for your final answer: {expected_output}\n "
+    "you MUST return the actual complete content as the final answer, not a summary. "
+    "\nCurrent Task: {description}\n\nBegin! This is VERY important to you, use the "
+    "tools available and give your best Final Answer, your job depends on it!\n\nThought:")
 
 yaml = YAML()
 yaml.preserve_quotes = True  # Preserve quotes in existing data
@@ -63,6 +67,14 @@ class TaskConfig(pydantic.BaseModel):
                 error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(f"Error loading task {name} from {filename}.\n{error_str}")
 
+    @property
+    def prompt(self) -> str:
+        """Format a complete prompt which includes the task description and expected output."""
+        return TASKS_PROMPT_TPL.format(**{
+            'description': self.description,
+            'expected_output': self.expected_output,
+        })
+
     def model_dump(self, *args, **kwargs) -> dict:
         dump = super().model_dump(*args, **kwargs)
         dump.pop('name')  # name is the key, so keep it out of the data
@@ -102,3 +114,9 @@ def get_all_task_names() -> list[str]:
 
 def get_all_tasks() -> list[TaskConfig]:
     return [TaskConfig(name) for name in get_all_task_names()]
+
+
+def get_task(name: str) -> TaskConfig:
+    """Get a task configuration by name."""
+    return TaskConfig(name)
+

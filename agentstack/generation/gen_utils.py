@@ -1,4 +1,15 @@
+from typing import Optional
+from enum import Enum
 import ast
+
+
+class InsertionPoint(Enum):
+    """
+    Enum for specifying where to insert generated code.
+    """
+
+    BEGIN = 'begin'
+    END = 'end'
 
 
 def insert_code_after_tag(file_path, tag, code_to_insert, next_line=False):
@@ -68,3 +79,17 @@ def string_in_file(file_path: str, str_to_match: str) -> bool:
     with open(file_path, 'r') as file:
         file_content = file.read()
         return str_to_match in file_content
+
+
+def parse_insertion_point(position: Optional[str] = None) -> Optional[InsertionPoint]:
+    """
+    Parse an insertion point CLI argument into an InsertionPoint enum.
+    """
+    if position is None:
+        return None  # defer assumptions
+
+    valid_positions = {x.value for x in InsertionPoint}
+    if position not in valid_positions:
+        raise ValueError(f"Position must be one of {','.join(valid_positions)}.")
+
+    return next(x for x in InsertionPoint if x.value == position)
