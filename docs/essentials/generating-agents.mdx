@@ -9,11 +9,13 @@ To generate a new agent for your project, run:
 agentstack generate agent <agent_name>
 ```
 
-This command will modify two files, `crew.py` and `agents.yaml`.
+This command will modify two files, your agent file (`crew.py` / `graph.py`) and `agents.yaml`.
 
-## crew.py
+## your agent file
 
-This is the file that declares each of your agents and tasks. It's the core of your AgentStack project with Crew.
+This is the file that declares each of your agents and tasks. It's the core of your AgentStack project and how AgentStack configures your framework.
+- Crew projects have `crew.py`
+- LangGraph projects have `graph.py`
 
 
 ## agents.yaml
@@ -26,6 +28,6 @@ Each agent has three prompt params:
 - Backstory
 
 And one configuration param:
-- LLM - This value tells crew which model to use for this specific agent. It must be in `<provider>/<model>` format
+- LLM - This value tells AgentStack which model to use for this specific agent. It must be in `<provider>/<model>` format
 
     Ex: `openai/gpt-4o`
