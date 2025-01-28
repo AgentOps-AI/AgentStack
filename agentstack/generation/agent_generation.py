@@ -37,4 +37,4 @@ def add_agent(
     except ValidationError as e:
         raise ValidationError(f"Error adding agent to project:\n{e}")
 
-    log.success(f"Added agent \"{agent.name}\" to your AgentStack project successfully!")
+    log.success(f"🤖 Added agent \"{agent.name}\" to your AgentStack project successfully!")

@@ -39,10 +39,9 @@ def add_tool(name: str, agents: Optional[list[str]] = []):
     if not agents:  # If no agents are specified, add the tool to all agents
         agents = frameworks.get_agent_method_names()
     for agent_name in agents:
-        log.info(f'Adding tool {tool.name} to agent {agent_name}')
         frameworks.add_tool(tool, agent_name)
 
-    log.success(f'🔨 Tool {tool.name} added to agentstack project successfully')
+    log.success(f'🔨 Tool {tool.name} added to agentstack project successfully!')
     if tool.cta:
         log.notify(f'🪩  {tool.cta}')
 
