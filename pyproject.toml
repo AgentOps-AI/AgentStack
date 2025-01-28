@@ -44,8 +44,8 @@ test = [
     "tox",
 ]
 crewai = [
-    "crewai==0.83.0",
-    "crewai-tools==0.14.0",
+    "crewai==0.100.0",
+    "crewai-tools==0.33.0",
 ]
 langgraph = [
     "langgraph>=0.2.61",
