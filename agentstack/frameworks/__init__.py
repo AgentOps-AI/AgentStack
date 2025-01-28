@@ -16,9 +16,11 @@ if TYPE_CHECKING:
 
 CREWAI = 'crewai'
 LANGGRAPH = 'langgraph'
+OPENAI_SWARM = 'openai_swarm'
 SUPPORTED_FRAMEWORKS = [
     CREWAI,
     LANGGRAPH,
+    OPENAI_SWARM,
 ]
 
 
@@ -58,9 +60,9 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def get_tool_callables(self, tool_name: str) -> list[Callable]:
+    def wrap_tool(tool_func: Callable) -> Callable:
         """
-        Get a tool by name and return it as a list of framework-native callables.
+        Wrap a tool function with framework-specific functionality.
         """
         ...
 
@@ -152,7 +154,39 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     """
     Get a tool by name and return it as a list of framework-native callables.
     """
-    return get_framework_module(get_framework()).get_tool_callables(tool_name)
+    # TODO: remove after agentops fixes their issue
+    # wrap method with agentops tool event
+    def wrap_method(method: Callable) -> Callable:
+        def wrapped_method(*args, **kwargs):
+            import agentops
+            tool_event = agentops.ToolEvent(method.__name__)
+            result = method(*args, **kwargs)
+            agentops.record(tool_event)
+            return result
+
+        # Preserve all original attributes
+        wrapped_method.__name__ = method.__name__
+        wrapped_method.__doc__ = method.__doc__
+        wrapped_method.__module__ = method.__module__
+        wrapped_method.__qualname__ = method.__qualname__
+        wrapped_method.__annotations__ = getattr(method, '__annotations__', {})
+        return wrapped_method
+
+    tool_funcs = []
+    tool_config = ToolConfig.from_tool_name(tool_name)
+    for tool_func_name in tool_config.tools:
+        tool_func = getattr(tool_config.module, tool_func_name)
+
+        assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
+        assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
+
+        # First wrap with agentops
+        agentops_wrapped = wrap_method(tool_func)
+        # Then apply framework decorators
+        framework_wrapped = get_framework_module(get_framework()).wrap_tool(agentops_wrapped)
+        tool_funcs.append(framework_wrapped)
+
+    return tool_funcs
 
 
 def get_agent_method_names() -> list[str]:

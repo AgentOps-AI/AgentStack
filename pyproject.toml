@@ -51,8 +51,11 @@ langgraph = [
     "langgraph>=0.2.61",
     "langchain>=0.3.14",
 ]
+openai_swarm = [
+    "git+https://github.com/openai/swarm@9db581cecaacea0d46a933d6453c312b034dbf47"
+]
 all = [
-    "agentstack[dev,test,crewai,langgraph]",
+    "agentstack[dev,test,crewai,langgraph,openai_swarm]",
 ]
 
 [tool.setuptools.package-data]
