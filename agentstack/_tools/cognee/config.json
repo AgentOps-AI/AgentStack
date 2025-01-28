@@ -3,7 +3,7 @@
     "category": "Memory", 
     "tools": [
         "prune_data",
-        "add_text",
+        "add_data",
         "cognify",
         "search_insights",
         "search_summaries",

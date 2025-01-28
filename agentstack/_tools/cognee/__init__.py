@@ -6,7 +6,6 @@ as synchronous functions with typed parameters & docstrings for use by AI agents
 
 import cognee
 import asyncio
-from typing import List
 from cognee.api.v1.search import SearchType
 
 
@@ -27,17 +26,16 @@ def prune_data(metadata: bool = False) -> str:
     return asyncio.run(_prune())
 
 
-def add_text(text: str) -> str:
+def add_data(data) -> str:
     """
-    Add text to cognee's knowledge system for future 'cognify' operations.
+    Add any type of data to cognee's knowledge system for future 'cognify' operations.
 
-    :param text: The text to add.
     :return: A confirmation message.
     """
 
     async def _add():
-        await cognee.add(text)
-        return "Text added successfully."
+        await cognee.add(data)
+        return "Data added successfully."
 
     return asyncio.run(_add())
 
@@ -71,6 +69,7 @@ def search_insights(query_text: str) -> str:
 
     return asyncio.run(_search())
 
+
 def search_summaries(query_text: str) -> str:
     """
     Perform a SUMMARIES search on the knowledge graph for the given query text.
@@ -84,6 +83,7 @@ def search_summaries(query_text: str) -> str:
         return str(results)
 
     return asyncio.run(_search())
+
 
 def search_chunks(query_text: str) -> str:
     """
@@ -99,9 +99,13 @@ def search_chunks(query_text: str) -> str:
 
     return asyncio.run(_search())
 
+
 def search_completion(query_text: str) -> str:
     """
     Perform a COMPLETION search on the knowledge graph for the given query text.
+
+    This function retrieves the document chunk most relevant to the user's query
+    and prompts the LLM to provide an answer using this context.
 
     :param query_text: The query to search for.
     :return: The search results as a (stringified) list of matches.
@@ -113,9 +117,13 @@ def search_completion(query_text: str) -> str:
 
     return asyncio.run(_search())
 
+
 def search_graph_completion(query_text: str) -> str:
     """
     Perform a GRAPH_COMPLETION search on the knowledge graph for the given query text.
+
+    This function identifies the most relevant knowledge graph entities, including document chunks,
+    related to the user's query and prompts the LLM to generate a response with this enriched context.
 
     :param query_text: The query to search for.
     :return: The search results as a (stringified) list of matches.

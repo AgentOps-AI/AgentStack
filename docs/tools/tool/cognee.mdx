@@ -1,0 +1,56 @@
+---
+title: 'cognee'
+description: 'AI Memory Engine for Enhanced LLM Accuracy'
+---
+
+## Overview
+
+[cognee](https://www.cognee.ai/) is an AI memory engine designed to improve the accuracy of Large Language Models (LLMs). It connects data points to uncover hidden links, providing your LLM applications with a better understanding of your data, leading to more reliable responses.
+
+## Installation
+
+1. To install the `cognee` tool in AgentStack, run:
+
+```bash
+agentstack tools add cognee
+
+2. Set Environment Variables:
+Configure the necessary environment variables in your environment or .env file. For the default setup you only need to add your `LLM_API_KEY`. Adjust other configurations as needed based on your setup.
+
+## Usage
+Cognee provides a suite of tools to manage and utilize AI memory effectively. Below is a set of tools available to AgentStack and their functionalities:
+
+### Available Tools
+- prune_data: Cleanses the cognee data store, with an option to include system metadata.
+- add_data: Adds any data to cognee's data store for future processing.
+- cognify: Processes the added data to build a knowledge graph, summaries, and other metadata.
+- search_insights: Performs an insights search on the knowledge graph based on a query.
+- search_summaries: Searches for summaries related to the query in the knowledge graph.
+- search_chunks: Searches for specific chunks of data related to the query.
+- search_completion: Retrieves the document chunk most relevant to the user's query and prompts the LLM to provide an answer using this context.
+- search_graph_completion: Identifies the most related knowledge graph entities, including document chunks, related to the user's query and prompts the LLM to generate a response with this enriched context.
+
+
+For more features, please visit [cognee's repo](https://github.com/topoteretes/cognee)
+Cognee can be configured for different behaviors by modifying /agentstack/_tools/cognee/__init__.py
+
+
+### Example
+
+#### Using cognee for your Agent's tasks
+
+**Description:**
+
+1. **Prune Data:** Start by pruning existing data in cognee to ensure a clean slate.
+2. **Add Data:** Provide text into cognee's knowledge base. Example: "Natural language processing (NLP) is an interdisciplinary subfield of computer science and information retrieval."
+3. **Cognify:** Process the added text to build the knowledge graph and related metadata.
+4. **Search:** Perform searches using cognee's search functions with a query. Example: "Tell me about NLP". Present each search result separately, specifying the function name used for each search type.
+
+**Expected Output:**
+
+The agent should retrieve answers from the provided text based on the query.
+
+
+
+For more detailed information and advanced configurations, refer to the official [cognee documentation](https://docs.cognee.ai/).
+
