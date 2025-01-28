@@ -89,9 +89,10 @@ class GenerationFilesTest(unittest.TestCase):
         shutil.copy(BASE_PATH / "fixtures/.env", self.project_dir / ".env")
 
         env = EnvFile()
-        assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2"}
+        assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2", "ENV_VAR3": "12a34b===="}
         assert env["ENV_VAR1"] == "value1"
         assert env["ENV_VAR2"] == "value2"
+        assert env["ENV_VAR3"] == "12a34b===="
         with self.assertRaises(KeyError) as _:
             env["ENV_VAR100"]
 
@@ -105,7 +106,7 @@ class GenerationFilesTest(unittest.TestCase):
         tmp_data = open(self.project_dir / ".env").read()
         assert (
             tmp_data
-            == """\nENV_VAR1=value1\nENV_VAR2=value_ignored\nENV_VAR2=value2\n#ENV_VAR3=""\nENV_VAR100=value2"""
+            == """\nENV_VAR1=value1\nENV_VAR2=value_ignored\nENV_VAR2=value2\nENV_VAR3 = \"12a34b====\"\n#ENV_VAR4=""\nENV_VAR100=value2"""
         )
     
     def test_write_env_numeric_that_can_be_boolean(self):
@@ -116,20 +117,20 @@ class GenerationFilesTest(unittest.TestCase):
             env.append_if_new("ENV_VAR101", 1)
         
         env = EnvFile()  # re-read the file
-        assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2", "ENV_VAR100": "0", "ENV_VAR101": "1"}
+        assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2", "ENV_VAR3": "12a34b====", "ENV_VAR100": "0", "ENV_VAR101": "1"}
 
     def test_write_env_commented(self):
         """We should be able to write a commented-out value."""
         shutil.copy(BASE_PATH / "fixtures/.env", self.project_dir / ".env")
 
         with EnvFile() as env:
-            env.append_if_new("ENV_VAR3", "value3")
+            env.append_if_new("ENV_VAR4", "value3")
 
         env = EnvFile()  # re-read the file
-        assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2", "ENV_VAR3": "value3"}
+        assert env.variables == {"ENV_VAR1": "value1", "ENV_VAR2": "value2", "ENV_VAR3": "12a34b====", "ENV_VAR4": "value3"}
 
         tmp_file = open(self.project_dir / ".env").read()
         assert (
             tmp_file
-            == """\nENV_VAR1=value1\nENV_VAR2=value_ignored\nENV_VAR2=value2\n#ENV_VAR3=""\nENV_VAR3=value3"""
+            == """\nENV_VAR1=value1\nENV_VAR2=value_ignored\nENV_VAR2=value2\nENV_VAR3 = \"12a34b====\"\n#ENV_VAR4=""\nENV_VAR4=value3"""
         )
