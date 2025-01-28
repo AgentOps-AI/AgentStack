@@ -34,4 +34,4 @@ def add_task(
     except ValidationError as e:
         raise ValidationError(f"Error adding task to project:\n{e}")
 
-    log.success(f"Added task \"{task.name}\" to your AgentStack project successfully!")
+    log.success(f"📃 Added task \"{task.name}\" to your AgentStack project successfully!")
