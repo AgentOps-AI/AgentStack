@@ -37,6 +37,7 @@ def init_project(
     template: Optional[str] = None,
     framework: Optional[str] = None,
     use_wizard: bool = False,
+    template_data: Optional[TemplateConfig] = None,
 ):
     """
     Initialize a new project in the current directory.
@@ -59,18 +60,19 @@ def init_project(
     if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
         raise Exception(f"Directory already exists: {conf.PATH}")
 
-    if template and use_wizard:
-        raise Exception("Template and wizard flags cannot be used together")
-    
-    if use_wizard:
-        log.debug("Initializing new project with wizard.")
-        template_data = run_wizard(slug_name)
-    elif template:
-        log.debug(f"Initializing new project with template: {template}")
-        template_data = TemplateConfig.from_user_input(template)
-    else:
-        log.debug(f"Initializing new project with default template: {DEFAULT_TEMPLATE_NAME}")
-        template_data = TemplateConfig.from_template_name(DEFAULT_TEMPLATE_NAME)
+    if not template_data:
+        if template and use_wizard:
+            raise Exception("Template and wizard flags cannot be used together")
+        
+        if use_wizard:
+            log.debug("Initializing new project with wizard.")
+            template_data = run_wizard(slug_name)
+        elif template:
+            log.debug(f"Initializing new project with template: {template}")
+            template_data = TemplateConfig.from_user_input(template)
+        else:
+            log.debug(f"Initializing new project with default template: {DEFAULT_TEMPLATE_NAME}")
+            template_data = TemplateConfig.from_template_name(DEFAULT_TEMPLATE_NAME)
 
     welcome_message()
     log.notify("🦾 Creating a new AgentStack project...")

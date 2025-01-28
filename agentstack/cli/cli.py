@@ -1,5 +1,4 @@
 import os, sys
-from art import text2art
 import inquirer
 from agentstack import conf, log
 from agentstack.conf import ConfigFile
@@ -26,12 +25,11 @@ LOGO = """\
 
 
 def welcome_message():
-    title = text2art("AgentStack", font="smisome1")
     tagline = "The easiest way to build a robust agent application!"
     border = "-" * len(tagline)
 
     # Print the welcome message with ASCII art
-    log.info(title)
+    log.info(LOGO)
     log.info(border)
     log.info(tagline)
     log.info(border)

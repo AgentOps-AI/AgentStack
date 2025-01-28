@@ -121,3 +121,8 @@ def get_all_tool_names() -> list[str]:
 
 def get_all_tools() -> list[ToolConfig]:
     return [ToolConfig.from_tool_name(path) for path in get_all_tool_names()]
+
+
+def get_tool(name: str) -> ToolConfig:
+    return ToolConfig.from_tool_name(name)
+

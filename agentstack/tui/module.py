@@ -6,10 +6,15 @@ from random import randint
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Any, List, Tuple, Union
 from enum import Enum
+from pyfiglet import Figlet
 
 from agentstack import conf, log
 if TYPE_CHECKING:
     from agentstack.tui.color import Color, AnimatedColor
+
+
+class RenderException(Exception):
+    pass
 
 
 # horizontal alignment
@@ -88,7 +93,7 @@ class Key:
     
     @property
     def is_alpha(self):
-        return (self.ch >= 65 and self.ch <= 90) or (self.ch >= 97 and self.ch <= 122)
+        return (self.ch >= 65 and self.ch <= 122)
 
 
 class Renderable:
@@ -136,6 +141,16 @@ class Renderable:
                 self.y, 
                 self.x) # TODO this cant be bigger than the window
         return self._grid
+
+    def move(self, y: int, x: int):
+        self.y, self.x = y, x
+        if self._grid:
+            if self.positioning == POS_RELATIVE:
+                self._grid.mvderwin(self.y, self.x)
+            elif self.positioning == POS_ABSOLUTE:
+                self._grid.mvwin(self.y, self.x)
+            else:
+                raise ValueError("Cannot move a root window") 
 
     @property
     def abs_x(self):
@@ -273,10 +288,12 @@ class Editable(NodeModule):
         self.active = True
         self._original_value = self.value
     
-    def deactivate(self):
+    def deactivate(self, save: bool = True):
         """Deactivate this module, making it no longer active."""
         App.editing = False
         self.active = False
+        if save:
+            self.save()
     
     def save(self):
         if self.filter:
@@ -287,18 +304,16 @@ class Editable(NodeModule):
         if not self.active:
             return
 
-        # TODO word wrap
-        # TODO we probably don't need to filter as prohibitively
         if key.is_alpha or key.is_numeric or key.PERIOD or key.MINUS or key.SPACE:
             self.value = str(self.value) + key.chr
         elif key.BACKSPACE:
             self.value = str(self.value)[:-1]
         elif key.ESC:
-            self.deactivate()
+            self.deactivate(save=False)
             self.value = self._original_value  # revert changes
         elif key.ENTER:
             self.deactivate()
-            self.save()
+            log.debug(f"Saving {self.value} to {self.node}")
     
     def destroy(self):
         self.deactivate()
@@ -311,6 +326,25 @@ class Text(Module):
 
 class WrappedText(Text):
     word_wrap: bool = True
+
+
+class ASCIIText(Text):
+    default_font: str = "pepper"
+    formatter: Optional[Figlet]
+    _ascii_render: Optional[str] = None  # rendered content
+    _ascii_value: Optional[str] = None  # value used to render content
+    
+    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], value: Optional[Any] = "", color: Optional['Color'] = None, formatter: Optional[Figlet] = None):
+        super().__init__(coords, dims, value=value, color=color)
+        self.formatter = formatter or Figlet(font=self.default_font)
+    
+    def _get_lines(self, value: str) -> List[str]:
+        if not self._ascii_render or self._ascii_value != value:
+            # prevent rendering on every frame
+            self._ascii_value = value
+            self._ascii_render = self.formatter.renderText(value)
+        
+        return super()._get_lines(self._ascii_render)
 
 
 class BoldText(Text):
@@ -346,10 +380,10 @@ class TextInput(Editable):
         self.border_color = self.active_color
         super().activate()
     
-    def deactivate(self):
+    def deactivate(self, save: bool = True):
         if self.active and hasattr(self, '_original_border_color'):
             self.border_color = self._original_border_color
-        super().deactivate()
+        super().deactivate(save)
     
     def render(self) -> None:
         for i, line in enumerate(self._get_lines(str(self.value))):
@@ -389,7 +423,7 @@ class Button(Module):
         if hasattr(self.color, 'reset_animation'):
             self.color.reset_animation()
 
-    def deactivate(self):
+    def deactivate(self, save: bool = True):
         """Deactivate this module, making it no longer active."""
         self.active = False
         if hasattr(self, '_original_color'):
@@ -444,8 +478,12 @@ class Contains(Renderable):
         module.parent = self
         self.modules.append(module)
 
+    def get_modules(self):
+        """Override this to filter displayed modules"""
+        return self.modules
+
     def render(self):
-        for module in self.modules:
+        for module in self.get_modules():
             module.render()
             module.last_render = time.time()
             module.grid.noutrefresh()
@@ -485,7 +523,7 @@ class Box(Contains):
         self.grid.addch(0, w, self.TR, self.color.to_curses())
         self.grid.addch(h, w, self.BR, self.color.to_curses())
         
-        for module in self.modules:
+        for module in self.get_modules():
             module.render()
             module.last_render = time.time()
             module.grid.noutrefresh()
@@ -512,20 +550,37 @@ class Select(Box):
     """
     Build a select menu out of buttons.
     """
+    UP, DOWN = "▲", "▼"
     on_change: Optional[callable] = None
     button_cls: type[Button] = Button
+    button_height: int = 3
+    show_up: bool = False
+    show_down: bool = False
     
-    def __init__(self, coords: Tuple[int, int], dims: Tuple[int, int], options: List[str], color: Optional['Color'] = None, highlight: Optional['Color'] = None, on_change: Optional[callable] = None) -> None:
+    def __init__(self, coords: Tuple[int, int], dims: Tuple[int, int], options: List[str], color: Optional['Color'] = None, highlight: Optional['Color'] = None, on_change: Optional[callable] = None, on_select: Optional[callable] = None) -> None:
         super().__init__(coords, dims, [], color=color)
         from agentstack.tui.color import Color
         self.highlight = highlight or Color(0, 100, 100)
         self.options = options
         self.on_change = on_change
+        self.on_select = on_select
+        
         for i, option in enumerate(self.options):
-            self.append(self.button_cls(((i*3)+1, 1), (3, self.width-2), value=option, color=color, highlight=self.highlight))
+            self.append(self._get_button(i, option))
         self._mark_active(0)
 
+    def _get_button(self, index: int, option: str) -> Button:
+        """Helper to create a button for an option"""
+        return self.button_cls(
+            ((index * self.button_height) + 1, 1), 
+            (self.button_height, self.width - 2), 
+            value=option, 
+            color=self.color, 
+            highlight=self.highlight, 
+        )
+
     def _mark_active(self, index: int):
+        """Mark a submodule as active."""
         for module in self.modules:
             module.deactivate()
         self.modules[index].activate()
@@ -534,22 +589,73 @@ class Select(Box):
         if self.on_change:
             self.on_change(index, self.options[index])
 
-    def select(self, module: Module):
-        module.selected = not module.selected
-        self._mark_active(self.modules.index(module))
-    
-    def input(self, key: Key):
-        index = None
+    def _get_active_index(self):
+        """Get the index of the active option."""
         for module in self.modules:
             if module.active:
-                index = self.modules.index(module)
+                return self.modules.index(module)
+        return 0
+
+    def get_modules(self):
+        """Return a subset of modules to be rendered"""
+        # since we can't always render all of the buttons, return a subset
+        # that can be displayed in the available height. 
+        num_displayed = (self.height - 4) // self.button_height
+        index = self._get_active_index()
+        count = len(self.modules)
+
+        if count <= num_displayed:
+            start = 0
+            self.show_up = False
+        else:
+            ideal_start = index - (num_displayed // 2)
+            start = min(ideal_start, count - num_displayed)
+            start = max(0, start)
+            self.show_up = bool(start > 0)
+
+        end = min(start + num_displayed, count)
+        self.show_down = bool(end < count)
+        visible = self.modules[start:end]
+
+        for i, module in enumerate(visible):
+            pad = 2 if self.show_up else 1
+            module.move((i * self.button_height) + pad, module.x)
+        return visible
+
+    def render(self):
+        """Render all options and conditionally show up/down arrows."""
+        for module in self.modules:
+            if module.last_render:
+                module.grid.erase()
+        
+        self.grid.erase()
+        if self.show_up:
+            self.grid.addstr(1, 1, self.UP.center(self.width-2), self.color.to_curses())
+        if self.show_down:
+            self.grid.addstr(self.height - 2, 1, self.DOWN.center(self.width-2), self.color.to_curses())
+        
+        super().render()
+
+    def select(self, option: Module):
+        """Select an option; ie. mark it as the value of this element."""
+        index = self.modules.index(option)
+        option.selected = not option.selected
+        self._mark_active(index)
+        if self.on_select:
+            self.on_select(index, self.options[index])
+
+    def input(self, key: Key):
+        """Handle key input event."""
+        index = self._get_active_index()
         
         if index is None:
             return
         
         if key.UP or key.DOWN:
             direction = -1 if key.UP else 1
-            index = (direction + index) % len(self.modules)
+            index = direction + index
+            if index < 0 or index >= len(self.modules):
+                return  # don't loop
             self._mark_active(index)
         elif key.SPACE or key.ENTER:
             self.select(self.modules[index])
@@ -557,10 +663,12 @@ class Select(Box):
         super().input(key)
     
     def click(self, y, x):
+        # TODO there is a bug when you click on the last element in a scrollable list
         for module in self.modules:
+            if not module in self.get_modules():
+                continue  # module is not visible
             if not module.hit(y, x):
                 continue
-            self._mark_active(self.modules.index(module))
             self.select(module)
 
 
@@ -568,11 +676,12 @@ class RadioSelect(Select):
     """Allow one button to be `selected` at a time"""
     button_cls = RadioButton
 
-    def __init__(self, coords: Tuple[int, int], dims: Tuple[int, int], options: List[str], color: Optional['Color'] = None, highlight: Optional['Color'] = None, on_change: Optional[callable] = None) -> None:
-        super().__init__(coords, dims, options, color=color, highlight=highlight, on_change=on_change)
+    def __init__(self, coords: Tuple[int, int], dims: Tuple[int, int], options: List[str], color: Optional['Color'] = None, highlight: Optional['Color'] = None, on_change: Optional[callable] = None, on_select: Optional[callable] = None) -> None:
+        super().__init__(coords, dims, options, color=color, highlight=highlight, on_change=on_change, on_select=on_select)
         self.select(self.modules[0])
 
     def select(self, module: Module):
+        """Radio buttons only allow a single selection. """
         for _module in self.modules:
             _module.selected = False
         super().select(module)
@@ -595,12 +704,14 @@ class DebugModule(Module):
 
 
 class View(Contains):
+    app: 'App'
     positioning: str = POS_ABSOLUTE
     padding: tuple[int, int] = (0, 0)
     y: int = 0
     x: int = 0
 
-    def __init__(self):
+    def __init__(self, app: 'App'):
+        self.app = app
         self.modules = []
 
     def init(self, dims: Tuple[int, int]) -> None:
@@ -617,15 +728,19 @@ class View(Contains):
         return self._grid
 
     def layout(self) -> list[Module]:
-        log.warn(f"`layout` not implemented in View: {self.__class__}.")
+        """Override this in subclasses to define the layout of the view."""
+        log.warning(f"`layout` not implemented in View: {self.__class__}.")
         return []
 
 
 class App:
     stdscr: curses.window
+    height: int
+    width: int
+    min_height: int = 30
+    min_width: int = 80
     frame_time: float = 1.0 / 60  # 30 FPS
     editing = False
-    dims = property(lambda self: self.stdscr.getmaxyx())  # TODO remove this
     view: Optional[View] = None  # the active view
     views: dict[str, type[View]] = {}
     shortcuts: dict[str, str] = {}
@@ -634,10 +749,13 @@ class App:
         self.stdscr = stdscr
         self.height, self.width = self.stdscr.getmaxyx()  # TODO dynamic resizing
         
+        if not self.width >= self.min_width or not self.height >= self.min_height:
+            raise RenderException(f"Terminal window is too small. Resize to at least {self.min_width}x{self.min_height}.")
+        
         curses.curs_set(0)
         stdscr.nodelay(True)
         stdscr.timeout(10)  # balance framerate with cpu usage
-        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+        curses.mousemask(curses.BUTTON1_CLICKED | curses.REPORT_MOUSE_POSITION)
         
         from agentstack.tui.color import Color
         Color.initialize()
@@ -647,26 +765,32 @@ class App:
         if shortcut:
             self.shortcuts[shortcut] = name
 
-    def load(self, name: str):
+    def load(self, view_name: str):
         if self.view:
             self.view.destroy()
             self.view = None
         
-        view_cls = self.views[name]
-        self.view = view_cls()
-        self.view.init(self.dims)
+        view_cls = self.views[view_name]
+        self.view = view_cls(self)
+        self.view.init((self.height, self.width))
 
     def run(self):
         frame_time = 1.0 / 60  # 30 FPS
         last_frame = time.time()
-        while True:
+        self._running = True
+        while self._running:
             current_time = time.time()
             delta = current_time - last_frame
             ch = self.stdscr.getch()
             
             if ch == curses.KEY_MOUSE:
-                _, x, y, _, _ = curses.getmouse()
-                self.click(y, x)
+                try:
+                    _, x, y, _, bstate = curses.getmouse()
+                    if not bstate & curses.BUTTON1_CLICKED:
+                        continue  # only allow left click
+                    self.click(y, x)
+                except curses.error:
+                    pass
             elif ch != -1:
                 self.input(ch)
             
@@ -682,14 +806,29 @@ class App:
             if delta < self.frame_time:
                 time.sleep(frame_time - delta)
 
-    def render(self):
+    def stop(self):
         if self.view:
+            self.view.destroy()
+        self._running = False
+        curses.endwin()
+
+    def render(self):
+        if not self.view:
+            return
+
+        try:
             self.view.render()
             self.view.last_render = time.time()
             self.view.grid.noutrefresh()
-        
-        curses.doupdate()
-    
+            curses.doupdate()
+        except curses.error as e:
+            log.debug(f"Error rendering view: {e}")
+            if "add_wch() returned ERR" in str(e):
+                raise RenderException("Grid not large enough to render all modules.")
+            if "curses function returned NULL" in str(e):
+                raise RenderException("Window not large enough to render.")
+            raise e
+
     def click(self, y, x):
         """Handle mouse click event."""
         if self.view:
