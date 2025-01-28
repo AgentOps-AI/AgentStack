@@ -748,6 +748,7 @@ class Select(Box):
     """
     UP, DOWN = "▲", "▼"
     on_change: Optional[Callable] = None
+    on_select: Optional[Callable] = None
     button_cls: type[Button] = Button
     button_height: int = 3
     show_up: bool = False
@@ -838,6 +839,7 @@ class Select(Box):
         """Select an option; ie. mark it as the value of this element."""
         index = self.modules.index(option)
         option.selected = not option.selected
+        self.value = self.options[index]
         self._mark_active(index)
         if self.on_select:
             self.on_select(index, self.options[index])
