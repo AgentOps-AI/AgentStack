@@ -1,3 +1,4 @@
+from functools import wraps
 from typing import Optional, Union, Callable, Any
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,7 +17,8 @@ ENTRYPOINT: Path = Path('src/graph.py')
 GRAPH_NODE_START = 'START'
 GRAPH_NODE_END = 'END'
 GRAPH_NODE_TOOLS = 'tools'  # references the `ToolNode` instance
-GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END, )
+GRAPH_NODE_TOOLS_CONDITION = 'tools_condition'
+GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END, GRAPH_NODE_TOOLS_CONDITION, )
 
 
 @dataclass
@@ -174,7 +176,6 @@ class LangGraphFile(asttools.File):
         ])
         messages = messages.format_messages(**state['inputs'])
         agent = {agent_class_name}(model=agent_config.model)
-        agent = agent.bind_tools([])
         response = agent.invoke(
             messages + state['messages'],
         )
@@ -272,6 +273,21 @@ class LangGraphFile(asttools.File):
         if method is None:
             raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
 
+        try:
+            bind_tools = asttools.find_method_calls(method, 'bind_tools')[0]
+        except IndexError:
+            # create node for the `bind_tools` method call after the Agent instantiation
+            # we add this when we actually add the first tool to the Agent, since
+            # passing an empty list to `bind_tools` throws an error.
+            agent_conf = AgentConfig(agent_name)
+            agent_class_name = PROVIDERS[agent_conf.provider].class_name
+            agent_instantiation = asttools.find_method_calls(method, agent_class_name)[0]
+            _, pos = self.get_node_range(agent_instantiation)
+            # TODO we could dynamically find the Agent variable name
+            code = """
+        agent = agent.bind_tools([])"""
+            self.edit_node_range(pos, pos, code)
+
         existing_node: ast.List = self.get_agent_tools(agent_name)
         existing_elts: list[ast.expr] = existing_node.elts
 
@@ -331,8 +347,11 @@ class LangGraphFile(asttools.File):
         for node in nodes:
             source, target = node.args
             source_name = _get_node_name(source)
+            #target_name = _get_node_name(target)
             if source_name == GRAPH_NODE_TOOLS:  # TODO this is a bit brittle
                 nodes.remove(node)
+            # if target_name == GRAPH_NODE_TOOLS:
+            #     nodes.remove(node)
         return nodes
 
     def get_graph_edge_nodes(self) -> list[ast.Call]:
@@ -344,8 +363,8 @@ class LangGraphFile(asttools.File):
                 raise ValidationError(f"Invalid `add_edge` call in {ENTRYPOINT}")
 
             source, target = node.args
-            # if isinstance(source, ast.Str) and source.s == 'tools':
-            #     nodes.remove(node)
+            if isinstance(source, ast.Str) and source.s == GRAPH_NODE_TOOLS:
+                nodes.remove(node)
             if isinstance(target, ast.Str) and target.s == GRAPH_NODE_TOOLS:
                 nodes.remove(node)
         return nodes
@@ -401,6 +420,26 @@ class LangGraphFile(asttools.File):
 
         code = f"""
         self.graph.add_edge({source}, {target})"""
+        self.edit_node_range(end, end, code)
+
+    def add_conditional_edge(self, edge: graph.Edge):
+        """Add a new conditional edge to the graph configuration."""
+        existing_edges: list[ast.Call] = self.get_graph_edge_nodes()
+        if len(existing_edges):
+            _, end = self.get_node_range(existing_edges[-1])
+        else:
+            graph_instance = asttools.find_method_calls(self.get_run_method(), 'StateGraph')[0]
+            _, end = self.get_node_range(graph_instance)
+        
+        source, target = edge.source.name, edge.target.name
+        # wrap the node names in quotes if they are not special nodes
+        if edge.source.type != graph.NodeType.SPECIAL:
+            source = f'"{source}"'
+        if edge.target.type != graph.NodeType.SPECIAL:
+            target = f'"{target}"'
+
+        code = f"""
+        self.graph.add_conditional_edges({source}, {target})"""
         self.edit_node_range(end, end, code)
 
     def remove_graph_edge(self, edge: graph.Edge):
@@ -617,11 +656,18 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
         entrypoint.add_agent_method(agent)
         entrypoint.add_graph_node(agent)
 
-        # add graph edge for `tools`
+        # add graph edge to get back from the `tools` to the Agent
         entrypoint.add_graph_edge(
             graph.Edge(
+                source=graph.Node(name=GRAPH_NODE_TOOLS, type=graph.NodeType.TOOLS),
+                target=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
+            )
+        )
+        # add conditional edge for `tools_condition`
+        entrypoint.add_conditional_edge(
+            graph.Edge(
                 source=graph.Node(name=agent.name, type=graph.NodeType.AGENT),
-                target=graph.Node(name=GRAPH_NODE_TOOLS, type=graph.NodeType.TOOLS),
+                target=graph.Node(name=GRAPH_NODE_TOOLS_CONDITION, type=graph.NodeType.SPECIAL),
             )
         )
 
@@ -706,13 +752,28 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     # LangGraph accepts functions as tools, so we can return them directly
     tool_funcs = []
     tool_config = ToolConfig.from_tool_name(tool_name)
+
+    # TODO: remove after agentops supports langgraph
+    # wrap method with agentops tool event
+    def wrap_method(method: Callable) -> Callable:
+        @wraps(method)  # This preserves the original function's metadata
+        def wrapped_method(*args, **kwargs):
+            import agentops
+            tool_event = agentops.ToolEvent(method.__name__)
+            result = method(*args, **kwargs)
+            agentops.record(tool_event)
+            return result
+
+        return wrapped_method
+
     for tool_func_name in tool_config.tools:
         tool_func = getattr(tool_config.module, tool_func_name)
 
         assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
         assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
 
-        tool_funcs.append(tool_func)
+        tool_funcs.append(wrap_method(tool_func))
+
     return tool_funcs
 
 

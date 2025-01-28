@@ -168,8 +168,8 @@ class TemplateConfig(pydantic.BaseModel):
         A list of tools used by the project.
     graph: list[list[TemplateConfig.Node]]
         A list of graph relationships. Each edge must have exactly 2 nodes.
-    inputs: list[str]
-        A list of inputs used by the project.
+    inputs: dict[str, str]
+        Key/value pairs of inputs used by the project.
     """
 
     class Agent(pydantic.BaseModel):

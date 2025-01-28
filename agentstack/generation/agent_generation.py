@@ -28,7 +28,7 @@ def add_agent(
         config.backstory = backstory or "Add your backstory here"
         config.llm = llm or agentstack_config.default_model or ""
 
-        if allow_delegation is not None:
+        if allow_delegation:
             log.warning("Agent allow_delegation is not implemented.")
 
     _position = parse_insertion_point(position)
