@@ -818,6 +818,10 @@ class WizardApp(App):
     min_width: int = 80
     min_height: int = 30
     
+    # the main loop can still execute once more after this; so we create an 
+    # explicit marker to ensure the template is only written once
+    _finish_run_once: bool = True
+    
     def start(self):
         """Load the first view in the default workflow."""
         view = self.workflow['project'][0]
@@ -828,17 +832,18 @@ class WizardApp(App):
         template = self.state.to_template_config()
         
         self.stop()
-        # TODO the main loop can still execute once more after this; we need a 
-        # better marker for executing once. 
-        log.set_stdout(sys.stdout)  # re-enable on-screen logging
         
-        init_project(
-            slug_name=template.name,
-            template_data=template,
-        )
-        
-        template.write_to_file(conf.PATH / "wizard")
-        log.info(f"Saved template to: {conf.PATH / 'wizard.json'}")
+        if self._finish_run_once:
+            log.set_stdout(sys.stdout)  # re-enable on-screen logging
+            
+            init_project(
+                slug_name=template.name,
+                template_data=template,
+            )
+            
+            template.write_to_file(conf.PATH / "wizard")
+            log.info(f"Saved template to: {conf.PATH / 'wizard.json'}")
+            self._finish_run_once = False
     
     def advance(self):
         """Load the next view in the active workflow."""
