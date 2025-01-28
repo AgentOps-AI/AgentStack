@@ -48,11 +48,22 @@ def install_project():
     def on_error(line: str):
         log.error(f"uv: [error]\n {line.strip()}")
 
-    _wrap_command_with_callbacks(
-        [get_uv_bin(), 'pip', 'install', '--python', '.venv/bin/python', '.'],
-        on_progress=on_progress,
-        on_error=on_error,
-    )
+    try:
+        result = _wrap_command_with_callbacks(
+            [get_uv_bin(), 'pip', 'install', '--python', '.venv/bin/python', '.'],
+            on_progress=on_progress,
+            on_error=on_error,
+        )
+        if result is False:
+            log.info("Retrying uv installation with --no-cache flag...")
+            _wrap_command_with_callbacks(
+                [get_uv_bin(), 'pip', 'install', '--no-cache', '--python', '.venv/bin/python', '.'],
+                on_progress=on_progress,
+                on_error=on_error,
+            )
+    except Exception as e:
+        log.error(f"Installation failed: {str(e)}")
+        raise
 
 
 def remove(package: str):
@@ -137,8 +148,9 @@ def _wrap_command_with_callbacks(
     on_progress: Callable[[str], None] = lambda x: None,
     on_complete: Callable[[str], None] = lambda x: None,
     on_error: Callable[[str], None] = lambda x: None,
-) -> None:
-    """Run a command with progress callbacks."""
+) -> bool:
+    """Run a command with progress callbacks. Returns bool for cmd success."""
+    process = None
     try:
         all_lines = ''
         process = subprocess.Popen(
@@ -165,12 +177,16 @@ def _wrap_command_with_callbacks(
 
         if process.wait() == 0:  # return code: success
             on_complete(all_lines)
+            return True
         else:
             on_error(all_lines)
+            return False
     except Exception as e:
         on_error(str(e))
+        return False
     finally:
-        try:
-            process.terminate()
-        except:
-            pass
+        if process:
+            try:
+                process.terminate()
+            except:
+                pass
