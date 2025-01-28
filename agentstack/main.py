@@ -12,6 +12,7 @@ from agentstack.cli import (
     run_project,
     export_template,
 )
+from agentstack.cli import wizard
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
 from agentstack import generation
@@ -179,8 +180,7 @@ def _main():
         elif args.command in ["init", "i"]:
             init_project(args.slug_name, args.template, args.framework, args.wizard)
         elif args.command in ["wizard"]:
-            from agentstack import tui
-            tui.main()
+            wizard.main()
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()
