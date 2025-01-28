@@ -105,9 +105,9 @@ def init_project(
     log.success("🚀 AgentStack project generated successfully!\n")
     log.info(
         "  To get started, activate the virtual environment with:\n"
-        f"    cd {conf.PATH}\n"
-        "    source .venv/bin/activate\n\n"
+        f"    💫 cd {conf.PATH}\n"
+        "    🌟 source .venv/bin/activate\n\n"
         "  Run your new agent with:\n"
-        "    agentstack run\n\n"
+        "    ✨ agentstack run\n\n"
         "  Or, run `agentstack quickstart` or `agentstack docs` for more next steps.\n"
     )
