@@ -181,3 +181,5 @@ examples/tests/**/*
 uv.lock
 .DS_Store
 
+.python-version
+
