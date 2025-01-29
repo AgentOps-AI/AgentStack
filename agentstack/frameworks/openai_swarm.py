@@ -25,7 +25,7 @@ class SwarmFile(asttools.File):
     def get_base_class(self) -> ast.ClassDef:
         """
         A base class is the first class inside of the file that follows the
-        naming convention: `<FooBar>Swarm`
+        naming convention: `<FooBar>Stack`
         """
         try:
             return asttools.find_class_with_regex(self.tree, r'\w+Stack$')[0]
