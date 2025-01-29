@@ -647,9 +647,9 @@ class Button(Element):
     h_align: str = ALIGN_CENTER
     v_align: str = ALIGN_MIDDLE
     active: bool = False
-    selected: bool = False
     highlight: Optional[Color] = None
     on_confirm: Optional[Callable] = None
+    on_activate: Optional[Callable] = None
 
     def __init__(
         self,
@@ -659,10 +659,12 @@ class Button(Element):
         color: Optional[Color] = None,
         highlight: Optional[Color] = None,
         on_confirm: Optional[Callable] = None,
+        on_activate: Optional[Callable] = None,
     ):
         super().__init__(coords, dims, value=value, color=color)
         self.highlight = highlight or self.color.sat(80)
         self.on_confirm = on_confirm
+        self.on_activate = on_activate
 
     def confirm(self):
         """Handle button confirmation."""
@@ -676,6 +678,8 @@ class Button(Element):
         self.color = self.highlight or self.color
         if hasattr(self.color, 'reset_animation'):
             self.color.reset_animation()
+        if self.on_activate:
+            self.on_activate(self.value)
 
     def deactivate(self, save: bool = True):
         """Deactivate this module, making it no longer active."""
@@ -700,6 +704,7 @@ class RadioButton(Button):
     """A Button with an indicator that it is selected"""
 
     ON, OFF = "●", "○"
+    selected: bool = False
 
     def render(self):
         super().render()
@@ -853,7 +858,13 @@ class Select(Box):
             value=option,
             color=self.color,
             highlight=self.highlight,
+            on_activate=lambda value: self._button_on_activate(index, option),
         )
+
+    def _button_on_activate(self, index: int, option: str):
+        """Callback for when a button is activated."""
+        if self.on_change:
+            self.on_change(index, option)
 
     def _mark_active(self, index: int):
         """Mark a submodule as active."""
@@ -862,8 +873,9 @@ class Select(Box):
             module.deactivate()
 
         active = self.modules[index]
-        assert hasattr(active, 'activate')
-        active.activate()
+        if not active.active:
+            assert hasattr(active, 'activate')
+            active.activate()
 
         if self.on_change:
             self.on_change(index, self.options[index])
@@ -873,14 +885,14 @@ class Select(Box):
         for module in self.modules:
             if module.active:
                 return self.modules.index(module)
-        return 0
+        return None
 
     def get_modules(self):
         """Return a subset of modules to be rendered"""
         # since we can't always render all of the buttons, return a subset
         # that can be displayed in the available height.
         num_displayed = (self.height - 4) // self.button_height
-        index = self._get_active_index()
+        index = self._get_active_index() or 0
         count = len(self.modules)
 
         if count <= num_displayed:
@@ -929,7 +941,7 @@ class Select(Box):
         index = self._get_active_index()
 
         if index is None:
-            return
+            return  # can't select a non-active element
 
         if key.UP or key.DOWN:
             direction = -1 if key.UP else 1

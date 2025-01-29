@@ -43,7 +43,7 @@ FIELD_COLORS: FieldColors = {
 
 
 class LogoElement(Text):
-    #h_align = ALIGN_CENTER
+    # h_align = ALIGN_CENTER
 
     def __init__(self, coords: tuple[int, int], dims: tuple[int, int]):
         super().__init__(coords, dims)
@@ -68,8 +68,10 @@ class LogoElement(Text):
         super().render()
         for i, (x, y) in enumerate(self.stars):
             try:
+                # TODO condition to prevent rendering out of bounds
+                # TODO fix centering
                 self.grid.addch(y, x, '*', self._get_star_color(i).to_curses())
-                #self.grid.addch(y, self.left_offset + x, '*', self._get_star_color(i).to_curses())
+                # self.grid.addch(y, self.left_offset + x, '*', self._get_star_color(i).to_curses())
             except curses.error:
                 pass  # overflow
 
@@ -309,7 +311,6 @@ class FrameworkView(FormView):
     def __init__(self, app: 'App'):
         super().__init__(app)
         self.framework_key = Node()
-        self.framework_logo = Node()
         self.framework_name = Node()
         self.framework_description = Node()
 
@@ -329,7 +330,6 @@ class FrameworkView(FormView):
                 'description': "Unknown",
             }
 
-        self.framework_logo.value = data['name']
         self.framework_name.value = data['name']
         self.framework_description.value = data['description']
 
@@ -351,7 +351,7 @@ class FrameworkView(FormView):
             self.error("Framework is required.")
             return
 
-        self.app.state.update_active_project(framework=self.framework_key.value)
+        self.app.state.update_framework(self.framework_key.value)
         self.app.advance()
 
     def form(self) -> list[Renderable]:
@@ -374,7 +374,7 @@ class FrameworkView(FormView):
                         (1, 3),
                         (4, round(self.width / 2) - 10),
                         color=COLOR_FORM.sat(40),
-                        value=self.framework_logo,
+                        value=self.framework_name,
                     ),
                     BoldText(
                         (5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.framework_name
@@ -680,7 +680,11 @@ class ToolView(FormView):
                 ],
             ),
             Button(
-                (self.height - 6, self.width - 17), (3, 15), "Back", color=COLOR_BUTTON, on_confirm=self.back
+                (self.height - 6, 2),
+                (3, 15),
+                "Back",
+                color=COLOR_BUTTON,
+                on_confirm=self.back,
             ),
         ]
 
@@ -825,11 +829,9 @@ class State:
             'name': name,
             'description': description,
         }
-        self.active_project = name
 
-    def update_active_project(self, **kwargs):
-        for key, value in kwargs.items():
-            self.project[key] = value
+    def update_framework(self, framework: str):
+        self.project['framework'] = framework
 
     def create_agent(self, name: str, role: str, goal: str, backstory: str):
         self.agents[name] = {
