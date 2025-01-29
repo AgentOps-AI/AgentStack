@@ -1046,6 +1046,9 @@ class WizardApp(App):
 
     def advance(self, steps: int = 1):
         """Load the next view in the active workflow."""
+        assert self.active_workflow, "No active workflow set."
+        assert self.active_view, "No active view set."
+        
         workflow = self.workflow[self.active_workflow]
         current_index = workflow.index(self.active_view)
         view = workflow[current_index + steps]

@@ -661,6 +661,7 @@ class Button(Element):
     h_align: str = ALIGN_CENTER
     v_align: str = ALIGN_MIDDLE
     active: bool = False
+    selected: bool = False
     highlight: Optional[Color] = None
     on_confirm: Optional[Callable] = None
     on_activate: Optional[Callable] = None
@@ -887,6 +888,7 @@ class Select(Box):
             module.deactivate()
 
         active = self.modules[index]
+        assert hasattr(active, 'active')
         if not active.active:
             assert hasattr(active, 'activate')
             active.activate()
