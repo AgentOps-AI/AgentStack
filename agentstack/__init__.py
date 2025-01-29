@@ -9,8 +9,8 @@ from typing import Callable
 from pathlib import Path
 from agentstack import conf
 from agentstack.utils import get_framework
-from agentstack.agents import get_agent
-from agentstack.tasks import get_task
+from agentstack.agents import get_agent, get_all_agents, get_all_agent_names
+from agentstack.tasks import get_task, get_all_tasks, get_all_task_names
 from agentstack.inputs import get_inputs
 from agentstack import frameworks
 
@@ -22,7 +22,11 @@ ___all___ = [
     "get_tags", 
     "get_framework", 
     "get_agent", 
+    "get_all_agents",
+    "get_all_agent_names",
     "get_task", 
+    "get_all_tasks",
+    "get_all_task_names",
     "get_inputs", 
 ]
 

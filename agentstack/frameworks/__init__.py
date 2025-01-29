@@ -60,7 +60,7 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def wrap_tool(tool_func: Callable) -> Callable:
+    def wrap_tool(self, tool_func: Callable) -> Callable:
         """
         Wrap a tool function with framework-specific functionality.
         """
@@ -181,7 +181,9 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
         assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
 
         # First wrap with agentops
-        agentops_wrapped = wrap_method(tool_func)
+        # TODO method argument signature is needed by OpenAI Swarms to determine
+        # how to call it. Bypass temporarily.
+        agentops_wrapped = tool_func # wrap_method(tool_func)
         # Then apply framework decorators
         framework_wrapped = get_framework_module(get_framework()).wrap_tool(agentops_wrapped)
         tool_funcs.append(framework_wrapped)

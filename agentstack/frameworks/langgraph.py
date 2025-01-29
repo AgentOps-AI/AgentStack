@@ -18,7 +18,11 @@ GRAPH_NODE_START = 'START'
 GRAPH_NODE_END = 'END'
 GRAPH_NODE_TOOLS = 'tools'  # references the `ToolNode` instance
 GRAPH_NODE_TOOLS_CONDITION = 'tools_condition'
-GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END, GRAPH_NODE_TOOLS_CONDITION, )
+GRAPH_NODES_SPECIAL = (
+    GRAPH_NODE_START,
+    GRAPH_NODE_END,
+    GRAPH_NODE_TOOLS_CONDITION,
+)
 
 
 @dataclass
@@ -347,7 +351,7 @@ class LangGraphFile(asttools.File):
         for node in nodes:
             source, target = node.args
             source_name = _get_node_name(source)
-            #target_name = _get_node_name(target)
+            # target_name = _get_node_name(target)
             if source_name == GRAPH_NODE_TOOLS:  # TODO this is a bit brittle
                 nodes.remove(node)
             # if target_name == GRAPH_NODE_TOOLS:
@@ -430,7 +434,7 @@ class LangGraphFile(asttools.File):
         else:
             graph_instance = asttools.find_method_calls(self.get_run_method(), 'StateGraph')[0]
             _, end = self.get_node_range(graph_instance)
-        
+
         source, target = edge.source.name, edge.target.name
         # wrap the node names in quotes if they are not special nodes
         if edge.source.type != graph.NodeType.SPECIAL:
