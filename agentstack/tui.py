@@ -32,19 +32,20 @@ POS_ABSOLUTE = "absolute"
 
 class Node:  # TODO this needs a better name
     """
-    A simple data node that can be updated and have callbacks. This is used to 
-    populate and retrieve data from an input field inside the user interface. 
+    A simple data node that can be updated and have callbacks. This is used to
+    populate and retrieve data from an input field inside the user interface.
     """
+
     value: Any
     callbacks: list[Callable]
-    
+
     def __init__(self, value: Any = "") -> None:
         self.value = value
         self.callbacks = []
-    
+
     def __str__(self):
         return str(self.value)
-    
+
     def update(self, value: Any) -> None:
         self.value = value
         for callback in self.callbacks:
@@ -70,40 +71,41 @@ class Key:
         'PERCENT': 37,
         'MINUS': 45,
     }
-    
+
     def __init__(self, ch: int):
         self.ch = ch
-        log.debug(f"Key: {ch}")
-    
+
     def __getattr__(self, name):
         try:
             return self.ch == self.const[name]
         except KeyError:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
-    
+
     @property
     def chr(self):
         return chr(self.ch)
-    
+
     @property
     def is_numeric(self):
         return self.ch >= 48 and self.ch <= 57
-    
+
     @property
     def is_alpha(self):
-        return (self.ch >= 65 and self.ch <= 122)
+        return self.ch >= 65 and self.ch <= 122
 
 
 class Color:
     """
     Color class based on HSV color space, mapping directly to terminal color capabilities.
-    
+
     Hue: 0-360 degrees, mapped to 6 primary directions (0, 60, 120, 180, 240, 300)
     Saturation: 0-100%, mapped to 6 levels (0, 20, 40, 60, 80, 100)
     Value: 0-100%, mapped to 6 levels for colors, 24 levels for grayscale
     """
+
     # TODO: fallback for 16 color mode
     # TODO: fallback for no color mode
+    BACKGROUND = curses.COLOR_BLACK
     SATURATION_LEVELS = 12
     HUE_SEGMENTS = 6
     VALUE_LEVELS = 6
@@ -113,12 +115,14 @@ class Color:
     reversed: bool = False
     bold: bool = False
 
-    _color_map = {}      # Cache for color mappings
-    
-    def __init__(self, h: float, s: float = 100, v: float = 100, reversed: bool = False, bold: bool = False) -> None:
+    _color_map = {}  # Cache for color mappings
+
+    def __init__(
+        self, h: float, s: float = 100, v: float = 100, reversed: bool = False, bold: bool = False
+    ) -> None:
         """
         Initialize color with HSV values.
-        
+
         Args:
             h: Hue (0-360 degrees)
             s: Saturation (0-100 percent)
@@ -150,7 +154,7 @@ class Color:
 
         # Get RGB values based on hue segment
         max_level = self.COLOR_CUBE_SIZE - 1
-        if h_segment == 0:    # Red to Yellow
+        if h_segment == 0:  # Red to Yellow
             r, g, b = max_level, int(max_level * h_remainder), 0
         elif h_segment == 1:  # Yellow to Green
             r, g, b = int(max_level * (1 - h_remainder)), max_level, 0
@@ -160,7 +164,7 @@ class Color:
             r, g, b = 0, int(max_level * (1 - h_remainder)), max_level
         elif h_segment == 4:  # Blue to Magenta
             r, g, b = int(max_level * h_remainder), 0, max_level
-        else:                 # Magenta to Red
+        else:  # Magenta to Red
             r, g, b = max_level, 0, int(max_level * (1 - h_remainder))
 
         # Apply saturation
@@ -169,7 +173,7 @@ class Color:
             # Map the saturation to the number of levels
             s_level = int(s * (self.SATURATION_LEVELS - 1))
             s_factor = s_level / (self.SATURATION_LEVELS - 1)
-            
+
             r = int(r + (max_level - r) * (1 - s_factor))
             g = int(g + (max_level - g) * (1 - s_factor))
             b = int(b + (max_level - b) * (1 - s_factor))
@@ -186,7 +190,7 @@ class Color:
     def hue(self, h: float) -> 'Color':
         """Set the hue of the color."""
         return Color(h, self.s, self.v, self.reversed, self.bold)
-    
+
     def sat(self, s: float) -> 'Color':
         """Set the saturation of the color."""
         return Color(self.h, s, self.v, self.reversed, self.bold)
@@ -214,19 +218,15 @@ class Color:
             return self._get_color_pair(self._pair_number)
 
         color_number = self._get_closest_color()
-        
+
         # Create new pair if needed
         if color_number not in self._color_map:
             pair_number = len(self._color_map) + 1
-            #try:
-            # TODO make sure we don't overflow the available color pairs
-            curses.init_pair(pair_number, color_number, -1)
+            curses.init_pair(pair_number, color_number, self.BACKGROUND)
             self._color_map[color_number] = pair_number
-            #except:
-            #    return curses.color_pair(0)
         else:
             pair_number = self._color_map[color_number]
-        
+
         self._pair_number = pair_number
         return self._get_color_pair(pair_number)
 
@@ -238,12 +238,12 @@ class Color:
 
         curses.start_color()
         curses.use_default_colors()
-        
+
         try:
             curses.init_pair(1, 1, -1)
         except:
             raise RuntimeError("Terminal does not support required color features")
-        
+
         cls._color_map = {}
 
 
@@ -253,7 +253,7 @@ class ColorAnimation(Color):
     duration: float
     loop: bool
     _start_time: float
-    
+
     def __init__(self, start: Color, end: Color, duration: float, loop: bool = False):
         super().__init__(start.h, start.s, start.v)
         self.start = start
@@ -261,10 +261,10 @@ class ColorAnimation(Color):
         self.duration = duration
         self.loop = loop
         self._start_time = time.time()
-    
+
     def reset_animation(self):
         self._start_time = time.time()
-    
+
     def to_curses(self) -> int:
         elapsed = time.time() - self._start_time
         if elapsed > self.duration:
@@ -274,7 +274,7 @@ class ColorAnimation(Color):
                 return self.start.to_curses()  # prevents flickering :shrug:
             else:
                 return self.end.to_curses()
-        
+
         t = elapsed / self.duration
         h1, h2 = self.start.h, self.end.h
         # take the shortest path
@@ -285,11 +285,11 @@ class ColorAnimation(Color):
             else:
                 h2 += 360
         h = (h1 + t * (h2 - h1)) % 360
-        
+
         # saturation and value
         s = self.start.s + t * (self.end.s - self.start.s)
         v = self.start.v + t * (self.end.v - self.start.v)
-        
+
         return Color(h, s, v, reversed=self.start.reversed).to_curses()
 
 
@@ -306,15 +306,15 @@ class Renderable:
     last_render: float = 0
     padding: tuple[int, int] = (1, 1)
     positioning: str = POS_ABSOLUTE
-    
+
     def __init__(self, coords: tuple[int, int], dims: tuple[int, int], color: Optional[Color] = None):
         self.y, self.x = coords
         self.height, self.width = dims
         self.color = color or Color(0, 100, 0)
-    
-    def __repr__( self ):
+
+    def __repr__(self):
         return f"{type(self)} at ({self.y}, {self.x})"
-    
+
     @property
     def grid(self):
         # TODO cleanup
@@ -330,12 +330,11 @@ class Renderable:
                     raise ValueError("Invalid positioning value")
             else:
                 grid_func = curses.newwin
-            
+
             self._grid = grid_func(
-                self.height + self.padding[0], 
-                self.width + self.padding[1], 
-                self.y, 
-                self.x) # TODO this cant be bigger than the window
+                self.height + self.padding[0], self.width + self.padding[1], self.y, self.x
+            )  # TODO this cant be bigger than the window
+            self._grid.bkgd(' ', curses.color_pair(1))
         return self._grid
 
     def move(self, y: int, x: int):
@@ -346,7 +345,7 @@ class Renderable:
             elif self.positioning == POS_ABSOLUTE:
                 self._grid.mvwin(self.y, self.x)
             else:
-                raise ValueError("Cannot move a root window") 
+                raise ValueError("Cannot move a root window")
 
     @property
     def abs_x(self):
@@ -367,7 +366,12 @@ class Renderable:
 
     def hit(self, y, x):
         """Is the mouse click inside this module?"""
-        return y >= self.abs_y and y < self.abs_y + self.height and x >= self.abs_x and x < self.abs_x + self.width
+        return (
+            y >= self.abs_y
+            and y < self.abs_y + self.height
+            and x >= self.abs_x
+            and x < self.abs_x + self.width
+        )
 
     def click(self, y, x):
         """Handle mouse click event."""
@@ -387,12 +391,18 @@ class Renderable:
 class Element(Renderable):
     positioning: str = POS_RELATIVE
     word_wrap: bool = False
-    
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], value: Optional[Any] = "", color: Optional[Color] = None):
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        value: Optional[Any] = "",
+        color: Optional[Color] = None,
+    ):
         super().__init__(coords, dims, color=color)
         self.value = value
-    
-    def __repr__( self ):
+
+    def __repr__(self):
         return f"{type(self)} at ({self.y}, {self.x}) with value '{self.value[:20]}'"
 
     def _get_lines(self, value: str) -> list[str]:
@@ -405,8 +415,10 @@ class Element(Renderable):
         elif '\n' in value:
             splits = value.split('\n')
         else:
-            splits = [value, ]
-        
+            splits = [
+                value,
+            ]
+
         if self.v_align == ALIGN_TOP:
             # add empty elements below
             splits = splits + [''] * (self.height - len(splits))
@@ -416,7 +428,7 @@ class Element(Renderable):
             splits = [''] * pad + splits + [''] * pad
         elif self.v_align == ALIGN_BOTTOM:
             splits = [''] * (self.height - len(splits)) + splits
-        
+
         lines = []
         for line in splits:
             if self.h_align == ALIGN_LEFT:
@@ -425,10 +437,10 @@ class Element(Renderable):
                 line = line.rjust(self.width)
             elif self.h_align == ALIGN_CENTER:
                 line = line.center(self.width)
-            
-            lines.append(line[:self.width])
+
+            lines.append(line[: self.width])
         return lines
-    
+
     def render(self):
         for i, line in enumerate(self._get_lines(str(self.value))):
             self.grid.addstr(i, 0, line, self.color.to_curses())
@@ -436,10 +448,17 @@ class Element(Renderable):
 
 class NodeElement(Element):
     format: Optional[Callable] = None
-    
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], node: Node, color: Optional[Color] = None, format: Optional[Callable]=None):
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        node: Node,
+        color: Optional[Color] = None,
+        format: Optional[Callable] = None,
+    ):
         super().__init__(coords, dims, color=color)
-        self.node = node # TODO can also be str?
+        self.node = node  # TODO can also be str?
         self.value = str(node)
         self.format = format
         if isinstance(node, Node):
@@ -464,38 +483,46 @@ class Editable(NodeElement):
     filter: Optional[Callable] = None
     active: bool
     _original_value: Any
-    
-    def __init__(self, coords, dims, node, color=None, format: Optional[Callable]=None, filter: Optional[Callable]=None):
+
+    def __init__(
+        self,
+        coords,
+        dims,
+        node,
+        color=None,
+        format: Optional[Callable] = None,
+        filter: Optional[Callable] = None,
+    ):
         super().__init__(coords, dims, node=node, color=color, format=format)
         self.filter = filter
         self.active = False
         self._original_value = self.value
-    
+
     def click(self, y, x):
         if not self.active and self.hit(y, x):
             self.activate()
         elif self.active:  # click off
             self.deactivate()
             self.save()
-    
+
     def activate(self):
         """Make this module the active one; ie. editing or selected."""
         App.editing = True
         self.active = True
         self._original_value = self.value
-    
+
     def deactivate(self, save: bool = True):
         """Deactivate this module, making it no longer active."""
         App.editing = False
         self.active = False
         if save:
             self.save()
-    
+
     def save(self):
         if self.filter:
             self.value = self.filter(self.value)
         super().save()
-    
+
     def input(self, key: Key):
         if not self.active:
             return
@@ -510,7 +537,7 @@ class Editable(NodeElement):
         elif key.ENTER:
             self.deactivate()
             log.debug(f"Saving {self.value} to {self.node}")
-    
+
     def destroy(self):
         self.deactivate()
         super().destroy()
@@ -529,22 +556,35 @@ class ASCIIText(Text):
     formatter: Figlet
     _ascii_render: Optional[str] = None  # rendered content
     _ascii_value: Optional[str] = None  # value used to render content
-    
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], value: Optional[Any] = "", color: Optional[Color] = None, formatter: Optional[Figlet] = None):
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        value: Optional[Any] = "",
+        color: Optional[Color] = None,
+        formatter: Optional[Figlet] = None,
+    ):
         super().__init__(coords, dims, value=value, color=color)
         self.formatter = formatter or Figlet(font=self.default_font)
-    
+
     def _get_lines(self, value: str) -> list[str]:
         if not self._ascii_render or self._ascii_value != value:
             # prevent rendering on every frame
             self._ascii_value = value
             self._ascii_render = self.formatter.renderText(value) or ""
-        
+
         return super()._get_lines(self._ascii_render)
 
 
 class BoldText(Text):
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], value: Optional[Any] = "", color: Optional[Color] = None):
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        value: Optional[Any] = "",
+        color: Optional[Color] = None,
+    ):
         super().__init__(coords, dims, value=value, color=color)
         self.color.bold = True
 
@@ -556,35 +596,45 @@ class Title(BoldText):
 
 class TextInput(Editable):
     """
-    A module that allows the user to input text. 
+    A module that allows the user to input text.
     """
+
     H, V, BR = "━", "┃", "┛"
     padding: tuple[int, int] = (2, 1)
     border_color: Color
     active_color: Color
     word_wrap: bool = True
-    
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], node: Node, color: Optional[Color] = None, border: Optional[Color] = None, active: Optional[Color] = None, format: Optional[Callable]=None):
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        node: Node,
+        color: Optional[Color] = None,
+        border: Optional[Color] = None,
+        active: Optional[Color] = None,
+        format: Optional[Callable] = None,
+    ):
         super().__init__(coords, dims, node=node, color=color, format=format)
-        self.width, self.height = (dims[1]-1, dims[0]-1)
+        self.width, self.height = (dims[1] - 1, dims[0] - 1)
         self.border_color = border or self.color
         self.active_color = active or self.color
-    
+
     def activate(self):
         # change the border color to a highlight
         self._original_border_color = self.border_color
         self.border_color = self.active_color
         super().activate()
-    
+
     def deactivate(self, save: bool = True):
         if self.active and hasattr(self, '_original_border_color'):
             self.border_color = self._original_border_color
         super().deactivate(save)
-    
+
     def render(self) -> None:
         for i, line in enumerate(self._get_lines(str(self.value))):
             self.grid.addstr(i, 0, line, self.color.to_curses())
-        
+
         # # add border to bottom right like a drop shadow
         for x in range(self.width):
             self.grid.addch(self.height, x, self.H, self.border_color.to_curses())
@@ -600,17 +650,25 @@ class Button(Element):
     selected: bool = False
     highlight: Optional[Color] = None
     on_confirm: Optional[Callable] = None
-    
-    def __init__( self, coords: tuple[int, int], dims: tuple[int, int], value: Optional[Any] = "", color: Optional[Color] = None, highlight: Optional[Color] = None, on_confirm: Optional[Callable] = None):
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        value: Optional[Any] = "",
+        color: Optional[Color] = None,
+        highlight: Optional[Color] = None,
+        on_confirm: Optional[Callable] = None,
+    ):
         super().__init__(coords, dims, value=value, color=color)
         self.highlight = highlight or self.color.sat(80)
         self.on_confirm = on_confirm
-    
+
     def confirm(self):
         """Handle button confirmation."""
         if self.on_confirm:
             self.on_confirm()
-    
+
     def activate(self):
         """Make this module the active one; ie. editing or selected."""
         self.active = True
@@ -640,8 +698,9 @@ class Button(Element):
 
 class RadioButton(Button):
     """A Button with an indicator that it is selected"""
+
     ON, OFF = "●", "○"
-    
+
     def render(self):
         super().render()
         icon = self.ON if self.selected else self.OFF
@@ -650,6 +709,7 @@ class RadioButton(Button):
 
 class CheckButton(RadioButton):
     """A Button with an indicator that it is selected"""
+
     ON, OFF = "■", "□"
 
 
@@ -663,13 +723,19 @@ class Contains(Renderable):
     last_render: float = 0
     parent: Optional['Contains'] = None
     modules: list[Renderable]
-    
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], modules: list[Renderable], color: Optional[Color] = None):
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        modules: list[Renderable],
+        color: Optional[Color] = None,
+    ):
         super().__init__(coords, dims, color=color)
         self.modules = []
         for module in modules:
             self.append(module)
-    
+
     def append(self, module: Renderable):
         module.parent = self
         self.modules.append(module)
@@ -702,7 +768,8 @@ class Contains(Renderable):
 
 class Box(Contains):
     """A container with a border"""
-    H, V, TL, TR, BL, BR =  "─", "│", "┌", "┐", "└", "┘"
+
+    H, V, TL, TR, BL, BR = "─", "│", "┌", "┐", "└", "┘"
 
     def render(self) -> None:
         w: int = self.width - 1
@@ -718,7 +785,7 @@ class Box(Contains):
         self.grid.addch(h, 0, self.BL, self.color.to_curses())
         self.grid.addch(0, w, self.TR, self.color.to_curses())
         self.grid.addch(h, w, self.BR, self.color.to_curses())
-        
+
         for module in self.get_modules():
             module.render()
             module.last_render = time.time()
@@ -729,23 +796,27 @@ class Box(Contains):
 
 class LightBox(Box):
     """A Box with light borders"""
+
     pass
 
 
 class HeavyBox(Box):
     """A Box with heavy borders"""
-    H, V, TL, TR, BL, BR =  "━", "┃", "┏", "┓", "┗", "┛"
+
+    H, V, TL, TR, BL, BR = "━", "┃", "┏", "┓", "┗", "┛"
 
 
 class DoubleBox(Box):
     """A Box with double borders"""
-    H, V, TL, TR, BL, BR =  "═", "║", "╔", "╗", "╚", "╝"
+
+    H, V, TL, TR, BL, BR = "═", "║", "╔", "╗", "╚", "╝"
 
 
 class Select(Box):
     """
     Build a select menu out of buttons.
     """
+
     UP, DOWN = "▲", "▼"
     on_change: Optional[Callable] = None
     on_select: Optional[Callable] = None
@@ -753,14 +824,23 @@ class Select(Box):
     button_height: int = 3
     show_up: bool = False
     show_down: bool = False
-    
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], options: list[str], color: Optional[Color] = None, highlight: Optional[Color] = None, on_change: Optional[Callable] = None, on_select: Optional[Callable] = None) -> None:
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        options: list[str],
+        color: Optional[Color] = None,
+        highlight: Optional[Color] = None,
+        on_change: Optional[Callable] = None,
+        on_select: Optional[Callable] = None,
+    ) -> None:
         super().__init__(coords, dims, [], color=color)
         self.highlight = highlight or Color(0, 100, 100)
         self.options = options
         self.on_change = on_change
         self.on_select = on_select
-        
+
         for i, option in enumerate(self.options):
             self.append(self._get_button(i, option))
         self._mark_active(0)
@@ -768,11 +848,11 @@ class Select(Box):
     def _get_button(self, index: int, option: str) -> Button:
         """Helper to create a button for an option"""
         return self.button_cls(
-            ((index * self.button_height) + 1, 1), 
-            (self.button_height, self.width - 2), 
-            value=option, 
-            color=self.color, 
-            highlight=self.highlight, 
+            ((index * self.button_height) + 1, 1),
+            (self.button_height, self.width - 2),
+            value=option,
+            color=self.color,
+            highlight=self.highlight,
         )
 
     def _mark_active(self, index: int):
@@ -780,11 +860,11 @@ class Select(Box):
         for module in self.modules:
             assert hasattr(module, 'deactivate')
             module.deactivate()
-        
+
         active = self.modules[index]
         assert hasattr(active, 'activate')
         active.activate()
-        
+
         if self.on_change:
             self.on_change(index, self.options[index])
 
@@ -798,7 +878,7 @@ class Select(Box):
     def get_modules(self):
         """Return a subset of modules to be rendered"""
         # since we can't always render all of the buttons, return a subset
-        # that can be displayed in the available height. 
+        # that can be displayed in the available height.
         num_displayed = (self.height - 4) // self.button_height
         index = self._get_active_index()
         count = len(self.modules)
@@ -826,13 +906,13 @@ class Select(Box):
         for module in self.modules:
             if module.last_render:
                 module.grid.erase()
-        
+
         self.grid.erase()
         if self.show_up:
-            self.grid.addstr(1, 1, self.UP.center(self.width-2), self.color.to_curses())
+            self.grid.addstr(1, 1, self.UP.center(self.width - 2), self.color.to_curses())
         if self.show_down:
-            self.grid.addstr(self.height - 2, 1, self.DOWN.center(self.width-2), self.color.to_curses())
-        
+            self.grid.addstr(self.height - 2, 1, self.DOWN.center(self.width - 2), self.color.to_curses())
+
         super().render()
 
     def select(self, option: Button):
@@ -847,10 +927,10 @@ class Select(Box):
     def input(self, key: Key):
         """Handle key input event."""
         index = self._get_active_index()
-        
+
         if index is None:
             return
-        
+
         if key.UP or key.DOWN:
             direction = -1 if key.UP else 1
             index = direction + index
@@ -859,9 +939,9 @@ class Select(Box):
             self._mark_active(index)
         elif key.SPACE or key.ENTER:
             self.select(self.modules[index])
-        
+
         super().input(key)
-    
+
     def click(self, y, x):
         # TODO there is a bug when you click on the last element in a scrollable list
         for module in self.modules:
@@ -874,14 +954,26 @@ class Select(Box):
 
 class RadioSelect(Select):
     """Allow one button to be `selected` at a time"""
+
     button_cls = RadioButton
 
-    def __init__(self, coords: tuple[int, int], dims: tuple[int, int], options: list[str], color: Optional[Color] = None, highlight: Optional[Color] = None, on_change: Optional[Callable] = None, on_select: Optional[Callable] = None) -> None:
-        super().__init__(coords, dims, options, color=color, highlight=highlight, on_change=on_change, on_select=on_select)
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        options: list[str],
+        color: Optional[Color] = None,
+        highlight: Optional[Color] = None,
+        on_change: Optional[Callable] = None,
+        on_select: Optional[Callable] = None,
+    ) -> None:
+        super().__init__(
+            coords, dims, options, color=color, highlight=highlight, on_change=on_change, on_select=on_select
+        )
         self.select(self.modules[0])  # type: ignore[arg-type]
 
     def select(self, module: Button):
-        """Radio buttons only allow a single selection. """
+        """Radio buttons only allow a single selection."""
         for _module in self.modules:
             assert hasattr(_module, 'selected')
             _module.selected = False
@@ -890,46 +982,48 @@ class RadioSelect(Select):
 
 class MultiSelect(Select):
     """Allow multiple buttons to be `selected` at a time"""
+
     button_cls = CheckButton
 
 
 class ColorWheel(Element):
     """
-    A module used for testing color display. 
+    A module used for testing color display.
     """
+
     width: int = 80
     height: int = 24
-    
+
     def __init__(self, coords: tuple[int, int], duration: float = 10.0):
         super().__init__(coords, (self.height, self.width))
         self.duration = duration
         self.start_time = time.time()
-    
+
     def render(self) -> None:
         self.grid.erase()
-        center_y, center_x  = 12, 22
+        center_y, center_x = 12, 22
         radius = 10
         elapsed = time.time() - self.start_time
         hue_offset = (elapsed / self.duration) * 360  # animate
-        
+
         for y in range(center_y - radius, center_y + radius + 1):
             for x in range(center_x - radius * 2, center_x + radius * 2 + 1):
                 # Convert position to polar coordinates
                 dx = (x - center_x) / 2  # Compensate for terminal character aspect ratio
                 dy = y - center_y
-                distance = math.sqrt(dx*dx + dy*dy)
-                
+                distance = math.sqrt(dx * dx + dy * dy)
+
                 if distance <= radius:
                     # Convert to HSV
                     angle = math.degrees(math.atan2(dy, dx))
-                    #h = (angle + 360) % 360
+                    # h = (angle + 360) % 360
                     h = (angle + hue_offset) % 360
                     s = (distance / radius) * 100
-                    v = 100 # (distance / radius) * 100
-                    
+                    v = 100  # (distance / radius) * 100
+
                     color = Color(h, s, v)
                     self.grid.addstr(y, x, "█", color.to_curses())
-        
+
         x = 50
         y = 4
         for i in range(0, curses.COLORS):
@@ -940,15 +1034,16 @@ class ColorWheel(Element):
                 x += 3
             if x >= self.width - 3:
                 break
-        
+
         self.grid.refresh()
 
 
 class DebugElement(Element):
     """Show fps and color usage."""
+
     def __init__(self, coords: tuple[int, int]):
         super().__init__(coords, (1, 24))
-    
+
     def render(self) -> None:
         self.grid.addstr(0, 1, f"FPS: {1 / (time.time() - self.last_render):.0f}")
         self.grid.addstr(0, 10, f"Colors: {len(Color._color_map)}/{curses.COLORS}")
@@ -968,7 +1063,7 @@ class View(Contains):
     def init(self, dims: tuple[int, int]) -> None:
         self.height, self.width = dims
         self.modules = self.layout()
-        
+
         if conf.DEBUG:
             self.append(DebugElement((1, 1)))
 
@@ -976,6 +1071,7 @@ class View(Contains):
     def grid(self):
         if not self._grid:
             self._grid = curses.newwin(self.height, self.width, self.y, self.x)
+            self._grid.bkgd(' ', curses.color_pair(1))
         return self._grid
 
     def layout(self) -> list[Renderable]:
@@ -995,20 +1091,23 @@ class App:
     view: Optional[View] = None  # the active view
     views: dict[str, type[View]] = {}
     shortcuts: dict[str, str] = {}
-    
+
     def __init__(self, stdscr: curses.window) -> None:
         self.stdscr = stdscr
         self.height, self.width = self.stdscr.getmaxyx()  # TODO dynamic resizing
-        
+
         if not self.width >= self.min_width or not self.height >= self.min_height:
-            raise RenderException(f"Terminal window is too small. Resize to at least {self.min_width}x{self.min_height}.")
-        
+            raise RenderException(
+                f"Terminal window is too small. Resize to at least {self.min_width}x{self.min_height}."
+            )
+
         curses.curs_set(0)
         stdscr.nodelay(True)
         stdscr.timeout(10)  # balance framerate with cpu usage
         curses.mousemask(curses.BUTTON1_CLICKED | curses.REPORT_MOUSE_POSITION)
-        
+
         Color.initialize()
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
 
     def add_view(self, name: str, view_cls: type[View], shortcut: Optional[str] = None) -> None:
         self.views[name] = view_cls
@@ -1019,7 +1118,7 @@ class App:
         if self.view:
             self.view.destroy()
             self.view = None
-        
+
         view_cls = self.views[view_name]
         self.view = view_cls(self)
         self.view.init((self.height, self.width))
@@ -1032,7 +1131,7 @@ class App:
             current_time = time.time()
             delta = current_time - last_frame
             ch = self.stdscr.getch()
-            
+
             if ch == curses.KEY_MOUSE:
                 try:
                     _, x, y, _, bstate = curses.getmouse()
@@ -1043,13 +1142,13 @@ class App:
                     pass
             elif ch != -1:
                 self.input(ch)
-            
+
             if not App.editing:
                 if ch == ord('q'):
                     break
                 elif ch in [ord(x) for x in self.shortcuts.keys()]:
                     self.load(self.shortcuts[chr(ch)])
-            
+
             if delta >= self.frame_time or ch != -1:
                 self.render()
                 delta = 0
@@ -1087,29 +1186,32 @@ class App:
     def input(self, ch: int):
         """Handle key input event."""
         key = Key(ch)
-        
+
         if key.TAB:
             self._select_next_tabbable()
-        
+
         if self.view:
             self.view.input(key)
-    
+
     def _get_tabbable_modules(self):
         """
-        Search through the tree of modules to find selectable elements. 
+        Search through the tree of modules to find selectable elements.
         """
+
         def _get_activateable(module: Element):
             """Find modules with an `activate` method"""
             if hasattr(module, 'activate'):
                 yield module
             for submodule in getattr(module, 'modules', []):
                 yield from _get_activateable(submodule)
+
         return list(_get_activateable(self.view))
 
     def _select_next_tabbable(self):
         """
-        Activate the next tabbable module in the list. 
+        Activate the next tabbable module in the list.
         """
+
         def _get_active_module(module: Element):
             if hasattr(module, 'active') and module.active:
                 return module
@@ -1132,4 +1234,3 @@ class App:
             modules[next_index].activate()  # TODO this isn't working
         elif modules:
             modules[0].activate()
-
