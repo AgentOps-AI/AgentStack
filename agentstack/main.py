@@ -60,7 +60,7 @@ def _main():
         "init", aliases=["i"], help="Initialize a directory for the project", parents=[global_parser]
     )
     init_parser.add_argument("slug_name", nargs="?", help="The directory name to place the project in")
-    init_parser.add_argument("--wizard", "-w", action="store_true", help="Use the setup wizard")
+    init_parser.add_argument("--wizard", "-w", action="store_true", help="Use the setup wizard [deprecated]")
     init_parser.add_argument("--template", "-t", help="Agent template to use")
     init_parser.add_argument("--framework", "-f", help="Framework to use")
 
@@ -178,7 +178,11 @@ def _main():
         elif args.command in ["templates"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["init", "i"]:
-            init_project(args.slug_name, args.template, args.framework, args.wizard)
+            if args.wizard:
+                log.warning("init --wizard is deprecated. Use `agentstack wizard`")
+                wizard.main()
+            else:
+                init_project(args.slug_name, args.template, args.framework)
         elif args.command in ["wizard"]:
             wizard.main()
         elif args.command in ["tools", "t"]:

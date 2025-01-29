@@ -35,7 +35,6 @@ def init_project(
     slug_name: Optional[str] = None,
     template: Optional[str] = None,
     framework: Optional[str] = None,
-    use_wizard: bool = False,
     template_data: Optional[TemplateConfig] = None,
 ):
     """
@@ -60,12 +59,7 @@ def init_project(
         raise Exception(f"Directory already exists: {conf.PATH}")
 
     if not template_data:
-        if template and use_wizard:
-            raise Exception("Template and wizard flags cannot be used together")
-        
-        if use_wizard:
-            raise NotImplementedError("Run `agentstack wizard` to use the wizard")
-        elif template:
+        if template:
             log.debug(f"Initializing new project with template: {template}")
             template_data = TemplateConfig.from_user_input(template)
         else:
