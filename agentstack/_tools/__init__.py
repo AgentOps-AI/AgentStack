@@ -13,6 +13,12 @@ TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir,
 TOOLS_CONFIG_FILENAME: str = 'config.json'
 
 
+class ToolCategory(pydantic.BaseModel):
+    name: str
+    title: str  # human readable title
+    description: str
+
+
 class ToolConfig(pydantic.BaseModel):
     """
     This represents the configuration data for a tool.
@@ -98,6 +104,19 @@ class ToolConfig(pydantic.BaseModel):
                 f"Are you sure you have installed the tool? (agentstack tools add {self.name})\n"
                 f"ModuleNotFoundError: {e}"
             )
+
+
+def get_all_tool_categories() -> list[ToolCategory]:
+    categories = []
+    filename = TOOLS_DIR / 'categories.json'
+    data = open_json_file(filename)
+    for name, category in data.items():
+        categories.append(ToolCategory(name=name, **category))
+    return categories
+
+
+def get_all_tool_category_names() -> list[str]:
+    return [category.name for category in get_all_tool_categories()]
 
 
 def get_all_tool_paths() -> list[Path]:

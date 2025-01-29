@@ -1156,6 +1156,8 @@ class App:
         last_frame = time.time()
         self._running = True
         while self._running:
+            self.height, self.width = self.stdscr.getmaxyx()
+
             current_time = time.time()
             delta = current_time - last_frame
             ch = self.stdscr.getch()

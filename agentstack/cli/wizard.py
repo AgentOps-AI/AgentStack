@@ -12,7 +12,12 @@ from agentstack import conf, log
 from agentstack.utils import is_snake_case
 from agentstack.tui import *
 from agentstack.frameworks import SUPPORTED_FRAMEWORKS, CREWAI, LANGGRAPH
-from agentstack._tools import get_all_tools, get_tool
+from agentstack._tools import (
+    get_all_tools, 
+    get_tool, 
+    get_all_tool_categories, 
+    get_all_tool_category_names, 
+)
 from agentstack.proj_templates import TemplateConfig
 from agentstack.cli import LOGO, init_project
 
@@ -552,13 +557,6 @@ class ModelView(FormView):
 class ToolCategoryView(FormView):
     title = "Select a Tool Category"
 
-    # TODO category descriptions for all valid categories
-    TOOL_CATEGORY_OPTIONS = {
-        "web": {'name': "Web Tools", 'description': "Tools that interact with the web."},
-        "file": {'name': "File Tools", 'description': "Tools that interact with the file system."},
-        "code": {'name': "Code Tools", 'description': "Tools that interact with code."},
-    }
-
     def __init__(self, app: 'App'):
         super().__init__(app)
         self.tool_category_key = Node()
@@ -566,28 +564,18 @@ class ToolCategoryView(FormView):
         self.tool_category_description = Node()
 
     def set_tool_category_selection(self, index: int, value: str):
-        key, data = None, None
-        for _key, _value in self.TOOL_CATEGORY_OPTIONS.items():
-            if _value['name'] == value:  # search by name
-                key = _key
-                data = _value
+        tool_category = None
+        for _tool_category in get_all_tool_categories():
+            if _tool_category.name == value:  # search by name
+                tool_category = _tool_category
                 break
 
-        if not key or not data:
-            key = value
-            data = {
-                'name': "Unknown",
-                'description': "Unknown",
-            }
-
-        self.tool_category_name.value = data['name']
-        self.tool_category_description.value = data['description']
+        if tool_category:
+            self.tool_category_name.value = tool_category.title
+            self.tool_category_description.value = tool_category.description
 
     def set_tool_category_choice(self, index: int, value: str):
         self.tool_category_key.value = value
-
-    def get_tool_category_options(self) -> list[str]:
-        return sorted(list({tool.category for tool in get_all_tools()}))
 
     def submit(self):
         if not self.tool_category_key.value:
@@ -605,7 +593,7 @@ class ToolCategoryView(FormView):
             RadioSelect(
                 (11, 1),
                 (self.height - 18, round(self.width / 2) - 3),
-                options=self.get_tool_category_options(),
+                options=get_all_tool_category_names(),
                 color=COLOR_FORM_BORDER,
                 highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
                 on_change=self.set_tool_category_selection,
@@ -616,14 +604,17 @@ class ToolCategoryView(FormView):
                 (self.height - 18, round(self.width / 2) - 3),
                 color=COLOR_FORM_BORDER,
                 modules=[
-                    BoldText(
+                    ASCIIText(
                         (1, 3),
-                        (1, round(self.width / 2) - 10),
-                        color=COLOR_FORM,
+                        (4, round(self.width / 2) - 10),
+                        color=COLOR_FORM.sat(40),
                         value=self.tool_category_name,
                     ),
+                    BoldText(
+                        (5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.tool_category_name
+                    ),
                     WrappedText(
-                        (2, 3),
+                        (7, 3),
                         (5, round(self.width / 2) - 10),
                         color=COLOR_FORM.sat(50),
                         value=self.tool_category_description,
@@ -691,9 +682,17 @@ class ToolView(FormView):
                 (self.height - 18, round(self.width / 2) - 3),
                 color=COLOR_FORM_BORDER,
                 modules=[
-                    BoldText((1, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.tool_name),
+                    ASCIIText(
+                        (1, 3),
+                        (4, round(self.width / 2) - 10),
+                        color=COLOR_FORM.sat(40),
+                        value=self.tool_name,
+                    ),
+                    BoldText(
+                        (5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.tool_name
+                    ),
                     WrappedText(
-                        (2, 3),
+                        (7, 3),
                         (5, round(self.width / 2) - 10),
                         color=COLOR_FORM.sat(50),
                         value=self.tool_description,

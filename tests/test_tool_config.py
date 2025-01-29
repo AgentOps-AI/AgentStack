@@ -2,7 +2,16 @@ import json
 import unittest
 import re
 from pathlib import Path
-from agentstack._tools import ToolConfig, get_all_tool_paths, get_all_tool_names
+from agentstack.exceptions import ValidationError
+from agentstack._tools import (
+    ToolConfig, 
+    get_all_tools, 
+    get_all_tool_paths, 
+    get_all_tool_names, 
+    ToolCategory, 
+    get_all_tool_categories, 
+    get_all_tool_category_names, 
+)
 
 BASE_PATH = Path(__file__).parent
 
@@ -43,6 +52,17 @@ class ToolConfigTest(unittest.TestCase):
                             "All dependencies must include version specifications."
                         )
 
+    def test_tool_category(self):
+        categories = get_all_tool_categories()
+        assert categories
+        for category in categories:
+            assert category.name in get_all_tool_category_names()
+            assert isinstance(category, ToolCategory)
+
+    def test_all_tools_have_valid_categories(self):
+        for tool_config in get_all_tools():
+            assert tool_config.category in get_all_tool_category_names()
+
     def test_all_json_configs_from_tool_name(self):
         for tool_name in get_all_tool_names():
             config = ToolConfig.from_tool_name(tool_name)
@@ -60,3 +80,7 @@ class ToolConfigTest(unittest.TestCase):
                 )
 
             assert config.name == path.stem
+
+    def test_get_missing_tool(self):
+        with self.assertRaises(ValidationError):
+            ToolConfig.from_tool_name("missing_tool")
