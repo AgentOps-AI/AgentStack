@@ -1,7 +1,7 @@
 # {{ cookiecutter.project_metadata.project_name }}
 {{ cookiecutter.project_metadata.description }}
 
-## How to build your OpenAI Swarms Agent
+## How to build your OpenAI Swarm Agent
 ### With the CLI
 Add an agent using AgentStack with the CLI:  
 `agentstack generate agent <agent_name>`  
