@@ -230,15 +230,6 @@ def validate_project() -> None:
         )
 
 
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse the llm string into a `LLM` dataclass.
-    Crew separates providers and models with a forward slash.
-    """
-    provider, model = llm.split('/')
-    return provider, model
-
-
 def get_task_method_names() -> list[str]:
     """
     Get a list of task names (methods with an @task decorator).

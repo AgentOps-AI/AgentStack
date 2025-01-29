@@ -5,7 +5,7 @@ import pydantic
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
 from agentstack import conf, log
-from agentstack import frameworks
+from agentstack.providers import parse_provider_model
 from agentstack.exceptions import ValidationError
 
 
@@ -71,11 +71,11 @@ class AgentConfig(pydantic.BaseModel):
 
     @property
     def provider(self) -> str:
-        return frameworks.parse_llm(self.llm)[0]
+        return parse_provider_model(self.llm)[0]
 
     @property
     def model(self) -> str:
-        return frameworks.parse_llm(self.llm)[1]
+        return parse_provider_model(self.llm)[1]
 
     @property
     def prompt(self) -> str:

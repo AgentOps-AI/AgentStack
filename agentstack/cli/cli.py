@@ -4,15 +4,9 @@ from agentstack import conf, log
 from agentstack.conf import ConfigFile
 from agentstack.exceptions import ValidationError
 from agentstack.utils import validator_not_empty, is_snake_case
+from agentstack import providers
 
 
-PREFERRED_MODELS = [
-    'openai/gpt-4o',
-    'anthropic/claude-3-5-sonnet',
-    'openai/o1-preview',
-    'openai/gpt-4-turbo',
-    'anthropic/claude-3-opus',
-]
 LOGO = """\
     ___       ___       ___       ___       ___       ___       ___       ___       ___       ___   
    /\  \     /\  \     /\  \     /\__\     /\  \     /\  \     /\  \     /\  \     /\  \     /\__\  
@@ -46,7 +40,7 @@ def configure_default_model():
     other_msg = "Other (enter a model name)"
     model = inquirer.list_input(
         message="Which model would you like to use?",
-        choices=PREFERRED_MODELS + [other_msg],
+        choices=providers.get_preferred_model_ids() + [other_msg],
     )
 
     if model == other_msg:  # If the user selects "Other", prompt for a model name

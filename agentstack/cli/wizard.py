@@ -12,6 +12,7 @@ from agentstack import conf, log
 from agentstack.utils import is_snake_case
 from agentstack.tui import *
 from agentstack.frameworks import SUPPORTED_FRAMEWORKS, CREWAI, LANGGRAPH
+from agentstack import providers
 from agentstack._tools import (
     get_all_tools, 
     get_tool, 
@@ -455,41 +456,9 @@ class AgentView(FormView):
 class ModelView(FormView):
     title = "Select a Model"
 
-    MODEL_OPTIONS = [
-        {
-            'value': "anthropic/claude-3.5-sonnet",
-            'name': "Claude 3.5 Sonnet",
-            'provider': "Anthropic",
-            'description': "A fast and cost-effective model.",
-        },
-        {
-            'value': "gpt-3.5-turbo",
-            'name': "GPT-3.5 Turbo",
-            'provider': "OpenAI",
-            'description': "A fast and cost-effective model.",
-        },
-        {
-            'value': "gpt-4",
-            'name': "GPT-4",
-            'provider': "OpenAI",
-            'description': "A more advanced model with better understanding.",
-        },
-        {
-            'value': "gpt-4o",
-            'name': "GPT-4o",
-            'provider': "OpenAI",
-            'description': "The latest and most powerful model.",
-        },
-        {
-            'value': "gpt-4o-mini",
-            'name': "GPT-4o Mini",
-            'provider': "OpenAI",
-            'description': "A smaller, faster version of GPT-4o.",
-        },
-    ]
-
     def __init__(self, app: 'App'):
         super().__init__(app)
+        self.MODEL_CHOICES = providers.get_preferred_models()
         self.model_choice = Node()
         self.model_logo = Node()
         self.model_name = Node()
@@ -497,10 +466,10 @@ class ModelView(FormView):
 
     def set_model_selection(self, index: int, value: str):
         """Update the content of the model info box."""
-        model = self.MODEL_OPTIONS[index]
-        self.model_logo.value = model['provider']
-        self.model_name.value = model['name']
-        self.model_description.value = model['description']
+        model = self.MODEL_CHOICES[index]
+        self.model_logo.value = model.provider
+        self.model_name.value = model.name
+        self.model_description.value = model.description
 
     def set_model_choice(self, index: int, value: str):
         """Save the selection."""
@@ -508,7 +477,7 @@ class ModelView(FormView):
         self.model_choice.value = value
 
     def get_model_options(self):
-        return [model['value'] for model in self.MODEL_OPTIONS]
+        return providers.get_preferred_model_ids()
 
     def submit(self):
         if not self.model_choice.value:
