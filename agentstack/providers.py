@@ -7,37 +7,39 @@ from agentstack.exceptions import ValidationError
 PREFERRED_MODELS = {
     'groq/deepseek-r1-distill-llama-70b': {
         'name': "DeepSeek R1 Distill Llama 70B",
-        'provider': "Groq",
+        'host': "Groq",
         'description': "The Groq DeepSeek R1 Distill Llama 70B model",
+    },
+    'deepseek/deepseek-reasoner': {
+        'name': "DeepSeek Reasoner",
+        'host': "DeepSeek",
+        'description': "The DeepSeek Reasoner model hosted by DeepSeek",
     },
     'openai/o1-preview': {
         'name': "o1 Preview",
-        'provider': "OpenAI",
+        'host': "OpenAI",
         'description': "The OpenAI o1 Preview model",
     },
     'anthropic/claude-3-5-sonnet': {
         'name': "Claude 3.5 Sonnet",
-        'provider': "Anthropic",
+        'host': "Anthropic",
         'description': "The Anthropic Claude 3.5 Sonnet model",
     },
-    'deepseek/deepseek-reasoner': {
-        'name': "DeepSeek Reasoner",
-        'provider': "DeepSeek",
-        'description': "The DeepSeek Reasoner model hosted by DeepSeek",
-    },
-    'openrouter/deepseek/deepseek-r1': {
-        'name': "DeepSeek R1",
-        'provider': "OpenRouter",
-        'description': "The DeepSeek R1 model hosted by OpenRouter",
-    },
+    # TODO there is no publicly available OpenRouter implementation for 
+    # LangChain, so we can't recommend this yet. 
+    # 'openrouter/deepseek/deepseek-r1': {
+    #     'name': "DeepSeek R1",
+    #     'host': "OpenRouter",
+    #     'description': "The DeepSeek R1 model hosted by OpenRouter",
+    # },
     'openai/gpt-4o': {
         'name': "GPT-4o",
-        'provider': "OpenAI",
+        'host': "OpenAI",
         'description': "The OpenAI GPT-4o model",
     },
     'anthropic/claude-3-opus': {
         'name': "Claude 3 Opus",
-        'provider': "Anthropic",
+        'host': "Anthropic",
         'description': "The Anthropic Claude 3 Opus model",
     },
 }
@@ -59,7 +61,7 @@ def parse_provider_model(model_id: str) -> tuple[str, str]:
 class ProviderConfig(pydantic.BaseModel):
     id: str
     name: Optional[str]
-    provider: Optional[str]
+    host: Optional[str]
     description: Optional[str]
     provider = property(lambda self: parse_provider_model(self.id)[0])
     model = property(lambda self: parse_provider_model(self.id)[1])

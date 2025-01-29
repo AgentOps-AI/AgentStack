@@ -467,7 +467,7 @@ class ModelView(FormView):
     def set_model_selection(self, index: int, value: str):
         """Update the content of the model info box."""
         model = self.MODEL_CHOICES[index]
-        self.model_logo.value = model.provider
+        self.model_logo.value = model.host
         self.model_name.value = model.name
         self.model_description.value = model.description
 

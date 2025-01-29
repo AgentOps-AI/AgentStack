@@ -11,6 +11,7 @@ from agentstack import frameworks
 from agentstack._tools import ToolConfig, get_all_tools
 from agentstack.agents import AGENTS_FILENAME, AgentConfig
 from agentstack.tasks import TASKS_FILENAME, TaskConfig
+from agentstack.providers import get_preferred_model_ids
 from agentstack import graph
 
 BASE_PATH = Path(__file__).parent
@@ -103,6 +104,14 @@ class TestFrameworks(unittest.TestCase):
         frameworks.add_tool(self._get_test_tool(), 'agent_name')
         tool_names = frameworks.get_agent_tool_names('agent_name')
         assert tool_names == ['test_tool']
+
+    @parameterized.expand([(x, ) for x in get_preferred_model_ids()])
+    def test_add_agent_preferred_models(self, llm: str):
+        """Test adding an Agent to the graph with all preferred models we support"""
+        self._populate_min_entrypoint()
+        agent = self._get_test_agent()
+        agent.llm = llm
+        frameworks.add_agent(agent)
 
     def test_add_tool(self):
         self._populate_max_entrypoint()

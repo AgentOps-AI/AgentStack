@@ -66,6 +66,16 @@ PROVIDERS = {
         module_name='langchain_ollama.chat_models',
         dependency='langchain-ollama',
     ),
+    'groq': LangGraphProvider(
+        class_name='ChatGroq',
+        module_name='langchain_groq',
+        dependency='langchain-groq',
+    ),
+    'deepseek': LangGraphProvider(
+        class_name='ChatDeepSeek',
+        module_name='langchain_deepseek',
+        dependency='langchain-deepseek-official',
+    ),
 }
 
 
@@ -636,7 +646,7 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
         packaging.install(provider.dependency)
     except KeyError:
         raise ValidationError(
-            f"LangGraph provider '{provider}' has not been implemented. "
+            f"LangGraph provider '{agent.provider}' has not been implemented. "
             f"AgentStack currently supports: {', '.join(PROVIDERS.keys())} "
         )
 
