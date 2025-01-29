@@ -250,6 +250,8 @@ class Color:
 class ColorAnimation(Color):
     start: Color
     end: Color
+    reversed: bool = False
+    bold: bool = False
     duration: float
     loop: bool
     _start_time: float
@@ -266,6 +268,18 @@ class ColorAnimation(Color):
         self._start_time = time.time()
 
     def to_curses(self) -> int:
+        if self.reversed:
+            self.start.reversed = True
+            self.end.reversed = True
+        elif self.start.reversed:
+            self.reversed = True
+        
+        if self.bold:
+            self.start.bold = True
+            self.end.bold = True
+        elif self.start.bold:
+            self.bold = True
+        
         elapsed = time.time() - self._start_time
         if elapsed > self.duration:
             if self.loop:
@@ -290,7 +304,7 @@ class ColorAnimation(Color):
         s = self.start.s + t * (self.end.s - self.start.s)
         v = self.start.v + t * (self.end.v - self.start.v)
 
-        return Color(h, s, v, reversed=self.start.reversed).to_curses()
+        return Color(h, s, v, reversed=self.reversed, bold=self.bold).to_curses()
 
 
 class Renderable:
@@ -858,7 +872,7 @@ class Select(Box):
             value=option,
             color=self.color,
             highlight=self.highlight,
-            on_activate=lambda value: self._button_on_activate(index, option),
+            on_activate=lambda _: self._button_on_activate(index, option),
         )
 
     def _button_on_activate(self, index: int, option: str):

@@ -134,11 +134,13 @@ class BannerView(WizardView):
     title = "Welcome to AgentStack"
     sparkle = "The easiest way to build a robust agent application."
     subtitle = "Let's get started!"
-    color = ColorAnimation(
-        start=Color(90, 0, 0),  # TODO make this darker
-        end=Color(90),
-        duration=0.5,
-    )
+
+    def _get_color(self) -> Color:
+        return ColorAnimation(
+            start=Color(90, 0, 0),  # TODO make this darker
+            end=Color(90, 90),
+            duration=0.6,
+        )
 
     def layout(self) -> list[Renderable]:
         buttons = []
@@ -212,12 +214,12 @@ class BannerView(WizardView):
                         (9, round(self.width / 2)),
                         color=COLOR_BORDER,
                         modules=[
-                            Title((1, 1), (2, round(self.width / 2) - 2), color=self.color, value=self.title),
-                            Title(
-                                (3, 1), (2, round(self.width / 2) - 2), color=self.color, value=self.sparkle
+                            BoldText((1, 2), (2, round(self.width / 2) - 3), color=self._get_color(), value=self.title),
+                            WrappedText(
+                                (3, 2), (3, round(self.width / 2) - 3), color=self._get_color(), value=self.sparkle
                             ),
-                            Title(
-                                (5, 1), (2, round(self.width / 2) - 2), color=self.color, value=self.subtitle
+                            WrappedText(
+                                (6, 2), (2, round(self.width / 2) - 3), color=self._get_color(), value=self.subtitle
                             ),
                         ],
                     ),
@@ -293,10 +295,10 @@ class ProjectView(FormView):
 
     def form(self) -> list[Renderable]:
         return [
-            Text((12, 2), (1, 11), color=COLOR_FORM, value="Name"),
-            TextInput((12, 13), (2, self.width - 15), self.project_name, **FIELD_COLORS),
-            Text((14, 2), (1, 11), color=COLOR_FORM, value="Description"),
-            TextInput((14, 13), (5, self.width - 15), self.project_description, **FIELD_COLORS),
+            Text((12, 2), (1, 12), color=COLOR_FORM, value="Name"),
+            TextInput((12, 14), (2, self.width - 15), self.project_name, **FIELD_COLORS),
+            Text((14, 2), (1, 12), color=COLOR_FORM, value="Description"),
+            TextInput((14, 14), (5, self.width - 15), self.project_description, **FIELD_COLORS),
         ]
 
 
@@ -407,16 +409,25 @@ class AgentView(FormView):
         self.agent_backstory = Node()
 
     def submit(self):
-        if not self.agent_name.value:
+        agent_name = self.agent_name.value
+        if not agent_name:
             self.error("Name is required.")
             return
 
-        if not is_snake_case(self.agent_name.value):
+        if not is_snake_case(agent_name):
             self.error("Name must be in snake_case.")
             return
 
+        if agent_name in self.app.state.agents.keys():
+            self.error("Agent name must be unique.")
+            return
+
+        if agent_name in self.app.state.tasks.keys():
+            self.error("Agent name cannot match a task name.")
+            return
+
         self.app.state.create_agent(
-            name=self.agent_name.value,
+            name=agent_name,
             role=self.agent_role.value,
             goal=self.agent_goal.value,
             backstory=self.agent_backstory.value,
@@ -586,6 +597,9 @@ class ToolCategoryView(FormView):
         self.app.state.tool_category = self.tool_category_key.value
         self.app.advance()
 
+    def skip(self):
+        self.app.advance(steps=2)
+
     def form(self) -> list[Renderable]:
         return [
             RadioSelect(
@@ -615,6 +629,13 @@ class ToolCategoryView(FormView):
                         value=self.tool_category_description,
                     ),
                 ],
+            ),
+            Button(
+                (self.height - 6, 2),
+                (3, 15),
+                "Skip",
+                color=COLOR_BUTTON,
+                on_confirm=self.skip,
             ),
         ]
 
@@ -705,16 +726,25 @@ class TaskView(FormView):
         self.expected_output = Node()
 
     def submit(self):
-        if not self.task_name.value:
+        task_name = self.task_name.value
+        if not self.task_name:
             self.error("Task name is required.")
             return
 
-        if not is_snake_case(self.task_name.value):
+        if not is_snake_case(task_name):
             self.error("Task name must be in snake_case.")
             return
 
+        if task_name in self.app.state.tasks.keys():
+            self.error("Task name must be unique.")
+            return
+
+        if task_name in self.app.state.agents.keys():
+            self.error("Task name cannot match an agent name.")
+            return
+
         self.app.state.create_task(
-            name=self.task_name.value,
+            name=task_name,
             description=self.task_description.value,
             expected_output=self.expected_output.value,
         )
@@ -736,20 +766,29 @@ class AgentSelectionView(FormView):
 
     def __init__(self, app: 'App'):
         super().__init__(app)
+        self.agent_key = Node()
         self.agent_name = Node()
+        self.agent_llm = Node()
+        self.agent_description = Node()
+
+    def set_agent_selection(self, index: int, value: str):
+        agent_data = self.app.state.agents[value]
+        self.agent_name.value = value
+        self.agent_llm.value = agent_data['llm']
+        self.agent_description.value = agent_data['role']
 
     def set_agent_choice(self, index: int, value: str):
-        self.agent_name.value = value
+        self.agent_key.value = value
 
     def get_agent_options(self) -> list[str]:
         return list(self.app.state.agents.keys())
 
     def submit(self):
-        if not self.agent_name.value:
+        if not self.agent_key.value:
             self.error("Agent is required.")
             return
 
-        self.app.state.update_active_task(agent=self.agent_name.value)
+        self.app.state.update_active_task(agent=self.agent_key.value)
         self.app.advance()
 
     def form(self) -> list[Renderable]:
@@ -760,9 +799,31 @@ class AgentSelectionView(FormView):
                 options=self.get_agent_options(),
                 color=COLOR_FORM_BORDER,
                 highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
+                on_change=self.set_agent_selection,
                 on_select=self.set_agent_choice,
             ),
-            # TODO agent info pane
+            Box(
+                (12, round(self.width / 2)),
+                (self.height - 18, round(self.width / 2) - 3),
+                color=COLOR_FORM_BORDER,
+                modules=[
+                    ASCIIText(
+                        (1, 3),
+                        (4, round(self.width / 2) - 10),
+                        color=COLOR_FORM.sat(40),
+                        value=self.agent_name,
+                    ),
+                    BoldText(
+                        (5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.agent_llm
+                    ),
+                    WrappedText(
+                        (7, 3),
+                        (5, round(self.width / 2) - 10),
+                        color=COLOR_FORM.sat(50),
+                        value=self.agent_description,
+                    ),
+                ],
+            ),
         ]
 
 
@@ -983,19 +1044,16 @@ class WizardApp(App):
             log.info(f"Saved template to: {conf.PATH / 'wizard.json'}")
             self._finish_run_once = False
 
-    def advance(self):
+    def advance(self, steps: int = 1):
         """Load the next view in the active workflow."""
         workflow = self.workflow[self.active_workflow]
         current_index = workflow.index(self.active_view)
-        view = workflow[current_index + 1]
+        view = workflow[current_index + steps]
         self.load(view, workflow=self.active_workflow)
 
     def back(self):
         """Load the previous view in the active workflow."""
-        workflow = self.workflow[self.active_workflow]
-        current_index = workflow.index(self.active_view)
-        view = workflow[current_index - 1]
-        self.load(view, workflow=self.active_workflow)
+        return self.advance(-1)
 
     def load(self, view: str, workflow: Optional[str] = None):
         """Load a view from a workflow."""
