@@ -550,7 +550,6 @@ class Editable(NodeElement):
             self.value = self._original_value  # revert changes
         elif key.ENTER:
             self.deactivate()
-            log.debug(f"Saving {self.value} to {self.node}")
 
     def destroy(self):
         self.deactivate()
@@ -1259,8 +1258,6 @@ class App:
             next_index = modules.index(active_module) + 1
             if next_index >= len(modules):
                 next_index = 0
-            log.debug(f"Active index: {modules.index(active_module)}")
-            log.debug(f"Next index: {next_index}")
             modules[next_index].activate()  # TODO this isn't working
         elif modules:
             modules[0].activate()
