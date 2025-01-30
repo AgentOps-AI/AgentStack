@@ -157,6 +157,9 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     # TODO: remove after agentops fixes their issue
     # wrap method with agentops tool event
     def wrap_method(method: Callable) -> Callable:
+        from inspect import signature
+        
+        original_signature = signature(method)
         def wrapped_method(*args, **kwargs):
             import agentops
             tool_event = agentops.ToolEvent(method.__name__)
@@ -170,6 +173,7 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
         wrapped_method.__module__ = method.__module__
         wrapped_method.__qualname__ = method.__qualname__
         wrapped_method.__annotations__ = getattr(method, '__annotations__', {})
+        wrapped_method.__signature__ = original_signature
         return wrapped_method
 
     tool_funcs = []
@@ -181,9 +185,7 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
         assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
 
         # First wrap with agentops
-        # TODO method argument signature is needed by OpenAI Swarms to determine
-        # how to call it. Bypass temporarily.
-        agentops_wrapped = tool_func # wrap_method(tool_func)
+        agentops_wrapped = wrap_method(tool_func)
         # Then apply framework decorators
         framework_wrapped = get_framework_module(get_framework()).wrap_tool(agentops_wrapped)
         tool_funcs.append(framework_wrapped)
