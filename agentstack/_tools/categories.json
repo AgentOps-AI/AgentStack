@@ -1,0 +1,46 @@
+{
+    "application-specific": {
+        "title": "Application Specific",
+        "description": "Tools that are specific to a particular application or domain."
+    },
+    "browsing": {
+        "title": "Browsing",
+        "description": "Tools that are used to browse the web."
+    },
+    "code-execution": {
+        "title": "Code Execution",
+        "description": "Tools that are used to execute code."
+    },
+    "computer-control": {
+        "title": "Computer Control",
+        "description": "Tools that are used to control a computer."
+    },
+    "database": {
+        "title": "Database",
+        "description": "Tools that are used to interact with databases."
+    },
+    "image-analysis": {
+        "title": "Image Analysis",
+        "description": "Tools that are used to analyze images."
+    },
+    "network-protocols": {
+        "title": "Network Protocols",
+        "description": "Tools that are used to interact with network protocols."
+    },
+    "search": {
+        "title": "Search",
+        "description": "Tools that are used to search for information."
+    },
+    "storage": {
+        "title": "Storage",
+        "description": "Tools that are used to interact with storage."
+    },
+    "unified-apis": {
+        "title": "Unified APIs",
+        "description": "Tools that provide a unified API for interacting with multiple services."
+    },
+    "web-retrieval": {
+        "title": "Web Retrieval",
+        "description": "Tools that are used to retrieve information from the web."
+    }
+}

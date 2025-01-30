@@ -40,12 +40,6 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def parse_llm(self, llm: str) -> tuple[str, str]:
-        """
-        Parse a language model string into a provider and model.
-        """
-        ...
-
     def add_tool(self, tool: ToolConfig, agent_name: str) -> None:
         """
         Add a tool to an agent in the user's project.
@@ -123,13 +117,6 @@ def validate_project():
     Validate that the user's project is ready to run.
     """
     return get_framework_module(get_framework()).validate_project()
-
-
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse a language model string into a provider and model.
-    """
-    return get_framework_module(get_framework()).parse_llm(llm)
 
 
 def add_tool(tool: ToolConfig, agent_name: str):
