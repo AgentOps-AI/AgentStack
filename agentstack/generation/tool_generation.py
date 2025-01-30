@@ -19,7 +19,8 @@ def add_tool(name: str, agents: Optional[list[str]] = []):
         log.notify(f'Tool {name} is already installed')
     else:  # handle install
         if tool.dependencies:
-            packaging.install(tool.dependencies)
+            for dependency in tool.dependencies:
+                packaging.install(dependency)
 
         if tool.env:  # add environment variables which don't exist
             with EnvFile() as env:
