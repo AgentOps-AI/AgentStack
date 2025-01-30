@@ -173,7 +173,7 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
         wrapped_method.__module__ = method.__module__
         wrapped_method.__qualname__ = method.__qualname__
         wrapped_method.__annotations__ = getattr(method, '__annotations__', {})
-        wrapped_method.__signature__ = original_signature
+        wrapped_method.__signature__ = original_signature  # type: ignore
         return wrapped_method
 
     tool_funcs = []
