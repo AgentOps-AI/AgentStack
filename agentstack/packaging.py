@@ -18,7 +18,7 @@ RE_UV_PROGRESS = re.compile(r'^(Resolved|Prepared|Installed|Uninstalled|Audited)
 # When calling `uv` we explicitly specify the --python executable to use so that
 # the packages are installed into the correct virtual environment.
 # In testing, when this was not set, packages could end up in the pyenv's
-# site-packages directory; it's possible an environemnt variable can control this.
+# site-packages directory; it's possible an environment variable can control this.
 
 
 def install(package: str):
@@ -31,6 +31,7 @@ def install(package: str):
     def on_error(line: str):
         log.error(f"uv: [error]\n {line.strip()}")
 
+    log.info(f"Installing {package}")
     _wrap_command_with_callbacks(
         [get_uv_bin(), 'add', '--python', '.venv/bin/python', package],
         on_progress=on_progress,
@@ -79,6 +80,7 @@ def remove(package: str):
     def on_error(line: str):
         log.error(f"uv: [error]\n {line.strip()}")
 
+    log.info(f"Uninstalling {requirement.name}")
     _wrap_command_with_callbacks(
         [get_uv_bin(), 'remove', '--python', '.venv/bin/python', requirement.name],
         on_progress=on_progress,
@@ -97,6 +99,7 @@ def upgrade(package: str):
     def on_error(line: str):
         log.error(f"uv: [error]\n {line.strip()}")
 
+    log.info(f"Upgrading {package}")
     _wrap_command_with_callbacks(
         [get_uv_bin(), 'pip', 'install', '-U', '--python', '.venv/bin/python', package],
         on_progress=on_progress,
@@ -105,7 +108,7 @@ def upgrade(package: str):
 
 
 def create_venv(python_version: str = DEFAULT_PYTHON_VERSION):
-    """Intialize a virtual environment in the project directory of one does not exist."""
+    """Initialize a virtual environment in the project directory of one does not exist."""
     if os.path.exists(conf.PATH / VENV_DIR_NAME):
         return  # venv already exists
 
