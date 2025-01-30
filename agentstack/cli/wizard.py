@@ -26,11 +26,12 @@ from agentstack.cli import LOGO, init_project
 COLOR_BORDER = Color(90)
 COLOR_MAIN = Color(220)
 COLOR_TITLE = Color(220, 100, 40, reversed=True)
-COLOR_ERROR = Color(0)
+COLOR_ERROR = Color(0, 50)
+COLOR_BANNER = Color(80, 80, 80)
 COLOR_FORM = Color(300)
-COLOR_FORM_BORDER = Color(300, 50)
-COLOR_BUTTON = Color(300, reversed=True)
-COLOR_FIELD_BG = Color(240, 20, 100, reversed=True)
+COLOR_FORM_BORDER = Color(300, 80)
+COLOR_BUTTON = Color(300, 100, 80, reversed=True)
+COLOR_FIELD_BG = Color(300, 50, 50, reversed=True)
 COLOR_FIELD_BORDER = Color(300, 100, 50)
 COLOR_FIELD_ACTIVE = Color(300, 80)
 
@@ -118,7 +119,7 @@ class StarBox(Box):
 class HelpText(Text):
     def __init__(self, coords: tuple[int, int], dims: tuple[int, int]) -> None:
         super().__init__(coords, dims)
-        self.color = Color(0, 0, 50)
+        self.color = Color(0, 0, 70)
         self.value = " | ".join(
             [
                 "[tab] to select",
@@ -143,9 +144,9 @@ class BannerView(WizardView):
 
     def _get_color(self) -> Color:
         return ColorAnimation(
-            start=Color(90, 0, 0),  # TODO make this darker
-            end=Color(90, 90),
-            duration=0.6,
+            start=COLOR_BANNER.sat(0).val(0),
+            end=COLOR_BANNER,
+            duration=0.5,
         )
 
     def layout(self) -> list[Renderable]:
@@ -211,14 +212,14 @@ class BannerView(WizardView):
         return [
             StarBox(
                 (0, 0),
-                (self.height, self.width),
+                (self.height - 1, self.width),
                 color=COLOR_BORDER,
                 modules=[
                     LogoElement((1, 1), (7, self.width - 2)),
                     Box(
                         (round(self.height / 4), round(self.width / 4)),
                         (9, round(self.width / 2)),
-                        color=COLOR_BORDER,
+                        color=COLOR_BANNER,
                         modules=[
                             BoldText((1, 2), (2, round(self.width / 2) - 3), color=self._get_color(), value=self.title),
                             WrappedText(
@@ -232,6 +233,7 @@ class BannerView(WizardView):
                     *buttons,
                 ],
             ),
+            HelpText((self.height - 1, 0), (1, self.width)),
         ]
 
 
