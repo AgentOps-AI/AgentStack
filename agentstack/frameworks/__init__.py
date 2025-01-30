@@ -20,6 +20,7 @@ SUPPORTED_FRAMEWORKS = [
     CREWAI,
     LANGGRAPH,
 ]
+DEFAULT_FRAMEWORK = CREWAI
 
 
 class FrameworkModule(Protocol):
