@@ -8,6 +8,10 @@ from agentstack.utils import validator_not_empty, is_snake_case
 
 
 PREFERRED_MODELS = [
+    'groq/deepseek-r1-distill-llama-70b',
+    'deepseek/deepseek-chat',
+    'deepseek/deepseek-coder',
+    'deepseek/deepseek-reasoner',
     'openai/gpt-4o',
     'anthropic/claude-3-5-sonnet',
     'openai/o1-preview',
