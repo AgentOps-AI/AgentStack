@@ -26,7 +26,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.10,3.11,3.12]
-        framework: [crewai, langgraph]
 
     steps:
       - uses: actions/checkout@v2
@@ -37,6 +36,6 @@ jobs:
       - name: Install tox
         run: pip install tox
       - name: Install tox-gh-actions
-        run: pip install tox-gh-actions
+        run: pip install tox-gh-actions  # allows tox to get the current python version
       - name: Run tests with tox
-        run: tox -e py${{ matrix.python-version }}-${{ matrix.framework }}
+        run: tox
