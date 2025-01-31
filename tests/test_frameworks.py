@@ -3,7 +3,7 @@ import os, sys
 from pathlib import Path
 import shutil
 import unittest
-from parameterized import parameterized, parameterized_class
+from parameterized import parameterized
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
@@ -16,9 +16,9 @@ from agentstack import graph
 BASE_PATH = Path(__file__).parent
 
 
-@parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
 class TestFrameworks(unittest.TestCase):
     def setUp(self):
+        self.framework = os.getenv('TEST_FRAMEWORK')
         self.project_dir = BASE_PATH / 'tmp' / self.framework / 'test_frameworks'
 
         os.makedirs(self.project_dir)
