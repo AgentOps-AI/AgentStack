@@ -33,7 +33,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.11  # setup up with 3.11
       - name: Install tox
         run: pip install tox
       - name: Install tox-gh-actions
