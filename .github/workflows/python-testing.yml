@@ -33,8 +33,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.11' # Use a default Python version for running tox
+          python-version: ${{ matrix.python-version }}
       - name: Install tox
         run: pip install tox
+      - name: Install tox-gh-actions
+        run: pip install tox-gh-actions
       - name: Run tests with tox
-        run: tox
+        run: tox -e py${{ matrix.python-version }}-${{ matrix.framework }}
