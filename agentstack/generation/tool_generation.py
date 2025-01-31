@@ -1,4 +1,6 @@
+import json
 import os, sys
+from pathlib import Path
 from typing import Optional
 from agentstack import conf, log
 from agentstack.conf import ConfigFile
@@ -45,6 +47,54 @@ def add_tool(name: str, agents: Optional[list[str]] = []):
     log.success(f'🔨 Tool {tool.name} added to agentstack project successfully!')
     if tool.cta:
         log.notify(f'🪩  {tool.cta}')
+
+
+def create_tool(tool_name: str, tool_path: Path, user_tools_dir: Path, agents: Optional[list[str]] = []):
+    """Create a new custom tool.
+
+    Args:
+        tool_name: Name of the tool to create (must be snake_case)
+        tool_path: Path to the tool created
+        user_tools_dir: Path to the local project tools directory
+        agents: List of agents to make tool available to
+    """
+
+    # Create tool directory
+    tool_path.mkdir(parents=True, exist_ok=False)
+
+    # Create __init__.py with basic function template
+    init_file = tool_path / '__init__.py'
+    init_content = f'''def {tool_name}():
+    """
+    Define your tool's functionality here.
+    """
+    pass
+'''
+    init_file.write_text(init_content)
+
+    # Create config.json with basic structure
+    config = {
+        "name": tool_name,
+        "category": "custom",
+        "tools": [tool_name],
+        "url": "",
+        "cta": "",
+        "env": {},
+        "dependencies": [],
+        "post_install": "",
+        "post_remove": ""
+    }
+    config_file = tool_path / 'config.json'
+    config_file.write_text(json.dumps(config, indent=4))
+
+    # Edit the framework entrypoint file to include the tool in the agent definition
+    tool = ToolConfig.from_tool_name(tool_name)
+    if not agents:  # If no agents are specified, add the tool to all agents
+        agents = frameworks.get_agent_method_names()
+    for agent_name in agents:
+        frameworks.add_tool(tool, agent_name)
+
+    print(term_color(f"🔨 Tool '{tool_name}' has been created successfully in {user_tools_dir}.", 'green'))
 
 
 def remove_tool(name: str, agents: Optional[list[str]] = []):
