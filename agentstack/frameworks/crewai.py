@@ -8,6 +8,7 @@ from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 from agentstack import graph
+
 if TYPE_CHECKING:
     from agentstack.generation import InsertionPoint
 
@@ -19,6 +20,7 @@ class CrewFile(asttools.File):
     Parses and manipulates the CrewAI entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
+
     def write(self):
         """
         Early versions of the crew entrypoint file used tabs instead of spaces.
@@ -65,7 +67,7 @@ class CrewFile(asttools.File):
         return Task(
             config=self.tasks_config['{task.name}'],
         )"""
-        
+
         if not self.source[:pos].endswith('\n'):
             code = '\n\n' + code
         if not self.source[pos:].startswith('\n'):
@@ -95,7 +97,7 @@ class CrewFile(asttools.File):
             tools=[], # add tools here or use `agentstack tools add <tool_name>
             verbose=True,
         )"""
-        
+
         if not self.source[:pos].endswith('\n'):
             code = '\n\n' + code
         if not self.source[pos:].startswith('\n'):
@@ -280,7 +282,7 @@ def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -
     """
     if position is not None:
         raise NotImplementedError("Agent insertion points are not supported in CrewAI.")
-    
+
     with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.add_agent_method(agent)
 
@@ -302,52 +304,19 @@ def remove_tool(tool: ToolConfig, agent_name: str):
         crew_file.remove_agent_tools(agent_name, tool)
 
 
-def get_tool_callables(tool_name: str) -> list[Callable]:
+def wrap_tool(tool_func: Callable) -> Callable:
     """
-    Get a tool implementations for use directly by a CrewAI agent.
+    Wrap a tool function with framework-specific functionality.
     """
     try:
         from crewai.tools import tool as _crewai_tool_decorator
     except ImportError:
         raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
 
-    # TODO: remove after agentops fixes their issue
-    # wrap method with agentops tool event
-    def wrap_method(method: Callable) -> Callable:
-        def wrapped_method(*args, **kwargs):
-            import agentops
-            tool_event = agentops.ToolEvent(method.__name__)
-            result = method(*args, **kwargs)
-            agentops.record(tool_event)
-            return result
-
-        # Preserve all original attributes
-        wrapped_method.__name__ = method.__name__
-        wrapped_method.__doc__ = method.__doc__
-        wrapped_method.__module__ = method.__module__
-        wrapped_method.__qualname__ = method.__qualname__
-        wrapped_method.__annotations__ = getattr(method, '__annotations__', {})
-        return wrapped_method
-
-    tool_funcs = []
-    tool_config = ToolConfig.from_tool_name(tool_name)
-    for tool_func_name in tool_config.tools:
-        tool_func = getattr(tool_config.module, tool_func_name)
-
-        assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
-        assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
-
-        # First wrap with agentops
-        agentops_wrapped = wrap_method(tool_func)
-        # Then apply CrewAI decorator last so it properly inherits from BaseTool
-        crewai_wrapped = _crewai_tool_decorator(agentops_wrapped)
-        tool_funcs.append(crewai_wrapped)
-
-    return tool_funcs
+    return _crewai_tool_decorator(tool_func)
 
 
 def get_graph() -> list[graph.Edge]:
     """Get the graph of the user's project."""
     log.debug("CrewAI does not support graph generation.")
     return []
-

@@ -18,7 +18,11 @@ GRAPH_NODE_START = 'START'
 GRAPH_NODE_END = 'END'
 GRAPH_NODE_TOOLS = 'tools'  # references the `ToolNode` instance
 GRAPH_NODE_TOOLS_CONDITION = 'tools_condition'
-GRAPH_NODES_SPECIAL = (GRAPH_NODE_START, GRAPH_NODE_END, GRAPH_NODE_TOOLS_CONDITION, )
+GRAPH_NODES_SPECIAL = (
+    GRAPH_NODE_START,
+    GRAPH_NODE_END,
+    GRAPH_NODE_TOOLS_CONDITION,
+)
 
 
 @dataclass
@@ -347,7 +351,7 @@ class LangGraphFile(asttools.File):
         for node in nodes:
             source, target = node.args
             source_name = _get_node_name(source)
-            #target_name = _get_node_name(target)
+            # target_name = _get_node_name(target)
             if source_name == GRAPH_NODE_TOOLS:  # TODO this is a bit brittle
                 nodes.remove(node)
             # if target_name == GRAPH_NODE_TOOLS:
@@ -430,7 +434,7 @@ class LangGraphFile(asttools.File):
         else:
             graph_instance = asttools.find_method_calls(self.get_run_method(), 'StateGraph')[0]
             _, end = self.get_node_range(graph_instance)
-        
+
         source, target = edge.source.name, edge.target.name
         # wrap the node names in quotes if they are not special nodes
         if edge.source.type != graph.NodeType.SPECIAL:
@@ -745,36 +749,12 @@ def remove_tool(tool: ToolConfig, agent_name: str):
         entrypoint.remove_agent_tools(agent_name, tool)
 
 
-def get_tool_callables(tool_name: str) -> list[Callable]:
+def wrap_tool(tool_func: Callable) -> Callable:
     """
-    Get a tool by name and return it as a list of framework-native callables.
+    Wrap a tool function with framework-specific functionality.
     """
-    # LangGraph accepts functions as tools, so we can return them directly
-    tool_funcs = []
-    tool_config = ToolConfig.from_tool_name(tool_name)
-
-    # TODO: remove after agentops supports langgraph
-    # wrap method with agentops tool event
-    def wrap_method(method: Callable) -> Callable:
-        @wraps(method)  # This preserves the original function's metadata
-        def wrapped_method(*args, **kwargs):
-            import agentops
-            tool_event = agentops.ToolEvent(method.__name__)
-            result = method(*args, **kwargs)
-            agentops.record(tool_event)
-            return result
-
-        return wrapped_method
-
-    for tool_func_name in tool_config.tools:
-        tool_func = getattr(tool_config.module, tool_func_name)
-
-        assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
-        assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
-
-        tool_funcs.append(wrap_method(tool_func))
-
-    return tool_funcs
+    # LangGraph accepts bare functions as tools, so we don't need to do anything here.
+    return tool_func
 
 
 def get_graph() -> list[graph.Edge]:
