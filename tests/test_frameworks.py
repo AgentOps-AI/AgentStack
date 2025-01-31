@@ -3,7 +3,7 @@ import os, sys
 from pathlib import Path
 import shutil
 import unittest
-from parameterized import parameterized, parameterized_class
+from parameterized import parameterized
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
@@ -16,9 +16,9 @@ from agentstack import graph
 BASE_PATH = Path(__file__).parent
 
 
-@parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
 class TestFrameworks(unittest.TestCase):
     def setUp(self):
+        self.framework = os.getenv('TEST_FRAMEWORK')
         self.project_dir = BASE_PATH / 'tmp' / self.framework / 'test_frameworks'
 
         os.makedirs(self.project_dir)
@@ -45,14 +45,20 @@ class TestFrameworks(unittest.TestCase):
         """This entrypoint has tools and agents."""
         entrypoint_path = frameworks.get_entrypoint_path(self.framework)
         shutil.copy(BASE_PATH / f"fixtures/frameworks/{self.framework}/entrypoint_max.py", entrypoint_path)
+        shutil.copy(BASE_PATH / 'fixtures/agents_max.yaml', self.project_dir / AGENTS_FILENAME)
+        shutil.copy(BASE_PATH / 'fixtures/tasks_max.yaml', self.project_dir / TASKS_FILENAME)
 
     def _get_test_agent(self) -> AgentConfig:
-        shutil.copy(BASE_PATH / 'fixtures/agents_max.yaml', self.project_dir / AGENTS_FILENAME)
         return AgentConfig('agent_name')
 
+    def _get_test_agent_alternate(self) -> AgentConfig:
+        return AgentConfig('second_agent_name')
+
     def _get_test_task(self) -> TaskConfig:
-        shutil.copy(BASE_PATH / 'fixtures/tasks_max.yaml', self.project_dir / TASKS_FILENAME)
         return TaskConfig('task_name')
+
+    def _get_test_task_alternate(self) -> TaskConfig:
+        return TaskConfig('task_name_two')
 
     def _get_test_tool(self) -> ToolConfig:
         return ToolConfig(name='test_tool', category='test', tools=['test_tool'])
@@ -88,6 +94,8 @@ class TestFrameworks(unittest.TestCase):
 
     def test_validate_project_has_agent_no_task_invalid(self):
         self._populate_min_entrypoint()
+        shutil.copy(BASE_PATH / 'fixtures/agents_max.yaml', self.project_dir / AGENTS_FILENAME)
+        
         frameworks.add_agent(self._get_test_agent())
         with self.assertRaises(ValidationError) as context:
             frameworks.validate_project()
@@ -95,6 +103,38 @@ class TestFrameworks(unittest.TestCase):
     def test_validate_project_has_task_no_agent_invalid(self):
         self._populate_min_entrypoint()
         frameworks.add_task(self._get_test_task())
+        with self.assertRaises(ValidationError) as context:
+            frameworks.validate_project()
+
+    def test_validate_project_missing_agent_method_invalid(self):
+        """Ensure that all agents have a method defined in the entrypoint."""
+        self._populate_max_entrypoint()
+        # add an extra entry to agents.yaml
+        with open(self.project_dir / AGENTS_FILENAME, 'a') as f:
+            f.write("""\nextra_agent:
+  role: >-
+    role
+  goal: >-
+    this is a goal
+  backstory: >-
+    this is a backstory
+  llm: openai/gpt-4o""")
+        with self.assertRaises(ValidationError) as context:
+            frameworks.validate_project()
+
+    def test_validate_project_missing_task_method_invalid(self):
+        """Ensure that all tasks have a method defined in the entrypoint."""
+        self._populate_max_entrypoint()
+        # add an extra entry to tasks.yaml
+        with open(self.project_dir / TASKS_FILENAME, 'a') as f:
+            f.write("""\nextra_task:
+  description: >-
+    Add your description here
+  expected_output: >-
+    Add your expected output here
+  agent: >-
+    default_agent""")
+                    
         with self.assertRaises(ValidationError) as context:
             frameworks.validate_project()
 
@@ -167,6 +207,9 @@ class TestFrameworks(unittest.TestCase):
 
     def test_get_graph(self):
         self._populate_max_entrypoint()
+        shutil.copy(BASE_PATH / 'fixtures/agents_max.yaml', self.project_dir / AGENTS_FILENAME)
+        shutil.copy(BASE_PATH / 'fixtures/tasks_max.yaml', self.project_dir / TASKS_FILENAME)
+
         self._get_test_agent()
         self._get_test_task()
 

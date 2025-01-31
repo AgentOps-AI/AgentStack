@@ -46,6 +46,7 @@ test = [
 crewai = [
     "crewai==0.100.0",
     "crewai-tools==0.33.0",
+    "shapely==2.0.6"  # crewai-tools needs this, but 2.0.7 is broken
 ]
 langgraph = [
     "langgraph>=0.2.61",
@@ -53,9 +54,6 @@ langgraph = [
 ]
 openai_swarm = [
     "swarm @ git+https://github.com/openai/swarm@9db581cecaacea0d46a933d6453c312b034dbf47"
-]
-all = [
-    "agentstack[dev,test,crewai,langgraph,openai_swarm]",
 ]
 
 [tool.setuptools.package-data]

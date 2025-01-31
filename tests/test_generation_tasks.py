@@ -2,7 +2,6 @@ import os, sys
 from pathlib import Path
 import shutil
 import unittest
-from parameterized import parameterized_class
 import ast
 
 from agentstack.conf import ConfigFile, set_path
@@ -16,10 +15,10 @@ from agentstack.generation.agent_generation import add_agent
 BASE_PATH = Path(__file__).parent
 
 
-@parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
 class TestGenerationAgent(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp' / 'agent_generation'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'agent_generation'
 
         os.makedirs(self.project_dir)
         os.makedirs(self.project_dir / 'src')

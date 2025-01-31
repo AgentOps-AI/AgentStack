@@ -18,7 +18,8 @@ BASE_PATH = Path(__file__).parent
 # TODO copy files to working directory
 class GenerationFilesTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / "tmp" / "generation_files"
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'generation_files'
         os.makedirs(self.project_dir)
 
         shutil.copy(BASE_PATH / "fixtures/agentstack.json", self.project_dir / "agentstack.json")
