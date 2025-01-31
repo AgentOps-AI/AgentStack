@@ -1,16 +1,15 @@
-from typing import TYPE_CHECKING, Optional, Any, Callable
+from typing import Optional, Any, Callable
 from pathlib import Path
 import ast
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
+from agentstack.generation import InsertionPoint
 from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 from agentstack import graph
 
-if TYPE_CHECKING:
-    from agentstack.generation import InsertionPoint
 
 NAME: str = "OpenAI Swarm"
 ENTRYPOINT: Path = Path('src/stack.py')
@@ -62,12 +61,13 @@ class SwarmFile(asttools.File):
             pos, _ = self.get_node_range(main_method)
 
         code = f"""    @agentstack.task
-    def {task.name}(self):
+    def {task.name}(self, messages: list[str] = []) -> Agent:
         task_config = agentstack.get_task('{task.name}')
+        agent = getattr(self, task_config.agent)
         messages = [
+            *messages, 
             task_config.prompt, 
         ]
-        agent = getattr(self, task_config.agent)
         return agent(messages)"""
 
         if not self.source[:pos].endswith('\n'):
@@ -75,6 +75,40 @@ class SwarmFile(asttools.File):
         if not self.source[pos:].startswith('\n'):
             code += '\n\n'
         self.edit_node_range(pos, pos, code)
+        
+        # add a new task to the last agent in the stack
+        existing_agent_methods = self.get_agent_methods()
+        if not len(existing_agent_methods):
+            return  # no agents to update
+        
+        # add a call to `self._handoff(task_name)` to the front of the update_method's
+        # `function` argument which is a list of functions
+        update_method = existing_agent_methods[-1]
+        try:
+            agent_instance = asttools.find_method_calls(update_method, 'Agent')[0]
+        except IndexError:
+            raise ValidationError(f"Agent method `{update_method.name}` does not instantiate `Agent` in {ENTRYPOINT}")
+
+        existing_agent_tools = asttools.find_kwarg_in_method_call(agent_instance, 'functions')
+        if not existing_agent_tools:
+            raise ValidationError(
+                f"`@agent` method `{update_method.name}` does not have a keyword argument `functions` in {ENTRYPOINT}"
+            )
+        
+        assert isinstance(existing_agent_tools.value, ast.List)
+        existing_elts = existing_agent_tools.value.elts
+        existing_elts.insert(0, ast.Call(
+            func=ast.Attribute(
+                value=ast.Name(id='self', ctx=ast.Load()),
+                attr='_handoff',
+                ctx=ast.Load(),
+            ),
+            args=[ast.Constant(value=task.name)],
+            keywords=[],
+        ))
+        new_node = ast.List(elts=existing_elts, ctx=ast.Load())
+        start, end = self.get_node_range(existing_agent_tools.value)
+        self.edit_node_range(start, end, new_node)
 
     def get_agent_methods(self) -> list[ast.FunctionDef]:
         """An `agent` method is a method decorated with `@agent`."""
@@ -92,12 +126,16 @@ class SwarmFile(asttools.File):
             pos, _ = self.get_node_range(main_method)
 
         code = f"""    @agentstack.agent
-    def {agent.name}(self, messages: list[str] = []):
+    def {agent.name}(self, messages: list[str] = []) -> Agent:
         agent_config = agentstack.get_agent('{agent.name}')
+        messages = [
+            agent_config.prompt,
+            *messages,
+        ]
         return Agent(
             name=agent_config.name, 
             model=agent_config.model, 
-            instructions='\\n'.join([agent_config.prompt, *messages, ]),
+            instructions='\\n'.join(messages),
             functions=[],
         )"""
 
@@ -259,7 +297,7 @@ def get_agent_tool_names(agent_name: str) -> list[Any]:
         return entrypoint.get_agent_tool_names(agent_name)
 
 
-def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -> None:
+def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add an agent method to the entrypoint.
     """
