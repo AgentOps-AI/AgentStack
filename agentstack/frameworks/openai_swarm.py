@@ -80,35 +80,6 @@ class SwarmFile(asttools.File):
         existing_agent_methods = self.get_agent_methods()
         if not len(existing_agent_methods):
             return  # no agents to update
-        
-        # add a call to `self._handoff(task_name)` to the front of the update_method's
-        # `function` argument which is a list of functions
-        update_method = existing_agent_methods[-1]
-        try:
-            agent_instance = asttools.find_method_calls(update_method, 'Agent')[0]
-        except IndexError:
-            raise ValidationError(f"Agent method `{update_method.name}` does not instantiate `Agent` in {ENTRYPOINT}")
-
-        existing_agent_tools = asttools.find_kwarg_in_method_call(agent_instance, 'functions')
-        if not existing_agent_tools:
-            raise ValidationError(
-                f"`@agent` method `{update_method.name}` does not have a keyword argument `functions` in {ENTRYPOINT}"
-            )
-        
-        assert isinstance(existing_agent_tools.value, ast.List)
-        existing_elts = existing_agent_tools.value.elts
-        existing_elts.insert(0, ast.Call(
-            func=ast.Attribute(
-                value=ast.Name(id='self', ctx=ast.Load()),
-                attr='_handoff',
-                ctx=ast.Load(),
-            ),
-            args=[ast.Constant(value=task.name)],
-            keywords=[],
-        ))
-        new_node = ast.List(elts=existing_elts, ctx=ast.Load())
-        start, end = self.get_node_range(existing_agent_tools.value)
-        self.edit_node_range(start, end, new_node)
 
     def get_agent_methods(self) -> list[ast.FunctionDef]:
         """An `agent` method is a method decorated with `@agent`."""
