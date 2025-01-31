@@ -13,6 +13,17 @@ from agentstack import conf, log
 TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir, also update MANIFEST.in
 TOOLS_CONFIG_FILENAME: str = 'config.json'
 
+
+def _get_custom_tool_path(name: str) -> Path:
+    """Get the path to a custom tool."""
+    return conf.PATH / 'src/tools' / name / TOOLS_CONFIG_FILENAME
+
+
+def _get_builtin_tool_path(name: str) -> Path:
+    """Get the path to a builtin tool."""
+    return TOOLS_DIR / name / TOOLS_CONFIG_FILENAME
+
+
 class ToolConfig(pydantic.BaseModel):
     """
     This represents the configuration data for a tool.
@@ -33,14 +44,13 @@ class ToolConfig(pydantic.BaseModel):
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
         # First check in the user's project directory for custom tools
-        if conf.PATH:
-            custom_path = conf.PATH / 'src/tools' / name / TOOLS_CONFIG_FILENAME
-            if custom_path.exists():
-                return cls.from_json(custom_path)
+        custom_path = _get_custom_tool_path(name)
+        if custom_path.exists():
+            return cls.from_json(custom_path)
 
         # Then check in the package's tools directory
-        path = TOOLS_DIR / name / TOOLS_CONFIG_FILENAME
-        if not os.path.exists(path):
+        path = _get_builtin_tool_path(name)
+        if not path.exists():
             raise ValidationError(f'No known agentstack tool: {name}')
         return cls.from_json(path)
 
@@ -54,6 +64,14 @@ class ToolConfig(pydantic.BaseModel):
             for error in e.errors():
                 error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(f"Error loading tool from {path}.\n{error_str}")
+
+    def write_to_file(self, filename: Path):
+        """Write the tool config to a json file."""
+        if not filename.suffix == '.json':
+            raise ValidationError(f"Filename must end with .json: {filename}")
+
+        with open(filename, 'w') as f:
+            f.write(self.model_dump_json())
 
     @property
     def type(self) -> type:
@@ -82,10 +100,9 @@ class ToolConfig(pydantic.BaseModel):
     def module_name(self) -> str:
         """Module name for the tool module."""
         # Check if this is a custom tool in the user's project
-        if conf.PATH:
-            custom_path = conf.PATH / 'src/tools' / self.name / TOOLS_CONFIG_FILENAME
-            if custom_path.exists():
-                return f"src.tools.{self.name}"
+        custom_path = _get_custom_tool_path(self.name)
+        if custom_path.exists():
+            return f"src.tools.{self.name}"
 
         # Otherwise, it's a package tool
         return f"agentstack._tools.{self.name}"

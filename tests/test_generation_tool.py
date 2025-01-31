@@ -10,7 +10,11 @@ from unittest.mock import patch
 from agentstack.conf import ConfigFile, set_path
 from agentstack import frameworks
 from agentstack._tools import get_all_tools, ToolConfig
-from agentstack.generation.tool_generation import add_tool, remove_tool, create_tool
+from agentstack.generation.tool_generation import (
+    add_tool,
+    create_tool,
+    remove_tool,
+)
 
 
 BASE_PATH = Path(__file__).parent
@@ -150,4 +154,18 @@ class TestGenerationTool(unittest.TestCase):
         log_message = mock_log_success.call_args[0][0]
         self.assertIn(tool_name, log_message)
         self.assertIn(str(self.tools_dir), log_message)
+
+
+    def test_create_tool(self):
+        create_tool('my_custom_tool')
+
+        tool_path = self.project_dir / 'src/tools/my_custom_tool'
+        entrypoint_path = frameworks.get_entrypoint_path(self.framework)
+        entrypoint_src = open(entrypoint_path).read()
+        ast.parse(entrypoint_src)
+
+        assert 'my_custom_tool' in entrypoint_src
+        assert (tool_path / '__init__.py').exists()
+        assert (tool_path / 'config.json').exists()
+        ToolConfig.from_tool_name('my_custom_tool')
 
