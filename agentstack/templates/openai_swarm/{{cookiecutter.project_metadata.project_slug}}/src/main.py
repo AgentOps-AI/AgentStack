@@ -13,7 +13,7 @@ def run():
     Run the agent.
     """
     instance.run(inputs=agentstack.get_inputs())
-
+    agentops.end_session(end_state='Success')
 
 if __name__ == '__main__':
     run()
