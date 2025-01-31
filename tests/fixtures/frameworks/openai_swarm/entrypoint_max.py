@@ -26,9 +26,28 @@ class TestStack:
             functions=[],
         )
 
+    @agentstack.agent
+    def second_agent_name(self, messages: list[str] = []):
+        agent_config = agentstack.get_agent('second_agent_name')
+        return Agent(
+            name=agent_config.name, 
+            model=agent_config.model, 
+            instructions="\n".join([agent_config.prompt, *messages, ]),
+            functions=[],
+        )
+
     @agentstack.task
     def task_name(self):
         task_config = agentstack.get_task('task_name')
+        messages = [
+            task_config.prompt, 
+        ]
+        agent = getattr(self, task_config.agent)
+        return agent(messages)
+
+    @agentstack.task
+    def task_name_two(self):
+        task_config = agentstack.get_task('task_name_two')
         messages = [
             task_config.prompt, 
         ]
