@@ -16,14 +16,16 @@ from agentstack.generation.tool_generation import add_tool, remove_tool, create_
 BASE_PATH = Path(__file__).parent
 
 
-@parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
+# TODO parameterize all tools
 class TestGenerationTool(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp' / 'tool_generation'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'tool_generation'
         self.tools_dir = self.project_dir / 'src' / 'tools'
 
         os.makedirs(self.project_dir)
         os.makedirs(self.project_dir / 'src')
+        os.makedirs(self.project_dir / 'src' / 'tools')
         os.makedirs(self.tools_dir)
         (self.project_dir / 'src' / '__init__.py').touch()
 
@@ -48,6 +50,8 @@ class TestGenerationTool(unittest.TestCase):
         entrypoint_src = open(entrypoint_path).read()
         ast.parse(entrypoint_src)  # validate syntax
 
+        # TODO verify tool is added to all agents (this is covered in test_frameworks.py)
+        # assert 'agent_connect' in entrypoint_src
         assert 'agent_connect' in open(self.project_dir / 'agentstack.json').read()
 
     def test_remove_tool(self):
@@ -59,6 +63,8 @@ class TestGenerationTool(unittest.TestCase):
         entrypoint_src = open(entrypoint_path).read()
         ast.parse(entrypoint_src)  # validate syntax
 
+        # TODO verify tool is removed from all agents (this is covered in test_frameworks.py)
+        # assert 'agent_connect' not in entrypoint_src
         assert 'agent_connect' not in open(self.project_dir / 'agentstack.json').read()
 
     def test_create_tool_basic(self):

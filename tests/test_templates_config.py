@@ -21,7 +21,8 @@ INVALID_TEMPLATE_URL = "https://raw.githubusercontent.com/AgentOps-AI/AgentStack
 
 class TemplateConfigTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp/template_config'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'template_config'
         os.makedirs(self.project_dir, exist_ok=True)
 
     def tearDown(self):
