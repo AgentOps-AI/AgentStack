@@ -38,14 +38,14 @@ def require_uv():
 def select_template(slug_name: str, framework: Optional[str] = None) -> TemplateConfig:
     """Let the user select a template from the ones available."""
     templates: list[TemplateConfig] = get_all_templates()
-    template_names = [shorten(f"{t.name} - {t.description}", 80) for t in templates]
+    template_names = [shorten(f"⚡️ {t.name} - {t.description}", 80) for t in templates]
 
-    empty_msg = "Start with an empty project"
+    empty_msg = "🆕 Empty Project"
     template_choice = inquirer.list_input(
-        message="Which template would you like to use?",
+        message="Do you want to start with a template?",
         choices=[empty_msg] + template_names,
     )
-    template_name = template_choice.split(" - ")[0]
+    template_name = template_choice.split("⚡️ ")[1].split(" - ")[0]
 
     if template_name == empty_msg:
         return TemplateConfig(
@@ -87,6 +87,8 @@ def init_project(
     if template and use_wizard:
         raise Exception("Template and wizard flags cannot be used together")
 
+    welcome_message()
+
     if use_wizard:
         log.debug("Initializing new project with wizard.")
         template_data = run_wizard(slug_name)
@@ -97,7 +99,6 @@ def init_project(
         log.debug("Initializing new project with template selection.")
         template_data = select_template(slug_name, framework)
 
-    welcome_message()
     log.notify("🦾 Creating a new AgentStack project...")
     log.info(f"Using project directory: {conf.PATH.absolute()}")
 
