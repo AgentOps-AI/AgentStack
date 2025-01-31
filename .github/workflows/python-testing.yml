@@ -25,7 +25,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.10","3.11","3.12"]
+        python-version: ["3.10","3.11","3.12"]  # versions need to be strings
 
     steps:
       - uses: actions/checkout@v2
@@ -38,4 +38,4 @@ jobs:
       - name: Install tox-gh-actions
         run: pip install tox-gh-actions  # allows tox to get the current python version
       - name: Run tests with tox
-        run: tox
+        run: tox  # we can't pass arguments to tox when using tox-gh-actions, so all frameworks happen in one run
