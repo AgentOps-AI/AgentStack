@@ -40,6 +40,14 @@ class FrameworkModule(Protocol):
         """
         ...
 
+    def create_tool(self, tool_name: str) -> None:
+        """
+        Create a new custom tool in the user's project.
+        Args:
+            tool_name: Name of the tool to create (must be snake_case)
+        """
+        ...
+
     def parse_llm(self, llm: str) -> tuple[str, str]:
         """
         Parse a language model string into a provider and model.
@@ -125,10 +133,10 @@ def validate_project():
     framework = get_framework()
     entrypoint_path = get_entrypoint_path(framework)
     _module = get_framework_module(framework)
-    
+
     # Run framework-specific validation
     _module.validate_project()
-    
+
     # Verify that agents defined in agents.yaml are present in the codebase
     agent_method_names = _module.get_agent_method_names()
     for agent_name in get_all_agent_names():
@@ -222,3 +230,11 @@ def get_graph() -> list[graph.Edge]:
     Get the graph of the user's project.
     """
     return get_framework_module(get_framework()).get_graph()
+
+
+def create_tool(tool_name: str):
+    """
+    Create a new custom tool in the user's project.
+    The tool will be created with a basic structure and configuration.
+    """
+    return get_framework_module(get_framework()).create_tool(tool_name)

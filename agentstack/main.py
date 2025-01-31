@@ -10,7 +10,7 @@ from agentstack.cli import (
     list_tools,
     configure_default_model,
     run_project,
-    export_template,
+    export_template, create_tool,
 )
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
@@ -134,6 +134,14 @@ def _main():
     )
     tools_add_parser.add_argument("--agent", help="Name of agent to add this tool to")
 
+    # 'create' command under 'tools'
+    tools_create_parser = tools_subparsers.add_parser(
+        "create", aliases=["c"], help="Create a new custom tool", parents=[global_parser]
+    )
+    tools_create_parser.add_argument("name", help="Name of the tool to create")
+    tools_create_parser.add_argument("--agents", help="Name of agents to add this tool to, comma separated")
+    tools_create_parser.add_argument("--agent", help="Name of agent to add this tool to")
+
     # 'remove' command under 'tools'
     tools_remove_parser = tools_subparsers.add_parser(
         "remove", aliases=["r"], help="Remove a tool", parents=[global_parser]
@@ -182,6 +190,10 @@ def _main():
                 agents = [args.agent] if args.agent else None
                 agents = args.agents.split(",") if args.agents else agents
                 add_tool(args.name, agents)
+            elif args.tools_command in ["create", "c"]:
+                conf.assert_project()
+                agents = [args.agent] if args.agent else None
+                agents = args.agents.split(",") if args.agents else agents
             elif args.tools_command in ["remove", "r"]:
                 conf.assert_project()
                 generation.remove_tool(args.name)
