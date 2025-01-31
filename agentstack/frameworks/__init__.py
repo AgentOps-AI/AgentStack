@@ -5,13 +5,13 @@ from pathlib import Path
 from agentstack import conf
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_framework
+from agentstack.agents import AgentConfig, get_all_agent_names
+from agentstack.tasks import TaskConfig, get_all_task_names
 from agentstack._tools import ToolConfig
 from agentstack import graph
 
 if TYPE_CHECKING:
     from agentstack.generation import InsertionPoint
-    from agentstack.agents import AgentConfig
-    from agentstack.tasks import TaskConfig
 
 
 CREWAI = 'crewai'
@@ -122,7 +122,28 @@ def validate_project():
     """
     Validate that the user's project is ready to run.
     """
-    return get_framework_module(get_framework()).validate_project()
+    framework = get_framework()
+    entrypoint_path = get_entrypoint_path(framework)
+    _module = get_framework_module(framework)
+    
+    # Run framework-specific validation
+    _module.validate_project()
+    
+    # Verify that agents defined in agents.yaml are present in the codebase
+    agent_method_names = _module.get_agent_method_names()
+    for agent_name in get_all_agent_names():
+        if agent_name not in agent_method_names:
+            raise ValidationError(
+                f"Agent `{agent_name}` is defined in agents.yaml but not in {entrypoint_path}"
+            )
+
+    # Verify that tasks defined in tasks.yaml are present in the codebase
+    task_method_names = _module.get_task_method_names()
+    for task_name in get_all_task_names():
+        if task_name not in task_method_names:
+            raise ValidationError(
+                f"Task `{task_name}` is defined in tasks.yaml but not in {entrypoint_path}"
+            )
 
 
 def parse_llm(llm: str) -> tuple[str, str]:
