@@ -14,7 +14,6 @@ from inquirer.errors import ValidationError
 
 BASE_PATH = Path(__file__).parent
 
-# TODO parameterized framework
 class CLIToolsTest(unittest.TestCase):
     def setUp(self):
         self.project_dir = Path(BASE_PATH / 'tmp/cli_tools')
@@ -63,3 +62,90 @@ class CLIToolsTest(unittest.TestCase):
         with patch('inquirer.text', return_value='test_case'):
             result = get_validated_input("Test message", snake_case=True)
             self.assertEqual(result, 'test_case')
+
+    def test_create_tool_basic(self):
+        """Test creating a new custom tool via CLI"""
+        # Initialize a project first
+        result = run_cli('init', "test_project")
+        self.assertEqual(result.returncode, 0)
+        os.chdir(self.project_dir / "test_project")
+
+        # Create an agent to test with
+        result = run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
+        self.assertEqual(result.returncode, 0)
+
+        # Create a new tool
+        result = run_cli('tools', 'create', 'test_tool')
+        self.assertEqual(result.returncode, 0)
+
+        # Verify tool directory and files were created
+        tool_path = Path('src/tools/test_tool')
+        self.assertTrue(tool_path.exists())
+        self.assertTrue((tool_path / '__init__.py').exists())
+        self.assertTrue((tool_path / 'config.json').exists())
+
+    def test_create_tool_with_agents(self):
+        """Test creating a new custom tool with specific agents via CLI"""
+        # Initialize project and create multiple agents
+        result = run_cli('init', "test_project")
+        self.assertEqual(result.returncode, 0)
+        os.chdir(self.project_dir / "test_project")
+
+        run_cli('generate', 'agent', 'agent1', '--llm', 'openai/gpt-4')
+        run_cli('generate', 'agent', 'agent2', '--llm', 'openai/gpt-4')
+
+        # Create tool with specific agent
+        result = run_cli('tools', 'create', 'test_tool', '--agents', 'agent1')
+        self.assertEqual(result.returncode, 0)
+
+        # Verify tool was created
+        tool_path = Path('src/tools/test_tool')
+        self.assertTrue(tool_path.exists())
+
+        # Verify tool was added to correct agent
+        with open('agentstack.json') as f:
+            config = f.read()
+            self.assertIn('test_tool', config)
+
+    def test_create_tool_existing(self):
+        """Test creating a tool that already exists"""
+        # Initialize project
+        result = run_cli('init', "test_project")
+        self.assertEqual(result.returncode, 0)
+        os.chdir(self.project_dir / "test_project")
+
+        # Create agent
+        run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
+
+        # Create tool first time
+        result = run_cli('tools', 'create', 'test_tool')
+        self.assertEqual(result.returncode, 0)
+
+        # Try to create same tool again
+        result = run_cli('tools', 'create', 'test_tool')
+        self.assertNotEqual(result.returncode, 0)  # Should fail
+        self.assertIn("already exists", result.stderr)
+
+    def test_create_tool_invalid_name(self):
+        """Test creating a tool with invalid name formats"""
+        # Initialize project
+        result = run_cli('init', "test_project")
+        self.assertEqual(result.returncode, 0)
+        os.chdir(self.project_dir / "test_project")
+
+        # Create agent
+        run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
+
+        # Test various invalid names
+        invalid_names = ['TestTool', 'test-tool', 'test tool']
+        for name in invalid_names:
+            result = run_cli('tools', 'create', name)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("must be snake_case", result.stderr)
+
+    def test_create_tool_no_project(self):
+        """Test creating a tool outside of a project directory"""
+        # Try to create tool without initializing project
+        result = run_cli('tools', 'create', 'test_tool')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("not in a project directory", result.stderr)

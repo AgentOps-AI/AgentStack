@@ -94,7 +94,7 @@ def create_tool(tool_name: str, tool_path: Path, user_tools_dir: Path, agents: O
     for agent_name in agents:
         frameworks.add_tool(tool, agent_name)
 
-    print(term_color(f"🔨 Tool '{tool_name}' has been created successfully in {user_tools_dir}.", 'green'))
+    log.success(f"🔨 Tool '{tool_name}' has been created successfully in {user_tools_dir}.")
 
 
 def remove_tool(name: str, agents: Optional[list[str]] = []):
