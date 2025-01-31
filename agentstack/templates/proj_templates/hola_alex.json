@@ -1,6 +1,6 @@
 {
     "name": "hola_alex",
-    "description": "This is the start of your AgentStack project.",
+    "description": "A simple example that summarizes the README in spanish.",
     "template_version": 4,
     "framework": "openai_swarm",
     "agents": [{
