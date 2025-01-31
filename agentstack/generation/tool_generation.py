@@ -49,15 +49,19 @@ def add_tool(name: str, agents: Optional[list[str]] = []):
         log.notify(f'🪩  {tool.cta}')
 
 
-def create_tool(tool_name: str, tool_path: Path, user_tools_dir: Path, agents: Optional[list[str]] = []):
+def create_tool(tool_name: str, agents: Optional[list[str]] = []):
     """Create a new custom tool.
 
     Args:
         tool_name: Name of the tool to create (must be snake_case)
-        tool_path: Path to the tool created
-        user_tools_dir: Path to the local project tools directory
         agents: List of agents to make tool available to
     """
+    
+    # Check if tool already exists
+    user_tools_dir = conf.PATH / "src/tools"
+    tool_path = user_tools_dir / tool_name
+    if tool_path.exists():
+        raise Exception(f"Tool '{tool_name}' already exists.")
 
     # Create tool directory
     tool_path.mkdir(parents=True, exist_ok=False)
@@ -72,29 +76,21 @@ def create_tool(tool_name: str, tool_path: Path, user_tools_dir: Path, agents: O
 '''
     init_file.write_text(init_content)
 
-    # Create config.json with basic structure
-    config = {
-        "name": tool_name,
-        "category": "custom",
-        "tools": [tool_name],
-        "url": "",
-        "cta": "",
-        "env": {},
-        "dependencies": [],
-        "post_install": "",
-        "post_remove": ""
-    }
-    config_file = tool_path / 'config.json'
-    config_file.write_text(json.dumps(config, indent=4))
+    tool_config = ToolConfig(
+        name=tool_name, 
+        category="custom", 
+        tools=[tool_name, ],
+    )
+    tool_config.write_to_file(tool_path / 'config.json')
 
     # Edit the framework entrypoint file to include the tool in the agent definition
     tool = ToolConfig.from_tool_name(tool_name)
     if not agents:  # If no agents are specified, add the tool to all agents
         agents = frameworks.get_agent_method_names()
     for agent_name in agents:
-        frameworks.add_tool(tool, agent_name)
+        frameworks.add_tool(tool_config, agent_name)
 
-    print(term_color(f"🔨 Tool '{tool_name}' has been created successfully in {user_tools_dir}.", 'green'))
+    log.success(f"🔨 Tool '{tool_name}' has been successfully created in {user_tools_dir}.")
 
 
 def remove_tool(name: str, agents: Optional[list[str]] = []):

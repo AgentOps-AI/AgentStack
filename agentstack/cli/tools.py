@@ -5,7 +5,6 @@ from agentstack.utils import term_color
 from agentstack import generation
 from agentstack._tools import get_all_tools
 from agentstack.agents import get_all_agents
-from agentstack.generation import tool_generation
 from pathlib import Path
 import sys
 import json
@@ -101,10 +100,5 @@ def create_tool(tool_name: str, agents=Optional[list[str]]):
         tool_name: Name of the tool to create (must be snake_case)
         agents: list of agents to make the tool available to
     """
-    # Check if tool already exists
-    user_tools_dir = Path('src/tools').resolve()
-    tool_path = user_tools_dir / tool_name
-    if tool_path.exists():
-        raise Exception(f"Tool '{tool_name}' already exists.")
+    generation.create_tool(tool_name, agents=agents)
 
-    tool_generation.create_tool(tool_name, tool_path, user_tools_dir, agents)
