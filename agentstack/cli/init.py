@@ -1,14 +1,20 @@
 import os, sys
 from typing import Optional
 from pathlib import Path
+
 from agentstack import conf, log
 from agentstack.exceptions import EnvironmentError
+from agentstack.utils import is_snake_case
 from agentstack import packaging
-from agentstack.cli import welcome_message, init_project_builder
-from agentstack.utils import term_color
+from agentstack import frameworks
+from agentstack import generation
+from agentstack.proj_templates import TemplateConfig
 
+from agentstack.cli import welcome_message
+from agentstack.cli.wizard import run_wizard
+from agentstack.cli.templates import insert_template
 
-# TODO move the rest of the CLI init tooling into this file
+DEFAULT_TEMPLATE_NAME: str = "hello_alex"
 
 
 def require_uv():
@@ -29,6 +35,7 @@ def require_uv():
 def init_project(
     slug_name: Optional[str] = None,
     template: Optional[str] = None,
+    framework: Optional[str] = None,
     use_wizard: bool = False,
 ):
     """
@@ -37,33 +44,70 @@ def init_project(
     - create a new virtual environment
     - copy project skeleton
     - install dependencies
+    - insert Tasks, Agents and Tools
     """
     require_uv()
 
-    # TODO prevent the user from passing the --path arguent to init
+    # TODO prevent the user from passing the --path argument to init
     if slug_name:
+        if not is_snake_case(slug_name):
+            raise Exception("Project name must be snake_case")
         conf.set_path(conf.PATH / slug_name)
     else:
-        raise Exception("Error: No project directory specified.\n Run `agentstack init <project_name>`")
+        raise Exception("No project directory specified.\n Run `agentstack init <project_name>`")
 
     if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
-        raise Exception(f"Error: Directory already exists: {conf.PATH}")
+        raise Exception(f"Directory already exists: {conf.PATH}")
+
+    if template and use_wizard:
+        raise Exception("Template and wizard flags cannot be used together")
+    
+    if use_wizard:
+        log.debug("Initializing new project with wizard.")
+        template_data = run_wizard(slug_name)
+    elif template:
+        log.debug(f"Initializing new project with template: {template}")
+        template_data = TemplateConfig.from_user_input(template)
+    else:
+        log.debug(f"Initializing new project with default template: {DEFAULT_TEMPLATE_NAME}")
+        template_data = TemplateConfig.from_template_name(DEFAULT_TEMPLATE_NAME)
 
     welcome_message()
     log.notify("🦾 Creating a new AgentStack project...")
     log.info(f"Using project directory: {conf.PATH.absolute()}")
 
+    if framework is None:
+        framework = template_data.framework
+    if not framework in frameworks.SUPPORTED_FRAMEWORKS:
+        raise Exception(f"Framework '{framework}' is not supported.")
+    log.info(f"Using framework: {framework}")
+    
     # copy the project skeleton, create a virtual environment, and install dependencies
-    init_project_builder(slug_name, template, use_wizard)
+    # project template is populated before the venv is created so we have a working directory
+    insert_template(name=slug_name, template=template_data, framework=framework)
+    log.info("Creating virtual environment...")
     packaging.create_venv()
+    log.info("Installing dependencies...")
     packaging.install_project()
+    
+    # now we can interact with the project and add Agents, Tasks, and Tools
+    # we allow dependencies to be installed along with these, so the project must
+    # be fully initialized first.
+    for task in template_data.tasks:
+        generation.add_task(**task.model_dump())
+
+    for agent in template_data.agents:
+        generation.add_agent(**agent.model_dump())
+
+    for tool in template_data.tools:
+        generation.add_tool(**tool.model_dump())
 
     log.success("🚀 AgentStack project generated successfully!\n")
     log.info(
         "  To get started, activate the virtual environment with:\n"
-        f"    cd {conf.PATH}\n"
-        "    source .venv/bin/activate\n\n"
+        f"    💫 cd {conf.PATH}\n"
+        "    🌟 source .venv/bin/activate\n\n"
         "  Run your new agent with:\n"
-        "    agentstack run\n\n"
+        "    ✨ agentstack run\n\n"
         "  Or, run `agentstack quickstart` or `agentstack docs` for more next steps.\n"
     )

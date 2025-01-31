@@ -1,4 +1,5 @@
 from typing import Optional, Union
+import re
 import string
 import os, sys
 import string
@@ -39,6 +40,9 @@ class EnvFile:
     ```
     """
 
+    # split the key-value pair on the first '=' character
+    # allow spaces around the '=' character
+    RE_PAIR = re.compile(r"^\s*([^\s=]+)\s*=\s*(.*)$")
     variables: dict[str, str]
 
     def __init__(self, filename: str = ENV_FILENAME):
@@ -69,8 +73,13 @@ class EnvFile:
             Pairs are split on the first '=' character, and stripped of whitespace & quotes.
             Only the last occurrence of a variable is stored.
             """
-            key, value = line.split('=')
-            return key.strip(), value.strip(string.whitespace + '"')
+            match = self.RE_PAIR.match(line)
+            
+            if not match:
+                raise ValueError(f"Invalid line in .env file: {line}")
+            
+            key, value = match.groups()
+            return key, value.strip(' "')
 
         if os.path.exists(conf.PATH / self._filename):
             with open(conf.PATH / self._filename, 'r') as f:
@@ -113,10 +122,25 @@ class ProjectFile:
 
     @property
     def project_metadata(self) -> dict:
+        """
+        [project]
+        name = "project_name"
+        version = "0.0.1"
+        description = "foo bar"
+        authors = [
+            { name = "Name <Email>" }
+        ]
+        license = { text = "MIT" }
+        requires-python = ">=3.10"
+
+        dependencies = [
+            ...
+        ]
+        """
         try:
-            return self._data['tool']['poetry']
+            return self._data['project']
         except KeyError:
-            raise KeyError("No poetry metadata found in pyproject.toml.")
+            raise KeyError("No project metadata found in pyproject.toml.")
 
     @property
     def project_name(self) -> str:
