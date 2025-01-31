@@ -1,5 +1,5 @@
 import unittest
-import sys
+import os, sys
 import io
 import logging
 import shutil
@@ -12,8 +12,8 @@ BASE_PATH = Path(__file__).parent
 
 class TestLog(unittest.TestCase):
     def setUp(self):
-        # Create test directory if it doesn't exist
-        self.test_dir = BASE_PATH / 'tmp/test_log'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.test_dir = BASE_PATH / 'tmp' / self.framework / 'test_log'
         self.test_dir.mkdir(parents=True, exist_ok=True)
 
         # Set log file to test directory

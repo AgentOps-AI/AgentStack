@@ -11,7 +11,8 @@ BASE_PATH = Path(__file__).parent
 
 class CLITemplatesTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = Path(BASE_PATH / 'tmp/cli_templates')
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'cli_templates'
         os.makedirs(self.project_dir, exist_ok=True)
         os.chdir(self.project_dir)
 
