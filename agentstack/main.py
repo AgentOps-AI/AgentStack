@@ -194,7 +194,6 @@ def _main():
                 conf.assert_project()
                 agents = [args.agent] if args.agent else None
                 agents = args.agents.split(",") if args.agents else agents
-                create_tool(args.name, agents)
             elif args.tools_command in ["remove", "r"]:
                 conf.assert_project()
                 generation.remove_tool(args.name)

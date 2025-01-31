@@ -1,7 +1,7 @@
 from typing import Optional
 import itertools
 import inquirer
-from agentstack.utils import term_color
+from agentstack.utils import term_color, is_snake_case
 from agentstack import generation
 from agentstack._tools import get_all_tools
 from agentstack.agents import get_all_agents
@@ -101,6 +101,9 @@ def create_tool(tool_name: str, agents=Optional[list[str]]):
         tool_name: Name of the tool to create (must be snake_case)
         agents: list of agents to make the tool available to
     """
+    if not is_snake_case(tool_name):
+        raise Exception("Invalid tool name: must be snake_case")
+
     # Check if tool already exists
     user_tools_dir = Path('src/tools').resolve()
     tool_path = user_tools_dir / tool_name

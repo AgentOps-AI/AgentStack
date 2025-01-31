@@ -149,4 +149,4 @@ class CLIToolsTest(unittest.TestCase):
         # Try to create tool without initializing project
         result = run_cli('tools', 'create', 'test_tool')
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("not in a project directory", result.stderr)
+        self.assertIn("Could not find agentstack.json", result.stderr)

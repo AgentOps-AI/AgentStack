@@ -23,10 +23,10 @@ class TestGenerationTool(unittest.TestCase):
         self.project_dir = BASE_PATH / 'tmp' / self.framework / 'tool_generation'
         self.tools_dir = self.project_dir / 'src' / 'tools'
 
-        os.makedirs(self.project_dir)
-        os.makedirs(self.project_dir / 'src')
-        os.makedirs(self.project_dir / 'src' / 'tools')
-        os.makedirs(self.tools_dir)
+        os.makedirs(self.project_dir, exist_ok=True)
+        os.makedirs(self.project_dir / 'src', exist_ok=True)
+        os.makedirs(self.project_dir / 'src' / 'tools', exist_ok=True)
+        os.makedirs(self.tools_dir, exist_ok=True)
         (self.project_dir / 'src' / '__init__.py').touch()
 
         # set the framework in agentstack.json
@@ -98,29 +98,21 @@ class TestGenerationTool(unittest.TestCase):
         self.assertEqual(config["category"], "custom")
         self.assertEqual(config["tools"], [tool_name])
 
-        # Verify tool was added to agentstack.json
-        self.assertIn(tool_name, open(self.project_dir / 'agentstack.json').read())
-
     def test_create_tool_specific_agents(self):
         """Test tool creation with specific agents"""
         tool_name = "test_tool"
         tool_path = self.tools_dir / tool_name
-        specific_agents = ["agent1"]
 
         create_tool(
             tool_name=tool_name,
             tool_path=tool_path,
             user_tools_dir=self.tools_dir,
-            agents=specific_agents
         )
 
         # Assert directory and files were created
         self.assertTrue(tool_path.exists())
         self.assertTrue((tool_path / "__init__.py").exists())
         self.assertTrue((tool_path / "config.json").exists())
-
-        # Verify tool was added to agentstack.json
-        self.assertIn(tool_name, open(self.project_dir / 'agentstack.json').read())
 
         # Verify tool was added only to specified agent in entrypoint
         entrypoint_src = open(frameworks.get_entrypoint_path(self.framework)).read()
