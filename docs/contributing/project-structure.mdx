@@ -56,6 +56,12 @@ the user's project, while only ever importing the single keyword.
 ## `agentstack.conf.PATH`
 `<pathlib.Path>` This is the path to the current project directory.
 
+## `@agentstack.agent`
+`<callable>` This is a decorator that marks a method as belonging to an Agent.
+
+## `@agentstack.task`
+`<callable>` This is a decorator that marks a method as belonging to a Task.
+
 ## `agentstack.tools[<tool_name>]`
 `<callable>` This is a tool that is available to agents in the project. Tools
 are implementations from useful third party libraries that are provided to Agents
@@ -68,13 +74,35 @@ use including docstrings and type hints for argument and return types.
 `<str>` This is the name of the current framework ie. `"crewai"`.
 
 ## `agentstack.get_inputs()`
-`<dict[str, str]>` This function returns the inputs for a project. These are the 
+`<dict[str, str]>` Returns the inputs for a project. These are the 
 variables that can be used to configure tasks in the project and are stored in the 
 `inputs.yaml` file inside the project directory.
 
 ## `agentstack.get_tags()`
-`<List[str]>` This function returns the tags for a project. These are strings
+`<List[str]>` Returns the tags for a project. These are strings
 that help identify the workflow in an `AgentOps` observability context.
+
+## `agentstack.get_agent(name: str)`
+`<AgentConfig>` Returns the configuration for an agent in the
+project. Content of this object originates from the project's `agents.yaml` file.
+
+## `agentstack.get_all_agents()`
+`<List[AgentConfig]>` Returns a list of all the agents in the
+project.
+
+## `agentstack.get_all_agent_names()`
+`<List[str]>` Returns a list of all the agent names in the project.
+
+## `agentstack.get_task(name: str)`
+`<TaskConfig>` Returns the configuration for a task in the project. Content of this object originates from the project's `tasks.yaml` file.
+
+## `agentstack.get_all_tasks()`
+`<List[TaskConfig]>` Returns a list of all the tasks in the
+project.
+
+## `agentstack.get_all_task_names()`
+`<List[str]>` Returns a list of all the task names in the project.
+
 
 # Core
 These namespaces occupy the root of `agentstack` and are shared across all
@@ -86,15 +114,45 @@ availability in the public API for use within a project.
 Agents are the actual personalities that accomplish work. We provide tools for
 interacting with the `agents.yaml` configuration file in this package. 
 
-### `AgentConfig.__init__(name: str)`
-`<AgentConfig>` Initialize an `AgentConfig` to read and modify `agents.yaml` in 
-the current project.
+### `AgentConfig`
+`<AgentConfig>` This class represents an agent in the project. It is used to
+read and modify the `agents.yaml` file.
+
+### Properties
+ - `name` `<str>` The name of the agent.
+ - `role` `<str>` The role prompt for the agent.
+ - `goal` `<str>` The goal prompt for the agent.
+ - `backstory` `<str>` The backstory prompt for the agent.
+ - `prompt` `<str>` The full prompt for the agent (formatted role + goal + backstory).
+ - `llm` `<str>` The LLM to use for the agent (ie. `"openai/gpt-4o"`).
+ - `provider` `<str>` The provider to use for the agent (ie. `"openai"`).
+ - `model` `<str>` The model to use for the agent (ie. `"gpt-4o"`).
+
+### Read/Write
+Instantiate `AgentConfig` with the name of the agent to read the relevant part
+from the user project's `agents.yaml` file.
+
+```python
+agent_config = AgentConfig("agent_name")
+agent_config.role
+```
+
+Use the `AgentConfig` as a context manager to modify and write the relevant part
+of the user project's `agents.yaml` file.
+
+```python
+with AgentConfig("agent_name") as agent_config:
+    agent_config.role = "You are a friendly assistant."
+```
+
+### `agents.get_agent(name: str)`
+`<AgentConfig>` Shortcut to return an `AgentConfig` object for a given agent name.
 
 ### `agents.get_all_agent_names()`
-`<List[str]>` This function returns a list of all the agent names in the project.
+`<List[str]>` Returns a list of all the agent names in the project.
 
 ### `agents.get_all_agents()`
-`<List[AgentConfig]>` This function returns a list of all the agents in the project.
+`<List[AgentConfig]>` Returns a list of all the agents in the project.
 
 
 ## `tasks`
@@ -102,15 +160,43 @@ Tasks are the individual units of work that an Agent can perform. `agents` will
 use the `tools` they have available to accomplish `tasks`. We provide tools for
 interacting with the `tasks.yaml` configuration file in this package.
 
-### `TaskConfig.__init__(name: str)`
+### `TaskConfig`
+`<TaskConfig>` This class represents a task in the project. It is used to
+read and modify the `tasks.yaml` file.
+
+#### Properties
+ - `name` `<str>` The name of the task.
+ - `description` `<str>` The description prompt for the task.
+ - `expected_output` `<str>` The expected output prompt of the task.
+ - `prompt` `<str>` The full prompt for the task (formatted description + expected output).
+ - `agent` `<str>` The agent name to use for the task.
+
+#### Read/Write
+Instantiate `TaskConfig` with the name of the task to read the relevant part
+from the user project's `tasks.yaml` file.
+
+```python
+task_config = TaskConfig("task_name")
+task_config.description
+```
+
+Use the `TaskConfig` as a context manager to modify and write the relevant part
+of the user project's `tasks.yaml` file.
+
+```python
+with TaskConfig("task_name") as task_config:
+    task_config.description = "How many R's are in strawberry."
+```
+
+### `tasks.get_task(name: str)`
 `<TaskConfig>` Initialize a `TaskConfig` to read and modify `tasks.yaml` in the
 current project.
 
 ### `tasks.get_all_task_names()`
-`<List[str]>` This function returns a list of all the task names in the project.
+`<List[str]>` Returns a list of all the task names in the project.
 
 ### `tasks.get_all_tasks()`
-`<List[TaskConfig]>` This function returns a list of all the tasks in the project.
+`<List[TaskConfig]>` Returns a list of all the tasks in the project.
 
 
 ## `inputs`
@@ -152,24 +238,25 @@ it's content to the current version.
 with the templates used by `generation`. Move existing templates to be part of
 the generation package. 
 
+### `TemplateConfig.from_user_input(identifier: str)`
+`<TemplateConfig>` Returns a `TemplateConfig` object for either a URL, file path,
+or builtin template name.
+
 ### `TemplateConfig.from_template_name(name: str)`
-`<TemplateConfig>` This function returns a `TemplateConfig` object for a given
-template name.
+`<TemplateConfig>` Returns a `TemplateConfig` object for a given template name.
 
 ### `TemplateConfig.from_file(path: Path)`
-`<TemplateConfig>` This function returns a `TemplateConfig` object for a given
-template file path.
+`<TemplateConfig>` Returns a `TemplateConfig` object for a given template file path.
 
 ### `TemplateConfig.from_url(url: str)`
-`<TemplateConfig>` This function returns a `TemplateConfig` object after loading
-data from a URL.
+`<TemplateConfig>` Returns a `TemplateConfig` object after loading data from a URL.
 
 ### `TemplateConfig.from_json(data: dict)`
-`<TemplateConfig>` This function returns a `TemplateConfig` object from a parsed
-JSON object.
+`<TemplateConfig>` Returns a `TemplateConfig` object from a parsed JSON object.
 
 ### `TemplateConfig.write_to_file(filename: Path)`
 `<None>` Instance method to serialize and write the `TemplateConfig` data to a file.
+
 
 ### `templates.get_all_template_paths()`
 `<List[Path]>` This function returns a list of all the template paths in the project.
@@ -186,16 +273,58 @@ project as `TemplateConfig` objects.
 Configuration data for the AgentStack application. This includes the path to the
 current project directory and the name of the current framework.
 
-### `agentstack.json`
+### `DEBUG`
+`<bool>` This is a flag that indicates whether the application is in debug mode.
+
+### `set_debug(debug: bool)`
+`<None>` This function sets the debug mode for the application.
+
+### `PATH`
+`<pathlib.Path>` This is the path to the current project directory. It may change
+during program execution, so always use `conf.PATH` to reference the global value.
+
+### `set_path(path: Path)`
+`<None>` This function sets the path to the current project directory. 
+
+### `ConfigFile`
 This is the configuration file for a user's project. It contains the project's
-configuration and metadata. It can be read and modified directly by accessing 
-`conf.ConfigFile`. 
+configuration and metadata and is read from `agentstack.json` in the user's 
+project directory.
+
+#### Read/Write
+Instantiate `ConfigFile` to read the relevant part from the user project's
+`agentstack.json` file.
+
+```python
+config = ConfigFile()
+config.framework
+```
+
+Use the `ConfigFile` as a context manager to modify and write the relevant part
+of the user project's `agentstack.json` file.
+
+```python
+with ConfigFile() as config:
+    config.framework = "crewai"
+```
 
 ## `log`
-AgentStack provides a robust logging interface for tracking and debugging 
-agentic workflows. Runs are separated into separate named files for easy tracking
-and have standard conventions for outputs from different parts of the system
-for parsing. 
+AgentStack logs to `stdout/stderr` if available, and to `agentstack.log` in the
+current project directory, if it exists. 
+
+### Log Handlers
+`debug`, `tool_use`, `thinking`, `info`, `notify`, `success`, `response`, 
+`warning` and `error` are available as functions to log messages at the
+appropriate level. 
+
+### `set_stdout(stream: IO)`
+`<None>` This function sets the `stdout` stream for the application. To disable
+logging to `stdout`, set the stream to a new `io.StringIO()` object.
+
+### `set_stderr(stream: IO)`
+`<None>` This function sets the `stderr` stream for the application. To disable
+logging to `stderr`, set the stream to a new `io.StringIO()` object.
+
 
 ## `serve`
 Completed agents can be deployed to the AgentStack cloud service with a single
@@ -208,8 +337,8 @@ agentic workflows.
 The command line interface for `agentstack` is provided in this package. Outside
 of `main.py` all logic relating to the command line interface resides here. 
 
-> TODO: Code from other parts of the application should always throw exceptions
-and leave the CLI to handle error messaging and control flow. 
+Typically, functionality inside the `cli` package handles user input and
+output, error messaging and status updates. 
 
 ## `packaging`
 We manage the virtual environment and dependencies for tools that are added to 
@@ -249,10 +378,12 @@ are imported into the project and available for use by `agents`.
 ## `generation.files`
 This is code that creates and modifies the `files` in a user's project.
 
-### `.env`
+### `EnvFile`
 This is the environment file for a user's project. It contains the project's
 environment variables. We dynamically modify this file to include relevant
 variables to support `tools` that are used in the project.
+
+### `ProjectFile`
 
 ## `generation.asttools`
 Since we're interacting with generated code, we provide a shared toolkit for
