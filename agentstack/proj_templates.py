@@ -196,15 +196,15 @@ class TemplateConfig(pydantic.BaseModel):
 
     name: str
     description: str
-    template_version: Literal[4]
+    template_version: Literal[4] = CURRENT_VERSION
     framework: str
-    method: str
+    method: str = "sequential"
     manager_agent: Optional[str] = None
-    agents: list[Agent]
-    tasks: list[Task]
-    tools: list[Tool]
-    graph: list[list[Node]]
-    inputs: dict[str, str] = {}
+    agents: list[Agent] = pydantic.Field(default_factory=list)
+    tasks: list[Task] = pydantic.Field(default_factory=list)
+    tools: list[Tool] = pydantic.Field(default_factory=list)
+    graph: list[list[Node]] = pydantic.Field(default_factory=list)
+    inputs: dict[str, str] = pydantic.Field(default_factory=dict)
 
     @pydantic.field_validator('graph')
     @classmethod

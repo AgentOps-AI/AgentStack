@@ -1,6 +1,6 @@
 {
     "name": "hello_alex",
-    "description": "This is the start of your AgentStack project.",
+    "description": "A simple example that opens the README and offers suggestions.",
     "template_version": 1,
     "framework": "crewai",
     "agents": [{

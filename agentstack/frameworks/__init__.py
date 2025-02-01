@@ -22,6 +22,7 @@ SUPPORTED_FRAMEWORKS = [
     LANGGRAPH,
     OPENAI_SWARM,
 ]
+DEFAULT_FRAMEWORK = CREWAI
 
 
 class FrameworkModule(Protocol):
