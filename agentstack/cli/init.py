@@ -45,7 +45,10 @@ def select_template(slug_name: str, framework: Optional[str] = None) -> Template
         message="Do you want to start with a template?",
         choices=[empty_msg] + template_names,
     )
-    template_name = template_choice.split("⚡️ ")[1].split(" - ")[0]
+    if '⚡️' not in template_choice:
+        template_name = empty_msg
+    else:
+        template_name = template_choice.split("⚡️ ")[1].split(" - ")[0]
 
     if template_name == empty_msg:
         return TemplateConfig(
