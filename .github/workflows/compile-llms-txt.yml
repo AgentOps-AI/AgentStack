@@ -19,7 +19,7 @@ jobs:
       - name: Compile llms.txt
         run: |
           cd docs
-          python compile_llms.py
+          python compile_llms_txt.py
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
