@@ -7,10 +7,12 @@ from agentstack import conf, log
 from agentstack import packaging
 from agentstack.exceptions import ValidationError
 from agentstack.generation import asttools, InsertionPoint
+from agentstack.frameworks import BaseEntrypointFile
 from agentstack._tools import ToolConfig
 from agentstack.agents import AgentConfig, get_all_agent_names
 from agentstack.tasks import TaskConfig, get_all_task_names
 from agentstack import graph
+
 
 ENTRYPOINT: Path = Path('src/graph.py')
 
@@ -73,74 +75,17 @@ PROVIDERS = {
 }
 
 
-class LangGraphFile(asttools.File):
+class LangGraphFile(BaseEntrypointFile):
     """
     Parses and manipulates the LangGraph entrypoint file.
     """
 
-    def get_import(self, module_name: str, attributes: str) -> Optional[ast.ImportFrom]:
-        """
-        Check if an import statement for a module and class exists in the file.
-        """
-        for node in asttools.get_all_imports(self.tree):
-            names_str = ', '.join(alias.name for alias in node.names)
-            if node.module == module_name and names_str == attributes:
-                return node
-        return None
+    base_class_pattern = r'\w+Graph$'
+    agent_decorator_name: str = 'agent'
+    task_decorator_name: str = 'task'
 
-    def add_import(self, module_name: str, attributes: str):
-        """
-        Add an import statement to the file.
-        """
-        all_imports = asttools.get_all_imports(self.tree)
-        _, end = self.get_node_range(all_imports[-1]) if all_imports else (0, 0)
-
-        code = f"from {module_name} import {attributes}\n"
-        if not self.source[:end].endswith('\n'):
-            code = '\n' + code
-
-        self.edit_node_range(end, end, code)
-
-    def get_base_class(self) -> ast.ClassDef:
-        """
-        A base class is the first class inside of the file that follows the
-        naming convention: `<FooBar>Graph`
-        """
-        try:
-            return asttools.find_class_with_regex(self.tree, r'\w+Graph$')[0]
-        except IndexError:
-            raise ValidationError(f"`<FooBar>Graph` class not found in {ENTRYPOINT}")
-
-    def get_run_method(self) -> ast.FunctionDef:
-        """A method named `run`."""
-        try:
-            base_class = self.get_base_class()
-            node = asttools.find_method_in_class(base_class, 'run')[0]
-            assert 'inputs' in (arg.arg for arg in node.args.args)
-            return node
-        except IndexError:
-            raise ValidationError(f"`run` method not found in `{base_class.name} class in {ENTRYPOINT}.")
-        except AssertionError:
-            raise ValidationError(
-                f"Method `run` of `{base_class.name}` must accept `inputs` as a keyword argument."
-            )
-
-    def get_task_methods(self) -> list[ast.FunctionDef]:
-        """A `task` method is a method decorated with `@task`."""
-        return asttools.find_decorated_method_in_class(self.get_base_class(), 'task')
-
-    def add_task_method(self, task: TaskConfig):
-        """Add a new task method to the LangGraph entrypoint."""
-        task_methods = self.get_task_methods()
-        if task_methods:
-            # Add after the existing task methods
-            _, pos = self.get_node_range(task_methods[-1])
-        else:
-            # Add before the `main` method
-            main_method = self.get_run_method()
-            pos, _ = self.get_node_range(main_method)
-
-        code = f"""    @agentstack.task
+    def get_new_task_method(self, task: TaskConfig) -> str:
+        return f"""    @agentstack.task
     def {task.name}(self, state: State):
         task_config = agentstack.get_task('{task.name}')
         messages = ChatPromptTemplate.from_messages([
@@ -149,30 +94,10 @@ class LangGraphFile(asttools.File):
         messages = messages.format_messages(**state['inputs'])
         return {{'messages': messages + state['messages']}}"""
 
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
-
-    def get_agent_methods(self) -> list[ast.FunctionDef]:
-        """An `agent` method is a method decorated with `@agent`."""
-        return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
-
-    def add_agent_method(self, agent: AgentConfig):
-        """Add a new agent method to the LangGraph entrypoint."""
-        agent_methods = self.get_agent_methods()
-        if agent_methods:
-            # Add after the existing agent methods
-            _, pos = self.get_node_range(agent_methods[-1])
-        else:
-            # Add before the `main` method
-            main_method = self.get_run_method()
-            pos, _ = self.get_node_range(main_method)
-
+    def get_new_agent_method(self, agent: AgentConfig) -> str:
         assert agent.provider in PROVIDERS.keys()  # this gets validated in `add_agent`
         agent_class_name = PROVIDERS[agent.provider].class_name
-        code = f"""    @agentstack.agent
+        return f"""    @agentstack.agent
     def {agent.name}(self, state: State):
         agent_config = agentstack.get_agent('{agent.name}')
         messages = ChatPromptTemplate.from_messages([
@@ -184,12 +109,6 @@ class LangGraphFile(asttools.File):
             messages + state['messages'],
         )
         return {{'messages': [response, ]}}"""
-
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
 
     def get_global_tools(self) -> ast.List:
         try:
@@ -501,35 +420,17 @@ class LangGraphFile(asttools.File):
         raise ValidationError(f"Node `{node_config.name}` not found in {ENTRYPOINT}")
 
 
+def get_entrypoint() -> LangGraphFile:
+    """Get the LangGraph entrypoint file."""
+    return LangGraphFile(conf.PATH / ENTRYPOINT)
+
+
 def validate_project() -> None:
     """
     Validate that a langgraph project is ready to run.
     Raises an `agentstack.ValidationError` if the project is not valid.
     """
-    graph_file = LangGraphFile(conf.PATH / ENTRYPOINT)
-
-    # A valid project must have a class in the graph.py file that is named <Foo>Graph.
-    # will raise a ValidationError if the class is not found
-    class_node = graph_file.get_base_class()
-
-    # The base class must implement a method called `run` that accepts `inputs`
-    # as a keyword argument.
-    # will raise a ValidationError if the method is not found or does not have the correct signature
-    _ = graph_file.get_run_method()
-
-    # The base class must have one or more methods decorated with `@task`
-    if len(graph_file.get_task_methods()) < 1:
-        raise ValidationError(
-            f"`@agentstack.task` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
-            "Create a new task using `agentstack generate task <task_name>`."
-        )
-
-    # The base class must have one or more methods decorated with `@agent`
-    if len(graph_file.get_agent_methods()) < 1:
-        raise ValidationError(
-            f"`@agentstack.agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
-            "Create a new agent using `agentstack generate agent <agent_name>`."
-        )
+    return  # No additional validation needed
 
 
 def parse_llm(llm: str) -> tuple[str, str]:
@@ -541,14 +442,6 @@ def parse_llm(llm: str) -> tuple[str, str]:
     return provider, model
 
 
-def get_task_method_names() -> list[str]:
-    """
-    Get a list of task names (methods with an @task decorator).
-    """
-    entrypoint = LangGraphFile(conf.PATH / ENTRYPOINT)
-    return [method.name for method in entrypoint.get_task_methods()]
-
-
 def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add a task method to the LangGraph entrypoint.
@@ -558,7 +451,7 @@ def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> Non
     if not position in (InsertionPoint.BEGIN, InsertionPoint.END):
         raise ValidationError(f"Invalid insertion point: {position}")
 
-    with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         entrypoint.add_task_method(task)
         entrypoint.add_graph_node(task)
 
@@ -619,19 +512,11 @@ def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> Non
                 log.warning(f"Could not find {GRAPH_NODE_START} node to replace in {ENTRYPOINT}")
 
 
-def get_agent_method_names() -> list[str]:
-    """
-    Get a list of agent names (methods with an @agent decorator).
-    """
-    entrypoint = LangGraphFile(conf.PATH / ENTRYPOINT)
-    return [method.name for method in entrypoint.get_agent_methods()]
-
-
 def get_agent_tool_names(agent_name: str) -> list[Any]:
     """
     Get a list of tools used by an agent.
     """
-    with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         return entrypoint.get_agent_tool_names(agent_name)
 
 
@@ -653,7 +538,7 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
             f"AgentStack currently supports: {', '.join(PROVIDERS.keys())} "
         )
 
-    with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         if not entrypoint.get_import(provider.module_name, provider.class_name):
             entrypoint.add_import(provider.module_name, provider.class_name)
 
@@ -737,7 +622,7 @@ def add_tool(tool: ToolConfig, agent_name: str):
     Add a tool to the LangGraph entrypoint for the specified agent.
     The agent should already exist in the base class and have a `bind_tools` method call.
     """
-    with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         entrypoint.add_agent_tools(agent_name, tool)
 
 
@@ -745,7 +630,7 @@ def remove_tool(tool: ToolConfig, agent_name: str):
     """
     Remove a tool from the CrewAI framework for the specified agent.
     """
-    with LangGraphFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         entrypoint.remove_agent_tools(agent_name, tool)
 
 
@@ -759,5 +644,4 @@ def wrap_tool(tool_func: Callable) -> Callable:
 
 def get_graph() -> list[graph.Edge]:
     """Get the graph structure of the project."""
-    entrypoint = LangGraphFile(conf.PATH / ENTRYPOINT)
-    return entrypoint.get_graph()
+    return get_entrypoint().get_graph()

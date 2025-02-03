@@ -1,25 +1,29 @@
-from typing import TYPE_CHECKING, Optional, Any, Callable
+from typing import Optional, Any, Callable
 from pathlib import Path
 import ast
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
+from agentstack.generation import InsertionPoint
+from agentstack.frameworks import BaseEntrypointFile
 from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 from agentstack import graph
 
-if TYPE_CHECKING:
-    from agentstack.generation import InsertionPoint
 
+NAME: str = "CrewAI"
 ENTRYPOINT: Path = Path('src/crew.py')
 
 
-class CrewFile(asttools.File):
+class CrewFile(BaseEntrypointFile):
     """
     Parses and manipulates the CrewAI entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
+
+    agent_decorator_name: str = 'agent'
+    task_decorator_name: str = 'task'
 
     def write(self):
         """
@@ -37,8 +41,8 @@ class CrewFile(asttools.File):
         except IndexError:
             raise ValidationError(f"`@CrewBase` decorated class not found in {ENTRYPOINT}")
 
-    def get_crew_method(self) -> ast.FunctionDef:
-        """A `crew` method is a method decorated with `@crew`."""
+    def get_run_method(self) -> ast.FunctionDef:
+        """A run method is a method decorated with `@crew`."""
         try:
             base_class = self.get_base_class()
             return asttools.find_decorated_method_in_class(base_class, 'crew')[0]
@@ -47,62 +51,23 @@ class CrewFile(asttools.File):
                 f"`@crew` decorated method not found in `{base_class.name}` class in {ENTRYPOINT}"
             )
 
-    def get_task_methods(self) -> list[ast.FunctionDef]:
-        """A `task` method is a method decorated with `@task`."""
-        return asttools.find_decorated_method_in_class(self.get_base_class(), 'task')
-
-    def add_task_method(self, task: TaskConfig):
-        """Add a new task method to the CrewAI entrypoint."""
-        task_methods = self.get_task_methods()
-        if task_methods:
-            # Add after the existing task methods
-            _, pos = self.get_node_range(task_methods[-1])
-        else:
-            # Add before the `crew` method
-            crew_method = self.get_crew_method()
-            pos, _ = self.get_node_range(crew_method)
-
-        code = f"""    @task
+    def get_new_task_method(self, task: TaskConfig) -> str:
+        """Get the content of a new task method. """
+        return f"""    @task
     def {task.name}(self) -> Task:
         return Task(
             config=self.tasks_config['{task.name}'],
         )"""
 
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
-
-    def get_agent_methods(self) -> list[ast.FunctionDef]:
-        """An `agent` method is a method decorated with `@agent`."""
-        return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
-
-    def add_agent_method(self, agent: AgentConfig):
-        """Add a new agent method to the CrewAI entrypoint."""
-        # TODO do we want to pre-populate any tools?
-        agent_methods = self.get_agent_methods()
-        if agent_methods:
-            # Add after the existing agent methods
-            _, pos = self.get_node_range(agent_methods[-1])
-        else:
-            # Add before the `crew` method
-            crew_method = self.get_crew_method()
-            pos, _ = self.get_node_range(crew_method)
-
-        code = f"""    @agent
+    def get_new_agent_method(self, agent: AgentConfig) -> str:
+        """Get the content of a new agent method."""
+        return f"""    @agent
     def {agent.name}(self) -> Agent:
         return Agent(
             config=self.agents_config['{agent.name}'],
             tools=[], # add tools here or use `agentstack tools add <tool_name>
             verbose=True,
         )"""
-
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
         """
@@ -195,41 +160,19 @@ class CrewFile(asttools.File):
         self.edit_node_range(start, end, existing_node)
 
 
+def get_entrypoint() -> CrewFile:
+    """
+    Get the CrewAI entrypoint file.
+    """
+    return CrewFile(conf.PATH / ENTRYPOINT)
+
+
 def validate_project() -> None:
     """
     Validate that a CrewAI project is ready to run.
     Raises an `agentstack.ValidationError` if the project is not valid.
     """
-    try:
-        crew_file = CrewFile(conf.PATH / ENTRYPOINT)
-    except ValidationError as e:
-        raise e
-
-    # A valid project must have a class in the crew.py file decorated with `@CrewBase`
-    try:
-        class_node = crew_file.get_base_class()
-    except ValidationError as e:
-        raise e
-
-    # The Crew class must have one method decorated with `@crew`
-    try:
-        crew_file.get_crew_method()
-    except ValidationError as e:
-        raise e
-
-    # The Crew class must have one or more methods decorated with `@task`
-    if len(crew_file.get_task_methods()) < 1:
-        raise ValidationError(
-            f"`@task` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
-            "Create a new task using `agentstack generate task <task_name>`."
-        )
-
-    # The Crew class must have one or more methods decorated with `@agent`
-    if len(crew_file.get_agent_methods()) < 1:
-        raise ValidationError(
-            f"`@agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
-            "Create a new agent using `agentstack generate agent <agent_name>`."
-        )
+    return  # We don't need to do any additional validation
 
 
 def parse_llm(llm: str) -> tuple[str, str]:
@@ -241,14 +184,6 @@ def parse_llm(llm: str) -> tuple[str, str]:
     return provider, model
 
 
-def get_task_method_names() -> list[str]:
-    """
-    Get a list of task names (methods with an @task decorator).
-    """
-    crew_file = CrewFile(conf.PATH / ENTRYPOINT)
-    return [method.name for method in crew_file.get_task_methods()]
-
-
 def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> None:
     """
     Add a task method to the CrewAI entrypoint.
@@ -256,24 +191,16 @@ def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> N
     if position is not None:
         raise NotImplementedError("Task insertion points are not supported in CrewAI.")
 
-    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
-        crew_file.add_task_method(task)
-
-
-def get_agent_method_names() -> list[str]:
-    """
-    Get a list of agent names (methods with an @agent decorator).
-    """
-    crew_file = CrewFile(conf.PATH / ENTRYPOINT)
-    return [method.name for method in crew_file.get_agent_methods()]
+    with get_entrypoint() as entrypoint:
+        entrypoint.add_task_method(task)
 
 
 def get_agent_tool_names(agent_name: str) -> list[Any]:
     """
     Get a list of tools used by an agent.
     """
-    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
-        return crew_file.get_agent_tool_names(agent_name)
+    with get_entrypoint() as entrypoint:
+        return entrypoint.get_agent_tool_names(agent_name)
 
 
 def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -> None:
@@ -283,8 +210,8 @@ def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -
     if position is not None:
         raise NotImplementedError("Agent insertion points are not supported in CrewAI.")
 
-    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
-        crew_file.add_agent_method(agent)
+    with get_entrypoint() as entrypoint:
+        entrypoint.add_agent_method(agent)
 
 
 def add_tool(tool: ToolConfig, agent_name: str):
@@ -292,16 +219,16 @@ def add_tool(tool: ToolConfig, agent_name: str):
     Add a tool to the CrewAI entrypoint for the specified agent.
     The agent should already exist in the crew class and have a keyword argument `tools`.
     """
-    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
-        crew_file.add_agent_tools(agent_name, tool)
+    with get_entrypoint() as entrypoint:
+        entrypoint.add_agent_tools(agent_name, tool)
 
 
 def remove_tool(tool: ToolConfig, agent_name: str):
     """
     Remove a tool from the CrewAI framework for the specified agent.
     """
-    with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
-        crew_file.remove_agent_tools(agent_name, tool)
+    with get_entrypoint() as entrypoint:
+        entrypoint.remove_agent_tools(agent_name, tool)
 
 
 def wrap_tool(tool_func: Callable) -> Callable:

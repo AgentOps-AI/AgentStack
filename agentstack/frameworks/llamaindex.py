@@ -11,23 +11,29 @@ from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 from agentstack import graph
 
+NAME: str = "LLama Index"
+ENTRYPOINT: Path = Path('src/stack.py')
 
-NAME: str = "Framework"
-ENTRYPOINT: Path = Path('src/<filename>.py')
 
-
-class FrameworkFile(BaseEntrypointFile):
+class LlamaIndexFile(BaseEntrypointFile):
     """
     Parses and manipulates the entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
-
     base_class_pattern = r'\w+Stack$'
     agent_decorator_name: str = 'agent'
     task_decorator_name: str = 'task'
+    
+    def get_task_methods(self) -> list[ast.FunctionDef]:
+        """A `task` method is a method decorated with `@task`."""
+        pass
 
     def get_new_task_method(self, task: TaskConfig) -> str:
         """Get the content of a new task method. """
+        pass
+
+    def get_agent_methods(self) -> list[ast.FunctionDef]:
+        """An `agent` method is a method decorated with `@agent`."""
         pass
 
     def get_new_agent_method(self, agent: AgentConfig) -> str:
@@ -51,9 +57,9 @@ class FrameworkFile(BaseEntrypointFile):
         pass
 
 
-def get_entrypoint() -> FrameworkFile:
+def get_entrypoint() -> LlamaIndexFile:
     """Get the entrypoint file."""
-    return FrameworkFile(conf.PATH / ENTRYPOINT)
+    return LlamaIndexFile(conf.PATH / ENTRYPOINT)
 
 
 def validate_project() -> None:

@@ -4,6 +4,7 @@ import ast
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack.generation import InsertionPoint
+from agentstack.frameworks import BaseEntrypointFile
 from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
@@ -15,52 +16,18 @@ NAME: str = "OpenAI Swarm"
 ENTRYPOINT: Path = Path('src/stack.py')
 
 
-class SwarmFile(asttools.File):
+class SwarmFile(BaseEntrypointFile):
     """
     Parses and manipulates the entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
+    base_class_pattern = r'\w+Stack$'
+    agent_decorator_name: str = 'agent'
+    task_decorator_name: str = 'task'
 
-    def get_base_class(self) -> ast.ClassDef:
-        """
-        A base class is the first class inside of the file that follows the
-        naming convention: `<FooBar>Stack`
-        """
-        try:
-            return asttools.find_class_with_regex(self.tree, r'\w+Stack$')[0]
-        except IndexError:
-            raise ValidationError(f"`<FooBar>Stack` class not found in {ENTRYPOINT}")
-
-    def get_run_method(self) -> ast.FunctionDef:
-        """A method named `run`."""
-        try:
-            base_class = self.get_base_class()
-            node = asttools.find_method_in_class(base_class, 'run')[0]
-            assert 'inputs' in (arg.arg for arg in node.args.args)
-            return node
-        except IndexError:
-            raise ValidationError(f"`run` method not found in `{base_class.name} class in {ENTRYPOINT}.")
-        except AssertionError:
-            raise ValidationError(
-                f"Method `run` of `{base_class.name}` must accept `inputs` as a keyword argument."
-            )
-
-    def get_task_methods(self) -> list[ast.FunctionDef]:
-        """A `task` method is a method decorated with `@task`."""
-        return asttools.find_decorated_method_in_class(self.get_base_class(), 'task')
-
-    def add_task_method(self, task: TaskConfig):
-        """Add a new task method to the entrypoint."""
-        task_methods = self.get_task_methods()
-        if task_methods:
-            # Add after the existing task methods
-            _, pos = self.get_node_range(task_methods[-1])
-        else:
-            # Add before the `main` method
-            main_method = self.get_run_method()
-            pos, _ = self.get_node_range(main_method)
-
-        code = f"""    @agentstack.task
+    def get_new_task_method(self, task: TaskConfig) -> str:
+        """Get the content of a new task method. """
+        return f"""    @agentstack.task
     def {task.name}(self, messages: list[str] = []) -> Agent:
         task_config = agentstack.get_task('{task.name}')
         agent = getattr(self, task_config.agent)
@@ -70,33 +37,9 @@ class SwarmFile(asttools.File):
         ]
         return agent(messages)"""
 
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
-        
-        # add a new task to the last agent in the stack
-        existing_agent_methods = self.get_agent_methods()
-        if not len(existing_agent_methods):
-            return  # no agents to update
-
-    def get_agent_methods(self) -> list[ast.FunctionDef]:
-        """An `agent` method is a method decorated with `@agent`."""
-        return asttools.find_decorated_method_in_class(self.get_base_class(), 'agent')
-
-    def add_agent_method(self, agent: AgentConfig) -> None:
-        """Add a new agent method to the entrypoint."""
-        agent_methods = self.get_agent_methods()
-        if agent_methods:
-            # Add after the existing agent methods
-            _, pos = self.get_node_range(agent_methods[-1])
-        else:
-            # Add before the `main` method
-            main_method = self.get_run_method()
-            pos, _ = self.get_node_range(main_method)
-
-        code = f"""    @agentstack.agent
+    def get_new_agent_method(self, agent: AgentConfig) -> str:
+        """Get the content of a new agent method."""
+        return f"""    @agentstack.agent
     def {agent.name}(self, messages: list[str] = []) -> Agent:
         agent_config = agentstack.get_agent('{agent.name}')
         messages = [
@@ -109,12 +52,6 @@ class SwarmFile(asttools.File):
             instructions='\\n'.join(messages),
             functions=[],
         )"""
-
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
         """Get the tools used by an agent as AST nodes."""
@@ -188,41 +125,19 @@ class SwarmFile(asttools.File):
         self.edit_node_range(start, end, existing_node)
 
 
+def get_entrypoint() -> SwarmFile:
+    """
+    Get the entrypoint file.
+    """
+    return SwarmFile(conf.PATH / ENTRYPOINT)
+
+
 def validate_project() -> None:
     """
     Validate that the project is ready to run.
     Raises an `agentstack.ValidationError` if the project is not valid.
     """
-    try:
-        entrypoint = SwarmFile(conf.PATH / ENTRYPOINT)
-    except ValidationError as e:
-        raise e
-
-    # A valid project must have a class in the entrypoint file
-    try:
-        class_node = entrypoint.get_base_class()
-    except ValidationError as e:
-        raise e
-
-    # The class must have a `run` method
-    try:
-        entrypoint.get_run_method()
-    except ValidationError as e:
-        raise e
-
-    # The class must have one or more methods decorated with `@task`
-    if len(entrypoint.get_task_methods()) < 1:
-        raise ValidationError(
-            f"`@task` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
-            "Create a new task using `agentstack generate task <task_name>`."
-        )
-
-    # The class must have one or more methods decorated with `@agent`
-    if len(entrypoint.get_agent_methods()) < 1:
-        raise ValidationError(
-            f"`@agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
-            "Create a new agent using `agentstack generate agent <agent_name>`."
-        )
+    return  # No additional validation needed
 
 
 def parse_llm(llm: str) -> tuple[str, str]:
@@ -233,14 +148,6 @@ def parse_llm(llm: str) -> tuple[str, str]:
     return provider, model
 
 
-def get_task_method_names() -> list[str]:
-    """
-    Get a list of task names (methods with an @task decorator).
-    """
-    entrypoint = SwarmFile(conf.PATH / ENTRYPOINT)
-    return [method.name for method in entrypoint.get_task_methods()]
-
-
 def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> None:
     """
     Add a task method to the entrypoint.
@@ -248,23 +155,15 @@ def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> N
     if position is not None:
         raise NotImplementedError(f"Task insertion points are not supported in {NAME}.")
 
-    with SwarmFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         entrypoint.add_task_method(task)
-
-
-def get_agent_method_names() -> list[str]:
-    """
-    Get a list of agent names (methods with an @agent decorator).
-    """
-    entrypoint = SwarmFile(conf.PATH / ENTRYPOINT)
-    return [method.name for method in entrypoint.get_agent_methods()]
 
 
 def get_agent_tool_names(agent_name: str) -> list[Any]:
     """
     Get a list of tools used by an agent.
     """
-    with SwarmFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         return entrypoint.get_agent_tool_names(agent_name)
 
 
@@ -275,7 +174,7 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
     if position is not None:
         raise NotImplementedError(f"Agent insertion points are not supported in {NAME}.")
 
-    with SwarmFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         entrypoint.add_agent_method(agent)
 
 
@@ -283,7 +182,7 @@ def add_tool(tool: ToolConfig, agent_name: str):
     """
     Add a tool to the entrypoint for the specified agent.
     """
-    with SwarmFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         entrypoint.add_agent_tools(agent_name, tool)
 
 
@@ -291,7 +190,7 @@ def remove_tool(tool: ToolConfig, agent_name: str):
     """
     Remove a tool from the entrypoint for the specified agent.
     """
-    with SwarmFile(conf.PATH / ENTRYPOINT) as entrypoint:
+    with get_entrypoint() as entrypoint:
         entrypoint.remove_agent_tools(agent_name, tool)
 
 
