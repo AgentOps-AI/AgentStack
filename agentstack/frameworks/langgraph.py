@@ -42,6 +42,11 @@ PROVIDERS = {
         module_name='langchain_openai',
         dependency='langchain-openai>=0.3.0',
     ),
+    'deepseek': LangGraphProvider(
+        class_name='ChatDeepSeek',
+        module_name='langchain_deepseek_official',
+        dependency='langchain-deepseek-official>=0.1.0',
+    ),
     'anthropic': LangGraphProvider(
         class_name='ChatAnthropic',
         module_name='langchain_anthropic',
@@ -71,6 +76,11 @@ PROVIDERS = {
         class_name='ChatOllama',
         module_name='langchain_ollama.chat_models',
         dependency='langchain-ollama',
+    ),
+    'groq': LangGraphProvider(
+        class_name='ChatGroq',
+        module_name='langchain_groq',
+        dependency='langchain-groq',
     ),
 }
 
