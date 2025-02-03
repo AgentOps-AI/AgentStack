@@ -269,6 +269,10 @@ or builtin template name.
 project as `TemplateConfig` objects.
 
 
+## `graph`
+We implement basic abstractions for graphing the relationships between `agents` and `tasks` in a project.
+
+
 ## `conf`
 Configuration data for the AgentStack application. This includes the path to the
 current project directory and the name of the current framework.
@@ -316,6 +320,10 @@ current project directory, if it exists.
 `debug`, `tool_use`, `thinking`, `info`, `notify`, `success`, `response`, 
 `warning` and `error` are available as functions to log messages at the
 appropriate level. 
+
+```python
+log.debug("This is a debug message.")
+```
 
 ### `set_stdout(stream: IO)`
 `<None>` This function sets the `stdout` stream for the application. To disable
@@ -401,15 +409,21 @@ This is the base protocol for all framework implementations– all implementatio
 must implement this protocol.
 
 ## `frameworks.crewai`
-This is the implementation for the CrewAI framework. CrewAI is a framework for
-creating and managing AI agents. All code related specifically to CrewAI is
-contained in this package.
+This is the implementation for the CrewAI framework. All code related specifically 
+to CrewAI is contained in this package.
 
 ## `frameworks.langgraph`
-> TODO Add [LangGraph](https://langchain-ai.github.io/langgraph/) as a framework.
+This is the implementation for the LangGraph framework. All code related specifically 
+to LangGraph is contained in this package.
 
 ## `frameworks.openai_swarms`
-> TODO: Add OpenAI Swarms as a framework.
+This is the implementation for the OpenAI Swarms framework. All code related specifically
+to OpenAI Swarms is contained in this package.
+
+## `frameworks.llamaindex`
+. TODO : Add [LlamaIndex](https://docs.llamaindex.ai/en/stable/examples/agent/custom_agent/)
+ as a framework.
 
 ## `frameworks.agency_swarm`
-> TODO: Add [VRSEN Agency Swarm](https://github.com/VRSEN/agency-swarm?tab=readme-ov-file) as a framework.
+> TODO: Add [VRSEN Agency Swarm](https://github.com/VRSEN/agency-swarm?tab=readme-ov-file) 
+as a framework.
