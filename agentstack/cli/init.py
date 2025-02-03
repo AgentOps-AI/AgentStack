@@ -38,19 +38,21 @@ def require_uv():
 def select_template(slug_name: str, framework: Optional[str] = None) -> TemplateConfig:
     """Let the user select a template from the ones available."""
     templates: list[TemplateConfig] = get_all_templates()
-    template_names = [shorten(f"⚡️ {t.name} - {t.description}", 80) for t in templates]
 
-    empty_msg = "🆕 Empty Project"
-    template_choice = inquirer.list_input(
+    EMPTY = 'empty'
+    choices = [
+        (EMPTY, "🆕 Empty Project"),
+    ]
+    for template in templates:
+        choices.append((template.name, shorten(f"⚡️ {template.name} - {template.description}", 80)))
+
+    choice = inquirer.list_input(
         message="Do you want to start with a template?",
-        choices=[empty_msg] + template_names,
+        choices=[c[1] for c in choices],
     )
-    if '⚡️' not in template_choice:
-        template_name = empty_msg
-    else:
-        template_name = template_choice.split("⚡️ ")[1].split(" - ")[0]
+    template_name = next(c[0] for c in choices if c[1] == choice)
 
-    if template_name == empty_msg:
+    if template_name == EMPTY:
         return TemplateConfig(
             name=slug_name,
             description="",
