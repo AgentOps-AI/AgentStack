@@ -73,7 +73,8 @@
       "group": "Contributing",
       "pages": [
         "contributing/how-to-contribute",
-        "contributing/adding-tools"
+        "contributing/adding-tools",
+        "contributing/project-structure"
       ]
     }
   ],

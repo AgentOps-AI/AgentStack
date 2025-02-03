@@ -15,10 +15,10 @@ BASE_PATH = Path(__file__).parent
 
 
 # TODO parameterize all tools
-@parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
 class TestGenerationTool(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp' / 'tool_generation'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'tool_generation'
 
         os.makedirs(self.project_dir)
         os.makedirs(self.project_dir / 'src')

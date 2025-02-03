@@ -1,12 +1,16 @@
-from typing import Optional, Any, Callable
+from typing import TYPE_CHECKING, Optional, Any, Callable
 from pathlib import Path
 import ast
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
+from agentstack import graph
+
+if TYPE_CHECKING:
+    from agentstack.generation import InsertionPoint
 
 ENTRYPOINT: Path = Path('src/crew.py')
 
@@ -16,8 +20,6 @@ class CrewFile(asttools.File):
     Parses and manipulates the CrewAI entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
-
-    _base_class: Optional[ast.ClassDef] = None
 
     def write(self):
         """
@@ -30,12 +32,10 @@ class CrewFile(asttools.File):
 
     def get_base_class(self) -> ast.ClassDef:
         """A base class is a class decorated with `@CrewBase`."""
-        if self._base_class is None:  # Gets cached to save repeat iteration
-            try:
-                self._base_class = asttools.find_class_with_decorator(self.tree, 'CrewBase')[0]
-            except IndexError:
-                raise ValidationError(f"`@CrewBase` decorated class not found in {ENTRYPOINT}")
-        return self._base_class
+        try:
+            return asttools.find_class_with_decorator(self.tree, 'CrewBase')[0]
+        except IndexError:
+            raise ValidationError(f"`@CrewBase` decorated class not found in {ENTRYPOINT}")
 
     def get_crew_method(self) -> ast.FunctionDef:
         """A `crew` method is a method decorated with `@crew`."""
@@ -54,9 +54,6 @@ class CrewFile(asttools.File):
     def add_task_method(self, task: TaskConfig):
         """Add a new task method to the CrewAI entrypoint."""
         task_methods = self.get_task_methods()
-        if task.name in [method.name for method in task_methods]:
-            # TODO this should check all methods in the class for duplicates
-            raise ValidationError(f"Task `{task.name}` already exists in {ENTRYPOINT}")
         if task_methods:
             # Add after the existing task methods
             _, pos = self.get_node_range(task_methods[-1])
@@ -70,6 +67,7 @@ class CrewFile(asttools.File):
         return Task(
             config=self.tasks_config['{task.name}'],
         )"""
+
         if not self.source[:pos].endswith('\n'):
             code = '\n\n' + code
         if not self.source[pos:].startswith('\n'):
@@ -84,9 +82,6 @@ class CrewFile(asttools.File):
         """Add a new agent method to the CrewAI entrypoint."""
         # TODO do we want to pre-populate any tools?
         agent_methods = self.get_agent_methods()
-        if agent.name in [method.name for method in agent_methods]:
-            # TODO this should check all methods in the class for duplicates
-            raise ValidationError(f"Agent `{agent.name}` already exists in {ENTRYPOINT}")
         if agent_methods:
             # Add after the existing agent methods
             _, pos = self.get_node_range(agent_methods[-1])
@@ -102,6 +97,7 @@ class CrewFile(asttools.File):
             tools=[], # add tools here or use `agentstack tools add <tool_name>
             verbose=True,
         )"""
+
         if not self.source[:pos].endswith('\n'):
             code = '\n\n' + code
         if not self.source[pos:].startswith('\n'):
@@ -143,27 +139,8 @@ class CrewFile(asttools.File):
         """
         Get a list of all ast nodes that define agentstack tools used by the agent.
         """
-        tool_nodes: list[ast.Starred] = []
         agent_tools_node = self.get_agent_tools(agent_name)
-        for node in agent_tools_node.elts:
-            try:
-                # we need to find nodes that look like:
-                #   `*agentstack.tools['tool_name']`
-                assert isinstance(node, ast.Starred)
-                assert isinstance(node.value, ast.Subscript)
-                assert isinstance(node.value.slice, ast.Constant)
-                name_node = node.value.value
-                assert isinstance(name_node, ast.Attribute)
-                assert isinstance(name_node.value, ast.Name)
-                assert name_node.value.id == 'agentstack'
-                assert name_node.attr == 'tools'
-
-                # This is a starred subscript node referencing agentstack.tools with
-                # a string slice, so it must be an agentstack tool
-                tool_nodes.append(node)
-            except AssertionError:
-                continue  # not a matched node; that's ok
-        return tool_nodes
+        return asttools.find_tool_nodes(agent_tools_node)
 
     def get_agent_tool_names(self, agent_name: str) -> list[str]:
         """
@@ -194,16 +171,7 @@ class CrewFile(asttools.File):
 
         new_tool_nodes: list[ast.expr] = []
         if not tool.name in self.get_agent_tool_names(agent_name):
-            # we need to create a node that looks like:
-            #   `*agentstack.tools['tool_name']`
-            # we always get a list of callables from the `agentstack.tools` module,
-            # so we need to wrap the node in a `Starred` node to unpack it.
-            node = ast.Subscript(
-                value=asttools.create_attribute('agentstack', 'tools'),
-                slice=ast.Constant(tool.name),
-                ctx=ast.Load(),
-            )
-            existing_elts.append(ast.Starred(value=node, ctx=ast.Load()))
+            existing_elts.append(asttools.create_tool_node(tool.name))
 
         new_node = ast.List(elts=existing_elts, ctx=ast.Load())
         start, end = self.get_node_range(existing_node)
@@ -264,7 +232,16 @@ def validate_project() -> None:
         )
 
 
-def get_task_names() -> list[str]:
+def parse_llm(llm: str) -> tuple[str, str]:
+    """
+    Parse the llm string into a `LLM` dataclass.
+    Crew separates providers and models with a forward slash.
+    """
+    provider, model = llm.split('/')
+    return provider, model
+
+
+def get_task_method_names() -> list[str]:
     """
     Get a list of task names (methods with an @task decorator).
     """
@@ -272,15 +249,18 @@ def get_task_names() -> list[str]:
     return [method.name for method in crew_file.get_task_methods()]
 
 
-def add_task(task: TaskConfig) -> None:
+def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> None:
     """
     Add a task method to the CrewAI entrypoint.
     """
+    if position is not None:
+        raise NotImplementedError("Task insertion points are not supported in CrewAI.")
+
     with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.add_task_method(task)
 
 
-def get_agent_names() -> list[str]:
+def get_agent_method_names() -> list[str]:
     """
     Get a list of agent names (methods with an @agent decorator).
     """
@@ -296,10 +276,13 @@ def get_agent_tool_names(agent_name: str) -> list[Any]:
         return crew_file.get_agent_tool_names(agent_name)
 
 
-def add_agent(agent: AgentConfig) -> None:
+def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -> None:
     """
     Add an agent method to the CrewAI entrypoint.
     """
+    if position is not None:
+        raise NotImplementedError("Agent insertion points are not supported in CrewAI.")
+
     with CrewFile(conf.PATH / ENTRYPOINT) as crew_file:
         crew_file.add_agent_method(agent)
 
@@ -321,45 +304,19 @@ def remove_tool(tool: ToolConfig, agent_name: str):
         crew_file.remove_agent_tools(agent_name, tool)
 
 
-def get_tool_callables(tool_name: str) -> list[Callable]:
+def wrap_tool(tool_func: Callable) -> Callable:
     """
-    Get a tool implementations for use directly by a CrewAI agent.
+    Wrap a tool function with framework-specific functionality.
     """
     try:
         from crewai.tools import tool as _crewai_tool_decorator
     except ImportError:
         raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
 
-    # TODO: remove after agentops fixes their issue
-    # wrap method with agentops tool event
-    def wrap_method(method: Callable) -> Callable:
-        def wrapped_method(*args, **kwargs):
-            import agentops
-            tool_event = agentops.ToolEvent(method.__name__)
-            result = method(*args, **kwargs)
-            agentops.record(tool_event)
-            return result
+    return _crewai_tool_decorator(tool_func)
 
-        # Preserve all original attributes
-        wrapped_method.__name__ = method.__name__
-        wrapped_method.__doc__ = method.__doc__
-        wrapped_method.__module__ = method.__module__
-        wrapped_method.__qualname__ = method.__qualname__
-        wrapped_method.__annotations__ = getattr(method, '__annotations__', {})
-        return wrapped_method
 
-    tool_funcs = []
-    tool_config = ToolConfig.from_tool_name(tool_name)
-    for tool_func_name in tool_config.tools:
-        tool_func = getattr(tool_config.module, tool_func_name)
-
-        assert callable(tool_func), f"Tool function {tool_func_name} is not callable."
-        assert tool_func.__doc__, f"Tool function {tool_func_name} is missing a docstring."
-
-        # First wrap with agentops
-        agentops_wrapped = wrap_method(tool_func)
-        # Then apply CrewAI decorator last so it properly inherits from BaseTool
-        crewai_wrapped = _crewai_tool_decorator(agentops_wrapped)
-        tool_funcs.append(crewai_wrapped)
-
-    return tool_funcs
+def get_graph() -> list[graph.Edge]:
+    """Get the graph of the user's project."""
+    log.debug("CrewAI does not support graph generation.")
+    return []

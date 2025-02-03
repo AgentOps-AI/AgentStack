@@ -1,7 +1,7 @@
+import os, sys
 import importlib
 from typing import Optional
 import os
-import sys
 import time
 from datetime import datetime
 
@@ -9,101 +9,33 @@ import json
 import shutil
 from art import text2art
 import inquirer
-from cookiecutter.main import cookiecutter
-
-from .agentstack_data import (
-    FrameworkData,
-    ProjectMetadata,
-    ProjectStructure,
-    CookiecutterData,
-)
 from agentstack import conf, log
+from agentstack.cli.agentstack_data import CookiecutterData, ProjectStructure, ProjectMetadata, FrameworkData
 from agentstack.conf import ConfigFile
-from agentstack.utils import get_package_path, verify_agentstack_project
 from agentstack.generation.files import ProjectFile
 from agentstack import frameworks
 from agentstack import generation
 from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
-from agentstack.utils import open_json_file, term_color, is_snake_case, get_framework, validator_not_empty
+from agentstack.utils import get_package_path, open_json_file, term_color, is_snake_case, get_framework, \
+    validator_not_empty, verify_agentstack_project
 from agentstack.proj_templates import TemplateConfig
 from agentstack.exceptions import ValidationError
+from agentstack.utils import validator_not_empty, is_snake_case
 
 
 PREFERRED_MODELS = [
+    'groq/deepseek-r1-distill-llama-70b',
+    'deepseek/deepseek-chat',
+    'deepseek/deepseek-coder',
+    'deepseek/deepseek-reasoner',
     'openai/gpt-4o',
     'anthropic/claude-3-5-sonnet',
     'openai/o1-preview',
     'openai/gpt-4-turbo',
     'anthropic/claude-3-opus',
 ]
-
-
-def init_project_builder(
-    slug_name: Optional[str] = None,
-    template: Optional[str] = None,
-    use_wizard: bool = False,
-):
-    if not slug_name and not use_wizard:
-        raise Exception("Project name is required. Use `agentstack init <project_name>`")
-
-    if slug_name and not is_snake_case(slug_name):
-        raise Exception("Project slug name must be snake_case")
-
-    if template is not None and use_wizard:
-        raise Exception("Template and wizard flags cannot be used together")
-
-    template_data = None
-    if template is not None:
-        template_data = TemplateConfig.from_user_input(template)
-
-    if template_data:
-        project_details = {
-            "name": slug_name or template_data.name,
-            "version": "0.0.1",
-            "description": template_data.description,
-            "author": "Name <Email>",
-            "license": "MIT",
-        }
-        framework = template_data.framework
-        design = {
-            'agents': [agent.model_dump() for agent in template_data.agents],
-            'tasks': [task.model_dump() for task in template_data.tasks],
-            'inputs': template_data.inputs,
-        }
-        tools = [tools.model_dump() for tools in template_data.tools]
-
-    elif use_wizard:
-        project_details = ask_project_details(slug_name)
-        welcome_message()
-        framework = ask_framework()
-        design = ask_design()
-        tools = ask_tools()
-
-    else:
-        # the user has started a new project; let's give them something to work with
-        default_project = TemplateConfig.from_template_name('hello_alex')
-        project_details = {
-            "name": slug_name or default_project.name,
-            "version": "0.0.1",
-            "description": default_project.description,
-            "author": "Name <Email>",
-            "license": "MIT",
-        }
-        framework = default_project.framework
-        design = {
-            'agents': [agent.model_dump() for agent in default_project.agents],
-            'tasks': [task.model_dump() for task in default_project.tasks],
-            'inputs': default_project.inputs,
-        }
-        tools = [tools.model_dump() for tools in default_project.tools]
-
-    log.debug(f"project_details: {project_details}" f"framework: {framework}" f"design: {design}")
-    insert_template(project_details, framework, design, template_data)
-
-    for tool_data in tools:
-        generation.add_tool(tool_data['name'], agents=tool_data['agents'])
 
 
 def welcome_message():
@@ -139,32 +71,6 @@ def configure_default_model():
     log.debug("Writing default model to project config.")
     with ConfigFile() as agentstack_config:
         agentstack_config.default_model = model
-
-
-def ask_framework() -> str:
-    framework = "CrewAI"
-    # framework = inquirer.list_input(
-    #     message="What agent framework do you want to use?",
-    #     choices=["CrewAI", "Autogen", "LiteLLM", "Learn what these are (link)"],
-    # )
-    #
-    # if framework == "Learn what these are (link)":
-    #     webbrowser.open("https://youtu.be/xvFZjo5PgG0")
-    #     framework = inquirer.list_input(
-    #         message="What agent framework do you want to use?",
-    #         choices=["CrewAI", "Autogen", "LiteLLM"],
-    #     )
-    #
-    # while framework in ['Autogen', 'LiteLLM']:
-    #     print(f"{framework} support coming soon!!")
-    #     framework = inquirer.list_input(
-    #         message="What agent framework do you want to use?",
-    #         choices=["CrewAI", "Autogen", "LiteLLM"],
-    #     )
-
-    log.success("Congrats! Your project is ready to go! Quickly add features now or skip to do it later.\n\n")
-
-    return framework
 
 
 def get_validated_input(

@@ -4,6 +4,7 @@ from parameterized import parameterized
 from pathlib import Path
 import shutil
 from cli_test_utils import run_cli
+from agentstack.proj_templates import get_all_templates
 
 BASE_PATH = Path(__file__).parent
 
@@ -19,8 +20,9 @@ class CLIInitTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.project_dir, ignore_errors=True)
 
-    def test_init_command(self):
+    @parameterized.expand([(template.name, ) for template in get_all_templates()])
+    def test_init_command(self, template_name: str):
         """Test the 'init' command to create a project directory."""
-        result = run_cli('init', 'test_project')
+        result = run_cli('init', 'test_project', '--template', template_name)
         self.assertEqual(result.returncode, 0)
         self.assertTrue((self.project_dir / 'test_project').exists())
