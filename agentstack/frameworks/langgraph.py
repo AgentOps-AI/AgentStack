@@ -33,16 +33,15 @@ class LangGraphProvider:
 PROVIDERS = {
     'openai': LangGraphProvider(
         class_name='ChatOpenAI',
-        module_name='langchain-deepseek-official',
-        dependency='langchain-deepseek-official',
-    ),
-
-    'openai': LangGraphProvider(
-        class_name='ChatDeepSeek',
         module_name='langchain_openai',
         dependency='langchain-openai>=0.3.0',
     ),
 
+    'deepseek': LangGraphProvider(
+        class_name='ChatDeepSeek',
+        module_name='langchain_deepseek_official',
+        dependency='langchain-deepseek-official>=0.1.0',
+    ),
 
     'anthropic': LangGraphProvider(
         class_name='ChatAnthropic',
