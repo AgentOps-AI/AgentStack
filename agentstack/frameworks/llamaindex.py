@@ -23,17 +23,9 @@ class LlamaIndexFile(BaseEntrypointFile):
     base_class_pattern = r'\w+Stack$'
     agent_decorator_name: str = 'agent'
     task_decorator_name: str = 'task'
-    
-    def get_task_methods(self) -> list[ast.FunctionDef]:
-        """A `task` method is a method decorated with `@task`."""
-        pass
 
     def get_new_task_method(self, task: TaskConfig) -> str:
         """Get the content of a new task method. """
-        pass
-
-    def get_agent_methods(self) -> list[ast.FunctionDef]:
-        """An `agent` method is a method decorated with `@agent`."""
         pass
 
     def get_new_agent_method(self, agent: AgentConfig) -> str:
