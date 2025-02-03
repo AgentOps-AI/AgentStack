@@ -14,6 +14,7 @@ from agentstack.tasks import TaskConfig, get_all_task_names
 from agentstack import graph
 
 
+NAME: str = "LangGraph"
 ENTRYPOINT: Path = Path('src/graph.py')
 
 GRAPH_NODE_START = 'START'
@@ -81,8 +82,6 @@ class LangGraphFile(BaseEntrypointFile):
     """
 
     base_class_pattern: str = r'\w+Graph$'
-    agent_decorator_name: str = 'agent'
-    task_decorator_name: str = 'task'
 
     def get_new_task_method(self, task: TaskConfig) -> str:
         return f"""    @agentstack.task
@@ -491,7 +490,7 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
         provider.install_dependencies()
     except KeyError:
         raise ValidationError(
-            f"LangGraph provider '{provider}' has not been implemented. "
+            f"{NAME} provider '{provider}' has not been implemented. "
             f"AgentStack currently supports: {', '.join(PROVIDERS.keys())} "
         )
 

@@ -34,14 +34,14 @@ DEFAULT_FRAMEWORK = CREWAI
 class Provider:
     """
     An LLM provider definition.
-    
-    Used to reference required dependencies, and provide attributes for an 
+
+    Used to install required dependencies and provide attributes for an
     import statement.
     """
 
-    class_name: str  # The class we need to import to use the provider
+    class_name: str  # The class we use to import and run the provider
     module_name: str  # The module we import from
-    dependencies: list[str]  # The dependency we need to install to get the module
+    dependencies: list[str]  # Any dependencies needed for use
 
     def install_dependencies(self):
         """Install the dependencies for the provider."""
@@ -79,6 +79,18 @@ class FrameworkModule(Protocol):
         """
         ...
 
+    def add_agent(self, agent: 'AgentConfig', position: Optional[InsertionPoint] = None) -> None:
+        """
+        Add an agent to the user's project.
+        """
+        ...
+
+    def add_task(self, task: 'TaskConfig', position: Optional[InsertionPoint] = None) -> None:
+        """
+        Add a task to the user's project.
+        """
+        ...
+
     def add_tool(self, tool: ToolConfig, agent_name: str) -> None:
         """
         Add a tool to an agent in the user's project.
@@ -97,18 +109,6 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def add_agent(self, agent: 'AgentConfig', position: Optional[InsertionPoint] = None) -> None:
-        """
-        Add an agent to the user's project.
-        """
-        ...
-
-    def add_task(self, task: 'TaskConfig', position: Optional[InsertionPoint] = None) -> None:
-        """
-        Add a task to the user's project.
-        """
-        ...
-    
     def get_graph(self) -> list[graph.Edge]:
         """
         Get the graph of the user's project.
@@ -120,34 +120,34 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
     """
     This handles interactions with a Framework's entrypoint file that are common
     to all frameworks.
-    
+
     In most cases, we have a base class which contains a `run` method, and
     methods decorated with `@agentstack.task` and `@agentstack.agent`.
-    
-    We match the base class with a regex pattern defined as `base_class_pattern`, 
-    and the `run` method with a method named `run` which accepts `inputs` as a 
+
+    We match the base class with a regex pattern defined as `base_class_pattern`,
+    and the `run` method with a method named `run` which accepts `inputs` as a
     keyword argument.
-    
+
     Usually, it looks something like this:
     ```
     class UserStack:
         @agentstack.task
         def task_name(self):
             ...
-        
+
         @agentstack.agent
         def agent_name(self):
             ...
-        
+
         def run(self, inputs: list):
             ...
     ```
     """
-    
+
     base_class_pattern: str = r'\w+Stack$'
     agent_decorator_name: str = 'agent'
     task_decorator_name: str = 'task'
-    
+
     def get_import(self, module_name: str, attributes: str) -> Optional[ast.ImportFrom]:
         """
         Return an import statement for a module and class if it exists in the file.
@@ -171,7 +171,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
             code = '\n' + code
 
         self.edit_node_range(end, end, code)
-    
+
     def get_base_class(self) -> ast.ClassDef:
         """
         A base class is the first class inside of the file that follows the
@@ -196,7 +196,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
             raise ValidationError(
                 f"Method `run` of `{base_class.name}` must accept `inputs` as a keyword argument."
             )
-    
+
     def get_task_methods(self) -> list[ast.FunctionDef]:
         """A `task` method is a method decorated with `@<self.task_decorator_name>`."""
         return asttools.find_decorated_method_in_class(self.get_base_class(), self.task_decorator_name)
@@ -208,7 +208,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
     # not marked as abstract because you can override `add_task_method` for more
     # control over adding new task methods if you need to
     def get_new_task_method(self, task: TaskConfig) -> str:
-        """Get the content of a new task method. """
+        """Get the content of a new task method."""
         # TODO allow returning `Union[str, ast.AST]`
         raise NotImplementedError("Subclass must implement `get_new_task_method` to support insertion.")
 
@@ -219,7 +219,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
             # Add after the existing task methods
             _, pos = self.get_node_range(task_methods[-1])
         else:
-            # Add before the `main` method
+            # Add before the `run` method
             main_method = self.get_run_method()
             pos, _ = self.get_node_range(main_method)
 
@@ -253,7 +253,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
             # Add after the existing agent methods
             _, pos = self.get_node_range(agent_methods[-1])
         else:
-            # Add before the `main` method
+            # Add before the `run` method
             main_method = self.get_run_method()
             pos, _ = self.get_node_range(main_method)
 
@@ -264,7 +264,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
         if not self.source[pos:].startswith('\n'):
             code += '\n\n'
         self.edit_node_range(pos, pos, code)
-    
+
     @abstractmethod
     def get_agent_tools(self, agent_name: str) -> ast.List:
         """Get the list of tools used by an agent as an AST List node."""
@@ -325,7 +325,8 @@ def get_entrypoint_path(framework: str) -> Path:
     """
     Get the path to the entrypoint file for a framework.
     """
-    return conf.PATH / get_framework_module(framework).ENTRYPOINT
+    module = get_framework_module(framework)
+    return conf.PATH / module.ENTRYPOINT
 
 
 def validate_project():
@@ -336,10 +337,10 @@ def validate_project():
     entrypoint_path = get_entrypoint_path(framework)
     module = get_framework_module(framework)
     entrypoint = module.get_entrypoint()
-    
+
     # Run framework-specific validation
     module.validate_project()
-    
+
     # A valid project must have a base class available
     try:
         class_node = entrypoint.get_base_class()
@@ -351,7 +352,7 @@ def validate_project():
         entrypoint.get_run_method()
     except ValidationError as e:
         raise e
-    
+
     # The class must have one or more task methods.
     if len(entrypoint.get_task_methods()) < 1:
         raise ValidationError(
@@ -365,7 +366,7 @@ def validate_project():
             f"One or more agent methods could not be found on class `{class_node.name}` in {entrypoint_path}.\n"
             "Create a new agent using `agentstack generate agent <agent_name>`."
         )
-    
+
     # Verify that agents defined in agents.yaml are present in the codebase
     agent_method_names = entrypoint.get_agent_method_names()
     for agent_name in get_all_agent_names():
@@ -378,9 +379,7 @@ def validate_project():
     task_method_names = entrypoint.get_task_method_names()
     for task_name in get_all_task_names():
         if task_name not in task_method_names:
-            raise ValidationError(
-                f"Task `{task_name}` is defined in tasks.yaml but not in {entrypoint_path}"
-            )
+            raise ValidationError(f"Task `{task_name}` is defined in tasks.yaml but not in {entrypoint_path}")
 
 
 def parse_llm(llm: str) -> tuple[str, str]:
@@ -414,14 +413,17 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
     """
     Get a tool by name and return it as a list of framework-native callables.
     """
+
     # TODO: remove after agentops fixes their issue
     # wrap method with agentops tool event
     def wrap_method(method: Callable) -> Callable:
         from inspect import signature
-        
+
         original_signature = signature(method)
+
         def wrapped_method(*args, **kwargs):
             import agentops
+
             tool_event = agentops.ToolEvent(method.__name__)
             result = method(*args, **kwargs)
             agentops.record(tool_event)
@@ -477,7 +479,7 @@ def add_agent(agent: 'AgentConfig', position: Optional[InsertionPoint] = None):
     """
     framework = get_framework()
     module = get_framework_module(framework)
-    
+
     if agent.name in get_agent_method_names():
         raise ValidationError(f"Agent `{agent.name}` already exists in {get_entrypoint_path(framework)}")
 
@@ -490,10 +492,10 @@ def add_task(task: 'TaskConfig', position: Optional[InsertionPoint] = None):
     """
     framework = get_framework()
     module = get_framework_module(framework)
-    
+
     if task.name in get_task_method_names():
         raise ValidationError(f"Task `{task.name}` already exists in {get_entrypoint_path(framework)}")
-    
+
     return module.add_task(task, position)
 
 

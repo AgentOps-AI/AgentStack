@@ -22,9 +22,6 @@ class CrewFile(BaseEntrypointFile):
     All AST interactions should happen within the methods of this class.
     """
 
-    agent_decorator_name: str = 'agent'
-    task_decorator_name: str = 'task'
-
     def write(self):
         """
         Early versions of the crew entrypoint file used tabs instead of spaces.
@@ -48,11 +45,11 @@ class CrewFile(BaseEntrypointFile):
             return asttools.find_decorated_method_in_class(base_class, 'crew')[0]
         except IndexError:
             raise ValidationError(
-                f"`@crew` decorated method not found in `{base_class.name}` class in {ENTRYPOINT}"
+                f"`@crew` decorated method not found in `{base_class.name}` in {ENTRYPOINT}"
             )
 
     def get_new_task_method(self, task: TaskConfig) -> str:
-        """Get the content of a new task method. """
+        """Get the content of a new task method."""
         return f"""    @task
     def {task.name}(self) -> Task:
         return Task(
@@ -79,24 +76,18 @@ class CrewFile(BaseEntrypointFile):
         """
         method = asttools.find_method(self.get_agent_methods(), agent_name)
         if method is None:
-            raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
+            raise ValidationError(f"Method `{agent_name}` does not exist in {ENTRYPOINT}")
 
         agent_class = asttools.find_class_instantiation(method, 'Agent')
         if agent_class is None:
-            raise ValidationError(
-                f"`@agent` method `{agent_name}` does not have an `Agent` class instantiation in {ENTRYPOINT}"
-            )
+            raise ValidationError(f"Method `{agent_name}` does not call `Agent` in {ENTRYPOINT}")
 
         tools_kwarg = asttools.find_kwarg_in_method_call(agent_class, 'tools')
         if not tools_kwarg:
-            raise ValidationError(
-                f"`@agent` method `{agent_name}` does not have a keyword argument `tools` in {ENTRYPOINT}"
-            )
+            raise ValidationError(f"`Agent` does not have a kwarg `tools` in {ENTRYPOINT}")
 
         if not isinstance(tools_kwarg.value, ast.List):
-            raise ValidationError(
-                f"`@agent` method `{agent_name}` has a non-list value for the `tools` kwarg in {ENTRYPOINT}"
-            )
+            raise ValidationError(f"`Agent` must define a list for kwarg `tools` in {ENTRYPOINT}")
 
         return tools_kwarg.value
 
@@ -130,7 +121,7 @@ def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> Non
     Add a task method to the CrewAI entrypoint.
     """
     if position is not None:
-        raise NotImplementedError("Task insertion points are not supported in CrewAI.")
+        raise NotImplementedError(f"Task insertion points are not supported in {NAME}.")
 
     with get_entrypoint() as entrypoint:
         entrypoint.add_task_method(task)
@@ -141,7 +132,7 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
     Add an agent method to the CrewAI entrypoint.
     """
     if position is not None:
-        raise NotImplementedError("Agent insertion points are not supported in CrewAI.")
+        raise NotImplementedError(f"Agent insertion points are not supported in {NAME}.")
 
     with get_entrypoint() as entrypoint:
         entrypoint.add_agent_method(agent)
@@ -171,12 +162,12 @@ def wrap_tool(tool_func: Callable) -> Callable:
     try:
         from crewai.tools import tool as _crewai_tool_decorator
     except ImportError:
-        raise ValidationError("Could not import `crewai`. Is this an AgentStack CrewAI project?")
+        raise ValidationError(f"Could not import `crewai`. Is this an AgentStack {NAME} project?")
 
     return _crewai_tool_decorator(tool_func)
 
 
 def get_graph() -> list[graph.Edge]:
     """Get the graph of the user's project."""
-    log.debug("CrewAI does not support graph generation.")
+    log.debug(f"{NAME} does not support graph generation.")
     return []

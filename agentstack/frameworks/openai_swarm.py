@@ -21,12 +21,9 @@ class SwarmFile(BaseEntrypointFile):
     Parses and manipulates the entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
-    base_class_pattern: str = r'\w+Stack$'
-    agent_decorator_name: str = 'agent'
-    task_decorator_name: str = 'task'
 
     def get_new_task_method(self, task: TaskConfig) -> str:
-        """Get the content of a new task method. """
+        """Get the content of a new task method."""
         return f"""    @agentstack.task
     def {task.name}(self, messages: list[str] = []) -> Agent:
         task_config = agentstack.get_task('{task.name}')
@@ -68,14 +65,10 @@ class SwarmFile(BaseEntrypointFile):
         tools_kwarg = asttools.find_kwarg_in_method_call(agent_init, 'functions')
 
         if not tools_kwarg:
-            raise ValidationError(
-                f"`@agent` method `{agent_name}` does not have a keyword argument `functions` in {ENTRYPOINT}"
-            )
+            raise ValidationError(f"`Agent` does not have a keyword argument `functions` in {ENTRYPOINT}")
 
         if not isinstance(tools_kwarg.value, ast.List):
-            raise ValidationError(
-                f"`@agent` method `{agent_name}` has a non-list value for the `functions` kwarg in {ENTRYPOINT}"
-            )
+            raise ValidationError(f"`Agent` must define a list for kwarg `tools` in {ENTRYPOINT}")
 
         return tools_kwarg.value
 

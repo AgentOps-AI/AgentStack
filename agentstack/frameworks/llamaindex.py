@@ -18,7 +18,7 @@ PROVIDERS = {
     'openai': Provider(
         class_name='OpenAI',
         module_name='llama_index.llms.openai',
-        dependencies=['llama-index-llms-openai', 'llama-index-agent-openai']
+        dependencies=['llama-index-llms-openai', 'llama-index-agent-openai'],
     )
 }
 
@@ -28,12 +28,9 @@ class LlamaIndexFile(BaseEntrypointFile):
     Parses and manipulates the entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
-    base_class_pattern: str = r'\w+Stack$'
-    agent_decorator_name: str = 'agent'
-    task_decorator_name: str = 'task'
 
     def get_new_task_method(self, task: TaskConfig) -> str:
-        """Get the content of a new task method. """
+        """Get the content of a new task method."""
         pass
 
     def get_new_agent_method(self, agent: AgentConfig) -> str:
@@ -83,7 +80,7 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
     """
     if position is not None:
         raise NotImplementedError(f"Agent insertion points are not supported in {NAME}.")
-    
+
     with get_entrypoint() as entrypoint:
         entrypoint.add_agent_method(agent)
 
@@ -110,11 +107,11 @@ def wrap_tool(tool_func: Callable) -> Callable:
     """
     try:
         # import happens at runtime to avoid including the framework as a base dependency.
-        #from crewai.tools import tool as _framework_tool_decorator
+        # from crewai.tools import tool as _framework_tool_decorator
         _framework_tool_decorator = lambda x: x
     except ImportError:
         raise ValidationError(f"Could not import framework. Is this an AgentStack {NAME} project?")
-    
+
     return _framework_tool_decorator(tool_func)
 
 
@@ -122,4 +119,3 @@ def get_graph() -> list[graph.Edge]:
     """Get the graph of the user's project."""
     log.debug(f"{NAME} does not support graph generation.")
     return []
-
