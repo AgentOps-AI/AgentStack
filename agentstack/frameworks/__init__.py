@@ -2,12 +2,14 @@ from typing import Optional, Union, Protocol, Callable
 from types import ModuleType
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
+from dataclasses import dataclass
 from pathlib import Path
 import ast
 from agentstack import conf
 from agentstack.exceptions import ValidationError
 from agentstack.generation import InsertionPoint
 from agentstack.utils import get_framework
+from agentstack import packaging
 from agentstack.generation import asttools
 from agentstack.agents import AgentConfig, get_all_agent_names
 from agentstack.tasks import TaskConfig, get_all_task_names
@@ -26,6 +28,25 @@ SUPPORTED_FRAMEWORKS = [
     LLAMAINDEX,
 ]
 DEFAULT_FRAMEWORK = CREWAI
+
+
+@dataclass
+class Provider:
+    """
+    An LLM provider definition.
+    
+    Used to reference required dependencies, and provide attributes for an 
+    import statement.
+    """
+
+    class_name: str  # The class we need to import to use the provider
+    module_name: str  # The module we import from
+    dependencies: list[str]  # The dependency we need to install to get the module
+
+    def install_dependencies(self):
+        """Install the dependencies for the provider."""
+        for dependency in self.dependencies:
+            packaging.install(dependency)
 
 
 class FrameworkModule(Protocol):
@@ -76,19 +97,13 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def get_agent_tool_names(self, agent_name: str) -> list[str]:
-        """
-        Get a list of tool names in an agent in the user's project.
-        """
-        ...
-
-    def add_agent(self, agent: 'AgentConfig', position: Optional['InsertionPoint'] = None) -> None:
+    def add_agent(self, agent: 'AgentConfig', position: Optional[InsertionPoint] = None) -> None:
         """
         Add an agent to the user's project.
         """
         ...
 
-    def add_task(self, task: 'TaskConfig', position: Optional['InsertionPoint'] = None) -> None:
+    def add_task(self, task: 'TaskConfig', position: Optional[InsertionPoint] = None) -> None:
         """
         Add a task to the user's project.
         """
@@ -113,6 +128,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
     and the `run` method with a method named `run` which accepts `inputs` as a 
     keyword argument.
     
+    Usually, it looks something like this:
     ```
     class UserStack:
         @agentstack.task
@@ -128,7 +144,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
     ```
     """
     
-    base_class_pattern = r'\w+Stack$'
+    base_class_pattern: str = r'\w+Stack$'
     agent_decorator_name: str = 'agent'
     task_decorator_name: str = 'task'
     
@@ -248,6 +264,51 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
         if not self.source[pos:].startswith('\n'):
             code += '\n\n'
         self.edit_node_range(pos, pos, code)
+    
+    @abstractmethod
+    def get_agent_tools(self, agent_name: str) -> ast.List:
+        """Get the list of tools used by an agent as an AST List node."""
+        ...
+
+    def get_agent_tool_nodes(self, agent_name: str) -> list[ast.Starred]:
+        """Get a list of all ast nodes that define agentstack tools used by the agent."""
+        agent_tools_node = self.get_agent_tools(agent_name)
+        return asttools.find_tool_nodes(agent_tools_node)
+
+    def get_agent_tool_names(self, agent_name: str) -> list[str]:
+        """Get a list of all tools used by the agent."""
+        # Tools are identified by the item name of an `agentstack.tools` attribute node.
+        tool_names: list[str] = []
+        for node in self.get_agent_tool_nodes(agent_name):
+            # ignore type checking here since `get_agent_tool_nodes` is exhaustive
+            tool_names.append(node.value.slice.value)  # type: ignore[attr-defined]
+        return tool_names
+
+    def add_agent_tools(self, agent_name: str, tool: ToolConfig):
+        """Modify the existing tools list to add a new tool."""
+        existing_node: ast.List = self.get_agent_tools(agent_name)
+        existing_elts: list[ast.expr] = existing_node.elts
+
+        if not tool.name in self.get_agent_tool_names(agent_name):
+            existing_elts.append(asttools.create_tool_node(tool.name))
+
+        new_node = ast.List(elts=existing_elts, ctx=ast.Load())
+        start, end = self.get_node_range(existing_node)
+        self.edit_node_range(start, end, new_node)
+
+    def remove_agent_tools(self, agent_name: str, tool: ToolConfig):
+        """Modify the existing tools list to remove a tool."""
+        existing_node: ast.List = self.get_agent_tools(agent_name)
+        start, end = self.get_node_range(existing_node)
+
+        # we're referencing the internal node list from two directions here,
+        # so it's important that the node tree doesn't get re-parsed in between
+        for node in self.get_agent_tool_nodes(agent_name):
+            # ignore type checking here since `get_agent_tool_nodes` is exhaustive
+            if tool.name == node.value.slice.value:  # type: ignore[attr-defined]
+                existing_node.elts.remove(node)
+
+        self.edit_node_range(start, end, existing_node)
 
 
 def get_framework_module(framework: str) -> FrameworkModule:
@@ -335,6 +396,7 @@ def add_tool(tool: ToolConfig, agent_name: str):
     The tool will have already been installed in the user's application and have
     all dependencies installed. We're just handling code generation here.
     """
+    # since this is a write operation, delegate to the framework impl.
     module = get_framework_module(get_framework())
     return module.add_tool(tool, agent_name)
 
@@ -343,6 +405,7 @@ def remove_tool(tool: ToolConfig, agent_name: str):
     """
     Remove a tool from the user's project.
     """
+    # since this is a write operation, delegate to the framework impl.
     module = get_framework_module(get_framework())
     return module.remove_tool(tool, agent_name)
 
@@ -401,10 +464,11 @@ def get_agent_method_names() -> list[str]:
 
 def get_agent_tool_names(agent_name: str) -> list[str]:
     """
-    Get a list of tool names in the user's project.
+    Get a list of tool names in the user's project for a given agent.
     """
     module = get_framework_module(get_framework())
-    return module.get_agent_tool_names(agent_name)
+    entrypoint = module.get_entrypoint()
+    return entrypoint.get_agent_tool_names(agent_name)
 
 
 def add_agent(agent: 'AgentConfig', position: Optional[InsertionPoint] = None):

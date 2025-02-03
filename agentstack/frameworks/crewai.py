@@ -71,7 +71,7 @@ class CrewFile(BaseEntrypointFile):
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
         """
-        Get the tools used by an agent as AST nodes.
+        Get the list of tools used by an agent as an AST List node.
 
         Tool definitions are inside of the methods marked with an `@agent` decorator.
         The method returns a new class instance with the tools as a list of callables
@@ -100,65 +100,6 @@ class CrewFile(BaseEntrypointFile):
 
         return tools_kwarg.value
 
-    def get_agent_tool_nodes(self, agent_name: str) -> list[ast.Starred]:
-        """
-        Get a list of all ast nodes that define agentstack tools used by the agent.
-        """
-        agent_tools_node = self.get_agent_tools(agent_name)
-        return asttools.find_tool_nodes(agent_tools_node)
-
-    def get_agent_tool_names(self, agent_name: str) -> list[str]:
-        """
-        Get a list of all tools used by the agent.
-
-        Tools are identified by the item name of an `agentstack.tools` attribute node.
-        """
-        tool_names: list[str] = []
-        for node in self.get_agent_tool_nodes(agent_name):
-            # ignore type checking here since `get_agent_tool_nodes` is exhaustive
-            tool_names.append(node.value.slice.value)  # type: ignore[attr-defined]
-        return tool_names
-
-    def add_agent_tools(self, agent_name: str, tool: ToolConfig):
-        """
-        Add new tools to be used by an agent.
-
-        Tool definitions are inside the methods marked with an `@agent` decorator.
-        The method returns a new class instance with the tools as a list of callables
-        under the kwarg `tools`.
-        """
-        method = asttools.find_method(self.get_agent_methods(), agent_name)
-        if method is None:
-            raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
-
-        existing_node: ast.List = self.get_agent_tools(agent_name)
-        existing_elts: list[ast.expr] = existing_node.elts
-
-        new_tool_nodes: list[ast.expr] = []
-        if not tool.name in self.get_agent_tool_names(agent_name):
-            existing_elts.append(asttools.create_tool_node(tool.name))
-
-        new_node = ast.List(elts=existing_elts, ctx=ast.Load())
-        start, end = self.get_node_range(existing_node)
-        self.edit_node_range(start, end, new_node)
-
-    def remove_agent_tools(self, agent_name: str, tool: ToolConfig):
-        """
-        Remove tools from an agent belonging to `tool`.
-        """
-        existing_node: ast.List = self.get_agent_tools(agent_name)
-        start, end = self.get_node_range(existing_node)
-
-        # modify the existing node to remove any matching tools
-        # we're referencing the internal node list from two directions here,
-        # so it's important that the node tree doesn't get re-parsed in between
-        for node in self.get_agent_tool_nodes(agent_name):
-            # ignore type checking here since `get_agent_tool_nodes` is exhaustive
-            if tool.name == node.value.slice.value:  # type: ignore[attr-defined]
-                existing_node.elts.remove(node)
-
-        self.edit_node_range(start, end, existing_node)
-
 
 def get_entrypoint() -> CrewFile:
     """
@@ -184,7 +125,7 @@ def parse_llm(llm: str) -> tuple[str, str]:
     return provider, model
 
 
-def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> None:
+def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add a task method to the CrewAI entrypoint.
     """
@@ -195,15 +136,7 @@ def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> N
         entrypoint.add_task_method(task)
 
 
-def get_agent_tool_names(agent_name: str) -> list[Any]:
-    """
-    Get a list of tools used by an agent.
-    """
-    with get_entrypoint() as entrypoint:
-        return entrypoint.get_agent_tool_names(agent_name)
-
-
-def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -> None:
+def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add an agent method to the CrewAI entrypoint.
     """

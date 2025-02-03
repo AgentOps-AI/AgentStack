@@ -34,22 +34,6 @@ class FrameworkFile(BaseEntrypointFile):
         """Get the content of a new agent method."""
         pass
 
-    def get_agent_tools(self, agent_name: str) -> ast.List:
-        """Get the tools used by an agent as AST nodes."""
-        pass
-
-    def get_agent_tool_names(self, agent_name: str) -> list[str]:
-        """Get a list of all tools used by the agent."""
-        pass
-
-    def add_agent_tools(self, agent_name: str, tool: ToolConfig) -> None:
-        """Add new tools to be used by an agent."""
-        pass
-
-    def remove_agent_tools(self, agent_name: str, tool: ToolConfig) -> None:
-        """Remove tools from an agent belonging to `tool`."""
-        pass
-
 
 def get_entrypoint() -> FrameworkFile:
     """Get the entrypoint file."""
@@ -72,7 +56,7 @@ def parse_llm(llm: str) -> tuple[str, str]:
     return provider, model
 
 
-def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> None:
+def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add a task method to the entrypoint.
     """
@@ -83,15 +67,7 @@ def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> N
         entrypoint.add_task_method(task)
 
 
-def get_agent_tool_names(agent_name: str) -> list[Any]:
-    """
-    Get a list of tools used by an agent.
-    """
-    with get_entrypoint() as entrypoint:
-        return entrypoint.get_agent_tool_names(agent_name)
-
-
-def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -> None:
+def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add an agent method to the entrypoint.
     """

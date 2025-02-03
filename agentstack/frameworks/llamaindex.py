@@ -4,7 +4,7 @@ import ast
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack.generation import InsertionPoint
-from agentstack.frameworks import BaseEntrypointFile
+from agentstack.frameworks import Provider, BaseEntrypointFile
 from agentstack._tools import ToolConfig
 from agentstack.tasks import TaskConfig
 from agentstack.agents import AgentConfig
@@ -14,13 +14,21 @@ from agentstack import graph
 NAME: str = "LLama Index"
 ENTRYPOINT: Path = Path('src/stack.py')
 
+PROVIDERS = {
+    'openai': Provider(
+        class_name='OpenAI',
+        module_name='llama_index.llms.openai',
+        dependencies=['llama-index-llms-openai', 'llama-index-agent-openai']
+    )
+}
+
 
 class LlamaIndexFile(BaseEntrypointFile):
     """
     Parses and manipulates the entrypoint file.
     All AST interactions should happen within the methods of this class.
     """
-    base_class_pattern = r'\w+Stack$'
+    base_class_pattern: str = r'\w+Stack$'
     agent_decorator_name: str = 'agent'
     task_decorator_name: str = 'task'
 
@@ -33,19 +41,7 @@ class LlamaIndexFile(BaseEntrypointFile):
         pass
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
-        """Get the tools used by an agent as AST nodes."""
-        pass
-
-    def get_agent_tool_names(self, agent_name: str) -> list[str]:
-        """Get a list of all tools used by the agent."""
-        pass
-
-    def add_agent_tools(self, agent_name: str, tool: ToolConfig) -> None:
-        """Add new tools to be used by an agent."""
-        pass
-
-    def remove_agent_tools(self, agent_name: str, tool: ToolConfig) -> None:
-        """Remove tools from an agent belonging to `tool`."""
+        """Get the list of tools used by an agent as an AST List node."""
         pass
 
 
@@ -70,7 +66,7 @@ def parse_llm(llm: str) -> tuple[str, str]:
     return provider, model
 
 
-def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> None:
+def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add a task method to the entrypoint.
     """
@@ -81,15 +77,7 @@ def add_task(task: TaskConfig, position: Optional['InsertionPoint'] = None) -> N
         entrypoint.add_task_method(task)
 
 
-def get_agent_tool_names(agent_name: str) -> list[Any]:
-    """
-    Get a list of tools used by an agent.
-    """
-    with get_entrypoint() as entrypoint:
-        return entrypoint.get_agent_tool_names(agent_name)
-
-
-def add_agent(agent: AgentConfig, position: Optional['InsertionPoint'] = None) -> None:
+def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add an agent method to the entrypoint.
     """

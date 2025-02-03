@@ -1,13 +1,13 @@
 from functools import wraps
 from typing import Optional, Union, Callable, Any
-from dataclasses import dataclass
+
 from pathlib import Path
 import ast
 from agentstack import conf, log
 from agentstack import packaging
 from agentstack.exceptions import ValidationError
 from agentstack.generation import asttools, InsertionPoint
-from agentstack.frameworks import BaseEntrypointFile
+from agentstack.frameworks import Provider, BaseEntrypointFile
 from agentstack._tools import ToolConfig
 from agentstack.agents import AgentConfig, get_all_agent_names
 from agentstack.tasks import TaskConfig, get_all_task_names
@@ -26,61 +26,51 @@ GRAPH_NODES_SPECIAL = (
     GRAPH_NODE_TOOLS_CONDITION,
 )
 
-
-@dataclass
-class LangGraphProvider:
-    """An LLM provider for the LangGraph framework."""
-
-    class_name: str
-    module_name: str
-    dependency: str
-
-
 PROVIDERS = {
-    'openai': LangGraphProvider(
+    'openai': Provider(
         class_name='ChatOpenAI',
         module_name='langchain_openai',
-        dependency='langchain-openai>=0.3.0',
+        dependencies=['langchain-openai>=0.3.0'],
     ),
-    'deepseek': LangGraphProvider(
+    'deepseek': Provider(
         class_name='ChatDeepSeek',
         module_name='langchain_deepseek_official',
-        dependency='langchain-deepseek-official>=0.1.0',
+        dependencies=['langchain-deepseek-official>=0.1.0'],
     ),
-    'anthropic': LangGraphProvider(
+    'anthropic': Provider(
         class_name='ChatAnthropic',
         module_name='langchain_anthropic',
-        dependency='langchain-anthropic>=0.3.1',
+        dependencies=['langchain-anthropic>=0.3.1'],
     ),
-    'google': LangGraphProvider(
+    'google': Provider(
         class_name='ChatGoogleGenerativeAI',
         module_name='langchain_google_genai',
-        dependency='langchain-google-genai>=2.0.8',
+        dependencies=['langchain-google-genai>=2.0.8'],
     ),
-    'huggingface': LangGraphProvider(
+    'huggingface': Provider(
         class_name='ChatHuggingFace',
         module_name='langchain_huggingface',
-        dependency='langchain-huggingface',
+        dependencies=['langchain-huggingface'],
     ),
-    'microsoft': LangGraphProvider(
+    'microsoft': Provider(
         class_name='AzureChatOpenAI',
         module_name='langchain_openai',
-        dependency='langchain-openai',
+        dependencies=['langchain-openai'],
     ),
-    'mistral': LangGraphProvider(
+    'mistral': Provider(
         class_name='ChatMistralAI',
         module_name='langchain_mistralai.chat_models',
-        dependency='langchain-mistralai',
+        dependencies=['langchain-mistralai'],
     ),
-    'ollama': LangGraphProvider(
+    'ollama': Provider(
         class_name='ChatOllama',
         module_name='langchain_ollama.chat_models',
-        dependency='langchain-ollama',
+        dependencies=['langchain-ollama'],
     ),
-    'groq': LangGraphProvider(
+    'groq': Provider(
         class_name='ChatGroq',
         module_name='langchain_groq',
-        dependency='langchain-groq',
+        dependencies=['langchain-groq'],
     ),
 }
 
@@ -90,7 +80,7 @@ class LangGraphFile(BaseEntrypointFile):
     Parses and manipulates the LangGraph entrypoint file.
     """
 
-    base_class_pattern = r'\w+Graph$'
+    base_class_pattern: str = r'\w+Graph$'
     agent_decorator_name: str = 'agent'
     task_decorator_name: str = 'task'
 
@@ -153,7 +143,7 @@ class LangGraphFile(BaseEntrypointFile):
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
         """
-        Get the tools used by an agent as AST nodes.
+        Get the list of tools used by an agent as an AST List node.
 
         Tool definitions are inside of the methods marked with an `@agent` decorator.
         The method `bind_tools` is called with a list of tools to bind to the agent.
@@ -178,25 +168,6 @@ class LangGraphFile(BaseEntrypointFile):
 
         return tools_list
 
-    def get_agent_tool_nodes(self, agent_name: str) -> list[ast.Starred]:
-        """
-        Get a list of all ast nodes that define agentstack tools used by the agent.
-        """
-        agent_tools_node = self.get_agent_tools(agent_name)
-        return asttools.find_tool_nodes(agent_tools_node)
-
-    def get_agent_tool_names(self, agent_name: str) -> list[str]:
-        """
-        Get a list of all tools used by the agent.
-
-        Tools are identified by the item name of an `agentstack.tools` attribute node.
-        """
-        tool_names: list[str] = []
-        for node in self.get_agent_tool_nodes(agent_name):
-            # ignore type checking here since `get_agent_tool_nodes` is exhaustive
-            tool_names.append(node.value.slice.value)  # type: ignore[attr-defined]
-        return tool_names
-
     def add_agent_tools(self, agent_name: str, tool: ToolConfig):
         """
         Add new tools to be used by an agent to the agent's tool list and the
@@ -204,7 +175,7 @@ class LangGraphFile(BaseEntrypointFile):
         """
         method = asttools.find_method(self.get_agent_methods(), agent_name)
         if method is None:
-            raise ValidationError(f"`@agent` method `{agent_name}` does not exist in {ENTRYPOINT}")
+            raise ValidationError(f"Agent method `{agent_name}` does not exist in {ENTRYPOINT}")
 
         try:
             bind_tools = asttools.find_method_calls(method, 'bind_tools')[0]
@@ -221,16 +192,8 @@ class LangGraphFile(BaseEntrypointFile):
         agent = agent.bind_tools([])"""
             self.edit_node_range(pos, pos, code)
 
-        existing_node: ast.List = self.get_agent_tools(agent_name)
-        existing_elts: list[ast.expr] = existing_node.elts
-
-        new_tool_nodes: list[ast.expr] = []
-        if not tool.name in self.get_agent_tool_names(agent_name):
-            existing_elts.append(asttools.create_tool_node(tool.name))
-
-        new_node = ast.List(elts=existing_elts, ctx=ast.Load())
-        start, end = self.get_node_range(existing_node)
-        self.edit_node_range(start, end, new_node)
+        # add the tool to the agent's tools list
+        super().add_agent_tools(agent_name, tool)
 
         # add the tool to the global tools list
         existing_global_node: ast.List = self.get_global_tools()
@@ -249,16 +212,8 @@ class LangGraphFile(BaseEntrypointFile):
         Remove tools from an agent belonging to `tool` from the agent's tool list
         and the global ToolNode list.
         """
-        existing_node: ast.List = self.get_agent_tools(agent_name)
-        start, end = self.get_node_range(existing_node)
-        # modify the existing node to remove any matching tools
-        # we're referencing the internal node list from two directions here,
-        # so it's important that the node tree doesn't get re-parsed in between
-        for node in self.get_agent_tool_nodes(agent_name):
-            # ignore type checking here since `get_agent_tool_nodes` is exhaustive
-            if tool.name == node.value.slice.value:  # type: ignore[attr-defined]
-                existing_node.elts.remove(node)
-        self.edit_node_range(start, end, existing_node)
+        # remove the tool from the agent's tools list
+        super().remove_agent_tools(agent_name, tool)
 
         # remove the tool from the global tools list
         existing_global_node: ast.List = self.get_global_tools()
@@ -522,14 +477,6 @@ def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> Non
                 log.warning(f"Could not find {GRAPH_NODE_START} node to replace in {ENTRYPOINT}")
 
 
-def get_agent_tool_names(agent_name: str) -> list[Any]:
-    """
-    Get a list of tools used by an agent.
-    """
-    with get_entrypoint() as entrypoint:
-        return entrypoint.get_agent_tool_names(agent_name)
-
-
 def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add an agent method to the LangGraph entrypoint.
@@ -541,7 +488,7 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
 
     try:
         provider = PROVIDERS[agent.provider]
-        packaging.install(provider.dependency)
+        provider.install_dependencies()
     except KeyError:
         raise ValidationError(
             f"LangGraph provider '{provider}' has not been implemented. "
