@@ -145,6 +145,6 @@ AgentStack is open source software [licensed as MIT](LICENSE).
 
 ## How to Contribute
 
-AgentStack is a new project built by passionate AI agent developers! We'd love help making this tool better. Easy first issues are available, create new issues with feature ideas, or chat with us on our [Discord](https://discord.gg/JdWkh9tgTQ).
+AgentStack is a new project built by passionate AI agent developers! We'd love help making this tool better. Easy first issues are available, create new issues with feature ideas, or chat with us on our [Discord](https://discord.gg/JdWkh9tgTQ). Make sure you read our contributor documentation to familiarize yourself with the project at [How to Contribute](https://docs.agentstack.sh/contributing/how-to-contribute).
 
 If you are an Agent Tool developer, feel free to create an issue or even a PR to add your tool to AgentStack. 
