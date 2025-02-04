@@ -162,8 +162,8 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
         """
         Add an import statement to the file.
         """
-        all_imports = asttools.get_all_imports(self.tree)
         # add the import after existing imports, or at the beginning of the file
+        all_imports = asttools.get_all_imports(self.tree)
         _, end = self.get_node_range(all_imports[-1]) if all_imports else (0, 0)
 
         code = f"from {module_name} import {attributes}\n"
@@ -187,15 +187,16 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
         """A method named `run` in the base class which accepts `inputs` as a keyword argument."""
         try:
             base_class = self.get_base_class()
-            node = asttools.find_method_in_class(base_class, 'run')[0]
+            node = asttools.find_method_in_class(base_class, 'run')
+            assert node
+        except AssertionError:
+            raise ValidationError(f"`run` method not found in `{base_class.name}` class in {self.filename}.")
+
+        try:
             assert 'inputs' in (arg.arg for arg in node.args.args)
             return node
-        except IndexError:
-            raise ValidationError(f"`run` method not found in `{base_class.name} class in {self.filename}.")
         except AssertionError:
-            raise ValidationError(
-                f"Method `run` of `{base_class.name}` must accept `inputs` as a keyword argument."
-            )
+            raise ValidationError(f"Method `run` of `{base_class.name}` must accept `inputs` as a kwarg.")
 
     def get_task_methods(self) -> list[ast.FunctionDef]:
         """A `task` method is a method decorated with `@<self.task_decorator_name>`."""
@@ -220,16 +221,9 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
             _, pos = self.get_node_range(task_methods[-1])
         else:
             # Add before the `run` method
-            main_method = self.get_run_method()
-            pos, _ = self.get_node_range(main_method)
+            pos, _ = self.get_node_range(self.get_run_method())
 
-        code = self.get_new_task_method(task)
-        # TODO move formatting to `asttools`
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
+        self.insert_method(pos, self.get_new_task_method(task))
 
     def get_agent_methods(self) -> list[ast.FunctionDef]:
         """An `agent` method is a method decorated with `@<self.agent_decorator_name>`."""
@@ -254,16 +248,9 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
             _, pos = self.get_node_range(agent_methods[-1])
         else:
             # Add before the `run` method
-            main_method = self.get_run_method()
-            pos, _ = self.get_node_range(main_method)
+            pos, _ = self.get_node_range(self.get_run_method())
 
-        code = self.get_new_agent_method(agent)
-        # TODO move formatting to `asttools`
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
+        self.insert_method(pos, self.get_new_agent_method(agent))
 
     @abstractmethod
     def get_agent_tools(self, agent_name: str) -> ast.List:
@@ -371,15 +358,13 @@ def validate_project():
     agent_method_names = entrypoint.get_agent_method_names()
     for agent_name in get_all_agent_names():
         if agent_name not in agent_method_names:
-            raise ValidationError(
-                f"Agent `{agent_name}` is defined in agents.yaml but not in {entrypoint_path}"
-            )
+            raise ValidationError(f"Agent `{agent_name}` defined in agents.yaml but not in {entrypoint_path}")
 
     # Verify that tasks defined in tasks.yaml are present in the codebase
     task_method_names = entrypoint.get_task_method_names()
     for task_name in get_all_task_names():
         if task_name not in task_method_names:
-            raise ValidationError(f"Task `{task_name}` is defined in tasks.yaml but not in {entrypoint_path}")
+            raise ValidationError(f"Task `{task_name}` defined in tasks.yaml but not in {entrypoint_path}")
 
 
 def parse_llm(llm: str) -> tuple[str, str]:
@@ -473,7 +458,7 @@ def get_agent_tool_names(agent_name: str) -> list[str]:
     return entrypoint.get_agent_tool_names(agent_name)
 
 
-def add_agent(agent: 'AgentConfig', position: Optional[InsertionPoint] = None):
+def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None):
     """
     Add an agent to the user's project.
     """
@@ -486,7 +471,7 @@ def add_agent(agent: 'AgentConfig', position: Optional[InsertionPoint] = None):
     return module.add_agent(agent, position)
 
 
-def add_task(task: 'TaskConfig', position: Optional[InsertionPoint] = None):
+def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None):
     """
     Add a task to the user's project.
     """
