@@ -10,7 +10,7 @@ from agentstack.utils import is_snake_case
 from agentstack import packaging
 from agentstack import frameworks
 from agentstack import generation
-from agentstack.proj_templates import get_all_templates, TemplateConfig
+from agentstack.templates import get_all_templates, TemplateConfig
 
 from agentstack.cli import welcome_message
 from agentstack.cli.wizard import run_wizard

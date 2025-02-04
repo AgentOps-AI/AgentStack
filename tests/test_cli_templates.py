@@ -4,7 +4,7 @@ import unittest
 from parameterized import parameterized
 from pathlib import Path
 import shutil
-from agentstack.proj_templates import get_all_template_names
+from agentstack.templates import get_all_template_names
 from cli_test_utils import run_cli
 
 BASE_PATH = Path(__file__).parent
