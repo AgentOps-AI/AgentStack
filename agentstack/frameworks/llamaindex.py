@@ -23,10 +23,18 @@ PROVIDERS = {
     'anthropic': Provider(
         class_name='Anthropic',
         module_name='llama_index.llms.anthropic',
-        dependencies=['llama-index-llms-anthropic', 'llama-index-agent-anthropic'],
+        dependencies=['llama-index-llms-anthropic'],
     ),
-    # TODO deepseek
-    # TODO google
+    'deepseek': Provider(
+        class_name='DeepSeek',
+        module_name='llama_index.llms.deepseek',
+        dependencies=['llama-index-llms-deepseek'],
+    ),
+    'google': Provider(
+        class_name='Gemini',
+        module_name='llama_index.llms.gemini',
+        dependencies=['llama-index-llms-gemini'],
+    ),
     'huggingface': Provider(
         class_name='HuggingFaceLLM',
         module_name='llama_index.llms.huggingface',
