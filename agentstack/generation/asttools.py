@@ -82,7 +82,6 @@ class File:
         _node = self._render_node(node)
 
         self.source = self.source[:start] + _node + self.source[end:]
-        print(self.source)
         # In order to continue accurately modifying the AST, we need to re-parse the source.
         self.atok = asttokens.ASTTokens(self.source, parse=True)
 
@@ -237,10 +236,13 @@ def find_class_with_regex(tree: ast.Module, expr: str) -> list[ast.ClassDef]:
     return nodes
 
 
-def find_method_in_class(classdef: ast.ClassDef, method_name: str) -> Optional[ast.FunctionDef]:
+def find_method_in_class(classdef: ast.ClassDef, method_name: str) -> Union[None, ast.FunctionDef, ast.AsyncFunctionDef]:
     """Find all methods named `method_name`."""
     for node in ast.iter_child_nodes(classdef):
         if isinstance(node, ast.FunctionDef):
+            if node.name == method_name:
+                return node
+        elif isinstance(node, ast.AsyncFunctionDef):
             if node.name == method_name:
                 return node
     return None

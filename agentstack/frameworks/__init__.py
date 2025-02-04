@@ -73,12 +73,6 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def parse_llm(self, llm: str) -> tuple[str, str]:
-        """
-        Parse a language model string into a provider and model.
-        """
-        ...
-
     def add_agent(self, agent: 'AgentConfig', position: Optional[InsertionPoint] = None) -> None:
         """
         Add an agent to the user's project.
@@ -183,7 +177,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
         except IndexError:
             raise ValidationError(f"`{pattern}` class not found in {self.filename}")
 
-    def get_run_method(self) -> ast.FunctionDef:
+    def get_run_method(self) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
         """A method named `run` in the base class which accepts `inputs` as a keyword argument."""
         try:
             base_class = self.get_base_class()
@@ -365,13 +359,6 @@ def validate_project():
     for task_name in get_all_task_names():
         if task_name not in task_method_names:
             raise ValidationError(f"Task `{task_name}` defined in tasks.yaml but not in {entrypoint_path}")
-
-
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse a language model string into a provider and model.
-    """
-    return get_framework_module(get_framework()).parse_llm(llm)
 
 
 def add_tool(tool: ToolConfig, agent_name: str):

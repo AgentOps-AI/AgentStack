@@ -123,7 +123,6 @@ celerybeat.pid
 
 # Environments
 .env
-**/.env
 .venv
 env/
 venv/
@@ -160,28 +159,6 @@ cython_debug/
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-.idea/
+#.idea/
 
-# aider
-.aider*
-
-# VSCode
-.vscode
-
-# AgentStack
-.agentstack*
-example_project/
-ex/
-**/ex/
-cookiecutter.json
-
-tests/tmp
-
-examples/tests/
-examples/tests/**/*
-
-uv.lock
-.DS_Store
-
-.python-version
-
+.agentops/

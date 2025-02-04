@@ -107,15 +107,6 @@ def validate_project() -> None:
     return  # We don't need to do any additional validation
 
 
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse the llm string into a `LLM` dataclass.
-    Crew separates providers and models with a forward slash.
-    """
-    provider, model = llm.split('/')
-    return provider, model
-
-
 def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add a task method to the CrewAI entrypoint.

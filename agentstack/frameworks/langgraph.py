@@ -397,15 +397,6 @@ def validate_project() -> None:
     return  # No additional validation needed
 
 
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse a language model string into a provider and model.
-    LangGraph separates providers and models with a forward slash.
-    """
-    provider, model = llm.split('/')
-    return provider, model
-
-
 def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add a task method to the LangGraph entrypoint.
@@ -485,16 +476,18 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
     if not position in (InsertionPoint.BEGIN, InsertionPoint.END):
         raise ValidationError(f"Invalid insertion point: {position}")
 
+    # individual LLM providers rely on additional dependencies, install them
     try:
         provider = PROVIDERS[agent.provider]
         provider.install_dependencies()
     except KeyError:
         raise ValidationError(
-            f"{NAME} provider '{provider}' has not been implemented. "
+            f"{NAME} provider '{agent.provider}' has not been implemented. "
             f"AgentStack currently supports: {', '.join(PROVIDERS.keys())} "
         )
 
     with get_entrypoint() as entrypoint:
+        # also include an import statement for the LLM provider
         if not entrypoint.get_import(provider.module_name, provider.class_name):
             entrypoint.add_import(provider.module_name, provider.class_name)
 

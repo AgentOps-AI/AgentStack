@@ -88,14 +88,6 @@ def validate_project() -> None:
     return  # No additional validation needed
 
 
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse the llm string into a tuple of `provider` and `model`.
-    """
-    provider, model = llm.split('/')
-    return provider, model
-
-
 def add_task(task: TaskConfig, position: Optional[InsertionPoint] = None) -> None:
     """
     Add a task method to the entrypoint.
