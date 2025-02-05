@@ -12,8 +12,9 @@ from agentstack.cli import (
     configure_default_model,
     run_project,
     export_template,
-    serve_project
+    # serve_project
 )
+from agentstack.cli.cli import serve_project
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
 from agentstack import generation

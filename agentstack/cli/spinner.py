@@ -18,6 +18,7 @@ class Spinner:
         self.start_time = None
         self._lock = threading.Lock()
         self._last_printed_len = 0
+        self._last_message = ""
 
     def _clear_line(self):
         """Clear the current line in terminal."""
@@ -75,12 +76,20 @@ class Spinner:
             self._clear_line()
             self.message = message
 
-    def clear_and_log(self, message, color: Literal['success','info'] = 'success'):
-        """Temporarily clear spinner, print message, and resume spinner."""
+    def clear_and_log(self, message, color: Literal['success', 'info'] = 'success'):
+        """Temporarily clear spinner, print message, and resume spinner.
+        Skips printing if message is the same as the last message printed."""
         with self._lock:
+            # Skip if message is same as last one
+            if hasattr(self, '_last_message') and self._last_message == message:
+                return
+
             self._clear_line()
             if color == 'success':
                 log.success(message)
             else:
                 log.info(message)
             sys.stdout.flush()
+
+            # Store current message
+            self._last_message = message

@@ -1,12 +1,10 @@
-FROM python:3.11-slim
+FROM python:3.12-slim-bookworm
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 WORKDIR /app
 
-# install git - TODO: remove after testing
-RUN apt-get update &&
-    apt-get install -y git &&
-    apt-get clean &&
-    rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install -y git gcc build-essential tree
+RUN apt clean
 
 # Copy requirements first to leverage Docker cache
 COPY pyproject.toml .
@@ -14,13 +12,12 @@ RUN pip install --no-cache-dir uv
 RUN pip install psutil flask
 
 RUN #pip install agentstack
-RUN pip install git+https://github.com/bboynton97/AgentStack.git@deploy-command
+RUN pip install git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command
 RUN mkdir src
-RUN cp /usr/local/lib/python3.11/site-packages/agentstack/deploy/serve.py ./src
+RUN cp /usr/local/lib/python3.12/site-packages/agentstack/serve/serve.py ./src
 
 RUN pip uninstall -y agentstack
 
-RUN apt-get update && apt-get install -y gcc
 RUN uv venv
 RUN source .venv/bin/activate
 RUN uv pip install --requirements pyproject.toml
@@ -32,4 +29,4 @@ COPY . .
 EXPOSE 6969
 
 # Command to run the application
-CMD ["agentstack", "run"]
+CMD ["/app/.venv/bin/agentstack", "run"]

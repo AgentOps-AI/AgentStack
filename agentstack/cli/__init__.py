@@ -1,4 +1,4 @@
-from .cli import init_project_builder, configure_default_model, welcome_message, get_validated_input
+from .cli import configure_default_model, welcome_message, get_validated_input
 from .init import init_project
 from .wizard import run_wizard
 from .run import run_project

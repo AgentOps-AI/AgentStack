@@ -30,6 +30,8 @@ async def connect_websocket(project_id, spinner):
                     spinner.clear_and_log(f"📤 {data.get('data','')}", 'info')
                 elif data['type'] == 'connected':
                     spinner.clear_and_log(f"\n\n~~ Build stream connected! ~~")
+                elif data['type'] == 'deploy':
+                    spinner.clear_and_log(f"🚀 {data.get('data','')}", 'info')
                 elif data['type'] == 'error':
                     raise Exception(f"Failed to deploy: {data.get('data')}")
         except websockets.ConnectionClosed:
@@ -77,7 +79,7 @@ async def deploy():
             if response.status_code != 200:
                 raise Exception(response.text)
 
-            spinner.update_message("Building your agent")
+            spinner.update_message("Building and deploying your agent")
 
             # Wait for build completion
             await websocket_task
