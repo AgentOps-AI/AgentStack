@@ -76,23 +76,30 @@ def init_project(
     - install dependencies
     - insert Tasks, Agents and Tools
     """
-    require_uv()
-
     # TODO prevent the user from passing the --path argument to init
-    if slug_name:
-        if not is_snake_case(slug_name):
-            raise Exception("Project name must be snake_case")
-        conf.set_path(conf.PATH / slug_name)
-    else:
-        raise Exception("No project directory specified.\n Run `agentstack init <project_name>`")
-
-    if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
-        raise Exception(f"Directory already exists: {conf.PATH}")
-
     if template and use_wizard:
         raise Exception("Template and wizard flags cannot be used together")
-
+    
+    require_uv()
     welcome_message()
+
+    if not slug_name:
+        log.info(
+            "Provide a project name. This will be used to create a new directory in the "
+            "current path and will be used as the project name. 🐍 Must be snake_case."
+        )
+        slug_name = inquirer.text(
+            message="Project name (snake_case)",
+        )
+
+    if not slug_name:
+        raise Exception("Project name cannot be empty")
+    if not is_snake_case(slug_name):
+        raise Exception("Project name must be snake_case")
+
+    conf.set_path(conf.PATH / slug_name)
+    if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
+        raise Exception(f"Directory already exists: {conf.PATH}")
 
     if use_wizard:
         log.debug("Initializing new project with wizard.")
