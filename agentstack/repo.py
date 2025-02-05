@@ -24,10 +24,11 @@ class Transaction:
     Changes will be committed automatically on exit.
     """
 
+    automated: bool
     messages: list[str]
-    automated: bool = True
 
-    def __init__(self) -> None:
+    def __init__(self, automated: bool = True) -> None:
+        self.automated = automated
         self.messages = []
 
     def commit(self) -> None:
@@ -79,13 +80,6 @@ def _get_repo() -> git.Repo:
         raise EnvironmentError(f"Git repository is not on the {MAIN_BRANCH_NAME} branch.")
     except git.exc.InvalidGitRepositoryError:
         raise EnvironmentError("No git repository found in the current project.")
-
-
-def transaction() -> Transaction:
-    """
-    Create a new Transaction for committing changes to the current project.
-    """
-    return Transaction()
 
 
 def init() -> None:
