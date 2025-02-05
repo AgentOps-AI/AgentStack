@@ -1,0 +1,42 @@
+{
+    "name": "daytona",
+    "category": "sandbox-management",
+    "url": "https://github.com/daytonaio/sdk",
+    "env": {},
+    "dependencies": [
+      "daytona-sdk"
+    ],
+    "tools": [
+      "create_workspace",
+      "stop_workspace",
+      "start_workspace",
+      "remove_workspace",
+      "exec_command",
+      "code_run",
+      "create_exec_session",
+      "get_session",
+      "execute_session_command",
+      "get_session_command",
+      "get_session_command_logs",
+      "list_sessions",
+      "delete_session",
+      "list_files",
+      "create_folder",
+      "upload_file",
+      "find_files",
+      "replace_in_files",
+      "download_file",
+      "set_file_permissions",
+      "get_file_info",
+      "move_files",
+      "delete_file",
+      "git_clone",
+      "git_pull",
+      "create_lsp_server",
+      "lsp_did_open",
+      "lsp_did_close",
+      "lsp_document_symbols",
+      "lsp_completions"
+    ],
+    "cta": "Learn more about the Daytona SDK at https://github.com/daytonaio/sdk"
+  }
