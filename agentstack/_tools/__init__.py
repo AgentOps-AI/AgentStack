@@ -1,5 +1,6 @@
 from typing import Optional, Protocol, runtime_checkable
 from types import ModuleType
+import enum
 import os
 import sys
 from pathlib import Path
@@ -11,6 +12,38 @@ from agentstack.utils import get_package_path, open_json_file, term_color, snake
 
 TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir, also update MANIFEST.in
 TOOLS_CONFIG_FILENAME: str = 'config.json'
+
+
+class ToolPermission(pydantic.BaseModel):
+    """
+    Control which features of a tool are available to an agent. 
+    
+    This solves a few problems:
+    - Some tools expose a number of functions, which may overwhelm the context of an agent.
+    - Some tools interact with the system they are running on, and should be restricted to
+    specific directories, or specific operations. 
+    - Some tools allow execution of code and should be restricted to specific features.
+    
+    Considerations:
+    - Users and the CLI will have to interact with this configuration format and it should be
+    easy to understand.
+    - Tools may need additional configuration to define what features are available.
+    
+    TODO
+    - Determine where and how we want to store this data. (conf/tools.yaml in the user's project?)
+    - Tool configurations should be specific to an agent, not the whole project. 
+    - If we do implement read/write/execute rules we need some way to mark tool functions as being relevant.
+    - Do we write a config file to the users project that lists all permissions as allowed by default and
+      instruct users to modify it?
+    - Do we need to support modification of these rules via the CLI?
+    """
+    class Action(enum.Enum):
+        READ = 'READ'
+        WRITE = 'WRITE'
+        EXECUTE = 'EXECUTE'
+
+    function_name: str
+    action: Action
 
 
 class ToolConfig(pydantic.BaseModel):
