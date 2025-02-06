@@ -6,27 +6,24 @@ WORKDIR /app
 RUN apt update && apt install -y git gcc build-essential tree
 RUN apt clean
 
-# Copy requirements first to leverage Docker cache
-COPY pyproject.toml .
-RUN pip install --no-cache-dir uv
-RUN pip install psutil flask
-
-RUN #pip install agentstack
-RUN pip install git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command
-RUN mkdir src
-RUN cp /usr/local/lib/python3.12/site-packages/agentstack/serve/serve.py ./src
-
-RUN pip uninstall -y agentstack
-
-RUN uv venv
-RUN source .venv/bin/activate
-RUN uv pip install --requirements pyproject.toml
-
-# Copy the rest of the application
 COPY . .
 
-# Expose the port the app runs on
+# Install uv and create venv in one layer
+RUN pip install --no-cache-dir uv \
+    && uv venv \
+    && . .venv/bin/activate \
+    && uv pip install psutil flask \
+    && uv pip install git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command \
+    && mkdir -p src \
+    && cp /usr/local/lib/python3.12/site-packages/agentstack/serve/serve.py ./src \
+    && uv pip uninstall -y agentstack \
+    && uv pip install .
+
+# Add venv to path
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Expose the port
 EXPOSE 6969
 
-# Command to run the application
-CMD ["/app/.venv/bin/agentstack", "run"]
+# Use absolute path to be safe
+CMD ["/app/.venv/bin/python", "src/serve.py"]
