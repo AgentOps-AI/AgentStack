@@ -1,0 +1,4 @@
+{%- for key, value in cookiecutter.structure.inputs.items() %}
+{{key}}: >
+    {{value}}
+{%- endfor %}

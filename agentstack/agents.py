@@ -5,8 +5,8 @@ import pydantic
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
 from agentstack import conf, log
-from agentstack.providers import parse_provider_model
 from agentstack.exceptions import ValidationError
+from agentstack.providers import parse_provider_model
 
 
 AGENTS_FILENAME: Path = Path("src/config/agents.yaml")
