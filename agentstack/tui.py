@@ -970,10 +970,7 @@ class Select(Box):
         super().input(key)
 
     def click(self, y, x):
-        # TODO there is a bug when you click on the last element in a scrollable list
-        for module in self.modules:
-            if not module in self.get_modules():
-                continue  # module is not visible
+        for module in self.get_modules():
             if not module.hit(y, x):
                 continue
             self.select(module)
