@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 import requests
 from typing import Dict, Any
 import os
-from run import run_project
+from agentstack.run import run_project
 
 app = Flask(__name__)
 
@@ -43,7 +43,7 @@ def process_agent():
         # result = WebresearcherCrew().crew().kickoff(inputs=request_data)
         # inputs = json.stringify(request_data)
         # os.system(f"python src/main.py {inputs}")
-        result = run_project(api_inputs=request_data)
+        result = run_project(api_inputs=request_data.get('inputs'))
 
         # Call the webhook with the results
         call_webhook(webhook_url, {
