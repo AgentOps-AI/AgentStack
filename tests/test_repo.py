@@ -1,12 +1,15 @@
-import unittest
 import os, sys
 import shutil
 from pathlib import Path
+import unittest
+from parameterized import parameterized
 from unittest.mock import patch, MagicMock
 from agentstack import conf
 from agentstack import repo
+from agentstack.repo import TrackingDisabledError
 from agentstack.exceptions import EnvironmentError
 import git
+
 
 
 BASE_PATH = Path(__file__).parent
@@ -75,6 +78,81 @@ class TestRepo(unittest.TestCase):
         uncommitted = repo.get_uncommitted_files()
         self.assertIn("initial_file.txt", uncommitted)
 
+    @patch('agentstack.repo.conf.ConfigFile')
+    def test_should_track_changes_default(self, mock_config_file):
+        mock_config = MagicMock()
+        mock_config.use_git = True
+        mock_config_file.return_value = mock_config
+
+        self.assertTrue(repo.should_track_changes())
+
+    @patch('agentstack.repo.conf.ConfigFile')
+    def test_should_track_changes_disabled(self, mock_config_file):
+        mock_config = MagicMock()
+        mock_config.use_git = False
+        mock_config_file.return_value = mock_config
+
+        self.assertFalse(repo.should_track_changes())
+
+    @patch('agentstack.repo.conf.ConfigFile')
+    def test_should_track_changes_file_not_found(self, mock_config_file):
+        mock_config_file.side_effect = FileNotFoundError
+
+        self.assertTrue(repo.should_track_changes())
+
+    def test_dont_track_changes(self):
+        # Ensure tracking is enabled initially
+        repo._USE_GIT = None
+        self.assertTrue(repo.should_track_changes())
+
+        # Disable tracking
+        repo.dont_track_changes()
+        self.assertFalse(repo.should_track_changes())
+
+        # Reset _USE_GIT for other tests
+        repo._USE_GIT = None
+
+    @patch('agentstack.repo.should_track_changes', return_value=False)
+    def test_require_git_when_disabled(self, mock_should_track):
+        with self.assertRaises(TrackingDisabledError):
+            repo._require_git()
+
+    def test_require_git_when_disabled_manually(self):
+        # Disable git tracking
+        repo.dont_track_changes()
+        
+        with self.assertRaises(repo.TrackingDisabledError):
+            repo._require_git()
+        
+        # Reset _USE_GIT for other tests
+        repo._USE_GIT = None
+
+    @parameterized.expand([
+        ("apt", "/usr/bin/apt", "Hint: run `sudo apt install git`"),
+        ("brew", "/usr/local/bin/brew", "Hint: run `brew install git`"),
+        ("port", "/opt/local/bin/port", "Hint: run `sudo port install git`"),
+        ("none", None, ""),
+    ])
+    @patch('agentstack.repo.should_track_changes', return_value=True)
+    @patch('agentstack.repo.shutil.which')
+    def test_require_git_not_installed(self, name, package_manager_path, expected_hint, mock_which, mock_should_track):
+        mock_which.side_effect = lambda x: None if x != name else package_manager_path
+        
+        with self.assertRaises(EnvironmentError) as context:
+            repo._require_git()
+        
+        error_message = str(context.exception)
+        self.assertIn("git is not installed.", error_message)
+        
+        if expected_hint:
+            self.assertIn(expected_hint, error_message)
+
+    @patch('agentstack.repo.should_track_changes', return_value=True)
+    @patch('agentstack.repo.shutil.which', return_value='/usr/bin/git')
+    def test_require_git_installed(self, mock_which, mock_should_track):
+        # This should not raise an exception
+        repo._require_git()
+
     def test_transaction_context_manager(self):
         repo.init()
         mock_commit = MagicMock()
@@ -112,3 +190,66 @@ class TestRepo(unittest.TestCase):
                 assert repo.get_uncommitted_files() == []
 
             mock_commit.assert_not_called()
+
+    def test_transaction_with_exception(self):
+        repo.init()
+        mock_commit = MagicMock()
+
+        with patch('agentstack.repo.commit', mock_commit):
+            try:
+                with repo.Transaction() as transaction:
+                    (self.test_dir / "test_file.txt").touch()
+                    transaction.add_message("This message should not be committed")
+                    raise ValueError("Test exception")
+            except ValueError:
+                pass
+
+            mock_commit.assert_not_called()
+
+        # Verify that the file was created but not committed
+        self.assertTrue((self.test_dir / "test_file.txt").exists())
+        self.assertIn("test_file.txt", repo.get_uncommitted_files())
+
+    def test_init_when_git_disabled(self):
+        repo.dont_track_changes()
+        result = repo.init()
+        self.assertIsNone(result)
+        repo._USE_GIT = None  # Reset for other tests
+
+    def test_commit_when_git_disabled(self):
+        repo.dont_track_changes()
+        result = repo.commit("Test message", ["test_file.txt"])
+        self.assertIsNone(result)
+        repo._USE_GIT = None  # Reset for other tests
+
+    def test_commit_all_changes_when_git_disabled(self):
+        repo.dont_track_changes()
+        result = repo.commit_all_changes("Test message")
+        self.assertIsNone(result)
+        repo._USE_GIT = None  # Reset for other tests
+
+    def test_get_uncommitted_files_when_git_disabled(self):
+        repo.dont_track_changes()
+        result = repo.get_uncommitted_files()
+        self.assertEqual(result, [])
+        repo._USE_GIT = None  # Reset for other tests
+
+    def test_commit_user_changes(self):
+        repo.init()
+        
+        # Create a new file
+        test_file = self.test_dir / "user_file.txt"
+        test_file.write_text("User content")
+        
+        # Commit user changes
+        repo.commit_user_changes()
+        
+        # Check if the file was committed
+        git_repo = git.Repo(self.test_dir)
+        commits = list(git_repo.iter_commits())
+        
+        self.assertEqual(len(commits), 2)  # Initial commit + user changes commit
+        self.assertEqual(commits[0].message, f"{repo.USER_CHANGES_COMMIT_MESSAGE}{repo.AUTOMATION_NOTE}")
+        
+        # Check if the file is no longer in uncommitted files
+        self.assertNotIn("user_file.txt", repo.get_uncommitted_files())
