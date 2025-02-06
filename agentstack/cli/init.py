@@ -104,6 +104,7 @@ def init_project(
         log.debug("Initializing new project with template selection.")
         template_data = select_template(slug_name, framework)
 
+    assert template_data  # appease type checker
     log.notify("🦾 Creating a new AgentStack project...")
     log.info(f"Using project directory: {conf.PATH.absolute()}")
 

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Optional, Any, Union, TypedDict
 from enum import Enum
 from pathlib import Path
+from abc import abstractmethod, ABCMeta
 
 from agentstack import conf, log
 from agentstack.utils import is_snake_case
@@ -187,15 +188,19 @@ class BannerView(WizardView):
                     on_confirm=lambda: self.app.load('task', workflow='task'),
                 )
             )
+            
+            # we can also add more tools to existing agents
+            buttons.append(
+                Button(
+                    (round(self.height / 2) + (len(buttons) * 4), round(self.width / 2 / 2)),
+                    (3, round(self.width / 2)),
+                    "Add More Tools",
+                    color=COLOR_BUTTON,
+                    on_confirm=lambda: self.app.load('tool_agent_selection', workflow='tool'),
+                )
+            )
 
-            # # we can also add more tools to existing agents
-            # buttons.append(Button(
-            #     (self.height-6, self.width-34),
-            #     (3, 15),
-            #     "Add Tool",
-            #     color=COLOR_BUTTON,
-            #     on_confirm=lambda: self.app.load('tool_category', workflow='agent'),
-            # ))
+
 
         if self.app.state.project:
             # we can complete the project
@@ -248,7 +253,7 @@ class BannerView(WizardView):
         ]
 
 
-class FormView(WizardView):
+class FormView(WizardView, metaclass=ABCMeta):
     title: str
     error_message: Node
 
@@ -262,8 +267,9 @@ class FormView(WizardView):
     def error(self, message: str):
         self.error_message.value = message
 
+    @abstractmethod
     def form(self) -> list[Renderable]:
-        return []
+        ...
 
     def layout(self) -> list[Renderable]:
         return [
@@ -286,6 +292,66 @@ class FormView(WizardView):
                 ],
             ),
             HelpText((self.height - 1, 0), (1, self.width)),
+        ]
+
+
+class AgentSelectionView(FormView, metaclass=ABCMeta):
+    title = "Select an Agent"
+
+    def __init__(self, app: 'App'):
+        super().__init__(app)
+        self.agent_key = Node()
+        self.agent_name = Node()
+        self.agent_llm = Node()
+        self.agent_description = Node()
+
+    def set_agent_selection(self, index: int, value: str):
+        agent_data = self.app.state.agents[value]
+        self.agent_name.value = value
+        self.agent_llm.value = agent_data['llm']
+        self.agent_description.value = agent_data['role']
+
+    def set_agent_choice(self, index: int, value: str):
+        self.agent_key.value = value
+
+    def get_agent_options(self) -> list[str]:
+        return list(self.app.state.agents.keys())
+
+    @abstractmethod
+    def submit(self):
+        ...
+
+    def form(self) -> list[Renderable]:
+        return [
+            RadioSelect(
+                (12, 1),
+                (self.height - 18, round(self.width / 2) - 3),
+                options=self.get_agent_options(),
+                color=COLOR_FORM_BORDER,
+                highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
+                on_change=self.set_agent_selection,
+                on_select=self.set_agent_choice,
+            ),
+            Box(
+                (12, round(self.width / 2)),
+                (self.height - 18, round(self.width / 2) - 3),
+                color=COLOR_FORM_BORDER,
+                modules=[
+                    ASCIIText(
+                        (1, 3),
+                        (4, round(self.width / 2) - 10),
+                        color=COLOR_FORM.sat(40),
+                        value=self.agent_name,
+                    ),
+                    BoldText((5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.agent_llm),
+                    WrappedText(
+                        (7, 3),
+                        (5, round(self.width / 2) - 10),
+                        color=COLOR_FORM.sat(50),
+                        value=self.agent_description,
+                    ),
+                ],
+            ),
         ]
 
 
@@ -668,6 +734,18 @@ class ToolView(FormView):
         ]
 
 
+class ToolAgentSelectionView(AgentSelectionView):
+    title = "Select an Agent for your Tool"
+
+    def submit(self):
+        if not self.agent_key.value:
+            self.error("Agent is required.")
+            return
+
+        self.app.state.active_agent = self.agent_key.value
+        self.app.advance()
+
+
 class AfterAgentView(BannerView):
     title = "Boom! We made some agents."
     sparkle = "(ﾉ>ω<)ﾉ :｡･:*:･ﾟ’★,｡･:*:･ﾟ’☆"
@@ -719,28 +797,9 @@ class TaskView(FormView):
         ]
 
 
-class AgentSelectionView(FormView):
+class TaskAgentSelectionView(AgentSelectionView):
     title = "Select an Agent for your Task"
-
-    def __init__(self, app: 'App'):
-        super().__init__(app)
-        self.agent_key = Node()
-        self.agent_name = Node()
-        self.agent_llm = Node()
-        self.agent_description = Node()
-
-    def set_agent_selection(self, index: int, value: str):
-        agent_data = self.app.state.agents[value]
-        self.agent_name.value = value
-        self.agent_llm.value = agent_data['llm']
-        self.agent_description.value = agent_data['role']
-
-    def set_agent_choice(self, index: int, value: str):
-        self.agent_key.value = value
-
-    def get_agent_options(self) -> list[str]:
-        return list(self.app.state.agents.keys())
-
+    
     def submit(self):
         if not self.agent_key.value:
             self.error("Agent is required.")
@@ -748,39 +807,6 @@ class AgentSelectionView(FormView):
 
         self.app.state.update_active_task(agent=self.agent_key.value)
         self.app.advance()
-
-    def form(self) -> list[Renderable]:
-        return [
-            RadioSelect(
-                (12, 1),
-                (self.height - 18, round(self.width / 2) - 3),
-                options=self.get_agent_options(),
-                color=COLOR_FORM_BORDER,
-                highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
-                on_change=self.set_agent_selection,
-                on_select=self.set_agent_choice,
-            ),
-            Box(
-                (12, round(self.width / 2)),
-                (self.height - 18, round(self.width / 2) - 3),
-                color=COLOR_FORM_BORDER,
-                modules=[
-                    ASCIIText(
-                        (1, 3),
-                        (4, round(self.width / 2) - 10),
-                        color=COLOR_FORM.sat(40),
-                        value=self.agent_name,
-                    ),
-                    BoldText((5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.agent_llm),
-                    WrappedText(
-                        (7, 3),
-                        (5, round(self.width / 2) - 10),
-                        color=COLOR_FORM.sat(50),
-                        value=self.agent_description,
-                    ),
-                ],
-            ),
-        ]
 
 
 class AfterTaskView(BannerView):
@@ -928,11 +954,12 @@ class WizardApp(App):
         'after_project': AfterProjectView,
         'agent': AgentView,
         'model': ModelView,
+        'tool_agent_selection': ToolAgentSelectionView,
         'tool_category': ToolCategoryView,
         'tool': ToolView,
         'after_agent': AfterAgentView,
         'task': TaskView,
-        'agent_selection': AgentSelectionView,
+        'task_agent_selection': TaskAgentSelectionView,
         'after_task': AfterTaskView,
         'debug': DebugView,
     }
@@ -955,15 +982,15 @@ class WizardApp(App):
         ],
         'task': [  # add tasks
             'task',
-            'agent_selection',
+            'task_agent_selection',
             'after_task',
         ],
-        # 'tool': [ # add tools to an agent
-        #     'agent_select',
-        #     'tool_category',
-        #     'tool',
-        #     'after_agent',
-        # ]
+        'tool': [ # add tools to an agent
+            'tool_agent_selection',
+            'tool_category',
+            'tool',
+            'after_agent',
+        ]
     }
 
     state: State
@@ -989,6 +1016,7 @@ class WizardApp(App):
         self.stop()
 
         if self._finish_run_once:
+            
             log.set_stdout(sys.stdout)  # re-enable on-screen logging
 
             init_project(
@@ -998,7 +1026,7 @@ class WizardApp(App):
 
             template.write_to_file(conf.PATH / "wizard")
             log.info(f"Saved template to: {conf.PATH / 'wizard.json'}")
-            self._finish_run_once = False
+            
 
     def advance(self, steps: int = 1):
         """Load the next view in the active workflow."""
