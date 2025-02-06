@@ -1,4 +1,4 @@
-from typing import Optional, Protocol, runtime_checkable
+from typing import Optional, Callable, Protocol, runtime_checkable
 from types import ModuleType
 import enum
 import os
@@ -7,11 +7,83 @@ from pathlib import Path
 from importlib import import_module
 import pydantic
 from agentstack.exceptions import ValidationError
-from agentstack.utils import get_package_path, open_json_file, term_color, snake_to_camel
+from agentstack.utils import get_package_path, open_json_file, snake_to_camel
 
 
 TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir, also update MANIFEST.in
 TOOLS_CONFIG_FILENAME: str = 'config.json'
+
+
+class Action(enum.Enum):
+    READ = 'read'
+    WRITE = 'write'
+    EXECUTE = 'execute'
+
+
+def performs_actions(*actions: str) -> Callable:
+    """
+    Decorator to note the Actions a tool exposes. 
+    
+    Use inside of a tool implementation to indicate which actions the function performs.
+    
+    ```
+    from agentstack import tools
+    
+    @tools.performs_actions('read', 'write')
+    def my_tool_function(key: str, value: str):
+        ...
+    ```
+
+    I also wonder about passing more configuration information to a tools in a semi-standardized way:
+    ```
+    @tools.performs_read(allowed_dirs=['/home/user/*'], allowed_extensions=['*.txt'])
+    def my_tool_function(key: str, value: str, **kwargs):
+        allowed_dirs = kwargs.get('allowed_dirs', ['/'])
+        allowed_extensions = kwargs.get('allowed_extensions', ['*.*'])
+        # it will always be up to the integrator to actually enforce these rules
+        ...
+    
+    ALLOWED_SH_COMMANDS = ['ls', 'cat', ...]
+    
+    @tools.performs_exec(language='sh', allowed_commands=ALLOWED_SH_COMMANDS)
+    def my_tool_function(key: str, value: str, **kwargs):
+        ...
+    ```
+    
+    Later, the user needs to be able to override all of these rules in their project. 
+    - Remember, each agent can have different rules.
+        - Would be great if this could inherit from a shared base.
+    
+    # project/src/config/tools.yaml
+    defaults:
+        tool_name:
+            function_name: &tool_name__function_name
+                read:
+                    allowed_dirs: ['/home/user/*']
+                    allowed_extensions: ['*.txt']
+                write:
+                    allowed_dirs: ['/home/user/*']
+                    allowed_extensions: ['*.txt']
+    agent_name:
+        tool_name: 
+            function_name: << *tool_name__function_name
+    ...
+    
+    I don't love that...
+    """
+
+    try:
+        _actions: list[Action] = []
+        for action_name in actions:
+            _actions.append(Action(action_name))
+    except ValueError as e:
+        raise ValidationError(f"Invalid action name '{action_name}' passed to `tools.performs_actions`")
+    
+    def decorator(func):
+        func.__tool_actions = _actions
+        return func
+
+    return decorator
 
 
 class ToolPermission(pydantic.BaseModel):
@@ -37,10 +109,7 @@ class ToolPermission(pydantic.BaseModel):
       instruct users to modify it?
     - Do we need to support modification of these rules via the CLI?
     """
-    class Action(enum.Enum):
-        READ = 'READ'
-        WRITE = 'WRITE'
-        EXECUTE = 'EXECUTE'
+
 
     function_name: str
     action: Action
