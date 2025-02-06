@@ -12,6 +12,7 @@ from agentstack.utils import get_framework
 from agentstack.agents import get_agent, get_all_agents, get_all_agent_names
 from agentstack.tasks import get_task, get_all_tasks, get_all_task_names
 from agentstack.inputs import get_inputs
+from agentstack import _tools
 from agentstack import frameworks
 
 ___all___ = [
@@ -68,5 +69,12 @@ class ToolLoader:
 
     def __getitem__(self, tool_name: str) -> list[Callable]:
         return frameworks.get_tool_callables(tool_name)
+
+    def performs_actions(self, *args, **kwargs) -> Callable:
+        # in order to add a method to `agentstack.tools` it has to be aliased here
+        # not sure internal tools decorators need to be part of the public API, 
+        # but there should be a clean way to reference the decorator inside a tool
+        # implementation if we do go forward with decorators. 
+        return _tools.performs_actions(*args, **kwargs)
 
 tools = ToolLoader()
