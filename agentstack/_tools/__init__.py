@@ -1,4 +1,4 @@
-from typing import Optional, Callable, Protocol, runtime_checkable
+from typing import Optional, Any, Callable, Protocol, runtime_checkable
 from types import ModuleType
 import enum
 import os
@@ -14,105 +14,146 @@ TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir,
 TOOLS_CONFIG_FILENAME: str = 'config.json'
 
 
+"""
+As a tool author, this should be as easy as possible to interact with:
+
+``` # config.json
+{
+    "name": "my_tool",
+    ...
+    "tools": {
+        "tool_function": {
+            "actions": ["read", "write"],
+            "allowed_dirs": ["/home/user/*"],
+            "allowed_extensions": ["*.txt"]
+        },
+        ...
+    }
+}
+```
+
+``` # my_tool.py
+def tool_function(vars_need_to_be_preserved_for_llms) -> str:
+    permissions = tools.get_permissions(tool_function)
+    ...
+    
+    if permissions.READ:
+        ...
+    if permissions.WRITE:
+        ...
+    if permissions.EXECUTE:
+        ...
+
+    permissions.allowed_dirs  # -> ['/home/user/*']
+    permissions.allowed_extensions  # -> ['*.txt']
+    ...
+```
+
+As a project user, this should be as easy as possible to interact with.
+They should be able to inherit sane defaults from the tool author. 
+In order to explicitly include a function in the tools available to the user's agent
+we do need the function to be listed in the config file. It would be nice if we
+didn't have to list all of the permissions, however. Although, that would be an
+easy way to allow them to override defaults. 
+
+``` # src/config/tools.yaml
+my_tool:
+    other_tool_function: ~
+    tool_function:
+        actions: ['read', 'write']
+        allowed_dirs: ['/home/user/*']
+        allowed_extensions: ['*.txt']
+...
+```
+
+TODO How do we determine which agent is using the tools? Maybe we leave out agent-specific
+configuration for tools for now and just have them at the application level?
+``` # src/stack.py
+...
+@agentstack.agent
+def get_agent() -> Agent:
+    return Agent(
+        tools=[*agentstack.tools['my_tool'], ]
+    )
+"""
+
+
 class Action(enum.Enum):
     READ = 'read'
     WRITE = 'write'
     EXECUTE = 'execute'
 
 
-def performs_actions(*actions: str) -> Callable:
-    """
-    Decorator to note the Actions a tool exposes. 
-    
-    Use inside of a tool implementation to indicate which actions the function performs.
-    
-    ```
-    from agentstack import tools
-    
-    @tools.performs_actions('read', 'write')
-    def my_tool_function(key: str, value: str):
-        ...
-    ```
-
-    I also wonder about passing more configuration information to a tools in a semi-standardized way:
-    ```
-    @tools.performs_read(allowed_dirs=['/home/user/*'], allowed_extensions=['*.txt'])
-    def my_tool_function(key: str, value: str, **kwargs):
-        allowed_dirs = kwargs.get('allowed_dirs', ['/'])
-        allowed_extensions = kwargs.get('allowed_extensions', ['*.*'])
-        # it will always be up to the integrator to actually enforce these rules
-        ...
-    
-    ALLOWED_SH_COMMANDS = ['ls', 'cat', ...]
-    
-    @tools.performs_exec(language='sh', allowed_commands=ALLOWED_SH_COMMANDS)
-    def my_tool_function(key: str, value: str, **kwargs):
-        ...
-    ```
-    
-    Later, the user needs to be able to override all of these rules in their project. 
-    - Remember, each agent can have different rules.
-        - Would be great if this could inherit from a shared base.
-    
-    # project/src/config/tools.yaml
-    defaults:
-        tool_name:
-            function_name: &tool_name__function_name
-                read:
-                    allowed_dirs: ['/home/user/*']
-                    allowed_extensions: ['*.txt']
-                write:
-                    allowed_dirs: ['/home/user/*']
-                    allowed_extensions: ['*.txt']
-    agent_name:
-        tool_name: 
-            function_name: << *tool_name__function_name
-    ...
-    
-    I don't love that...
-    """
-
-    try:
-        _actions: list[Action] = []
-        for action_name in actions:
-            _actions.append(Action(action_name))
-    except ValueError as e:
-        raise ValidationError(f"Invalid action name '{action_name}' passed to `tools.performs_actions`")
-    
-    def decorator(func):
-        func.__tool_actions = _actions
-        return func
-
-    return decorator
-
-
 class ToolPermission(pydantic.BaseModel):
     """
-    Control which features of a tool are available to an agent. 
-    
+    Control which features of a tool are available to an agent.
+
     This solves a few problems:
     - Some tools expose a number of functions, which may overwhelm the context of an agent.
     - Some tools interact with the system they are running on, and should be restricted to
-    specific directories, or specific operations. 
+    specific directories, or specific operations.
     - Some tools allow execution of code and should be restricted to specific features.
-    
+
     Considerations:
     - Users and the CLI will have to interact with this configuration format and it should be
     easy to understand.
     - Tools may need additional configuration to define what features are available.
-    
+
     TODO
-    - Determine where and how we want to store this data. (conf/tools.yaml in the user's project?)
-    - Tool configurations should be specific to an agent, not the whole project. 
-    - If we do implement read/write/execute rules we need some way to mark tool functions as being relevant.
-    - Do we write a config file to the users project that lists all permissions as allowed by default and
-      instruct users to modify it?
+    - Tool configurations should be specific to an agent, not the whole project.
     - Do we need to support modification of these rules via the CLI?
     """
 
-
+    tool_name: str
     function_name: str
-    action: Action
+    tool_config: ToolConfig
+    _actions: list[Action]
+    _attributes: dict[str, Any]
+
+    def __init__(self, tool_name: str, function_name: str):
+        self.tool_name = tool_name
+        self.function_name = function_name
+        self.tool_config = ToolConfig.from_tool_name(self.tool_name)
+
+        try:
+            config = tool_config[self.function_name]
+            self._actions = config.pop('actions', [])
+            self._attributes = config
+        except KeyError:
+            raise ValidationError(f"Function '{self.function_name}' not found in tool '{self.tool_name}'")
+
+        # TODO we have loaded the default tool config for the actions, now we need to overlay the user's preferences.
+
+    @property
+    def READ(self) -> bool:
+        return Action.READ in self._actions
+
+    @property
+    def WRITE(self) -> bool:
+        return Action.WRITE in self._actions
+
+    @property
+    def EXECUTE(self) -> bool:
+        return Action.EXECUTE in self._actions
+
+    def __getattr__(self, item):
+        """
+        Allow access to other variables defined in the tool config.
+        """
+        if item in self._attributes:
+            return self._attributes[item]
+        raise AttributeError(f"{item} not found in `ToolPermission`")
+
+
+def get_permissions(func: Callable) -> ToolPermission:
+    """
+    Get the permissions for a tool function.
+    We derive the tool name and function name from the function's module and name.
+    """
+    return ToolPermission(
+        tool_name=function.__module__.split('.')[-1],
+        function_name=function.__name__,
+    )
 
 
 class ToolConfig(pydantic.BaseModel):
@@ -124,13 +165,28 @@ class ToolConfig(pydantic.BaseModel):
 
     name: str
     category: str
-    tools: list[str]
+    tools: list[dict[str, Any]]
     url: Optional[str] = None
     cta: Optional[str] = None
     env: Optional[dict] = None
     dependencies: Optional[list[str]] = None
     post_install: Optional[str] = None
     post_remove: Optional[str] = None
+
+    @pydantic.validator('tools')
+    def validate_tools(cls, value):
+        """
+        Validate that each tool is a dict and has an 'actions' key which lists 'read', 'write', and/or 'execute'.
+        """
+        for tool in value:
+            if not isinstance(tool, dict):
+                raise pydantic.ValidationError(f"tools.{tool} is not a dict.")
+            if 'actions' not in tool:
+                raise pydantic.ValidationError(f"tools.{tool} does not have a key: 'actions'.")
+            for action in tool['actions']:
+                if action not in Action.__members__.values():
+                    raise pydantic.ValidationError(f"tools.{tool} has an invalid action: {action}.")
+        return value
 
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
@@ -221,5 +277,6 @@ def get_all_tool_names() -> list[str]:
     return [path.stem for path in get_all_tool_paths()]
 
 
+# TODO tool configs don't get modified at runtime, so we can safely cache them.
 def get_all_tools() -> list[ToolConfig]:
     return [ToolConfig.from_tool_name(path) for path in get_all_tool_names()]
