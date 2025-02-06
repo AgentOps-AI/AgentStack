@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 import sys
 import traceback
 from pathlib import Path
@@ -93,7 +93,7 @@ def _import_project_module(path: Path):
     return project_module
 
 
-def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
+def run_project(command: str = 'run', cli_args: Optional[List[str]] = None, api_inputs: Optional[Dict[str, str]] = None):
     """Validate that the project is ready to run and then run it."""
     verify_agentstack_project()
     
@@ -113,6 +113,9 @@ def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
             key, value = arg[len('--input-') :].split('=')
             log.debug(f"Using CLI input override: {key}={value}")
             inputs.add_input_for_run(key, value)
+
+    if api_inputs:
+        inputs.add_input_for_run(**api_inputs)
 
     load_dotenv(Path.home() / '.env')  # load the user's .env file
     load_dotenv(conf.PATH / '.env', override=True)  # load the project's .env file

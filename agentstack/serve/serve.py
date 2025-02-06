@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 import requests
 from typing import Dict, Any
 import os
-from main import run
+from run import run_project
 
 app = Flask(__name__)
 
@@ -34,13 +34,16 @@ def process_agent():
         if not request_data or 'webhook_url' not in request_data:
             return jsonify({'error': 'Missing webhook_url in request'}), 400
 
+        if not request_data or 'inputs' not in request_data:
+            return jsonify({'error': 'Missing input data in request'}), 400
+
         webhook_url = request_data.pop('webhook_url')
 
         # Run the agent process with the provided data
         # result = WebresearcherCrew().crew().kickoff(inputs=request_data)
         # inputs = json.stringify(request_data)
         # os.system(f"python src/main.py {inputs}")
-        result = run(request_data)
+        result = run_project(api_inputs=request_data)
 
         # Call the webhook with the results
         call_webhook(webhook_url, {
