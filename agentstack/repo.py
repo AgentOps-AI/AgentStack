@@ -88,7 +88,8 @@ class Transaction:
 
 def _require_git():
     """
-    Raise an EnvironmentError if git is not installed.
+    Raise an EnvironmentError if git is not installed, raise a TrackingDisabledError
+    if git tracking is disabled.
     """
     if not should_track_changes():
         raise TrackingDisabledError("Git tracking is disabled by the user.")
@@ -115,7 +116,9 @@ def _get_repo() -> git.Repo:
     try:
         return git.Repo(conf.PATH.absolute())
     except git.exc.InvalidGitRepositoryError:
-        raise EnvironmentError("No git repository found in the current project.")
+        message = "No git repository found in the current project."
+        log.warning(message)
+        raise EnvironmentError(message)
 
 
 def init() -> None:
@@ -163,11 +166,11 @@ def commit_all_changes(message: str, automated: bool = True) -> None:
         return commit(message, changed_files, automated=automated)
 
 
-def commit_user_changes() -> None:
+def commit_user_changes(automated: bool = True) -> None:
     """
     Commit any changes to the current repo and assume they're user changes.
     """
-    commit_all_changes(USER_CHANGES_COMMIT_MESSAGE, automated=True)
+    commit_all_changes(USER_CHANGES_COMMIT_MESSAGE, automated=automated)
 
 
 def get_uncommitted_files() -> list[str]:
