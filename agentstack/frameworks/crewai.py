@@ -12,6 +12,11 @@ from agentstack import graph
 if TYPE_CHECKING:
     from agentstack.generation import InsertionPoint
 
+NAME: str = "CrewAI"
+DESCRIPTION: str = (
+    "Framework for orchestrating role-playing, autonomous AI agents. By fostering collaborative "
+    "intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks."
+)
 ENTRYPOINT: Path = Path('src/crew.py')
 
 
@@ -230,15 +235,6 @@ def validate_project() -> None:
             f"`@agent` decorated method not found in `{class_node.name}` class in {ENTRYPOINT}.\n"
             "Create a new agent using `agentstack generate agent <agent_name>`."
         )
-
-
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse the llm string into a `LLM` dataclass.
-    Crew separates providers and models with a forward slash.
-    """
-    provider, model = llm.split('/')
-    return provider, model
 
 
 def get_task_method_names() -> list[str]:

@@ -13,6 +13,12 @@ TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir,
 TOOLS_CONFIG_FILENAME: str = 'config.json'
 
 
+class ToolCategory(pydantic.BaseModel):
+    name: str
+    title: str  # human readable title
+    description: str
+
+
 class ToolConfig(pydantic.BaseModel):
     """
     This represents the configuration data for a tool.
@@ -100,6 +106,19 @@ class ToolConfig(pydantic.BaseModel):
             )
 
 
+def get_all_tool_categories() -> list[ToolCategory]:
+    categories = []
+    filename = TOOLS_DIR / 'categories.json'
+    data = open_json_file(filename)
+    for name, category in data.items():
+        categories.append(ToolCategory(name=name, **category))
+    return categories
+
+
+def get_all_tool_category_names() -> list[str]:
+    return [category.name for category in get_all_tool_categories()]
+
+
 def get_all_tool_paths() -> list[Path]:
     """
     Get all the paths to the tool configuration files.
@@ -121,3 +140,8 @@ def get_all_tool_names() -> list[str]:
 
 def get_all_tools() -> list[ToolConfig]:
     return [ToolConfig.from_tool_name(path) for path in get_all_tool_names()]
+
+
+def get_tool(name: str) -> ToolConfig:
+    return ToolConfig.from_tool_name(name)
+

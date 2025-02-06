@@ -12,6 +12,11 @@ from agentstack.agents import AgentConfig, get_all_agent_names
 from agentstack.tasks import TaskConfig, get_all_task_names
 from agentstack import graph
 
+NAME: str = "LangGraph"
+DESCRIPTION: str = (
+    "A library for building stateful, multi-actor applications with LLMs, used to create "
+    "agent and multi-agent workflows."
+)
 ENTRYPOINT: Path = Path('src/graph.py')
 
 GRAPH_NODE_START = 'START'
@@ -79,6 +84,11 @@ PROVIDERS = {
         class_name='ChatGroq',
         module_name='langchain_groq',
         dependency='langchain-groq',
+    ),
+    'deepseek': LangGraphProvider(
+        class_name='ChatDeepSeek',
+        module_name='langchain_deepseek',
+        dependency='langchain-deepseek-official',
     ),
 }
 
@@ -542,15 +552,6 @@ def validate_project() -> None:
         )
 
 
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse a language model string into a provider and model.
-    LangGraph separates providers and models with a forward slash.
-    """
-    provider, model = llm.split('/')
-    return provider, model
-
-
 def get_task_method_names() -> list[str]:
     """
     Get a list of task names (methods with an @task decorator).
@@ -659,7 +660,7 @@ def add_agent(agent: AgentConfig, position: Optional[InsertionPoint] = None) -> 
         packaging.install(provider.dependency)
     except KeyError:
         raise ValidationError(
-            f"LangGraph provider '{provider}' has not been implemented. "
+            f"LangGraph provider '{agent.provider}' has not been implemented. "
             f"AgentStack currently supports: {', '.join(PROVIDERS.keys())} "
         )
 

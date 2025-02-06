@@ -30,6 +30,8 @@ class FrameworkModule(Protocol):
     Protocol spec for a framework implementation module.
     """
 
+    NAME: str  # Human readable name of the framework
+    DESCRIPTION: str  # Human readable description of the framework
     ENTRYPOINT: Path
     """
     Relative path to the entrypoint file for the framework in the user's project.
@@ -40,12 +42,6 @@ class FrameworkModule(Protocol):
         """
         Validate that a user's project is ready to run.
         Raises a `ValidationError` if the project is not valid.
-        """
-        ...
-
-    def parse_llm(self, llm: str) -> tuple[str, str]:
-        """
-        Parse a language model string into a provider and model.
         """
         ...
 
@@ -114,6 +110,17 @@ def get_framework_module(framework: str) -> FrameworkModule:
         raise Exception(f"Framework {framework} could not be imported.")
 
 
+def get_framework_info(framework: str) -> dict[str, str]:
+    """
+    Get the info for a framework.
+    """
+    _module = get_framework_module(framework)
+    return {
+        'name': _module.NAME,
+        'description': _module.DESCRIPTION,
+    }
+
+
 def get_entrypoint_path(framework: str) -> Path:
     """
     Get the path to the entrypoint file for a framework.
@@ -147,13 +154,6 @@ def validate_project():
             raise ValidationError(
                 f"Task `{task_name}` is defined in tasks.yaml but not in {entrypoint_path}"
             )
-
-
-def parse_llm(llm: str) -> tuple[str, str]:
-    """
-    Parse a language model string into a provider and model.
-    """
-    return get_framework_module(get_framework()).parse_llm(llm)
 
 
 def add_tool(tool: ToolConfig, agent_name: str):
