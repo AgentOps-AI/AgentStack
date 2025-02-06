@@ -4,7 +4,7 @@ import unittest
 from parameterized import parameterized
 from pathlib import Path
 import shutil
-from agentstack.proj_templates import get_all_template_names
+from agentstack.templates import get_all_template_names
 from cli_test_utils import run_cli
 
 BASE_PATH = Path(__file__).parent
@@ -22,7 +22,8 @@ class CLITemplatesTest(unittest.TestCase):
     @parameterized.expand([(x,) for x in get_all_template_names()])
     def test_init_command_for_template(self, template_name):
         """Test the 'init' command to create a project directory with a template."""
-        result = run_cli('init', 'test_project', '--template', template_name)
+        # initialize templates using the current framework regardless of their setting
+        result = run_cli('init', 'test_project', '--template', template_name, '--framework', self.framework)
         self.assertEqual(result.returncode, 0)
         self.assertTrue((self.project_dir / 'test_project').exists())
 

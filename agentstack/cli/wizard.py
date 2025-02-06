@@ -10,7 +10,7 @@ from agentstack.utils import open_json_file, is_snake_case
 from agentstack.cli import welcome_message, get_validated_input
 from agentstack.cli.cli import PREFERRED_MODELS
 from agentstack._tools import get_all_tools, get_all_tool_names
-from agentstack.proj_templates import TemplateConfig
+from agentstack.templates import TemplateConfig
 
 
 class WizardData(dict):

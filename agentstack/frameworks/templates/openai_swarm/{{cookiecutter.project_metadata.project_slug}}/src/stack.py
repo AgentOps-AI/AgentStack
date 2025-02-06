@@ -2,7 +2,7 @@ from swarm import Swarm, Agent
 import agentstack
 
 
-class {{ cookiecutter.project_metadata.project_name|replace('-', '')|replace('_', '')|capitalize }}Stack:
+class {{ cookiecutter.project_metadata.class_name }}Stack:
 
     def run(self, inputs: list[str]):
         app = Swarm()

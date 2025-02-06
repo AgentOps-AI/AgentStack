@@ -1,0 +1,8 @@
+{%- for task in cookiecutter.structure.tasks %}
+{{task.name}}:
+  description: >
+    {{task.description}}
+  expected_output: >
+    {{task.expected_output}}
+  agent: {{task.agent}}
+{%- endfor %}

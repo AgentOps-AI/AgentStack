@@ -64,17 +64,22 @@ class File:
         with open(self.filename, 'w', encoding='utf-8') as f:
             f.write(self.source)
 
+    def _render_node(self, node: Union[str, ASTT]) -> str:
+        if isinstance(node, ast.AST):
+            _node: ast.AST = node
+            if isinstance(node, ast.expr):
+                _node = ast.Module(body=[ast.Expr(value=node)], type_ignores=[])
+            return astor.to_source(_node).strip()
+
+        return node  # already a string
+
     def get_node_range(self, node: ast.AST) -> tuple[int, int]:
         """Get the string start and end indexes for a node in the source code."""
         return self.atok.get_text_range(node)
 
-    def edit_node_range(self, start: int, end: int, node: Union[str, ast.AST]):
+    def edit_node_range(self, start: int, end: int, node: Union[str, ASTT]):
         """Splice a new node or string into the source code at the given range."""
-        if isinstance(node, ast.expr):
-            module = ast.Module(body=[ast.Expr(value=node)], type_ignores=[])
-            _node = astor.to_source(module).strip()
-        else:
-            _node = node
+        _node = self._render_node(node)
 
         self.source = self.source[:start] + _node + self.source[end:]
         # In order to continue accurately modifying the AST, we need to re-parse the source.
@@ -84,6 +89,23 @@ class File:
             self.tree = self.atok.tree
         else:
             raise ValidationError(f"Failed to parse {self.filename} after edit")
+
+    def insert_method(self, pos: int, node: Union[str, ast.FunctionDef]) -> None:
+        """Insert a method node into the source code at the given position."""
+        # since this is a method, we can make assumptions about the formatting
+        _node = self._render_node(node).strip('\n')
+        
+        if not self.source[:pos].endswith('\n'):
+            _node = '\n\n' + _node
+        elif not self.source[:pos].endswith('\n\n'):
+            _node = '\n' + _node
+        
+        if not self.source[pos:].startswith('\n'):
+            _node += '\n\n'
+        elif not self.source[pos:].startswith('\n\n'):
+            _node += '\n'
+        
+        self.edit_node_range(pos, pos, _node)
 
     def remove_node(self, node: ast.AST) -> None:
         """Remove a node from the source code."""
@@ -184,6 +206,14 @@ def find_class_instantiation(tree: Union[Iterable[ast.AST], ast.AST], class_name
     return None
 
 
+def find_class(tree: ast.Module, class_name: str) -> Optional[ast.ClassDef]:
+    """Find a class definition in an AST."""
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ClassDef) and node.name == class_name:
+            return node
+    return None
+
+
 def find_class_with_decorator(tree: ast.Module, decorator_name: str) -> list[ast.ClassDef]:
     """Find a class definition that is marked by a decorator in an AST."""
     nodes = []
@@ -206,14 +236,16 @@ def find_class_with_regex(tree: ast.Module, expr: str) -> list[ast.ClassDef]:
     return nodes
 
 
-def find_method_in_class(classdef: ast.ClassDef, method_name: str) -> list[ast.FunctionDef]:
+def find_method_in_class(classdef: ast.ClassDef, method_name: str) -> Union[None, ast.FunctionDef, ast.AsyncFunctionDef]:
     """Find all methods named `method_name`."""
-    nodes = []
     for node in ast.iter_child_nodes(classdef):
         if isinstance(node, ast.FunctionDef):
             if node.name == method_name:
-                nodes.append(node)
-    return nodes
+                return node
+        elif isinstance(node, ast.AsyncFunctionDef):
+            if node.name == method_name:
+                return node
+    return None
 
 
 def find_decorated_method_in_class(classdef: ast.ClassDef, decorator_name: str) -> list[ast.FunctionDef]:

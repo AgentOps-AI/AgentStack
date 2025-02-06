@@ -6,6 +6,7 @@ from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
+from agentstack.providers import parse_provider_model
 
 
 AGENTS_FILENAME: Path = Path("src/config/agents.yaml")
@@ -70,13 +71,13 @@ class AgentConfig(pydantic.BaseModel):
 
     @property
     def provider(self) -> str:
-        from agentstack import frameworks
-        return frameworks.parse_llm(self.llm)[0]
+        """The LLM provider ie. 'openai' or 'openrouter'"""
+        return parse_provider_model(self.llm)[0]
 
     @property
     def model(self) -> str:
-        from agentstack import frameworks
-        return frameworks.parse_llm(self.llm)[1]
+        """The model name ie. 'gpt-4o'"""
+        return parse_provider_model(self.llm)[1]
 
     @property
     def prompt(self) -> str:
