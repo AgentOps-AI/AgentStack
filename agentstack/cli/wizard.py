@@ -51,7 +51,7 @@ FIELD_COLORS: FieldColors = {
 
 
 class LogoElement(Text):
-    # h_align = ALIGN_CENTER
+    h_align = ALIGN_CENTER
 
     def __init__(self, coords: tuple[int, int], dims: tuple[int, int]):
         super().__init__(coords, dims)
@@ -60,7 +60,7 @@ class LogoElement(Text):
         self.stars = [(3, 1), (25, 5), (34, 1), (52, 2), (79, 3), (97, 1)]
         self._star_colors = {}
         content_width = len(LOGO.split('\n')[0])
-        self.left_offset = round((self.width - content_width) / 2)
+        self.left_offset = max(0, round((self.width - content_width) / 2))
 
     def _get_star_color(self, index: int) -> Color:
         if index not in self._star_colors:
@@ -76,10 +76,7 @@ class LogoElement(Text):
         super().render()
         for i, (x, y) in enumerate(self.stars):
             try:
-                # TODO condition to prevent rendering out of bounds
-                # TODO fix centering
-                self.grid.addch(y, x, '*', self._get_star_color(i).to_curses())
-                # self.grid.addch(y, self.left_offset + x, '*', self._get_star_color(i).to_curses())
+                self.grid.addch(y, self.left_offset + x, '*', self._get_star_color(i).to_curses())
             except curses.error:
                 pass  # overflow
 
