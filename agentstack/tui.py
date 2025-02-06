@@ -1080,7 +1080,7 @@ class DebugElement(Element):
     def render(self) -> None:
         self.grid.addstr(0, 1, f"FPS: {1 / (time.time() - self.last_render):.0f}")
         self.grid.addstr(0, 10, f"Colors: {len(Color._color_map)}/{curses.COLORS}")
-        self.grid.addstr(0, 27, f"Dims: {self.parent.width}x{self.parent.height}")
+        self.grid.addstr(0, 27, f"Dims: {self.parent.width}x{self.parent.height}")  # type: ignore
 
 
 class View(Contains):
