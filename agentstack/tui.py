@@ -676,7 +676,7 @@ class Button(Element):
         on_activate: Optional[Callable] = None,
     ):
         super().__init__(coords, dims, value=value, color=color)
-        self.highlight = highlight or self.color.sat(80)
+        self.highlight = highlight or self.color.sat(50)
         self.on_confirm = on_confirm
         self.on_activate = on_activate
 
@@ -1194,6 +1194,16 @@ class App:
         if not self.view:
             return
 
+        # handle resize
+        height, width = self.stdscr.getmaxyx()
+        if self.view.width != width or self.view.height != height:
+            self.width, self.height = width, height
+            for name, cls in self.views.items():
+                if cls == self.view.__class__:
+                    break
+            self.load(name)
+        
+        # render loop
         try:
             self.view.render()
             self.view.last_render = time.time()

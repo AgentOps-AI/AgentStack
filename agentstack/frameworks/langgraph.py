@@ -12,6 +12,11 @@ from agentstack.agents import AgentConfig, get_all_agent_names
 from agentstack.tasks import TaskConfig, get_all_task_names
 from agentstack import graph
 
+NAME: str = "LangGraph"
+DESCRIPTION: str = (
+    "A library for building stateful, multi-actor applications with LLMs, used to create "
+    "agent and multi-agent workflows."
+)
 ENTRYPOINT: Path = Path('src/graph.py')
 
 GRAPH_NODE_START = 'START'

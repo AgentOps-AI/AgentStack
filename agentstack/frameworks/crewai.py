@@ -12,6 +12,11 @@ from agentstack import graph
 if TYPE_CHECKING:
     from agentstack.generation import InsertionPoint
 
+NAME: str = "CrewAI"
+DESCRIPTION: str = (
+    "Framework for orchestrating role-playing, autonomous AI agents. By fostering collaborative "
+    "intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks."
+)
 ENTRYPOINT: Path = Path('src/crew.py')
 
 

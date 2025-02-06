@@ -11,13 +11,13 @@ from pathlib import Path
 from agentstack import conf, log
 from agentstack.utils import is_snake_case
 from agentstack.tui import *
-from agentstack.frameworks import SUPPORTED_FRAMEWORKS, CREWAI, LANGGRAPH
 from agentstack import providers
+from agentstack import frameworks
 from agentstack._tools import (
-    get_all_tools, 
-    get_tool, 
-    get_all_tool_categories, 
-    get_all_tool_category_names, 
+    get_all_tools,
+    get_tool,
+    get_all_tool_categories,
+    get_all_tool_category_names,
 )
 from agentstack.proj_templates import TemplateConfig
 from agentstack.cli import LOGO, init_project
@@ -221,12 +221,23 @@ class BannerView(WizardView):
                         (9, round(self.width / 2)),
                         color=COLOR_BANNER,
                         modules=[
-                            BoldText((1, 2), (2, round(self.width / 2) - 3), color=self._get_color(), value=self.title),
-                            WrappedText(
-                                (3, 2), (3, round(self.width / 2) - 3), color=self._get_color(), value=self.sparkle
+                            BoldText(
+                                (1, 2),
+                                (2, round(self.width / 2) - 3),
+                                color=self._get_color(),
+                                value=self.title,
                             ),
                             WrappedText(
-                                (6, 2), (2, round(self.width / 2) - 3), color=self._get_color(), value=self.subtitle
+                                (3, 2),
+                                (3, round(self.width / 2) - 3),
+                                color=self._get_color(),
+                                value=self.sparkle,
+                            ),
+                            WrappedText(
+                                (6, 2),
+                                (2, round(self.width / 2) - 3),
+                                color=self._get_color(),
+                                value=self.subtitle,
                             ),
                         ],
                     ),
@@ -313,48 +324,24 @@ class ProjectView(FormView):
 class FrameworkView(FormView):
     title = "Select a Framework"
 
-    FRAMEWORK_OPTIONS = {
-        CREWAI: {'name': "CrewAI", 'description': "A simple and easy-to-use framework."},
-        LANGGRAPH: {'name': "LangGraph", 'description': "A powerful and flexible framework."},
-    }
-
     def __init__(self, app: 'App'):
         super().__init__(app)
         self.framework_key = Node()
         self.framework_name = Node()
         self.framework_description = Node()
+        self.framework_options = {
+            key: frameworks.get_framework_info(key) for key in frameworks.SUPPORTED_FRAMEWORKS
+        }
 
     def set_framework_selection(self, index: int, value: str):
         """Update the content of the framework info box."""
-        key, data = None, None
-        for _key, _value in self.FRAMEWORK_OPTIONS.items():
-            if _value['name'] == value:  # search by name
-                key = _key
-                data = _value
-                break
-
-        if not key or not data:
-            key = value
-            data = {
-                'name': "Unknown",
-                'description': "Unknown",
-            }
-
+        data = self.framework_options[value]
         self.framework_name.value = data['name']
         self.framework_description.value = data['description']
 
     def set_framework_choice(self, index: int, value: str):
         """Save the selection."""
-        key = None
-        for _key, _value in self.FRAMEWORK_OPTIONS.items():
-            if _value['name'] == value:  # search by name
-                key = _key
-                break
-
-        self.framework_key.value = key
-
-    def get_framework_options(self) -> list[str]:
-        return [self.FRAMEWORK_OPTIONS[key]['name'] for key in SUPPORTED_FRAMEWORKS]
+        self.framework_key.value = value
 
     def submit(self):
         if not self.framework_key.value:
@@ -369,7 +356,7 @@ class FrameworkView(FormView):
             RadioSelect(
                 (12, 1),
                 (self.height - 18, round(self.width / 2) - 3),
-                options=self.get_framework_options(),
+                options=list(self.framework_options.keys()),
                 color=COLOR_FORM_BORDER,
                 highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
                 on_change=self.set_framework_selection,
@@ -582,7 +569,10 @@ class ToolCategoryView(FormView):
                         value=self.tool_category_name,
                     ),
                     BoldText(
-                        (5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.tool_category_name
+                        (5, 3),
+                        (1, round(self.width / 2) - 10),
+                        color=COLOR_FORM,
+                        value=self.tool_category_name,
                     ),
                     WrappedText(
                         (7, 3),
@@ -659,9 +649,7 @@ class ToolView(FormView):
                         color=COLOR_FORM.sat(40),
                         value=self.tool_name,
                     ),
-                    BoldText(
-                        (5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.tool_name
-                    ),
+                    BoldText((5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.tool_name),
                     WrappedText(
                         (7, 3),
                         (5, round(self.width / 2) - 10),
@@ -783,9 +771,7 @@ class AgentSelectionView(FormView):
                         color=COLOR_FORM.sat(40),
                         value=self.agent_name,
                     ),
-                    BoldText(
-                        (5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.agent_llm
-                    ),
+                    BoldText((5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.agent_llm),
                     WrappedText(
                         (7, 3),
                         (5, round(self.width / 2) - 10),
@@ -1018,7 +1004,7 @@ class WizardApp(App):
         """Load the next view in the active workflow."""
         assert self.active_workflow, "No active workflow set."
         assert self.active_view, "No active view set."
-        
+
         workflow = self.workflow[self.active_workflow]
         current_index = workflow.index(self.active_view)
         view = workflow[current_index + steps]
@@ -1030,7 +1016,7 @@ class WizardApp(App):
 
     def load(self, view: str, workflow: Optional[str] = None):
         """Load a view from a workflow."""
-        self.active_workflow = workflow
+        self.active_workflow = workflow if workflow else self.active_workflow
         self.active_view = view
         super().load(view)
 
@@ -1047,5 +1033,4 @@ def main():
     import io
 
     log.set_stdout(io.StringIO())  # disable on-screen logging
-
     curses.wrapper(WizardApp.wrapper)

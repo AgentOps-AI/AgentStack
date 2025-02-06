@@ -12,6 +12,10 @@ from agentstack import graph
 
 
 NAME: str = "OpenAI Swarm"
+DESCRIPTION: str = (
+    "Educational framework exploring ergonomic, lightweight multi-agent orchestration. "
+    "Managed by OpenAI Solution team."
+)
 ENTRYPOINT: Path = Path('src/stack.py')
 
 
