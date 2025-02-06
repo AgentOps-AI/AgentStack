@@ -1,8 +1,10 @@
 from typing import Optional
 import itertools
 import inquirer
+from agentstack import conf
 from agentstack.utils import term_color
 from agentstack import generation
+from agentstack import repo
 from agentstack._tools import get_all_tools
 from agentstack.agents import get_all_agents
 
@@ -43,6 +45,8 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
         - add the tool to the user's project
         - add the tool to the specified agents or all agents if none are specified
     """
+    conf.assert_project()
+
     if not tool_name:
         # ask the user for the tool name
         tools_list = [
@@ -71,4 +75,21 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
             return  # user cancelled the prompt
 
     assert tool_name  # appease type checker
-    generation.add_tool(tool_name, agents=agents)
+    
+    repo.commit_user_changes()
+    with repo.Transaction() as commit:
+        commit.add_message(f"Added tool {tool_name}")
+        generation.add_tool(tool_name, agents=agents)
+
+
+def remove_tool(tool_name: str):
+    """
+    Remove a tool from the user's project.
+    """
+    conf.assert_project()
+    
+    repo.commit_user_changes()
+    with repo.Transaction() as commit:
+        commit.add_message(f"Removed tool {tool_name}")
+        generation.remove_tool(tool_name)
+

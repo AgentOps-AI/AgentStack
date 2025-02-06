@@ -156,14 +156,20 @@ def _build_logger() -> logging.Logger:
     # global stdout, stderr
 
     log = logging.getLogger(LOG_NAME)
+    log.handlers.clear()  # remove any existing handlers
     log.propagate = False  # prevent inheritance from the root logger
     # min log level set here cascades to all handlers
     log.setLevel(DEBUG if conf.DEBUG else INFO)
 
     try:
         # `conf.PATH` can change during startup, so defer building the path
-        # log file only gets written to if it exists, which happens on project init
         log_filename = conf.PATH / LOG_FILENAME
+
+        # log file only gets written to if it exists, which happens on project init
+        # this prevents us from littering log files outside of project directories
+        if not log_filename.exists():
+            raise FileNotFoundError
+
         file_handler = logging.FileHandler(log_filename)
         file_handler.setFormatter(FileFormatter())
         file_handler.setLevel(DEBUG)

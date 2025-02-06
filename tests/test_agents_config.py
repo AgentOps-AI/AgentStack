@@ -21,7 +21,10 @@ BASE_PATH = Path(__file__).parent
 
 class AgentConfigTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp/agent_config'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'test_agents_config'
+        os.makedirs(self.project_dir)
+        
         conf.set_path(self.project_dir)
         os.makedirs(self.project_dir / 'src/config')
 

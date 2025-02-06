@@ -69,6 +69,8 @@ def export_template(output_filename: str):
     """
     Export the current project as a template.
     """
+    conf.assert_project()
+    
     try:
         metadata = ProjectFile()
     except Exception as e:

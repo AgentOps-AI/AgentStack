@@ -1,11 +1,13 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from pathlib import Path
 from agentstack import log
 from agentstack.exceptions import ValidationError
-from agentstack.generation import parse_insertion_point
 from agentstack import frameworks
 from agentstack.utils import verify_agentstack_project
 from agentstack.tasks import TaskConfig, TASKS_FILENAME
+
+if TYPE_CHECKING:
+    from agentstack.generation import InsertionPoint
 
 
 def add_task(
@@ -13,7 +15,7 @@ def add_task(
     description: Optional[str] = None,
     expected_output: Optional[str] = None,
     agent: Optional[str] = None,
-    position: Optional[str] = None,
+    position: Optional['InsertionPoint'] = None,
 ):
     verify_agentstack_project()
 
@@ -28,10 +30,10 @@ def add_task(
         config.expected_output = expected_output or "Add your expected_output here"
         config.agent = agent or "agent_name"
 
-    _position = parse_insertion_point(position)
     try:
-        frameworks.add_task(task, _position)
+        frameworks.add_task(task, position)
     except ValidationError as e:
         raise ValidationError(f"Error adding task to project:\n{e}")
 
     log.success(f"📃 Added task \"{task.name}\" to your AgentStack project successfully!")
+

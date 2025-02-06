@@ -10,6 +10,7 @@ from agentstack.utils import is_snake_case
 from agentstack import packaging
 from agentstack import frameworks
 from agentstack import generation
+from agentstack import repo
 from agentstack.proj_templates import get_all_templates, TemplateConfig
 
 from agentstack.cli import welcome_message
@@ -127,18 +128,23 @@ def init_project(
     packaging.create_venv()
     log.info("Installing dependencies...")
     packaging.install_project()
+    repo.init()  # initialize git repo
 
     # now we can interact with the project and add Agents, Tasks, and Tools
     # we allow dependencies to be installed along with these, so the project must
     # be fully initialized first.
-    for task in template_data.tasks:
-        generation.add_task(**task.model_dump())
+    with repo.Transaction() as commit:
+        for task in template_data.tasks:
+            commit.add_message(f"Added task {task.name}")
+            generation.add_task(**task.model_dump())
 
-    for agent in template_data.agents:
-        generation.add_agent(**agent.model_dump())
+        for agent in template_data.agents:
+            commit.add_message(f"Added agent {agent.name}")
+            generation.add_agent(**agent.model_dump())
 
-    for tool in template_data.tools:
-        generation.add_tool(**tool.model_dump())
+        for tool in template_data.tools:
+            commit.add_message(f"Added tool {tool.name}")
+            generation.add_tool(**tool.model_dump())
 
     log.success("🚀 AgentStack project generated successfully!\n")
     log.info(
