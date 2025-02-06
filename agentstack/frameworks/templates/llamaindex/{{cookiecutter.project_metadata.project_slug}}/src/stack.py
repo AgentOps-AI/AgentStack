@@ -10,11 +10,6 @@ import agentstack
 
 
 class {{ cookiecutter.project_metadata.class_name }}Stack:
-    def _format_history(self, history: list[ChatMessage]) -> str:
-        # ideally we would pass these directly to `chat_history`, but passing
-        # messages directly overrides the system prompt. this allows us to
-        # pass them as a string to `user_msg`.
-        return "\n\n".join([f"{msg.role}: {msg.content}" for msg in history])
 
     async def run(self, inputs: dict[str, str]):
         # TODO interpolate inputs into prompts
@@ -27,8 +22,7 @@ class {{ cookiecutter.project_metadata.class_name }}Stack:
             )
             history.append(task())
             handler = workflow.run(
-                user_msg=self._format_history(history), 
-                # chat_history=history, 
+                chat_history=history, 
             )
             
             async for event in handler.stream_events():

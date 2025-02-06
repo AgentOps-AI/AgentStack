@@ -56,7 +56,7 @@ openai_swarm = [
     "agentstack-openai-swarm>=0.0.1"
 ]
 llamaindex = [
-    "llama-index-core>=0.12.15"
+    "llama-index-core>=0.12.16"
 ]
 
 [tool.setuptools.package-data]
