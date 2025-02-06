@@ -17,6 +17,7 @@ from agentstack.cli import (
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
 from agentstack import generation
+from agentstack import repo
 from agentstack.update import check_for_updates
 
 
@@ -162,6 +163,10 @@ def _main():
     conf.set_path(args.project_path)
     # Set the debug flag
     conf.set_debug(args.debug)
+
+    # --no-git flag disables automatic git commits
+    if args.no_git:
+        repo.dont_track_changes()
 
     # Handle version
     if args.version:
