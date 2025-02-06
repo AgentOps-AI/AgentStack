@@ -10,21 +10,21 @@ AUTOMATION_NOTE = "\n\n(This commit was made automatically by AgentStack)"
 INITIAL_COMMIT_MESSAGE = "Initial commit."
 USER_CHANGES_COMMIT_MESSAGE = "Adding user changes before modifying project."
 
-_USE_GIT = None  # global state to disable it tracking for one run
+_USE_GIT = None  # global state to disable git for this run
 
 
 def should_track_changes() -> bool:
     """
-    If git has been disabled for this run, return False.
-    Otherwise, return the value defined in agentstack.json.
+    If git has been disabled for this run, return False. Next, look for the value 
+    defined in agentstack.json. Finally, default to True.
     """
     global _USE_GIT
-    
+
     if _USE_GIT is not None:
         return _USE_GIT
-    
+
     try:
-        return bool(conf.ConfigFile().use_git)
+        return conf.ConfigFile().use_git is not False
     except FileNotFoundError:
         return True
 
@@ -41,8 +41,9 @@ def dont_track_changes() -> None:
 class TrackingDisabledError(EnvironmentError):
     """
     Raised when git is disabled for this run.
+    Subclasses `EnvironmentError` so we can early exit using the same logic.
     """
-    # subclasses `EnvironmentError` so we can early exit using the same logic
+
     pass
 
 
@@ -56,7 +57,6 @@ class Transaction:
         Path('foo').touch()
         transaction.add_message("Created foo")
     ```
-
     Changes will be committed automatically on exit.
     """
 
@@ -93,52 +93,56 @@ def _require_git():
     """
     if not should_track_changes():
         raise TrackingDisabledError("Git tracking is disabled by the user.")
-    
+
     try:
         assert shutil.which('git')
-    except (AssertionError, ImportError):
-        message = "git is not installed.\nIn order to track changes to files in your project, install git.\n"
+    except AssertionError:
+        message = "git is not installed.\nInstall it to track changes to files in your project."
         if shutil.which('apt'):
-            message += "Hint: run `sudo apt install git`"
+            message += "\nHint: run `sudo apt install git`"
         elif shutil.which('brew'):
-            message += "Hint: run `brew install git`"
+            message += "\nHint: run `brew install git`"
         elif shutil.which('port'):
-            message += "Hint: run `sudo port install git`"
-        log.warning(message)
+            message += "\nHint: run `sudo port install git`"
+        log.warning(message)  # log now since this won't bubble to the user
         raise EnvironmentError(message)
 
 
 def _get_repo() -> git.Repo:
     """
     Get the git repository for the current project.
+    Raises:
+     - `TrackingDisabledError` if git tracking is disabled.
+     - `EnvironmentError` if git is not installed.
+     - `EnvironmentError` if the repo is not found.
     """
     _require_git()
     try:
         return git.Repo(conf.PATH.absolute())
     except git.exc.InvalidGitRepositoryError:
         message = "No git repository found in the current project."
-        log.warning(message)
+        log.warning(message)  # log now since this won't bubble to the user
         raise EnvironmentError(message)
 
 
 def init() -> None:
     """
-    Initialize a git repository for the current project if one does not exist
-    and commit all changes.
+    Create a git repository for the current project and commit a .gitignore file
+    to initialize the repo. Assumes that a repo does not already exist.
     """
     try:
         _require_git()
     except EnvironmentError as e:
-        return
+        return  # git is not installed or tracking is disabled
 
     # creates a new repo at conf.PATH / '.git
     repo = git.Repo.init(path=conf.PATH.absolute(), initial_branch=MAIN_BRANCH_NAME)
-    
-    # commit gitignore first, so we don't add untracked files
+
+    # commit gitignore first so we don't add untracked files
     gitignore = conf.PATH.absolute() / '.gitignore'
     gitignore.touch()
-    
-    commit(INITIAL_COMMIT_MESSAGE, [str(gitignore), ], automated=True)
+
+    commit(INITIAL_COMMIT_MESSAGE, [str(gitignore)], automated=True)
 
 
 def commit(message: str, files: list[str], automated: bool = True) -> None:
@@ -149,7 +153,7 @@ def commit(message: str, files: list[str], automated: bool = True) -> None:
     try:
         repo = _get_repo()
     except EnvironmentError as e:
-        return
+        return  # git is not installed or tracking is disabled
 
     log.debug(f"Committing {len(files)} changed files")
     repo.index.add(files)
@@ -168,19 +172,20 @@ def commit_all_changes(message: str, automated: bool = True) -> None:
 
 def commit_user_changes(automated: bool = True) -> None:
     """
-    Commit any changes to the current repo and assume they're user changes.
+    Commit any changes to the current repo as user changes.
+    Include AUTOMATION_NOTE in the commit message if `automated` is `True`.
     """
     commit_all_changes(USER_CHANGES_COMMIT_MESSAGE, automated=automated)
 
 
 def get_uncommitted_files() -> list[str]:
     """
-    Get a list of all files that have been modified but not committed.
+    Get a list of all files that have been modified since the last commit.
     """
     try:
         repo = _get_repo()
     except EnvironmentError as e:
-        return []
+        return []  # git is not installed or tracking is disabled
 
     untracked = repo.untracked_files
     modified = [item.a_path for item in repo.index.diff(None) if item.a_path]
