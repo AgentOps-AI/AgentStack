@@ -457,7 +457,10 @@ class Element(Renderable):
 
     def render(self):
         for i, line in enumerate(self._get_lines(str(self.value))):
-            self.grid.addstr(i, 0, line, self.color.to_curses())
+            try:
+                self.grid.addstr(i, 0, line, self.color.to_curses())
+            except curses.error:
+                pass  # ignore overflow
 
 
 class NodeElement(Element):
@@ -765,9 +768,12 @@ class Contains(Renderable):
 
     def render(self):
         for module in self.get_modules():
-            module.render()
-            module.last_render = time.time()
-            module.grid.noutrefresh()
+            try:
+                module.render()
+                module.last_render = time.time()
+                module.grid.noutrefresh()
+            except RenderException:
+                pass  # ignore overflow
         self.last_render = time.time()
 
     def click(self, y, x):
@@ -806,9 +812,12 @@ class Box(Contains):
         self.grid.addch(h, w, self.BR, self.color.to_curses())
 
         for module in self.get_modules():
-            module.render()
-            module.last_render = time.time()
-            module.grid.noutrefresh()
+            try:
+                module.render()
+                module.last_render = time.time()
+                module.grid.noutrefresh()
+            except RenderException:
+                pass  # ignore overflow
         self.last_render = time.time()
         self.grid.noutrefresh()
 
@@ -906,7 +915,7 @@ class Select(Box):
         """Return a subset of modules to be rendered"""
         # since we can't always render all of the buttons, return a subset
         # that can be displayed in the available height.
-        num_displayed = (self.height - 4) // self.button_height
+        num_displayed = (self.height - 3) // self.button_height
         index = self._get_active_index() or 0
         count = len(self.modules)
 
@@ -1066,11 +1075,12 @@ class DebugElement(Element):
     """Show fps and color usage."""
 
     def __init__(self, coords: tuple[int, int]):
-        super().__init__(coords, (1, 24))
+        super().__init__(coords, (1, 40))
 
     def render(self) -> None:
         self.grid.addstr(0, 1, f"FPS: {1 / (time.time() - self.last_render):.0f}")
         self.grid.addstr(0, 10, f"Colors: {len(Color._color_map)}/{curses.COLORS}")
+        self.grid.addstr(0, 27, f"Dims: {self.parent.width}x{self.parent.height}")
 
 
 class View(Contains):
@@ -1108,7 +1118,7 @@ class App:
     stdscr: curses.window
     height: int
     width: int
-    min_height: int = 30
+    min_height: int = 24
     min_width: int = 80
     frame_time: float = 1.0 / 60  # 30 FPS
     editing = False
@@ -1122,7 +1132,8 @@ class App:
 
         if not self.width >= self.min_width or not self.height >= self.min_height:
             raise RenderException(
-                f"Terminal window is too small. Resize to at least {self.min_width}x{self.min_height}."
+                f"Terminal window is too small. Resize to at least {self.min_width}x{self.min_height}. \n"
+                f"Current size: {self.width}x{self.height}"
             )
 
         curses.curs_set(0)
@@ -1211,7 +1222,8 @@ class App:
             if "add_wch() returned ERR" in str(e):
                 raise RenderException("Grid not large enough to render all modules.")
             if "curses function returned NULL" in str(e):
-                raise RenderException("Window not large enough to render.")
+                pass
+                #raise RenderException("Window not large enough to render.")
             raise e
 
     def click(self, y, x):

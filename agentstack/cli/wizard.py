@@ -27,7 +27,7 @@ from agentstack.cli import LOGO, init_project
 COLOR_BORDER = Color(90)
 COLOR_MAIN = Color(220)
 COLOR_TITLE = Color(220, 100, 40, reversed=True)
-COLOR_ERROR = Color(0, 50)
+COLOR_ERROR = Color(0, 70)
 COLOR_BANNER = Color(80, 80, 80)
 COLOR_FORM = Color(300)
 COLOR_FORM_BORDER = Color(300, 80)
@@ -120,10 +120,10 @@ class HelpText(Text):
         self.color = Color(0, 0, 70)
         self.value = " | ".join(
             [
-                "[tab] to select",
-                "[up / down] to navigate",
-                "[space / enter] to confirm",
-                "[q] to quit",
+                "select [tab]",
+                "navigate [up / down]",
+                "confirm [space / enter]",
+                "[q]uit",
             ]
         )
         if conf.DEBUG:
@@ -148,68 +148,41 @@ class BannerView(WizardView):
         )
 
     def layout(self) -> list[Renderable]:
-        buttons = []
+        buttons_conf: dict[str, Callable] = {}
 
         if not self.app.state.project:
             # no project yet, so we need to create one
-            buttons.append(
-                Button(
-                    # center button full width below the subtitle
-                    (round(self.height / 2) + (len(buttons) * 4), round(self.width / 2 / 2)),
-                    (3, round(self.width / 2)),
-                    "Create Project",
-                    color=COLOR_BUTTON,
-                    on_confirm=lambda: self.app.load('project', workflow='project'),
-                )
-            )
+            buttons_conf["Create Project"] = lambda: self.app.load('project', workflow='project')
         else:
             # project has been created, so we can add agents
-            buttons.append(
-                Button(
-                    (round(self.height / 2) + (len(buttons) * 4), round(self.width / 2 / 2)),
-                    (3, round(self.width / 2)),
-                    "Add Agent",
-                    color=COLOR_BUTTON,
-                    on_confirm=lambda: self.app.load('agent', workflow='agent'),
-                )
-            )
+            buttons_conf["New Agent"] = lambda: self.app.load('agent', workflow='agent')
 
         if len(self.app.state.agents):
             # we have one or more agents, so we can add tasks
-            buttons.append(
-                Button(
-                    (round(self.height / 2) + (len(buttons) * 4), round(self.width / 2 / 2)),
-                    (3, round(self.width / 2)),
-                    "Add Task",
-                    color=COLOR_BUTTON,
-                    on_confirm=lambda: self.app.load('task', workflow='task'),
-                )
-            )
-            
+            buttons_conf["New Task"] = lambda: self.app.load('task', workflow='task')
             # we can also add more tools to existing agents
-            buttons.append(
-                Button(
-                    (round(self.height / 2) + (len(buttons) * 4), round(self.width / 2 / 2)),
-                    (3, round(self.width / 2)),
-                    "Add More Tools",
-                    color=COLOR_BUTTON,
-                    on_confirm=lambda: self.app.load('tool_agent_selection', workflow='tool'),
-                )
-            )
-
-
-
+            buttons_conf["Add Tools"] = lambda: self.app.load('tool_agent_selection', workflow='tool')
+        
         if self.app.state.project:
             # we can complete the project
+            buttons_conf["Finish"] = lambda: self.app.finish()
+
+        buttons: list[Button] = []
+        num_buttons = len(buttons_conf)
+        button_width = min(round(self.width / 2), round(self.width / num_buttons) - 2)
+        left_offset = round((self.width - (num_buttons * button_width)) / 2) if num_buttons == 1 else 2
+
+        for title, action in buttons_conf.items():
             buttons.append(
                 Button(
-                    (round(self.height / 2) + (len(buttons) * 4), round(self.width / 2 / 2)),
-                    (3, round(self.width / 2)),
-                    "Finish",
+                    (self.height - 5, left_offset),
+                    (3, button_width),
+                    title, 
                     color=COLOR_BUTTON,
-                    on_confirm=lambda: self.app.finish(),
+                    on_confirm=action,
                 )
             )
+            left_offset += button_width + 1
 
         return [
             StarBox(
@@ -219,7 +192,7 @@ class BannerView(WizardView):
                 modules=[
                     LogoElement((1, 1), (7, self.width - 2)),
                     Box(
-                        (round(self.height / 4), round(self.width / 4)),
+                        (round(self.height / 3), round(self.width / 4)),
                         (9, round(self.width / 2)),
                         color=COLOR_BANNER,
                         modules=[
@@ -276,11 +249,11 @@ class FormView(WizardView, metaclass=ABCMeta):
                 color=COLOR_BORDER,
                 modules=[
                     LogoElement((1, 1), (7, self.width - 2)),
-                    Title((9, 1), (1, self.width - 3), color=COLOR_TITLE, value=self.title),
-                    Title((10, 1), (1, self.width - 3), color=COLOR_ERROR, value=self.error_message),
+                    Title((9, 1), (1, self.width - 2), color=COLOR_TITLE, value=self.title),
+                    Title((self.height - 5, round(self.width / 3)), (3, round(self.width / 3)), color=COLOR_ERROR, value=self.error_message),
                     *self.form(),
                     Button(
-                        (self.height - 6, self.width - 17),
+                        (self.height - 5, self.width - 17),
                         (3, 15),
                         "Next",
                         color=COLOR_BUTTON,
@@ -321,8 +294,8 @@ class AgentSelectionView(FormView, metaclass=ABCMeta):
     def form(self) -> list[Renderable]:
         return [
             RadioSelect(
-                (12, 1),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, 1),
+                (self.height - 15, round(self.width / 2) - 2),
                 options=self.get_agent_options(),
                 color=COLOR_FORM_BORDER,
                 highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
@@ -330,8 +303,8 @@ class AgentSelectionView(FormView, metaclass=ABCMeta):
                 on_select=self.set_agent_choice,
             ),
             Box(
-                (12, round(self.width / 2)),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, round(self.width / 2) + 1),
+                (self.height - 15, round(self.width / 2) - 2),
                 color=COLOR_FORM_BORDER,
                 modules=[
                     ASCIIText(
@@ -343,7 +316,7 @@ class AgentSelectionView(FormView, metaclass=ABCMeta):
                     BoldText((5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.agent_llm),
                     WrappedText(
                         (7, 3),
-                        (5, round(self.width / 2) - 10),
+                        (min(5, self.height - 24), round(self.width / 2) - 10),
                         color=COLOR_FORM.sat(50),
                         value=self.agent_description,
                     ),
@@ -377,10 +350,10 @@ class ProjectView(FormView):
 
     def form(self) -> list[Renderable]:
         return [
-            Text((12, 2), (1, 12), color=COLOR_FORM, value="Name"),
-            TextInput((12, 14), (2, self.width - 15), self.project_name, **FIELD_COLORS),
-            Text((14, 2), (1, 12), color=COLOR_FORM, value="Description"),
-            TextInput((14, 14), (5, self.width - 15), self.project_description, **FIELD_COLORS),
+            Text((11, 2), (1, 12), color=COLOR_FORM, value="Name"),
+            TextInput((11, 14), (2, self.width - 15), self.project_name, **FIELD_COLORS),
+            Text((13, 2), (1, 12), color=COLOR_FORM, value="Description"),
+            TextInput((13, 14), (5, self.width - 15), self.project_description, **FIELD_COLORS),
         ]
 
 
@@ -417,8 +390,8 @@ class FrameworkView(FormView):
     def form(self) -> list[Renderable]:
         return [
             RadioSelect(
-                (12, 1),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, 1),
+                (self.height - 15, round(self.width / 2) - 2),
                 options=list(self.framework_options.keys()),
                 color=COLOR_FORM_BORDER,
                 highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
@@ -426,8 +399,8 @@ class FrameworkView(FormView):
                 on_select=self.set_framework_choice,
             ),
             Box(
-                (12, round(self.width / 2)),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, round(self.width / 2)),
+                (self.height - 15, round(self.width / 2) - 2),
                 color=COLOR_FORM_BORDER,
                 modules=[
                     ASCIIText(
@@ -441,7 +414,7 @@ class FrameworkView(FormView):
                     ),
                     WrappedText(
                         (7, 3),
-                        (5, round(self.width / 2) - 10),
+                        (min(5, self.height - 24), round(self.width / 2) - 10),
                         color=COLOR_FORM.sat(50),
                         value=self.framework_description,
                     ),
@@ -493,15 +466,19 @@ class AgentView(FormView):
         self.app.advance()
 
     def form(self) -> list[Renderable]:
+        large_field_height = min(5, round((self.height - 17) / 3))
         return [
-            Text((12, 2), (1, 11), color=COLOR_FORM, value="Name"),
-            TextInput((12, 13), (2, self.width - 15), self.agent_name, **FIELD_COLORS),
-            Text((14, 2), (1, 11), color=COLOR_FORM, value="Role"),
-            TextInput((14, 13), (5, self.width - 15), self.agent_role, **FIELD_COLORS),
-            Text((19, 2), (1, 11), color=COLOR_FORM, value="Goal"),
-            TextInput((19, 13), (5, self.width - 15), self.agent_goal, **FIELD_COLORS),
-            Text((24, 2), (1, 11), color=COLOR_FORM, value="Backstory"),
-            TextInput((24, 13), (5, self.width - 15), self.agent_backstory, **FIELD_COLORS),
+            Text((11, 2), (1, 12), color=COLOR_FORM, value="Name"),
+            TextInput((11, 14), (2, self.width - 16), self.agent_name, **FIELD_COLORS),
+            
+            Text((13, 2), (1, 12), color=COLOR_FORM, value="Role"),
+            TextInput((13, 14), (large_field_height, self.width - 16), self.agent_role, **FIELD_COLORS),
+            
+            Text((13 + large_field_height, 2), (1, 12), color=COLOR_FORM, value="Goal"),
+            TextInput((13 + large_field_height, 14), (large_field_height, self.width - 16), self.agent_goal, **FIELD_COLORS),
+            
+            Text((13 + (large_field_height * 2), 2), (1, 12), color=COLOR_FORM, value="Backstory"),
+            TextInput((13 + (large_field_height * 2), 14), (large_field_height, self.width - 16), self.agent_backstory, **FIELD_COLORS),
         ]
 
 
@@ -542,8 +519,8 @@ class ModelView(FormView):
     def form(self) -> list[Renderable]:
         return [
             RadioSelect(
-                (11, 1),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, 1),
+                (self.height - 15, round(self.width / 2) - 2),
                 options=self.get_model_options(),
                 color=COLOR_FORM_BORDER,
                 highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
@@ -551,8 +528,8 @@ class ModelView(FormView):
                 on_select=self.set_model_choice,
             ),
             Box(
-                (11, round(self.width / 2)),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, round(self.width / 2)),
+                (self.height - 15, round(self.width / 2) - 2),
                 color=COLOR_FORM_BORDER,
                 modules=[
                     ASCIIText(
@@ -566,7 +543,7 @@ class ModelView(FormView):
                     ),
                     WrappedText(
                         (7, 3),
-                        (5, round(self.width / 2) - 10),
+                        (min(5, self.height - 24), round(self.width / 2) - 10),
                         color=COLOR_FORM.sat(50),
                         value=self.model_description,
                     ),
@@ -612,8 +589,8 @@ class ToolCategoryView(FormView):
     def form(self) -> list[Renderable]:
         return [
             RadioSelect(
-                (11, 1),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, 1),
+                (self.height - 15, round(self.width / 2) - 2),
                 options=get_all_tool_category_names(),
                 color=COLOR_FORM_BORDER,
                 highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
@@ -621,8 +598,8 @@ class ToolCategoryView(FormView):
                 on_select=self.set_tool_category_choice,
             ),
             Box(
-                (11, round(self.width / 2)),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, round(self.width / 2) + 1),
+                (self.height - 15, round(self.width / 2) - 2),
                 color=COLOR_FORM_BORDER,
                 modules=[
                     ASCIIText(
@@ -639,14 +616,14 @@ class ToolCategoryView(FormView):
                     ),
                     WrappedText(
                         (7, 3),
-                        (5, round(self.width / 2) - 10),
+                        (min(5, self.height - 24), round(self.width / 2) - 10),
                         color=COLOR_FORM.sat(50),
                         value=self.tool_category_description,
                     ),
                 ],
             ),
             Button(
-                (self.height - 6, 2),
+                (self.height - 5, 2),
                 (3, 15),
                 "Skip",
                 color=COLOR_BUTTON,
@@ -693,8 +670,8 @@ class ToolView(FormView):
     def form(self) -> list[Renderable]:
         return [
             RadioSelect(
-                (12, 1),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, 1),
+                (self.height - 15, round(self.width / 2) - 2),
                 options=self.get_tool_options(),
                 color=COLOR_FORM_BORDER,
                 highlight=ColorAnimation(COLOR_BUTTON.sat(0), COLOR_BUTTON, duration=0.2),
@@ -702,8 +679,8 @@ class ToolView(FormView):
                 on_select=self.set_tool_choice,
             ),
             Box(
-                (12, round(self.width / 2)),
-                (self.height - 18, round(self.width / 2) - 3),
+                (10, round(self.width / 2) + 1),
+                (self.height - 15, round(self.width / 2) - 2),
                 color=COLOR_FORM_BORDER,
                 modules=[
                     ASCIIText(
@@ -715,14 +692,14 @@ class ToolView(FormView):
                     BoldText((5, 3), (1, round(self.width / 2) - 10), color=COLOR_FORM, value=self.tool_name),
                     WrappedText(
                         (7, 3),
-                        (5, round(self.width / 2) - 10),
+                        (min(5, self.height - 24), round(self.width / 2) - 10),
                         color=COLOR_FORM.sat(50),
                         value=self.tool_description,
                     ),
                 ],
             ),
             Button(
-                (self.height - 6, 2),
+                (self.height - 5, 2),
                 (3, 15),
                 "Back",
                 color=COLOR_BUTTON,
@@ -784,13 +761,16 @@ class TaskView(FormView):
         self.app.advance()
 
     def form(self) -> list[Renderable]:
+        large_field_height = min(5, round((self.height - 17) / 3))
         return [
-            Text((12, 2), (1, 11), color=COLOR_FORM, value="Name"),
-            TextInput((12, 13), (2, self.width - 15), self.task_name, **FIELD_COLORS),
-            Text((14, 2), (1, 11), color=COLOR_FORM, value="Description"),
-            TextInput((14, 13), (5, self.width - 15), self.task_description, **FIELD_COLORS),
-            Text((19, 2), (1, 11), color=COLOR_FORM, value="Expected Output"),
-            TextInput((19, 13), (5, self.width - 15), self.expected_output, **FIELD_COLORS),
+            Text((11, 2), (1, 12), color=COLOR_FORM, value="Name"),
+            TextInput((11, 14), (2, self.width - 16), self.task_name, **FIELD_COLORS),
+            
+            Text((13, 2), (1, 12), color=COLOR_FORM, value="Description"),
+            TextInput((13, 14), (large_field_height, self.width - 16), self.task_description, **FIELD_COLORS),
+            
+            Text((13 + large_field_height, 2), (2, 12), color=COLOR_FORM, value="Expected\nOutput"),
+            TextInput((13 + large_field_height, 14), (large_field_height, self.width - 16), self.expected_output, **FIELD_COLORS),
         ]
 
 
@@ -995,7 +975,7 @@ class WizardApp(App):
     active_view: Optional[str]
 
     min_width: int = 80
-    min_height: int = 30
+    min_height: int = 24
 
     # the main loop can still execute once more after this; so we create an
     # explicit marker to ensure the template is only written once
