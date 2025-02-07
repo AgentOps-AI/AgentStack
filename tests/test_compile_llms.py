@@ -10,12 +10,13 @@ from docs.compile_llms_txt import compile_llms_txt
 
 class TestCompileLLMsTxt(unittest.TestCase):
     def setUp(self):
+        self.original_cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
         # Create a temporary directory for test files
         self.test_dir = tempfile.mkdtemp()
         self.docs_dir = Path(self.test_dir)
         
-        # Save current working directory
-        self.original_cwd = os.getcwd()
+        # Change to the temporary directory
         os.chdir(self.docs_dir)
         
     def tearDown(self):
