@@ -37,6 +37,7 @@ class GenerationFilesTest(unittest.TestCase):
         assert config.agentstack_version == get_version()
         assert config.template is None
         assert config.template_version is None
+        assert config.use_git is True
 
     def test_write_config(self):
         with ConfigFile() as config:
@@ -47,6 +48,7 @@ class GenerationFilesTest(unittest.TestCase):
             config.agentstack_version = "0.2.1"
             config.template = "default"
             config.template_version = "1"
+            config.use_git = False
 
         tmp_data = open(self.project_dir / "agentstack.json").read()
         assert (
@@ -61,7 +63,8 @@ class GenerationFilesTest(unittest.TestCase):
     "default_model": "openai/gpt-4o",
     "agentstack_version": "0.2.1",
     "template": "default",
-    "template_version": "1"
+    "template_version": "1",
+    "use_git": false
 }"""
         )
 
