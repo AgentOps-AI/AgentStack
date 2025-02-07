@@ -11,7 +11,7 @@ from agentstack.agents import AgentConfig
 from agentstack.generation import asttools
 from agentstack import graph
 
-NAME: str = "LLama Index"
+NAME: str = "LLamaIndex"
 ENTRYPOINT: Path = Path('src/stack.py')
 
 PROVIDERS = {
