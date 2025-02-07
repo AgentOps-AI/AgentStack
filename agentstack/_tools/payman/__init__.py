@@ -4,7 +4,7 @@ from paymanai import Paymanai
 
 # Initialize Payman client
 PAYMAN_API_SECRET = os.getenv("PAYMAN_API_SECRET")
-PAYMAN_ENVIRONMENT = os.getenv("PAYMAN_ENVIRONMENT")
+PAYMAN_ENVIRONMENT = os.getenv("PAYMAN_ENVIRONMENT", "sandbox")
 
 client = Paymanai(
     x_payman_api_secret=PAYMAN_API_SECRET,
@@ -13,24 +13,22 @@ client = Paymanai(
 
 def send_payment(
     amount_decimal: float,
-    payment_destination_id: Optional[str] = None,
-    payment_destination: Optional[Dict] = None,
-    customer_id: Optional[str] = None,
+    payment_destination_id: str,
     customer_email: Optional[str] = None,
+    customer_id: Optional[str] = None,
     customer_name: Optional[str] = None,
     memo: Optional[str] = None
 ) -> Dict:
     """
-    Send a payment using Payman.
+    Send USD from the agent's wallet to a pre-created payment destination.
     
     Args:
-        amount_decimal: Amount to send in decimal format
-        payment_destination_id: ID of existing payment destination
-        payment_destination: Dictionary containing payment destination details
-        customer_id: Optional customer ID
-        customer_email: Optional customer email
-        customer_name: Optional customer name
-        memo: Optional payment memo
+        amount_decimal: Amount to send in USD (e.g. 10.00 for $10.00)
+        payment_destination_id: ID of the pre-created payment destination
+        customer_email: Optional email address of the customer
+        customer_id: Optional ID of the customer
+        customer_name: Optional name of the customer
+        memo: Optional note or memo for the payment
     
     Returns:
         Dictionary containing payment details
@@ -39,102 +37,114 @@ def send_payment(
         return client.payments.send_payment(
             amount_decimal=amount_decimal,
             payment_destination_id=payment_destination_id,
-            payment_destination=payment_destination,
-            customer_id=customer_id,
             customer_email=customer_email,
+            customer_id=customer_id,
             customer_name=customer_name,
             memo=memo
         )
     except Exception as e:
         return {"error": f"Failed to send payment: {str(e)}"}
 
-def search_available_payees(
+def search_destinations(
     name: Optional[str] = None,
+    customer_id: Optional[str] = None,
     contact_email: Optional[str] = None,
-    type: Optional[str] = None
 ) -> List[Dict]:
     """
-    Search for available payment destinations/payees.
+    Search for existing payment destinations by name, customer, or email.
     
     Args:
-        name: Optional name filter
-        contact_email: Optional email filter
-        type: Optional payment type filter
+        name: Optional name of the payment destination
+        customer_id: Optional customer ID who owns the destination
+        contact_email: Optional contact email to search for
     
     Returns:
-        List of matching payment destinations
+        List of matching payment destinations with their IDs
     """
     try:
-        return client.payments.search_payees(
+        return client.payments.search_destinations(
             name=name,
-            contact_email=contact_email,
-            type=type
+            customer_id=customer_id,
+            contact_email=contact_email
         )
     except Exception as e:
-        return [{"error": f"Failed to search payees: {str(e)}"}]
+        return [{"error": f"Failed to search destinations: {str(e)}"}]
 
-def add_payee(
-    type: Literal["CRYPTO_ADDRESS"] | Literal["US_ACH"],
-    name: Optional[str] = None,
-    contact_details: Optional[Dict] = None,
+def create_payee(
+    type: Literal["US_ACH", "PAYMAN_AGENT"],
+    name: str,
+    customer_id: Optional[str] = None,
     account_holder_name: Optional[str] = None,
+    account_holder_type: Optional[Literal["individual", "business"]] = None,
     account_number: Optional[str] = None,
-    account_type: Optional[str] = None,
     routing_number: Optional[str] = None,
-    address: Optional[str] = None,
-    currency: Optional[str] = None,
-    tags: Optional[List[str]] = None
+    account_type: Optional[Literal["checking", "savings"]] = None,
+    payman_agent_id: Optional[str] = None,
+    contact_details: Optional[Dict] = None
 ) -> Dict:
     """
-    Add a new payee/payment destination.
+    Create a new payment destination for future USD payments.
     
     Args:
-        type: Type of payment destination ("CRYPTO_ADDRESS" or "US_ACH")
-        name: Optional name for the payment destination
+        type: Type of payment destination ("US_ACH" or "PAYMAN_AGENT")
+        name: Name for the payment destination
+        customer_id: Customer ID who owns this destination (required for US_ACH)
+        account_holder_name: Name of the account holder (required for US_ACH)
+        account_holder_type: Type of account holder ("individual" or "business") (required for US_ACH)
+        account_number: Bank account number (required for US_ACH)
+        routing_number: Bank routing number (required for US_ACH)
+        account_type: Type of bank account ("checking" or "savings") (required for US_ACH)
+        payman_agent_id: The unique ID of the receiving agent (required for PAYMAN_AGENT)
         contact_details: Optional dictionary containing contact information
-        account_holder_name: Required for US_ACH
-        account_number: Required for US_ACH
-        account_type: Required for US_ACH
-        routing_number: Required for US_ACH
-        address: Required for CRYPTO_ADDRESS
-        currency: Optional currency specification
-        tags: Optional list of tags
     
     Returns:
         Dictionary containing the created payee details
     """
     try:
-        return client.payments.create_payee(
-            type=type,
-            name=name,
-            contact_details=contact_details,
-            account_holder_name=account_holder_name,
-            account_number=account_number,
-            account_type=account_type,
-            routing_number=routing_number,
-            address=address,
-            currency=currency,
-            tags=tags
-        )
+        params = {
+            "type": type,
+            "name": name,
+            "contact_details": contact_details
+        }
+        
+        if type == "US_ACH":
+            params.update({
+                "customer_id": customer_id,
+                "account_holder_name": account_holder_name,
+                "account_holder_type": account_holder_type,
+                "account_number": account_number,
+                "routing_number": routing_number,
+                "account_type": account_type
+            })
+        elif type == "PAYMAN_AGENT":
+            params.update({
+                "payman_agent_id": payman_agent_id
+            })
+            
+        return client.payments.create_payee(params)
     except Exception as e:
-        return {"error": f"Failed to add payee: {str(e)}"}
+        return {"error": f"Failed to create payee: {str(e)}"}
 
-def ask_for_money(
+def initiate_customer_deposit(
     amount_decimal: float,
     customer_id: str,
     customer_email: Optional[str] = None,
     customer_name: Optional[str] = None,
-    memo: Optional[str] = None
+    fee_mode: Optional[Literal["INCLUDED_IN_AMOUNT", "ADD_TO_AMOUNT"]] = None,
+    memo: Optional[str] = None,
+    wallet_id: Optional[str] = None
 ) -> Dict:
     """
-    Generate a checkout link to request money from a customer.
+    Generate a checkout link for customer USD deposits.
     
     Args:
-        amount_decimal: Amount to request in decimal format
-        customer_id: Customer's ID
-        customer_email: Optional customer email
-        customer_name: Optional customer name
-        memo: Optional memo for the request
+        amount_decimal: Amount to deposit in USD (e.g. 10.00 for $10.00)
+        customer_id: ID of the customer to deposit funds for
+        customer_email: Optional email address of the customer
+        customer_name: Optional name of the customer
+        fee_mode: How to handle processing fees ("INCLUDED_IN_AMOUNT" or "ADD_TO_AMOUNT")
+        memo: Optional memo for the transaction
+        wallet_id: Optional ID of specific wallet to deposit to
     
     Returns:
         Dictionary containing the checkout URL
@@ -145,34 +155,55 @@ def ask_for_money(
             customer_id=customer_id,
             customer_email=customer_email,
             customer_name=customer_name,
-            memo=memo
+            fee_mode=fee_mode,
+            memo=memo,
+            wallet_id=wallet_id
         )
-        return {"checkout_url": response.checkout_url}
+        return response
     except Exception as e:
-        return {"error": f"Failed to generate payment request: {str(e)}"}
+        return {"error": f"Failed to generate deposit link: {str(e)}"}
 
-def get_balance(
-    customer_id: Optional[str] = None,
-    currency: str = "USD"
+def get_customer_balance(
+    customer_id: str,
+    currency: Literal["USD"] = "USD"
 ) -> Dict:
     """
-    Get balance information.
+    Check customer's available USD balance.
     
     Args:
-        customer_id: Optional customer ID (if None, returns agent balance)
-        currency: Currency to check balance for
+        customer_id: ID of the customer to check balance for
+        currency: Currency code (always USD)
     
     Returns:
         Dictionary containing balance information
     """
     try:
-        if customer_id and customer_id.lower() != "none":
-            return client.balances.get_customer_balance(
-                customer_id=customer_id,  # Use keyword arguments
-                currency=currency
-            )
-        return client.balances.get_spendable_balance(
-            currency=currency
-        )
+        response = client.balances.get_customer_balance(customer_id, currency)
+        return {
+            "spendable_balance": response,
+            "currency": currency,
+            "customer_id": customer_id
+        }
     except Exception as e:
-        return {"error": f"Failed to get balance: {str(e)}"}
+        return {"error": f"Failed to get customer balance: {str(e)}"}
+
+def get_spendable_balance(
+    currency: Literal["USD"] = "USD"
+) -> Dict:
+    """
+    Check agent's available USD balance.
+    
+    Args:
+        currency: Currency code (always USD)
+    
+    Returns:
+        Dictionary containing balance information
+    """
+    try:
+        response = client.balances.get_spendable_balance(currency)
+        return {
+            "spendable_balance": response,
+            "currency": currency
+        }
+    except Exception as e:
+        return {"error": f"Failed to get spendable balance: {str(e)}"}
