@@ -32,7 +32,7 @@ AgentStack scaffolds your _agent stack_ - the tech stack that collectively is yo
 
 ### Currently Supported Providers
 - **LLMs**: Most all notable LLMs and providers are supported via LiteLLM or LangChain
-- **Framework**: Currently supported frameworks include CrewAI and LangGraph
+- **Framework**: Currently supported frameworks include CrewAI, LangGraph, OpenAI Swarms and LlamaStack
   - Roadmap: Pydantic AI, Eliza, AG2 and Autogen
 - **Tools**: Maintaining the largest repository of framework-agnostic tools! All tools listed [here](https://docs.agentstack.sh/tools/community)
 - **Observability**: AgentOps baked in by default with first-tier support
