@@ -1,4 +1,5 @@
 import os
+from agentstack import tools
 from ftplib import FTP
 
 HOST = os.getenv('FTP_HOST')
@@ -30,6 +31,10 @@ def upload_files(file_paths: list[str]):
     Returns:
         bool: True if all files were uploaded successfully, False otherwise.
     """
+
+    permissions = tools.get_permissions(upload_files)
+    if not permissions.WRITE:
+        return "User has not granted write permissions."
 
     assert HOST and USER and PASSWORD  # appease type checker
 

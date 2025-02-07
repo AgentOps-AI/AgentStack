@@ -2,7 +2,7 @@
 
 import os
 from typing import Any, Dict, List, Optional
-
+from agentstack import tools
 from composio import Action, ComposioToolSet
 from composio.constants import DEFAULT_ENTITY_ID
 
@@ -34,6 +34,10 @@ def execute_action(
     Returns:
         Dict containing the action result
     """
+    permissions = tools.get_permissions(execute_action)
+    if not permissions.EXECUTE:
+        return "User has not granted execute permission."
+    
     toolset = ComposioToolSet()
     action = Action(action_name)
 
@@ -49,6 +53,10 @@ def execute_action(
 
 def get_action_schema(action_name: str) -> Dict[str, Any]:
     """Get the schema for a composio action."""
+    permissions = tools.get_permissions(get_action_schema)
+    if not permissions.READ:
+        return "User has not granted read permission."
+
     toolset = ComposioToolSet()
     action = Action(action_name)
     (action_schema,) = toolset.get_action_schemas(actions=[action])
@@ -60,6 +68,10 @@ def find_actions_by_use_case(
     use_case: str,
 ) -> List[Dict[str, Any]]:
     """Find actions by use case."""
+    permissions = tools.get_permissions(find_actions_by_use_case)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     toolset = ComposioToolSet()
     actions = toolset.find_actions_by_use_case(*apps, use_case=use_case)
     return [get_action_schema(action.name) for action in actions]
@@ -70,6 +82,10 @@ def find_actions_by_tags(
     tags: List[str],
 ) -> List[Dict[str, Any]]:
     """Find actions by tags."""
+    permissions = tools.get_permissions(find_actions_by_tags)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     toolset = ComposioToolSet()
     actions = toolset.find_actions_by_tags(*apps, tags=tags)
     return [get_action_schema(action.name) for action in actions]

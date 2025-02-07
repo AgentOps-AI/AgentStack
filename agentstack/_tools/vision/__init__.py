@@ -3,9 +3,16 @@
 import base64
 from typing import Optional
 import requests
+from fnmatch import fnmatch
+from agentstack import tools
 from openai import OpenAI
 
 __all__ = ["analyze_image"]
+
+
+def _is_path_allowed(path: str, allowed_patterns: list[str]) -> bool:
+    """Check if the given path matches any of the allowed patterns."""
+    return any(fnmatch(path, pattern) for pattern in allowed_patterns)
 
 
 def analyze_image(image_path_url: str) -> str:
@@ -18,13 +25,27 @@ def analyze_image(image_path_url: str) -> str:
     Returns:
         str: Description of the image contents
     """
+    permissions = tools.get_permissions(analyze_image)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     client = OpenAI()
 
     if not image_path_url:
         return "Image Path or URL is required."
 
     if "http" in image_path_url:
+        if not permissions.allow_http:
+            return "User has not granted permission to access the internet."
         return _analyze_web_image(client, image_path_url)
+    
+    if permissions.allowed_dirs:
+        if not _is_path_allowed(image_path_url, permissions.allowed_dirs):
+            return (
+                f"Error: Access to file {image_path_url} is not allowed. "
+                f"Allowed directories: {permissions.allowed_dirs}"
+            )
+    
     return _analyze_local_image(client, image_path_url)
 
 

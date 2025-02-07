@@ -2,10 +2,13 @@
     "name": "agentql",
     "url": "https://agentql.com/",
     "category": "web-retrieval",
-    "packages": [],
+    "cta": "Create your AgentQL API key at https://dev.agentql.com", 
     "env": {
-        "AGENTQL_API_KEY": "..."
+        "AGENTQL_API_KEY": null
     },
-    "tools": ["query_data"],
-    "cta": "Create your AgentQL API key at https://dev.agentql.com"
+    "tools": {
+        "query_data": {
+            "actions": ["read"]
+        }
+    }
 }

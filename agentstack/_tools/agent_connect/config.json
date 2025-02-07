@@ -13,5 +13,12 @@
   "dependencies": [
     "agent-connect>=0.3.0"
   ],
-  "tools": ["send_message", "receive_message"]
+  "tools": {
+    "send_message": {
+      "actions": ["write"]
+    },
+    "receive_message": {
+      "actions": ["read"]
+    }
+  }
 }

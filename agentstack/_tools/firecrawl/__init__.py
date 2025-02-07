@@ -1,4 +1,5 @@
 import os
+from agentstack import tools
 from firecrawl import FirecrawlApp
 
 app = FirecrawlApp(api_key=os.getenv('FIRECRAWL_API_KEY'))
@@ -9,6 +10,10 @@ def web_scrape(url: str):
     Scrape a url and return markdown. Use this to read a singular page and web_crawl only if you
     need to read all other links as well.
     """
+    permissions = tools.get_permissions(web_scrape)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     scrape_result = app.scrape_url(url, params={'formats': ['markdown']})
     return scrape_result
 
@@ -23,6 +28,9 @@ def web_crawl(url: str):
     Crawl will ignore sublinks of a page if they aren’t children of the url you provide.
     So, the website.com/other-parent/blog-1 wouldn’t be returned if you crawled website.com/blogs/.
     """
+    permissions = tools.get_permissions(web_crawl)
+    if not permissions.READ:
+        return "User has not granted read permission."
 
     crawl_status = app.crawl_url(
         url, params={'limit': 100, 'scrapeOptions': {'formats': ['markdown']}}, poll_interval=30
@@ -37,4 +45,8 @@ def retrieve_web_crawl(crawl_id: str):
     so be sure to only use this tool some time after initiating a crawl. The result
     will tell you if the crawl is finished. If it is not, wait some more time then try again.
     """
+    permissions = tools.get_permissions(retrieve_web_crawl)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     return app.check_crawl_status(crawl_id)
