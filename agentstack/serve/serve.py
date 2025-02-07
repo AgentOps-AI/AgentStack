@@ -87,16 +87,6 @@ def process_agent():
         }), 500
 
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 6969))
-
-    print("🚧 Running your agent on a development server")
-    print(f"Send agent requests to http://localhost:{port}")
-    print("Learn more about agent requests at https://docs.agentstack.sh/") # TODO: add docs for this
-
-    app.run(host='0.0.0.0', port=port)
-
-
 def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
                 api_inputs: Optional[Dict[str, str]] = None):
     """Validate that the project is ready to run and then run it."""
@@ -141,3 +131,13 @@ def _import_project_module(path: Path):
     sys.path.insert(0, str((path / MAIN_FILENAME).parent))
     spec.loader.exec_module(project_module)
     return project_module
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 6969))
+
+    print("🚧 Running your agent on a development server")
+    print(f"Send agent requests to http://localhost:{port}")
+    print("Learn more about agent requests at https://docs.agentstack.sh/") # TODO: add docs for this
+
+    app.run(host='0.0.0.0', port=port)
