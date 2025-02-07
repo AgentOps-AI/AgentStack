@@ -1,0 +1,29 @@
+name: Compile llms.txt
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**/*.mdx'
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Compile llms.txt
+        run: |
+          cd docs
+          python compile_llms_txt.py
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/llms.txt
+          git commit -m "Update llms.txt" || exit 0
+          git push

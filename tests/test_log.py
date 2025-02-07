@@ -1,5 +1,5 @@
 import unittest
-import sys
+import os, sys
 import io
 import logging
 import shutil
@@ -12,13 +12,13 @@ BASE_PATH = Path(__file__).parent
 
 class TestLog(unittest.TestCase):
     def setUp(self):
-        # Create test directory if it doesn't exist
-        self.test_dir = BASE_PATH / 'tmp/test_log'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.test_dir = BASE_PATH / 'tmp' / self.framework / 'test_log'
         self.test_dir.mkdir(parents=True, exist_ok=True)
 
-        # Set log file to test directory
-        self.test_log_file = self.test_dir / 'test.log'
-        log.LOG_FILENAME = self.test_log_file
+        conf.set_path(self.test_dir)
+        self.test_log_file = (self.test_dir / log.LOG_FILENAME)
+        self.test_log_file.touch()
 
         # Create string IO objects to capture stdout/stderr
         self.stdout = io.StringIO()
@@ -30,13 +30,7 @@ class TestLog(unittest.TestCase):
         log.set_stderr(self.stderr)
 
     def tearDown(self):
-        # Clean up test directory
-        if self.test_dir.exists():
-            shutil.rmtree(self.test_dir)
-
-        # Clear string IO buffers
-        self.stdout.close()
-        self.stderr.close()
+        shutil.rmtree(self.test_dir)
 
     def test_debug_message(self):
         log.debug("Debug message")
@@ -96,6 +90,18 @@ class TestLog(unittest.TestCase):
         self.assertIn("Test stdout", new_stdout.getvalue())
         self.assertIn("Test stderr", new_stderr.getvalue())
 
+    def test_doesnt_create_file_when_missing(self):
+        # Delete log file if exists
+        if self.test_log_file.exists():
+            self.test_log_file.unlink()
+
+        # Test with missing log file
+        log.instance = None
+        log.info("Test missing log file")
+        self.assertFalse(self.test_log_file.exists())
+        self.assertIn("Test missing log file", self.stdout.getvalue())
+        self.assertFalse(self.test_log_file.exists())
+
     def test_debug_level_config(self):
         # Test with debug disabled
         conf.set_debug(False)
@@ -108,17 +114,6 @@ class TestLog(unittest.TestCase):
         log.instance = None  # Reset logger
         log.debug("Visible debug")
         self.assertIn("Visible debug", self.stdout.getvalue())
-
-    def test_log_file_creation(self):
-        # Delete log file if exists
-        if self.test_log_file.exists():
-            self.test_log_file.unlink()
-
-        # First log should create file
-        self.assertFalse(self.test_log_file.exists())
-        log.info("Create log file")
-        self.assertTrue(self.test_log_file.exists())
-        self.assertIn("Create log file", self.test_log_file.read_text())
 
     def test_debug_mode_filtering(self):
         # Test with debug mode off

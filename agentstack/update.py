@@ -5,23 +5,8 @@ from pathlib import Path
 from packaging.version import parse as parse_version, Version
 import inquirer
 from agentstack import log
-from agentstack.utils import term_color, get_version, get_framework
+from agentstack.utils import term_color, get_version, get_framework, get_base_dir
 from agentstack import packaging
-from appdirs import user_data_dir
-
-
-def _get_base_dir():
-    """Try to get appropriate directory for storing update file"""
-    try:
-        base_dir = Path(user_data_dir("agentstack", "agency"))
-        # Test if we can write to directory
-        test_file = base_dir / '.test_write_permission'
-        test_file.touch()
-        test_file.unlink()
-    except (RuntimeError, OSError, PermissionError):
-        # In CI or when directory is not writable, use temp directory
-        base_dir = Path(os.getenv('TEMP', '/tmp'))
-    return base_dir
 
 
 AGENTSTACK_PACKAGE = 'agentstack'
@@ -35,7 +20,8 @@ CI_ENV_VARS = [
     'TEAMCITY_VERSION',
 ]
 
-LAST_CHECK_FILE_PATH = _get_base_dir() / ".cli-last-update"
+LAST_CHECK_FILE_PATH = get_base_dir() / ".cli-last-update"
+USER_GUID_FILE_PATH = get_base_dir() / ".cli-user-guid"
 INSTALL_PATH = Path(sys.executable).parent.parent
 ENDPOINT_URL = "https://pypi.org/simple"
 CHECK_EVERY = 3600  # hour

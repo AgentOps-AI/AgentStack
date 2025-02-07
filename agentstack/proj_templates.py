@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 import os, sys
 from pathlib import Path
 import pydantic
@@ -6,6 +6,21 @@ import requests
 import json
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path
+
+CURRENT_VERSION: Literal[4] = 4
+
+
+def _model_dump_agent(agent: Union[dict, pydantic.BaseModel]) -> dict:
+    """Between template version 3 and 4 we fixed the naming of the model/llm field. """
+    if isinstance(agent, pydantic.BaseModel):
+        agent = agent.model_dump()
+    return {
+        "name": agent['name'],
+        "role": agent['role'],
+        "goal": agent['goal'],
+        "backstory": agent['backstory'],
+        "llm": agent['model'],  # model -> llm
+    }
 
 
 class TemplateConfig_v1(pydantic.BaseModel):
@@ -19,16 +34,18 @@ class TemplateConfig_v1(pydantic.BaseModel):
     tools: list[dict]
     inputs: list[str]
 
-    def to_v2(self) -> 'TemplateConfig_v2':
-        return TemplateConfig_v2(
+    def to_v4(self) -> 'TemplateConfig':
+        return TemplateConfig(
             name=self.name,
             description=self.description,
-            template_version=2,
+            template_version=CURRENT_VERSION,
             framework=self.framework,
             method=self.method,
-            agents=[TemplateConfig_v2.Agent(**agent) for agent in self.agents],
-            tasks=[TemplateConfig_v2.Task(**task) for task in self.tasks],
-            tools=[TemplateConfig_v2.Tool(**tool) for tool in self.tools],
+            manager_agent=None,
+            agents=[TemplateConfig.Agent(**_model_dump_agent(agent)) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool) for tool in self.tools],
+            graph=[],
             inputs={key: "" for key in self.inputs},
         )
 
@@ -61,17 +78,64 @@ class TemplateConfig_v2(pydantic.BaseModel):
     tools: list[Tool]
     inputs: dict[str, str]
 
-    def to_v3(self) -> 'TemplateConfig':
+    def to_v4(self) -> 'TemplateConfig':
         return TemplateConfig(
             name=self.name,
             description=self.description,
-            template_version=3,
+            template_version=CURRENT_VERSION,
             framework=self.framework,
             method=self.method,
             manager_agent=None,
-            agents=[TemplateConfig.Agent(**agent.model_dump()) for agent in self.agents],
+            agents=[TemplateConfig.Agent(**_model_dump_agent(agent)) for agent in self.agents],
             tasks=[TemplateConfig.Task(**task.model_dump()) for task in self.tasks],
             tools=[TemplateConfig.Tool(**tool.model_dump()) for tool in self.tools],
+            graph=[],
+            inputs=self.inputs,
+        )
+
+
+class TemplateConfig_v3(pydantic.BaseModel):
+    class Agent(pydantic.BaseModel):
+        name: str
+        role: str
+        goal: str
+        backstory: str
+        allow_delegation: bool = False
+        model: str
+
+    class Task(pydantic.BaseModel):
+        name: str
+        description: str
+        expected_output: str
+        agent: str
+
+    class Tool(pydantic.BaseModel):
+        name: str
+        agents: list[str]
+
+    name: str
+    description: str
+    template_version: Literal[3]
+    framework: str
+    method: str
+    manager_agent: Optional[str]
+    agents: list[Agent]
+    tasks: list[Task]
+    tools: list[Tool]
+    inputs: dict[str, str]
+    
+    def to_v4(self) -> 'TemplateConfig':
+        return TemplateConfig(
+            name=self.name,
+            description=self.description,
+            template_version=CURRENT_VERSION,
+            framework=self.framework,
+            method=self.method,
+            manager_agent=self.manager_agent,
+            agents=[TemplateConfig.Agent(**_model_dump_agent(agent)) for agent in self.agents],
+            tasks=[TemplateConfig.Task(**task.model_dump()) for task in self.tasks],
+            tools=[TemplateConfig.Tool(**tool.model_dump()) for tool in self.tools],
+            graph=[],
             inputs=self.inputs,
         )
 
@@ -102,8 +166,10 @@ class TemplateConfig(pydantic.BaseModel):
         A list of tasks used by the project.
     tools: list[TemplateConfig.Tool]
         A list of tools used by the project.
-    inputs: list[str]
-        A list of inputs used by the project.
+    graph: list[list[TemplateConfig.Node]]
+        A list of graph relationships. Each edge must have exactly 2 nodes.
+    inputs: dict[str, str]
+        Key/value pairs of inputs used by the project.
     """
 
     class Agent(pydantic.BaseModel):
@@ -112,28 +178,41 @@ class TemplateConfig(pydantic.BaseModel):
         goal: str
         backstory: str
         allow_delegation: bool = False
-        model: str
+        llm: str
 
     class Task(pydantic.BaseModel):
         name: str
         description: str
         expected_output: str
-        agent: str
+        agent: str  # TODO this is redundant with the graph
 
     class Tool(pydantic.BaseModel):
         name: str
         agents: list[str]
 
+    class Node(pydantic.BaseModel):
+        type: Literal["agent", "task", "special"]
+        name: str
+
     name: str
     description: str
-    template_version: Literal[3]
+    template_version: Literal[4] = CURRENT_VERSION
     framework: str
-    method: str
-    manager_agent: Optional[str]
-    agents: list[Agent]
-    tasks: list[Task]
-    tools: list[Tool]
-    inputs: dict[str, str]
+    method: str = "sequential"
+    manager_agent: Optional[str] = None
+    agents: list[Agent] = pydantic.Field(default_factory=list)
+    tasks: list[Task] = pydantic.Field(default_factory=list)
+    tools: list[Tool] = pydantic.Field(default_factory=list)
+    graph: list[list[Node]] = pydantic.Field(default_factory=list)
+    inputs: dict[str, str] = pydantic.Field(default_factory=dict)
+
+    @pydantic.field_validator('graph')
+    @classmethod
+    def validate_graph_edges(cls, value: list[list[Node]]) -> list[list[Node]]:
+        for i, edge in enumerate(value):
+            if len(edge) != 2:
+                raise ValueError(f"Graph edge {i} must have exactly 2 nodes.")
+        return value
 
     def write_to_file(self, filename: Path):
         if not filename.suffix == '.json':
@@ -174,6 +253,8 @@ class TemplateConfig(pydantic.BaseModel):
                 return cls.from_json(json.load(f))
         except json.JSONDecodeError as e:
             raise ValidationError(f"Error decoding template JSON.\n{e}")
+        except ValidationError as e:
+            raise ValidationError(f"{e}\nTemplateConfig.from_file({path})")
 
     @classmethod
     def from_url(cls, url: str) -> 'TemplateConfig':
@@ -186,16 +267,20 @@ class TemplateConfig(pydantic.BaseModel):
             return cls.from_json(response.json())
         except json.JSONDecodeError as e:
             raise ValidationError(f"Error decoding template JSON.\n{e}")
+        except ValidationError as e:
+            raise ValidationError(f"{e}\nTemplateConfig.from_url({url})")
 
     @classmethod
     def from_json(cls, data: dict) -> 'TemplateConfig':
         try:
             match data.get('template_version'):
                 case 1:
-                    return TemplateConfig_v1(**data).to_v2().to_v3()
+                    return TemplateConfig_v1(**data).to_v4()
                 case 2:
-                    return TemplateConfig_v2(**data).to_v3()
+                    return TemplateConfig_v2(**data).to_v4()
                 case 3:
+                    return TemplateConfig_v3(**data).to_v4()
+                case 4:
                     return cls(**data)  # current version
                 case _:
                     raise ValidationError(f"Unsupported template version: {data.get('template_version')}")

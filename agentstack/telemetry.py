@@ -21,17 +21,21 @@
 # cool of you to allow telemetry <3
 #
 # - braelyn
+import json
 import os
 import platform
 import socket
+import uuid
+from pathlib import Path
 from typing import Optional
 import psutil
 import requests
 from agentstack import conf
 from agentstack.auth import get_stored_token
-from agentstack.utils import get_telemetry_opt_out, get_framework, get_version
+from agentstack.utils import get_telemetry_opt_out, get_framework, get_version, get_base_dir
 
 TELEMETRY_URL = 'https://api.agentstack.sh/telemetry'
+USER_GUID_FILE_PATH = get_base_dir() / ".cli-user-guid"
 
 
 def collect_machine_telemetry(command: str):
@@ -46,6 +50,7 @@ def collect_machine_telemetry(command: str):
         'cpu_count': psutil.cpu_count(logical=True),
         'memory': psutil.virtual_memory().total,
         'agentstack_version': get_version(),
+        'cli_user_id': _get_cli_user_guid()
     }
 
     if command != "init":
@@ -98,3 +103,24 @@ def update_telemetry(id: int, result: int, message: Optional[str] = None):
         requests.put(TELEMETRY_URL, json={"id": id, "result": result, "message": message})
     except Exception:
         pass
+
+def _get_cli_user_guid() -> str:
+    if Path(USER_GUID_FILE_PATH).exists():
+        try:
+            with open(USER_GUID_FILE_PATH, 'r') as f:
+                return f.read()
+        except (json.JSONDecodeError, PermissionError):
+            return "unknown"
+
+    # make new cli user guid
+    try:
+        # Create directory if it doesn't exist
+        USER_GUID_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+        guid = str(uuid.uuid4())
+        with open(USER_GUID_FILE_PATH, 'w') as f:
+            f.write(guid)
+        return guid
+    except (OSError, PermissionError):
+        # Silently fail in CI or when we can't write
+        return "unknown"
