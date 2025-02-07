@@ -19,7 +19,7 @@ RUN #ls -a agentstack
 # Debug: Try installing packages one at a time
 RUN uv pip install --system psutil
 RUN uv pip install --system flask
-RUN uv pip install --system git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command #install on cloud #cache 2
+RUN uv pip install --system git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command #install on cloud #cache 3
 RUN #cd agentstack && uv pip install --system .
 RUN mkdir -p src
 RUN cp /usr/local/lib/python3.12/site-packages/agentstack/serve/serve.py ./src

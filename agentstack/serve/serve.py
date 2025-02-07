@@ -8,6 +8,7 @@ from agentstack.exceptions import ValidationError
 from agentstack.utils import verify_agentstack_project
 # TODO: move this to not cli, but cant be utils due to circular import
 from agentstack.cli.run import format_friendly_error_message
+from build.lib.agentstack.logger import log
 
 load_dotenv(dotenv_path="/app/.env")
 
