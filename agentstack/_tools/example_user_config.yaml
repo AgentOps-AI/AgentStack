@@ -1,0 +1,5 @@
+file_read:
+    read_file:
+        actions: ['read']
+        allowed_dirs: ['*']
+        allowed_extensions: ['*']
