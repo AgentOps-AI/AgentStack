@@ -4,7 +4,7 @@ from parameterized import parameterized
 from pathlib import Path
 import shutil
 from cli_test_utils import run_cli
-from agentstack.proj_templates import get_all_templates
+from agentstack.templates import get_all_templates
 
 BASE_PATH = Path(__file__).parent
 

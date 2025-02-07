@@ -6,7 +6,7 @@ import shutil
 from unittest.mock import patch
 from parameterized import parameterized
 from agentstack.exceptions import ValidationError
-from agentstack.proj_templates import (
+from agentstack.templates import (
     CURRENT_VERSION, 
     TemplateConfig,
     get_all_template_names,
@@ -130,7 +130,7 @@ class TemplateConfigTest(unittest.TestCase):
         with self.assertRaises(ValidationError) as context:
             TemplateConfig.from_url(invalid_url)
 
-    @patch('agentstack.proj_templates.requests.get')
+    @patch('agentstack.templates.requests.get')
     def test_from_url_non_200_response(self, mock_get):
         mock_response = mock_get.return_value
         mock_response.status_code = 404
@@ -192,7 +192,7 @@ class TemplateConfigTest(unittest.TestCase):
         finally:
             os.unlink(temp_file)
 
-    @patch('agentstack.proj_templates.requests.get')
+    @patch('agentstack.templates.requests.get')
     def test_from_url_invalid_json(self, mock_get):
         mock_response = mock_get.return_value
         mock_response.status_code = 200
@@ -215,7 +215,7 @@ class TemplateConfigTest(unittest.TestCase):
         for path in get_all_template_paths():
             self.assertIsInstance(path, Path)
 
-    @patch('agentstack.proj_templates.get_package_path')
+    @patch('agentstack.templates.get_package_path')
     @patch('pathlib.Path.iterdir')
     def test_get_all_template_paths_no_json_files(self, mock_iterdir, mock_get_package_path):
         mock_get_package_path.return_value = Path('/mock/path')

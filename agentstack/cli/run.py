@@ -1,5 +1,6 @@
 from typing import Optional, List
 import sys
+import asyncio
 import traceback
 from pathlib import Path
 import importlib.util
@@ -122,7 +123,13 @@ def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
     try:
         log.notify("Running your agent...")
         project_main = _import_project_module(conf.PATH)
-        getattr(project_main, command)()
+        main = getattr(project_main, command)
+        
+        # handle both async and sync entrypoints
+        if asyncio.iscoroutinefunction(main):
+            asyncio.run(main())
+        else:
+            main()
     except ImportError as e:
         raise ValidationError(f"Failed to import AgentStack project at: {conf.PATH.absolute()}\n{e}")
     except Exception as e:

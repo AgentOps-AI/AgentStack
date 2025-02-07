@@ -11,7 +11,7 @@ from agentstack import packaging
 from agentstack import frameworks
 from agentstack import generation
 from agentstack import repo
-from agentstack.proj_templates import get_all_templates, TemplateConfig
+from agentstack.templates import get_all_templates, TemplateConfig
 
 from agentstack.cli import welcome_message
 from agentstack.cli.wizard import run_wizard
@@ -80,7 +80,7 @@ def init_project(
     # TODO prevent the user from passing the --path argument to init
     if template and use_wizard:
         raise Exception("Template and wizard flags cannot be used together")
-    
+
     require_uv()
     welcome_message()
 
