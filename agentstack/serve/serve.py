@@ -1,12 +1,23 @@
 # app.py
+import importlib
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
+from agentstack import conf, frameworks, inputs
+from agentstack.exceptions import ValidationError
+from agentstack.utils import verify_agentstack_project
+# TODO: move this to not cli, but cant be utils due to circular import
+from agentstack.cli.run import format_friendly_error_message
+
 load_dotenv(dotenv_path="/app/.env")
 
 from flask import Flask, request, jsonify
 import requests
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import os
-from agentstack.run import run_project
+
+MAIN_FILENAME: Path = Path("src/main.py")
+MAIN_MODULE_NAME = "main"
 
 app = Flask(__name__)
 
@@ -84,3 +95,49 @@ if __name__ == '__main__':
     print("Learn more about agent requests at https://docs.agentstack.sh/") # TODO: add docs for this
 
     app.run(host='0.0.0.0', port=port)
+
+
+def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
+                api_inputs: Optional[Dict[str, str]] = None):
+    """Validate that the project is ready to run and then run it."""
+    verify_agentstack_project()
+
+    if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
+        raise ValidationError(f"Framework {conf.get_framework()} is not supported by agentstack.")
+
+    try:
+        frameworks.validate_project()
+    except ValidationError as e:
+        raise e
+
+    inputs.add_input_for_run(**api_inputs)
+
+    load_dotenv(Path.home() / '.env')  # load the user's .env file
+    load_dotenv(conf.PATH / '.env', override=True)  # load the project's .env file
+
+    # import src/main.py from the project path and run `command` from the project's main.py
+    try:
+        log.notify("Running your agent...")
+        project_main = _import_project_module(conf.PATH)
+        getattr(project_main, command)()
+    except ImportError as e:
+        raise ValidationError(f"Failed to import AgentStack project at: {conf.PATH.absolute()}\n{e}")
+    except Exception as e:
+        raise Exception(format_friendly_error_message(e))
+
+def _import_project_module(path: Path):
+    """
+    Import `main` from the project path.
+
+    We do it this way instead of spawning a subprocess so that we can share
+    state with the user's project.
+    """
+    spec = importlib.util.spec_from_file_location(MAIN_MODULE_NAME, str(path / MAIN_FILENAME))
+
+    assert spec is not None  # appease type checker
+    assert spec.loader is not None  # appease type checker
+
+    project_module = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str((path / MAIN_FILENAME).parent))
+    spec.loader.exec_module(project_module)
+    return project_module

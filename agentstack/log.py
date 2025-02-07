@@ -24,7 +24,6 @@ TODO With agentstack serve, we can direct all messages to the API, too.
 """
 
 from typing import IO, Optional, Callable
-import os, sys
 import io
 import logging
 from agentstack import conf

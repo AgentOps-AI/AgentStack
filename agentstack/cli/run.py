@@ -15,7 +15,7 @@ MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
 
 
-def _format_friendly_error_message(exception: Exception):
+def format_friendly_error_message(exception: Exception):
     """
     Projects will throw various errors, especially on first runs, so we catch
     them here and print a more helpful message.
@@ -93,7 +93,7 @@ def _import_project_module(path: Path):
     return project_module
 
 
-def run_project(command: str = 'run', cli_args: Optional[List[str]] = None, api_inputs: Optional[Dict[str, str]] = None):
+def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
     """Validate that the project is ready to run and then run it."""
     verify_agentstack_project()
     
@@ -114,9 +114,6 @@ def run_project(command: str = 'run', cli_args: Optional[List[str]] = None, api_
             log.debug(f"Using CLI input override: {key}={value}")
             inputs.add_input_for_run(key, value)
 
-    if api_inputs:
-        inputs.add_input_for_run(**api_inputs)
-
     load_dotenv(Path.home() / '.env')  # load the user's .env file
     load_dotenv(conf.PATH / '.env', override=True)  # load the project's .env file
 
@@ -128,4 +125,4 @@ def run_project(command: str = 'run', cli_args: Optional[List[str]] = None, api_
     except ImportError as e:
         raise ValidationError(f"Failed to import AgentStack project at: {conf.PATH.absolute()}\n{e}")
     except Exception as e:
-        raise Exception(_format_friendly_error_message(e))
+        raise Exception(format_friendly_error_message(e))
