@@ -10,7 +10,8 @@ BASE_PATH = Path(__file__).parent
 
 class CLIInitTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = Path(BASE_PATH / 'tmp/cli_init')
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = Path(BASE_PATH / 'tmp' / self.framework / 'test_cli_init')
         os.chdir(BASE_PATH)  # Change to parent directory first
         os.makedirs(self.project_dir, exist_ok=True)
         os.chdir(self.project_dir)

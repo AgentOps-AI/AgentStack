@@ -96,6 +96,7 @@ def _import_project_module(path: Path):
 
 def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
     """Validate that the project is ready to run and then run it."""
+    conf.assert_project()
     verify_agentstack_project()
     
     if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
