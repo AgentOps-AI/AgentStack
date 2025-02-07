@@ -100,7 +100,8 @@ def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
     except ValidationError as e:
         raise e
 
-    inputs.add_input_for_run(**api_inputs)
+    for key, value in api_inputs.items():
+        inputs.add_input_for_run(key, value)
 
     load_dotenv(Path.home() / '.env')  # load the user's .env file
     load_dotenv(conf.PATH / '.env', override=True)  # load the project's .env file
