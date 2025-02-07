@@ -1,12 +1,14 @@
 from typing import Optional, Any, Callable, Protocol, runtime_checkable
 from types import ModuleType
-import enum
 import os
-import sys
-from pathlib import Path
 from importlib import import_module
+from functools import lru_cache
+from pathlib import Path
+import enum
 import pydantic
 from ruamel.yaml import YAML, YAMLError
+from ruamel.yaml.scalarstring import ScalarString
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path, open_json_file, snake_to_camel
 
@@ -19,6 +21,8 @@ yaml = YAML()
 yaml.preserve_quotes = True  # Preserve quotes in existing data
 
 """
+Tool Authors
+------------
 As a tool author, this should be as easy as possible to interact with:
 
 ``` # config.json
@@ -36,6 +40,12 @@ As a tool author, this should be as easy as possible to interact with:
 }
 ```
 
+Permissions passed to the tool take info account the developer-defined defaults 
+and the preferences the user has overlaid on top of them.
+
+If a user has not overridden prefs, the tool will get a base set of permissions, 
+but the user's project will not have access to the function, so we're good. 
+
 ``` # my_tool.py
 def tool_function(vars_need_to_be_preserved_for_llms) -> str:
     permissions = tools.get_permissions(tool_function)
@@ -48,6 +58,7 @@ def tool_function(vars_need_to_be_preserved_for_llms) -> str:
     if permissions.EXECUTE:
         ...
 
+    # extra permission are ad-hoc
     permissions.allowed_dirs  # -> ['/home/user/*']
     permissions.allowed_extensions  # -> ['*.txt']
     ...
@@ -56,6 +67,8 @@ def tool_function(vars_need_to_be_preserved_for_llms) -> str:
 `allowed_dirs` and `allowed_extensions` are optional, and up to the tool integrator to implement, 
 but in this case we're using patterns that are compatible with `fnmatch`.
 
+End Users
+---------
 As a project user, this should be as easy as possible to interact with.
 They should be able to inherit sane defaults from the tool author. 
 In order to explicitly include a function in the tools available to the user's agent
@@ -92,7 +105,7 @@ class Action(enum.Enum):
 
 class ToolPermission(pydantic.BaseModel):
     """
-    Control which features of a tool are available to an agent.
+    Control which features of a tool are available to an project.
 
     This solves a few problems:
     - Some tools expose a number of functions, which may overwhelm the context of an agent.
@@ -105,51 +118,38 @@ class ToolPermission(pydantic.BaseModel):
     easy to understand.
     - Tools may need additional configuration to define what features are available.
 
-    TODO
-    - Tool configurations should be specific to an agent, not the whole project.
-    - Do we need to support modification of these rules via the CLI?
+    This is used by both the tool's included configuration and the user's configuration
+    to represent the permissions for a tool.
+
+    TODO Tool configurations could be specific to an agent, not the whole project.
+    This does make the configuration format that much more complex and the way we 
+    currently load tools into an agent does not have a marker for that. 
     """
 
-    tool_name: str
-    function_name: str
-    tool_config: 'ToolConfig'
-    _actions: list[Action]
-    _attributes: dict[str, Any]
+    actions: list[Action]
+    model_config = pydantic.ConfigDict(extra='allow')  # allow extra fields
 
-    def __init__(self, tool_name: str, function_name: str):
-        self.tool_name = tool_name
-        self.function_name = function_name
-        self.tool_config = ToolConfig.from_tool_name(self.tool_name)
-
-        try:
-            config = self.tool_config.tools[self.function_name]
-            self._actions = config.pop('actions', [])
-            self._attributes = config
-        except KeyError:
-            raise ValidationError(f"Function '{self.function_name}' not found in tool '{self.tool_name}'")
-
-        # TODO we have loaded the default tool config for the actions, now we need to overlay the user's preferences.
+    def __init__(self, **data):
+        super().__init__(actions=data.pop('actions', []), **data)
 
     @property
     def READ(self) -> bool:
-        return Action.READ in self._actions
+        """Is this tool allowed to read?"""
+        return Action.READ in self.actions
 
     @property
     def WRITE(self) -> bool:
-        return Action.WRITE in self._actions
+        """Is this tool allowed to write?"""
+        return Action.WRITE in self.actions
 
     @property
     def EXECUTE(self) -> bool:
-        return Action.EXECUTE in self._actions
-
-    def __getattr__(self, item):
-        """
-        Allow access to other variables defined in the tool config.
-        If the variable is not defined, return None.
-        """
-        if item in self._attributes:
-            return self._attributes[item]
-        return None
+        """Is this tool allowed to execute?"""
+        return Action.EXECUTE in self.actions
+    
+    def __getattr__(self, name: str) -> Any:
+        """Developer-defined extra fields are accessible as attributes."""
+        return getattr(self.__dict__, name, None)
 
 
 class ToolConfig(pydantic.BaseModel):
@@ -157,11 +157,13 @@ class ToolConfig(pydantic.BaseModel):
     This represents the configuration data for a tool.
     It parses and validates the `config.json` file and provides a dynamic
     interface for interacting with the tool implementation.
+    User tool config data is incorporated to return a list of tools the user has
+    allowed into their project with any permissions they have set. 
     """
 
     name: str
     category: str
-    tools: dict[str, Any]
+    tools: dict[str, ToolPermission]
     url: Optional[str] = None
     cta: Optional[str] = None
     env: Optional[dict] = None
@@ -169,25 +171,35 @@ class ToolConfig(pydantic.BaseModel):
     post_install: Optional[str] = None
     post_remove: Optional[str] = None
 
-    @pydantic.validator('tools')
-    def validate_tools(cls, value):
-        """
-        Validate that each tool is a dict and has an 'actions' key which lists 'read', 'write', and/or 'execute'.
-        """
-        for tool in value:
-            if not isinstance(tool, dict):
-                raise pydantic.ValidationError(f"tools.{tool} is not a dict.")
-            if 'actions' not in tool:
-                raise pydantic.ValidationError(f"tools.{tool} does not have a key: 'actions'.")
-            if not isinstance(tool['actions'], list):
-                raise pydantic.ValidationError(f"tools.{tool}.actions is not a list.")
-            for action in tool['actions']:
-                if action not in Action.__members__.values():
-                    raise pydantic.ValidationError(f"tools.{tool} has an invalid action: {action}.")
-        return value
+    @pydantic.model_validator(mode='before')
+    def filter_tools(cls, data: dict) -> dict:
+        """Include only tool functions that are explicitly allowed by the user. """
+        tool_name = data['name']
+        user_tools_config = UserToolConfig(tool_name)
+        
+        for func_name in user_tools_config.tools:
+            base_config: dict = data['tools'].get(func_name, {})
+            assert base_config, f"Tool config.json for '{tool_name}' does not include '{func_name}'."
+            
+            user_config: Optional[ToolPermission] = user_tools_config.tools.get(func_name)
+            # `user_config` can be None if the user chooses to inherit all defaults
+            if user_config is None:
+                _user_config = {}
+            # `user_config` can also be an instance of `ToolPermission`
+            if isinstance(user_config, ToolPermission):
+                _user_config = user_config.model_dump()
+            assert _user_config, f"User tool config got unexpected type {type(user_config)}."
+            
+            # combine user and base config and overwrite in the data
+            data['tools'][func_name] = ToolPermission(**{
+                **base_config, 
+                **_user_config, 
+            })
+        return data
 
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
+        """Load a tool's configuration by name."""
         path = TOOLS_DIR / name / TOOLS_CONFIG_FILENAME
         if not os.path.exists(path):
             raise ValidationError(f'No known agentstack tool: {name}')
@@ -195,6 +207,7 @@ class ToolConfig(pydantic.BaseModel):
 
     @classmethod
     def from_json(cls, path: Path) -> 'ToolConfig':
+        """Load a tool's configuration from a path to a JSON file."""
         data = open_json_file(path)
         try:
             return cls(**data)
@@ -206,6 +219,7 @@ class ToolConfig(pydantic.BaseModel):
 
     @property
     def tool_names(self) -> list[str]:
+        """Get the names of all tools in this tool module."""
         return list(self.tools.keys())
 
     @property
@@ -217,6 +231,8 @@ class ToolConfig(pydantic.BaseModel):
 
         def method_stub(name: str):
             def not_implemented(*args, **kwargs):
+                # this should never be called, but is here to indicate that the method
+                # is not implemented in the tool module if for some reason it is called.
                 raise NotImplementedError(
                     f"Method '{name}' is configured in config.json for tool '{self.name}'"
                     f"but has not been implemented in the tool module ({self.module_name})."
@@ -264,61 +280,120 @@ class UserToolConfig(pydantic.BaseModel):
     """
     Interface for reading a user's tool configuration from a project. 
 
+    Usage:
+    ```
+    user_tool_config = UserToolConfig('tool_name')
+    tool = user_tool_config.tools['tool_function']
+    tool.actions # -> [Actions.READ, ...]
+    tool.foobar # -> Any
+    ```
+    Use it as a context manager to make and save edits:
+    ```python
+    with UserToolConfig('tool_name') as config:
+        config.tools['tool_function'].actions = [Actions.READ, Actions.WRITE]
+    ```
+    
     Config Schema
     -------------
     name: str
-        The name of the agent; used for lookup.
-    role: str
-        The role of the agent.
-    goal: str
-        The goal of the agent.
-    backstory: str
-        The backstory of the agent.
-    llm: str
-        The model this agent should use.
-        Adheres to the format set by the framework.
+        The name of the tool. 
+    tools: dict[str, Optional[ToolPermission]]
+        A dictionary of tool names to permissions. Empty values inherit all from the tool's config.json.
     """
 
     name: str
-    role: str = ""
-    goal: str = ""
-    backstory: str = ""
-    llm: str = ""
+    tools: dict[str, Optional[ToolPermission]] = pydantic.Field(default_factory=dict)
 
-    def __init__(self, name: str):
-        filename = conf.PATH / AGENTS_FILENAME
+    def __init__(self, tool_name: str):
+        filename = conf.PATH / USER_TOOL_CONFIG_FILENAME
 
         try:
             with open(filename, 'r') as f:
                 data = yaml.load(f) or {}
-            data = data.get(name, {}) or {}
-            super().__init__(**{**{'name': name}, **data})
+            data = data.get(tool_name, {}) or {}
+            super().__init__(**{
+                'name': tool_name, 
+                'tools': data, 
+            })
+        except FileNotFoundError:
+            # initialize an empty config
+            # TODO we need to bring existing projects up-to-date
+            super().__init__(**{
+                'name': tool_name, 
+                'tools': {}, 
+            })
         except YAMLError as e:
             # TODO format MarkedYAMLError lines/messages
-            raise ValidationError(f"Error parsing agents file: {filename}\n{e}")
+            raise ValidationError(f"Error parsing tools file: {filename}\n{e}")
         except pydantic.ValidationError as e:
             error_str = "Error validating tool config:\n"
             for error in e.errors():
                 error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
-            raise ValidationError(f"Error loading tool {name} from {filename}.\n{error_str}")
+            raise ValidationError(f"Error loading tool {tool_name} from {filename}.\n{error_str}")
+
+    def model_dump(self, *args, **kwargs) -> dict:
+        model_dump = super().model_dump(*args, **kwargs)
+        
+        tool_name = model_dump.pop('name')  # `name` is the key, so keep it out of the data
+        tool_data = model_dump.pop('tools')  # `tools` as a key is implied
+        if not tool_data:  # empty configs get marked with `~`
+            tool_data = ScalarString('~')
+        
+        return {tool_name: tool_data}
+
+    def write(self):
+        log.debug(f"Writing tool {self.name} to {USER_TOOL_CONFIG_FILENAME}")
+        filename = conf.PATH / USER_TOOL_CONFIG_FILENAME
+
+        with open(filename, 'r') as f:
+            data = yaml.load(f) or {}
+
+        # update just this tool
+        data.update(self.model_dump())
+
+        with open(filename, 'w') as f:
+            yaml.dump(data, f)
+
+    def __enter__(self) -> 'UserToolConfig':
+        return self
+
+    def __exit__(self, *args):
+        self.write()
+
+
+def _initialize_user_tool_config() -> None:
+    """
+    Create a user tool config file if it does not exist and populate it with 
+    all of the tools available to the user.
+    """
+    pass  # TODO
 
 
 def get_permissions(func: Callable) -> ToolPermission:
     """
-    Get the permissions for a tool function.
+    Get the permissions for use inside of a tool function.
     We derive the tool name and function name from the function's module and name.
+    This takes the user's preferences into account.
     """
-    return ToolPermission(
-        tool_name=function.__module__.split('.')[-1],
-        function_name=function.__name__,
-    )
+    tool_name = func.__module__.split('.')[-1]
+    func_name = func.__name__
+    log.debug(f"Getting permissions for `{tool_name}.{func_name}`")
+    return get_tool(tool_name).tools[func_name]
 
 
+def get_tool(name: str) -> ToolConfig:
+    """
+    Get the tool configuration for a given tool name.
+    """
+    # TODO this is a candidate for caching
+    return ToolConfig.from_tool_name(name)
+
+
+@lru_cache()  # tool config paths do not change at runtime
 def get_all_tool_paths() -> list[Path]:
     """
-    Get all the paths to the tool configuration files.
-    ie. agentstack/_tools/<tool_name>/
-    Tools are identified by having a `config.json` file inside the _tools/<tool_name> directory.
+    Get all the paths to all bundled tools. (ie. agentstack/_tools/<tool_name>/)
+    Tools are identified by having a `config.json` file inside the tool directory.
     """
     paths = []
     for tool_dir in TOOLS_DIR.iterdir():
@@ -330,9 +405,14 @@ def get_all_tool_paths() -> list[Path]:
 
 
 def get_all_tool_names() -> list[str]:
+    """
+    Get the names of all bundled tools.
+    """
     return [path.stem for path in get_all_tool_paths()]
 
 
-# TODO tool configs don't get modified at runtime, so we can safely cache them.
 def get_all_tools() -> list[ToolConfig]:
-    return [ToolConfig.from_tool_name(path) for path in get_all_tool_names()]
+    """
+    Get configurations for all bundled tools.
+    """
+    return [get_tool(name) for name in get_all_tool_names()]

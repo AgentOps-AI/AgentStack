@@ -7,7 +7,7 @@ from agentstack.exceptions import ValidationError
 from agentstack.utils import get_framework
 from agentstack.agents import AgentConfig, get_all_agent_names
 from agentstack.tasks import TaskConfig, get_all_task_names
-from agentstack._tools import ToolConfig
+from agentstack._tools import get_tool, ToolConfig
 from agentstack import graph
 
 if TYPE_CHECKING:
@@ -175,6 +175,7 @@ def remove_tool(tool: ToolConfig, agent_name: str):
 def get_tool_callables(tool_name: str) -> list[Callable]:
     """
     Get a tool by name and return it as a list of framework-native callables.
+    This will only return the functions that the user has allowed in tools.yaml.
     """
     # TODO: remove after agentops fixes their issue
     # wrap method with agentops tool event
@@ -199,7 +200,7 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
         return wrapped_method
 
     tool_funcs = []
-    tool_config = ToolConfig.from_tool_name(tool_name)
+    tool_config = get_tool(tool_name)
     for tool_func_name in tool_config.tools:
         tool_func = getattr(tool_config.module, tool_func_name)
 

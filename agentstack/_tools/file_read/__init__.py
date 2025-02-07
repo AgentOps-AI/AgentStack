@@ -8,9 +8,9 @@ from fnmatch import fnmatch
 from agentstack import tools
 
 
-def _is_path_allowed(path: Path, allowed_patterns: list[str]) -> bool:
+def _is_path_allowed(path: str, allowed_patterns: list[str]) -> bool:
     """Check if the given path matches any of the allowed patterns."""
-    return any(fnmatch(str(path), pattern) for pattern in allowed_patterns)
+    return any(fnmatch(path, pattern) for pattern in allowed_patterns)
 
 
 def read_file(file_path: str) -> str:
@@ -30,7 +30,7 @@ def read_file(file_path: str) -> str:
         return "User has not granted read permission."
 
     if permissions.allowed_dirs:
-        if not _is_path_allowed(path, permissions.allowed_dirs):
+        if not _is_path_allowed(str(path), permissions.allowed_dirs):
             return (
                 f"Error: Access to file {file_path} is not allowed. "
                 f"Allowed directories: {permissions.allowed_dirs}"

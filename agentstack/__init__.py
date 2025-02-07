@@ -62,12 +62,13 @@ class ToolLoader:
     """
     Provides the public interface for accessing tools, wrapped in the
     framework-specific callable format.
-
-    Get a tool's callables by name with `agentstack.tools[tool_name]`
-    Include them in your agent's tool list with `tools = [*agentstack.tools[tool_name], ]`
     """
 
     def __getitem__(self, tool_name: str) -> list[Callable]:
+        """
+        Get a tool's callables by name with `agentstack.tools[tool_name]`
+        Include them in your agent's tool list with `tools = [*agentstack.tools[tool_name], ]`
+        """
         return frameworks.get_tool_callables(tool_name)
 
     def get_permissions(self, func: Callable) -> _tools.ToolPermission:

@@ -1,5 +1,12 @@
+# tools.yaml
+# This file controls the tools available to your project, and allows you to 
+# customize the permissions of each tool.
+
+
+
 file_read:
     read_file:
-        actions: ['read']
-        allowed_dirs: ['*']
-        allowed_extensions: ['*']
+        actions: ['read', 'write']
+        allowed_dirs: ['/home/tcdent/*']
+        allowed_extensions: ['*.txt', '*.md']
+    other_function: ~  # inherit defaults
