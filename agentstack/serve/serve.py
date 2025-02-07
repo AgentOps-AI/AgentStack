@@ -42,6 +42,8 @@ def process_agent():
     try:
         # Extract data and webhook URL from request
         request_data = request.get_json()
+
+        # TODO: validate webhook url
         if not request_data or 'webhook_url' not in request_data:
             return jsonify({'error': 'Missing webhook_url in request'}), 400
 
@@ -54,6 +56,9 @@ def process_agent():
         # result = WebresearcherCrew().crew().kickoff(inputs=request_data)
         # inputs = json.stringify(request_data)
         # os.system(f"python src/main.py {inputs}")
+
+        # TODO: run in subprocess so we can return started and then webhook called with callback later
+        # TODO: only allow one process to run at a time per pod
         result = run_project(api_inputs=request_data.get('inputs'))
 
         # Call the webhook with the results
