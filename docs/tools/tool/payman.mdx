@@ -1,0 +1,104 @@
+---
+title: Payman
+description: Trust your AI Agents to deal with money.
+icon: dollar-sign
+---
+
+## Description
+
+Payman enables your agents to handle USD payments, manage payment destinations, and handle customer deposits. This tool allows agents to send payments, create payees, manage balances, and generate deposit links for customers.
+
+## Example
+
+Add the Payman tool with
+```bash
+agentstack tools add payman
+```
+
+Set up your environment variables:
+```env
+PAYMAN_API_SECRET=your_api_secret_here
+PAYMAN_ENVIRONMENT=sandbox  # or "production" for live environment
+```
+
+## Features
+
+### Send Payments
+Send USD payments to pre-created payment destinations:
+```python
+response = payman.send_payment(
+    amount_decimal=50.00,
+    payment_destination_id="dest_123",
+    customer_name="John Doe",
+    memo="Invoice payment"
+)
+```
+
+### Create Payment Destinations
+Set up new payment destinations for US ACH or Payman agent transfers:
+```python
+# Create US ACH payment destination
+ach_payee = payman.create_payee(
+    type="US_ACH",
+    name="John's Bank Account",
+    customer_id="cust_123",
+    account_holder_name="John Doe",
+    account_holder_type="individual",
+    account_number="1234567890",
+    routing_number="021000021",
+    account_type="checking"
+)
+
+# Create Payman agent destination
+agent_payee = payman.create_payee(
+    type="PAYMAN_AGENT",
+    name="Partner Agent",
+    payman_agent_id="agent_123"
+)
+```
+
+### Customer Deposits
+Generate checkout links for customer deposits:
+```python
+deposit_link = payman.initiate_customer_deposit(
+    amount_decimal=100.00,
+    customer_id="cust_123",
+    customer_email="customer@example.com",
+    fee_mode="ADD_TO_AMOUNT"
+)
+```
+
+### Balance Management
+Check available balances:
+```python
+# Check agent balance
+agent_balance = payman.get_spendable_balance()
+
+# Check customer balance
+customer_balance = payman.get_customer_balance(
+    customer_id="cust_123"
+)
+```
+
+### Search Payment Destinations
+Find existing payment destinations:
+```python
+destinations = payman.search_destinations(
+    name="John",
+    customer_id="cust_123",
+    contact_email="john@example.com"
+)
+```
+
+## Available Functions
+
+The Payman tool provides the following core functions:
+
+- `send_payment()`: Send USD payments to payment destinations
+- `create_payee()`: Create new payment destinations (US ACH or Payman Agent)
+- `search_destinations()`: Search for existing payment destinations
+- `initiate_customer_deposit()`: Generate customer deposit checkout links
+- `get_customer_balance()`: Check customer USD balance
+- `get_spendable_balance()`: Check agent USD balance
+
+For detailed function parameters and usage, refer to the function docstrings in your IDE or the Payman API documentation.

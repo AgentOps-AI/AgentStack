@@ -950,7 +950,7 @@ description: 'AgentStack tools from community contributors'
 
 ## Application Specific
 - [Stripe](/tools/tool/stripe)
-
+- [Payman](/tools/tool/payman)
 <CardGroup cols={1}>
   <Card
     title="Core Tools"
