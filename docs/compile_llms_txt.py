@@ -1,14 +1,13 @@
 import os
+from pathlib import Path
 
 def compile_llms_txt():
-    # Get the docs directory path (where this script is located)
-    docs_dir = os.path.dirname(os.path.abspath(__file__))
+    # Get the current working directory
+    current_dir = Path(os.getcwd())
     content = ''
+    
     # Define names of directories and files to exclude
     excluded_names = {'tool'}
-    
-    # Change to docs directory
-    os.chdir(docs_dir)
     
     for root, _, files in os.walk('.'):
         # Get the last part of the current directory
@@ -17,8 +16,11 @@ def compile_llms_txt():
             continue
             
         for file in files:
+            # Check if the file is an MDX file and not in excluded names
             if file.endswith('.mdx'):
-                if file in excluded_names:
+                # Extract the base name without extension for exclusion check
+                base_name = os.path.splitext(file)[0]
+                if base_name in excluded_names:
                     continue
                     
                 file_path = os.path.join(root, file)
@@ -28,10 +30,9 @@ def compile_llms_txt():
                     file_content = f.read()
                 content += f"## {relative_path}\n\n{file_content}\n\n"
 
-    # Write the complete content, replacing the existing file
-    output_path = os.path.join(docs_dir, 'llms.txt')
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(content)
+    # Write the complete content to llms.txt in the current directory
+    output_path = Path('llms.txt')
+    output_path.write_text(content, encoding='utf-8')
 
 if __name__ == "__main__":
     compile_llms_txt()

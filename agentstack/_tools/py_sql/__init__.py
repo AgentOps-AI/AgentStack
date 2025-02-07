@@ -2,7 +2,7 @@ import os
 import psycopg2
 from typing import Dict, Any
 
-def get_connection():
+def _get_connection():
     """Get PostgreSQL database connection"""
     return psycopg2.connect(
         dbname=os.getenv('POSTGRES_DB'),
@@ -18,7 +18,7 @@ def get_schema() -> Dict[str, Any]:
     Returns a dictionary containing the database schema.
     """
     try:
-        conn = get_connection()
+        conn = _get_connection()
         cursor = conn.cursor()
         
         # Query to get all tables in the current schema
@@ -63,7 +63,7 @@ def execute_query(query: str) -> list:
         List of query results
     """
     try:
-        conn = get_connection()
+        conn = _get_connection()
         cursor = conn.cursor()
         
         # Execute the query

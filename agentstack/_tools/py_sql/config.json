@@ -3,28 +3,11 @@
     "url": "https://pypi.org/project/psycopg2/",
     "category": "database",
     "env": {
-        "POSTGRES_DB": {
-            "description": "PostgreSQL database name",
-            "required": true
-        },
-        "POSTGRES_USER": {
-            "description": "PostgreSQL username",
-            "required": true
-        },
-        "POSTGRES_PASSWORD": {
-            "description": "PostgreSQL password",
-            "required": true
-        },
-        "POSTGRES_HOST": {
-            "description": "PostgreSQL host address",
-            "required": true,
-            "default": "localhost"
-        },
-        "POSTGRES_PORT": {
-            "description": "PostgreSQL port number",
-            "required": true,
-            "default": "5432"
-        }
+        "POSTGRES_DB": "...",
+        "POSTGRES_USER": "...",
+        "POSTGRES_PASSWORD": "...",
+        "POSTGRES_HOST": "...",
+        "POSTGRES_PORT": "..."
     },
     "dependencies": [
         "psycopg2-binary>=2.9.9"
