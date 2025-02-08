@@ -8,7 +8,7 @@ import ast
 from agentstack import conf
 from agentstack.exceptions import ValidationError
 from agentstack.generation import InsertionPoint
-from agentstack.utils import get_framework
+from agentstack.utils import get_framework, get_package_path
 from agentstack import packaging
 from agentstack.generation import asttools
 from agentstack.agents import AgentConfig, get_all_agent_names
@@ -310,6 +310,14 @@ def get_entrypoint_path(framework: str) -> Path:
     return conf.PATH / module.ENTRYPOINT
 
 
+def get_templates_path(framework: str) -> Path:
+    """
+    Get the path to the templates for a framework.
+    """
+    path = get_package_path() / 'frameworks/templates' / framework
+    return path / "{{cookiecutter.project_metadata.project_slug}}"
+
+
 def validate_project():
     """
     Validate that the user's project is ready to run.
@@ -413,7 +421,8 @@ def get_tool_callables(tool_name: str) -> list[Callable]:
 
     tool_funcs = []
     tool_config = get_tool(tool_name)
-    for tool_func_name in tool_config.tools:
+    # `allowed_tools` takes the the project's permissions into account
+    for tool_func_name in tool_config.allowed_tools:
         tool_func = getattr(tool_config.module, tool_func_name)
 
         assert callable(tool_func), f"Tool function {tool_func_name} is not callable."

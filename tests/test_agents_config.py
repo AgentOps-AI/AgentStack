@@ -92,7 +92,7 @@ class AgentConfigTest(unittest.TestCase):
   role: >
   goal: >
   backstory: >
-  llm:
+  llm: ~
 """
         )
 

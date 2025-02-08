@@ -6,23 +6,20 @@ from functools import lru_cache
 from pathlib import Path
 import enum
 import pydantic
-from ruamel.yaml import YAML, YAMLError
-from ruamel.yaml.scalarstring import ScalarString
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack.utils import get_package_path, open_json_file, snake_to_camel
+from agentstack import yaml
 
 
 TOOLS_DIR: Path = get_package_path() / '_tools'  # NOTE: if you change this dir, also update MANIFEST.in
 TOOLS_CONFIG_FILENAME: str = 'config.json'
+USER_TOOL_CONFIG_FILENAME: str = 'src/config/tools.yaml'
 
 
 def _get_user_tool_config_path() -> Path:
-    return conf.PATH / 'src/config/tools.yaml'
+    return conf.PATH / USER_TOOL_CONFIG_FILENAME
 
-
-yaml = YAML()
-yaml.preserve_quotes = True  # Preserve quotes in existing data
 
 """
 Tool Authors
@@ -175,44 +172,6 @@ class ToolConfig(pydantic.BaseModel):
     post_install: Optional[str] = None
     post_remove: Optional[str] = None
 
-    @pydantic.model_validator(mode='before')
-    @classmethod
-    def filter_tools(cls, data: dict) -> dict:
-        """Include only tool functions that are explicitly allowed by the user."""
-        tool_name = data['name']
-        tool_data = data['tools']
-
-        try:
-            user_config = UserToolConfig(tool_name)
-        except FileNotFoundError:
-            log.debug(f"User has no tools.yaml file; allowing all tools.")
-            return data
-
-        log.debug(
-            f"Excluding tools from {tool_name} based on project permissions: "
-            f"{', '.join(tool_data.keys() - user_config.tools.keys()) or 'None'}\n"
-            f"Modify this behavior in 'src/config/tools.yaml'."
-        )
-
-        filtered_perms = {}
-        for func_name in user_config.tools:
-            # TODO what about orphaned tools in the user config
-            base_perms: dict = tool_data.get(func_name, {})
-            assert base_perms, f"Tool config.json for '{tool_name}' does not include '{func_name}'."
-
-            _user_perms: Optional[ToolPermission] = user_config.tools[func_name]
-            if _user_perms is None:  # `None` if user chooses to inherit all defaults
-                user_perms = {}
-            if isinstance(_user_perms, ToolPermission):
-                user_perms = _user_perms.model_dump()
-            assert user_perms is not None, f"User tool permission got unexpected type {type(_user_perms)}."
-
-            all_perms = {**base_perms, **user_perms}
-            filtered_perms[func_name] = ToolPermission(**all_perms)
-
-        data['tools'] = filtered_perms
-        return data
-
     @classmethod
     def from_tool_name(cls, name: str) -> 'ToolConfig':
         """Load a tool's configuration by name."""
@@ -234,9 +193,46 @@ class ToolConfig(pydantic.BaseModel):
             raise ValidationError(f"Error loading tool from {path}.\n{error_str}")
 
     @property
+    def allowed_tools(self) -> dict[str, ToolPermission]:
+        """Get the tools this project has access to."""
+        try:
+            user_config = UserToolConfig(self.name)
+        except FileNotFoundError:
+            log.debug(f"User has no tools.yaml file; allowing all tools.")
+            return self.tools
+
+        log.debug(
+            f"Excluding tools from {self.name} based on project permissions: "
+            f"{', '.join(self.tools.keys() - user_config.tools.keys()) or 'None'}\n"
+            f"Modify this behavior in 'src/config/tools.yaml'."
+        )
+
+        filtered_perms = {}
+        for func_name in user_config.tools:
+            # TODO what about orphaned tools in the user config
+            base_perms: Optional[ToolPermission] = self.tools.get(func_name)
+            assert base_perms, f"Tool config.json for '{self.name}' does not include '{func_name}'."
+
+            _user_perms: Optional[ToolPermission] = user_config.tools[func_name]
+            if _user_perms is None:  # `None` if user chooses to inherit all defaults
+                user_perms = {}
+            if isinstance(_user_perms, ToolPermission):
+                user_perms = _user_perms.model_dump()
+            assert user_perms is not None, f"User tool permission got unexpected type {type(_user_perms)}."
+
+            all_perms = {**base_perms.model_dump(), **user_perms}
+            filtered_perms[func_name] = ToolPermission(**all_perms)
+        return filtered_perms
+
+    @property
     def tool_names(self) -> list[str]:
-        """Get the names of all tools this project has access to."""
+        """Get the names of all tools."""
         return list(self.tools.keys())
+
+    @property
+    def allowed_tool_names(self) -> list[str]:
+        """Get the names of all tools this project has access to."""
+        return list(self.allowed_tools.keys())
 
     @property
     def type(self) -> type:
@@ -306,7 +302,7 @@ class UserToolConfig(pydantic.BaseModel):
     Use it as a context manager to make and save edits:
     ```python
     with UserToolConfig('tool_name') as config:
-        # TODO ToolPermission might not be instantiated
+        # TODO `ToolPermission` might not be instantiated so this is a bad example
         config.tools['tool_function'].actions = [Actions.READ, Actions.WRITE]
     ```
 
@@ -331,15 +327,10 @@ class UserToolConfig(pydantic.BaseModel):
         filename = _get_user_tool_config_path()
         try:
             with open(filename, 'r') as f:
-                data = yaml.load(f) or {}
+                data = yaml.parser.load(f) or {}
             data = data.get(tool_name, {}) or {}
-            super().__init__(
-                **{
-                    'name': tool_name,
-                    'tools': data,
-                }
-            )
-        except YAMLError as e:
+            super().__init__(**{'name': tool_name, 'tools': data})
+        except yaml.YAMLError as e:
             # TODO format MarkedYAMLError lines/messages
             raise ValidationError(f"Error parsing tools file: {filename}\n{e}")
         except pydantic.ValidationError as e:
@@ -348,17 +339,54 @@ class UserToolConfig(pydantic.BaseModel):
                 error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(f"Error loading tool {tool_name} from {filename}.\n{error_str}")
 
-    def add_tool(self, tool_config: ToolConfig) -> None:
-        """Add stubs for a tool to the user's configuration."""
-        self.tools.update({tool_name: None for tool_name in tool_config.tool_names})
+    @classmethod
+    def exists(cls) -> bool:
+        """Check if a user tool config file exists."""
+        return _get_user_tool_config_path().exists()
+
+    @classmethod
+    def initialize(cls) -> None:
+        """
+        Create a user tool config file if it does not exist and populate it with
+        all of the tools available to the user. This is used to bring an existing
+        project up to date with a UserToolConfig.
+        """
+        from agentstack.frameworks import get_templates_path
+
+        framework = conf.get_framework()
+        assert framework, "Not an agentstack project."
+        template_path = get_templates_path(framework) / USER_TOOL_CONFIG_FILENAME
+        filename = _get_user_tool_config_path()
+
+        assert not filename.exists(), f"{filename} exists."
+        with open(filename, 'w') as f:
+            f.write(template_path.read_text())
+
+        for tool_name in conf.get_installed_tools():
+            tool_config = get_tool(tool_name)
+            with cls(tool_name) as user_tool_config:
+                user_tool_config.add_stubs()
+
+    @property
+    def tool_names(self) -> list[str]:
+        """Get the names of all tools in the user config."""
+        return list(self.tools.keys())
+
+    def add_stubs(self) -> None:
+        """
+        Add stubs for all tools in the user config to the tool config file.
+        This is used to bring an existing project up to date with a UserToolConfig.
+        """
+        tool_config = get_tool(self.name)
+        self.tools = {key: None for key in tool_config.tool_names}
 
     def model_dump(self, *args, **kwargs) -> dict:
         model_dump = super().model_dump(*args, **kwargs)
 
         tool_name = model_dump.pop('name')  # `name` is the key, so keep it out of the data
         tool_data = model_dump.pop('tools')  # `tools` as a key is implied
-        if not tool_data:  # empty configs get marked with `~`
-            tool_data = ScalarString('~')
+        # if not tool_data:  # empty configs get marked with `~`
+        #     tool_data = ScalarString('~')
 
         return {tool_name: tool_data}
 
@@ -368,7 +396,7 @@ class UserToolConfig(pydantic.BaseModel):
 
         try:
             with open(filename, 'r') as f:
-                data = yaml.load(f) or {}
+                data = yaml.parser.load(f) or {}
         except FileNotFoundError:
             data = {}
 
@@ -376,29 +404,13 @@ class UserToolConfig(pydantic.BaseModel):
         data.update(self.model_dump())
 
         with open(filename, 'w') as f:
-            yaml.dump(data, f)
+            yaml.parser.dump(data, f)
 
     def __enter__(self) -> 'UserToolConfig':
         return self
 
     def __exit__(self, *args):
         self.write()
-
-
-def _initialize_user_tool_config() -> None:
-    """
-    Create a user tool config file if it does not exist and populate it with
-    all of the tools available to the user. This is used to bring an existing
-    project up to date with a UserToolConfig.
-    """
-    # TODO actually use this
-    # TODO there is documentation in the example project file for this, which we
-    # should include in old projects, too.
-
-    for tool_name in conf.get_installed_tools():
-        tool_config = get_tool(tool_name)
-        with UserToolConfig(tool_name) as user_tool_config:
-            user_tool_config.add_tool(tool_config)
 
 
 def get_permissions(func: Callable) -> ToolPermission:
