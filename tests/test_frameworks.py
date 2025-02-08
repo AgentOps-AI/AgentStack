@@ -8,7 +8,7 @@ from parameterized import parameterized
 from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
-from agentstack._tools import ToolConfig, get_all_tools
+from agentstack._tools import ToolConfig, ToolPermission, get_all_tools
 from agentstack.agents import AGENTS_FILENAME, AgentConfig
 from agentstack.tasks import TASKS_FILENAME, TaskConfig
 from agentstack import graph
@@ -61,10 +61,10 @@ class TestFrameworks(unittest.TestCase):
         return TaskConfig('task_name_two')
 
     def _get_test_tool(self) -> ToolConfig:
-        return ToolConfig(name='test_tool', category='test', tools=['test_tool'])
+        return ToolConfig(name='test_tool', category='test', tools={'test_tool': {'actions': ['read']}})
 
     def _get_test_tool_alternate(self) -> ToolConfig:
-        return ToolConfig(name='test_tool_alt', category='test', tools=['test_tool_alt'])
+        return ToolConfig(name='test_tool_alt', category='test', tools={'test_tool_alt': {'actions': ['write']}})
 
     def test_get_framework_module(self):
         module = frameworks.get_framework_module(self.framework)

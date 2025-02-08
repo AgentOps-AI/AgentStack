@@ -36,7 +36,7 @@ def execute_action(
     """
     permissions = tools.get_permissions(execute_action)
     if not permissions.EXECUTE:
-        return "User has not granted execute permission."
+        return {'error': "User has not granted execute permission."}
     
     toolset = ComposioToolSet()
     action = Action(action_name)
@@ -55,7 +55,7 @@ def get_action_schema(action_name: str) -> Dict[str, Any]:
     """Get the schema for a composio action."""
     permissions = tools.get_permissions(get_action_schema)
     if not permissions.READ:
-        return "User has not granted read permission."
+        return {'error': "User has not granted read permission."}
 
     toolset = ComposioToolSet()
     action = Action(action_name)
@@ -70,7 +70,7 @@ def find_actions_by_use_case(
     """Find actions by use case."""
     permissions = tools.get_permissions(find_actions_by_use_case)
     if not permissions.READ:
-        return "User has not granted read permission."
+        return [{'error': "User has not granted read permission."}]
     
     toolset = ComposioToolSet()
     actions = toolset.find_actions_by_use_case(*apps, use_case=use_case)
@@ -84,7 +84,7 @@ def find_actions_by_tags(
     """Find actions by tags."""
     permissions = tools.get_permissions(find_actions_by_tags)
     if not permissions.READ:
-        return "User has not granted read permission."
+        return [{'error': "User has not granted read permission."}]
     
     toolset = ComposioToolSet()
     actions = toolset.find_actions_by_tags(*apps, tags=tags)

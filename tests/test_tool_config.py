@@ -11,7 +11,8 @@ class ToolConfigTest(unittest.TestCase):
         config = ToolConfig.from_json(BASE_PATH / "fixtures/tool_config_min.json")
         assert config.name == "tool_name"
         assert config.category == "category"
-        assert config.tools == ["tool1", "tool2"]
+        assert config.tool_names == ["tool1", "tool2"]
+        # TODO test config.tools
         assert config.url is None
         assert config.cta is None
         assert config.env is None
@@ -22,7 +23,8 @@ class ToolConfigTest(unittest.TestCase):
         config = ToolConfig.from_json(BASE_PATH / "fixtures/tool_config_max.json")
         assert config.name == "tool_name"
         assert config.category == "category"
-        assert config.tools == ["tool1", "tool2"]
+        assert config.tool_names == ["tool1", "tool2"]
+        # TODO test config.tools
         assert config.url == "https://example.com"
         assert config.cta == "Click me!"
         assert config.env == {"ENV_VAR1": "value1", "ENV_VAR2": "value2"}

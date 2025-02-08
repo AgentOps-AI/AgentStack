@@ -185,7 +185,8 @@ class ToolConfig(pydantic.BaseModel):
         try:
             user_config = UserToolConfig(tool_name)
         except FileNotFoundError:
-            return data  # if the user has no config, allow all tools.
+            log.debug(f"User has no tools.yaml file; allowing all tools.")
+            return data
 
         log.debug(
             f"Excluding tools from {tool_name} based on project permissions: "
@@ -195,6 +196,7 @@ class ToolConfig(pydantic.BaseModel):
 
         filtered_perms = {}
         for func_name in user_config.tools:
+            # TODO what about orphaned tools in the user config
             base_perms: dict = tool_data.get(func_name, {})
             assert base_perms, f"Tool config.json for '{tool_name}' does not include '{func_name}'."
 
@@ -205,12 +207,8 @@ class ToolConfig(pydantic.BaseModel):
                 user_perms = _user_perms.model_dump()
             assert user_perms is not None, f"User tool permission got unexpected type {type(_user_perms)}."
 
-            filtered_perms[func_name] = ToolPermission(
-                **{
-                    **base_perms,
-                    **user_perms,
-                }
-            )
+            all_perms = {**base_perms, **user_perms}
+            filtered_perms[func_name] = ToolPermission(**all_perms)
 
         data['tools'] = filtered_perms
         return data
@@ -393,6 +391,7 @@ def _initialize_user_tool_config() -> None:
     all of the tools available to the user. This is used to bring an existing
     project up to date with a UserToolConfig.
     """
+    # TODO actually use this
     # TODO there is documentation in the example project file for this, which we
     # should include in old projects, too.
 
