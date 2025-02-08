@@ -20,6 +20,9 @@
         },
         "tool2": {
             "actions": ["read"]
+        },
+        "tool3": {
+            "actions": ["write"]
         }
     }
 }

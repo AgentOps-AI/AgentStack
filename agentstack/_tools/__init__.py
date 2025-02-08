@@ -128,10 +128,10 @@ class ToolPermission(pydantic.BaseModel):
     """
 
     actions: list[Action]
-    model_config = pydantic.ConfigDict(extra='allow')  # allow extra fields
+    attributes: dict[str, Any] = pydantic.Field(default_factory=dict)
 
     def __init__(self, **data):
-        super().__init__(actions=data.pop('actions'), **data)
+        super().__init__(actions=data.pop('actions'), attributes=data)
 
     @property
     def READ(self) -> bool:
@@ -149,8 +149,13 @@ class ToolPermission(pydantic.BaseModel):
         return Action.EXECUTE in self.actions
 
     def __getattr__(self, name: str) -> Any:
-        """Developer-defined extra fields are accessible as attributes."""
-        return getattr(self.__dict__, name, None)
+        """Get an attribute from the attributes dict."""
+        return self.attributes.get(name, None)
+
+    def model_dump(self, *args, **kwargs) -> dict:
+        """Dump the model as a dict."""
+        model_dump = super().model_dump(*args, **kwargs)
+        return {**model_dump['attributes'], 'actions': model_dump['actions']}
 
 
 class ToolConfig(pydantic.BaseModel):
@@ -213,7 +218,7 @@ class ToolConfig(pydantic.BaseModel):
             base_perms: Optional[ToolPermission] = self.tools.get(func_name)
             assert base_perms, f"Tool config.json for '{self.name}' does not include '{func_name}'."
 
-            _user_perms: Optional[ToolPermission] = user_config.tools[func_name]
+            _user_perms: Optional[ToolPermission] = user_config.tools.get(func_name)
             if _user_perms is None:  # `None` if user chooses to inherit all defaults
                 user_perms = {}
             if isinstance(_user_perms, ToolPermission):
@@ -245,7 +250,7 @@ class ToolConfig(pydantic.BaseModel):
             def not_implemented(*args, **kwargs):
                 # this should never be called, but is here to indicate that the method
                 # is not implemented in the tool module if for some reason it is called.
-                raise NotImplementedError(
+                raise NotImplementedError(  # pragma: no cover
                     f"Method '{name}' is configured in config.json for tool '{self.name}'"
                     f"but has not been implemented in the tool module ({self.module_name})."
                 )
@@ -334,7 +339,7 @@ class UserToolConfig(pydantic.BaseModel):
             # TODO format MarkedYAMLError lines/messages
             raise ValidationError(f"Error parsing tools file: {filename}\n{e}")
         except pydantic.ValidationError as e:
-            error_str = "Error validating tool config:\n"
+            error_str = "Error validating user tool config:\n"
             for error in e.errors():
                 error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(f"Error loading tool {tool_name} from {filename}.\n{error_str}")
@@ -382,23 +387,16 @@ class UserToolConfig(pydantic.BaseModel):
 
     def model_dump(self, *args, **kwargs) -> dict:
         model_dump = super().model_dump(*args, **kwargs)
-
         tool_name = model_dump.pop('name')  # `name` is the key, so keep it out of the data
         tool_data = model_dump.pop('tools')  # `tools` as a key is implied
-        # if not tool_data:  # empty configs get marked with `~`
-        #     tool_data = ScalarString('~')
-
         return {tool_name: tool_data}
 
     def write(self):
         filename = _get_user_tool_config_path()
         log.debug(f"Writing tool '{self.name}' to {filename}")
 
-        try:
-            with open(filename, 'r') as f:
-                data = yaml.parser.load(f) or {}
-        except FileNotFoundError:
-            data = {}
+        with open(filename, 'r') as f:
+            data = yaml.parser.load(f) or {}
 
         # update just this tool
         data.update(self.model_dump())

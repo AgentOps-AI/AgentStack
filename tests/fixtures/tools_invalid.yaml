@@ -1,0 +1,4 @@
+tool_name:
+  tool1:
+    actions: False
+  tool2: ['fooo']

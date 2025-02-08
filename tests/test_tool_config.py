@@ -1,12 +1,42 @@
+import os
+import shutil
 import json
-import unittest
 import re
 from pathlib import Path
-from agentstack._tools import ToolConfig, get_all_tool_paths, get_all_tool_names
+import unittest
+from unittest.mock import MagicMock, PropertyMock, patch
+from parameterized import parameterized
+from agentstack import conf
+from agentstack.exceptions import ValidationError
+from agentstack._tools import (
+    ToolConfig, 
+    get_tool, 
+    get_all_tools, 
+    get_all_tool_paths, 
+    get_all_tool_names, 
+    UserToolConfig, 
+    get_permissions, 
+    ToolPermission, 
+    Action, 
+)
 
 BASE_PATH = Path(__file__).parent
 
 class ToolConfigTest(unittest.TestCase):
+    def setUp(self):
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'test_tool_config'
+        os.makedirs(self.project_dir)
+        os.makedirs(self.project_dir / 'src/config')
+        
+        shutil.copy(BASE_PATH / "fixtures/agentstack.json", self.project_dir / "agentstack.json")
+        conf.set_path(self.project_dir)
+        with conf.ConfigFile() as config:
+            config.framework = self.framework
+
+    def tearDown(self):
+        shutil.rmtree(self.project_dir)
+    
     def test_minimal_json(self):
         config = ToolConfig.from_json(BASE_PATH / "fixtures/tool_config_min.json")
         assert config.name == "tool_name"
@@ -23,7 +53,7 @@ class ToolConfigTest(unittest.TestCase):
         config = ToolConfig.from_json(BASE_PATH / "fixtures/tool_config_max.json")
         assert config.name == "tool_name"
         assert config.category == "category"
-        assert config.tool_names == ["tool1", "tool2"]
+        assert config.tool_names == ["tool1", "tool2", "tool3"]
         # TODO test config.tools
         assert config.url == "https://example.com"
         assert config.cta == "Click me!"
@@ -45,20 +75,108 @@ class ToolConfigTest(unittest.TestCase):
                             "All dependencies must include version specifications."
                         )
 
-    def test_all_json_configs_from_tool_name(self):
-        for tool_name in get_all_tool_names():
-            config = ToolConfig.from_tool_name(tool_name)
-            assert config.name == tool_name
-            # We can assume that pydantic validation caught any other issues
+    @parameterized.expand([(x, ) for x in get_all_tools()])
+    def test_all_tools(self, config: ToolConfig):
+        assert isinstance(config, ToolConfig)
+        # We can assume that pydantic validation caught any other issues
 
-    def test_all_json_configs_from_tool_path(self):
-        for path in get_all_tool_paths():
-            try:
-                config = ToolConfig.from_json(f"{path}/config.json")
-            except json.decoder.JSONDecodeError:
-                raise Exception(
-                    f"Failed to decode tool json at {path}. Does your tool config fit the required formatting? "
-                    "https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/tools/~README.md"
-                )
+    def test_load_invalid_tool(self):
+        with self.assertRaises(ValidationError):
+            ToolConfig.from_tool_name("invalid_tool")
 
-            assert config.name == path.stem
+    def test_load_invalid_config(self):
+        with self.assertRaises(ValidationError):
+            ToolConfig.from_json(BASE_PATH / "fixtures/tool_config_invalid.json")
+
+    @parameterized.expand([(x, ) for x in get_all_tool_paths()])
+    def test_all_json_configs_from_tool_path(self, path):
+        try:
+            config = ToolConfig.from_json(f"{path}/config.json")
+        except json.decoder.JSONDecodeError:
+            raise Exception(
+                f"Failed to decode tool json at {path}. Does your tool config fit the required formatting? "
+                "https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/tools/~README.md"
+            )
+
+        assert config.name == path.stem
+
+    @patch('agentstack._tools.ToolConfig.module_name', new_callable=PropertyMock)
+    def test_config_module_missing_function(self, mock_module_name):
+        mock_module_name.return_value = 'tests.fixtures.test_tool'
+        with self.assertRaises(ValidationError):
+            config = ToolConfig.from_json(BASE_PATH / "fixtures/tool_config_min.json")
+            config.module
+
+    @patch('agentstack._tools.ToolConfig.module_name', new_callable=PropertyMock)
+    def test_config_module_missing_import(self, mock_module_name):
+        mock_module_name.return_value = 'invalid'
+        with self.assertRaises(ValidationError):
+            config = ToolConfig.from_json(BASE_PATH / "fixtures/tool_config_min.json")
+            config.module
+
+    @parameterized.expand([(x, ) for x in get_all_tool_names()])
+    def test_user_tool_config_uninitialized(self, tool_name):
+        with self.assertRaises(FileNotFoundError):
+            UserToolConfig(tool_name)
+
+    def test_user_tool_config_initialize(self):
+        test_tools = get_all_tools()[:3]  # just a few
+        with conf.ConfigFile() as config:
+            config.tools = [tool.name for tool in test_tools]
+        
+        assert not UserToolConfig.exists()
+        UserToolConfig.initialize()
+        
+        assert UserToolConfig.exists()
+        for tool in test_tools:
+            user_conf = UserToolConfig(tool.name)
+            assert user_conf.tools.keys() == tool.tools.keys()
+            assert user_conf.tools.keys() == tool.allowed_tools.keys()
+            assert user_conf.tool_names == tool.tool_names
+            assert user_conf.tool_names == tool.allowed_tool_names
+    
+    def test_user_tool_config_customize(self):
+        shutil.copy(BASE_PATH / "fixtures/tools.yaml", self.project_dir / "src/config/tools.yaml")
+        test_tool = ToolConfig.from_json(BASE_PATH / "fixtures/tool_config_max.json")
+        user_conf = UserToolConfig(test_tool.name)
+        
+        # tool has `tool1`, `tool2`, `tool3`
+        # user has `tool1`, `tool2`
+        assert user_conf.tool_names == test_tool.allowed_tool_names
+        assert user_conf.tool_names != test_tool.tool_names
+        assert user_conf.tools['tool1'].actions == [Action.EXECUTE]
+        assert user_conf.tools['tool2'] is None
+        
+        assert test_tool.allowed_tools['tool1'].actions == [Action.EXECUTE]
+        assert test_tool.allowed_tools['tool1'].additional_property == "value"
+        assert test_tool.allowed_tools['tool2'].actions == [Action.READ]
+        assert not hasattr(test_tool.allowed_tools, 'tool3')
+    
+    @patch('agentstack._tools._get_user_tool_config_path')
+    def test_load_invalid_user_config(self, mock_get_user_tool_config_path):
+        mock_get_user_tool_config_path.return_value = BASE_PATH / "fixtures/tools_invalid.yaml"
+        with self.assertRaises(ValidationError):
+            UserToolConfig('tool_name')
+    
+    @patch('agentstack._tools._get_user_tool_config_path')
+    def test_load_malformed_user_config(self, mock_get_user_tool_config_path):
+        mock_get_user_tool_config_path.return_value = BASE_PATH / "fixtures/malformed.yaml"
+        with self.assertRaises(ValidationError):
+            UserToolConfig('tool_name')
+    
+    def test_tool_permission_rwe(self):
+        tool_permission = ToolPermission(actions=['read', 'write', 'execute'])
+        assert tool_permission.READ
+        assert tool_permission.WRITE
+        assert tool_permission.EXECUTE
+    
+    def test_tool_permission_attrs(self):
+        tool_permission = ToolPermission(actions=['read'], foo='bar', baz='qux')
+        assert tool_permission.foo == 'bar'
+        assert tool_permission.baz == 'qux'
+        assert tool_permission.undefined is None
+    
+    def test_get_permissions(self):
+        from agentstack._tools.file_read import read_file
+        permissions = get_permissions(read_file)
+        assert isinstance(permissions, ToolPermission)
