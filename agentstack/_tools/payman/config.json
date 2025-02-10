@@ -1,6 +1,6 @@
 {
   "name": "payman",
-  "category": "financial-infra",
+  "category": "finance",
   "tools": [
     "send_payment",
     "search_available_payees",

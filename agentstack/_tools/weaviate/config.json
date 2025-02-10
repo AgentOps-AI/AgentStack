@@ -1,7 +1,7 @@
 {
   "name": "weaviate",
   "url": "https://github.com/weaviate/weaviate-python-client",
-  "category": "vector-store",
+  "category": "database",
   "env": {
     "WEAVIATE_URL": null,
     "WEAVIATE_API_KEY": null,
