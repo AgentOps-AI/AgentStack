@@ -20,7 +20,7 @@ from agentstack._tools import (
     get_all_tool_categories,
     get_all_tool_category_names,
 )
-from agentstack.proj_templates import TemplateConfig
+from agentstack.templates import TemplateConfig
 from agentstack.cli import LOGO, init_project
 
 
