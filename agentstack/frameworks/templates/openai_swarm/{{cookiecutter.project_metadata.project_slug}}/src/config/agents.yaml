@@ -1,0 +1,10 @@
+{%- for agent in cookiecutter.structure.agents %}
+{{agent.name}}:
+    role: >
+      {{agent.role}}
+    goal: >
+      {{agent.goal}}
+    backstory: >
+      {{agent.backstory}}
+    llm: {{agent.llm}}
+{%- endfor %}

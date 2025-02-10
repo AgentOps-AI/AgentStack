@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 
 .agentops/
+agentstack.log
+.agentstack*

@@ -175,6 +175,8 @@ ex/
 **/ex/
 cookiecutter.json
 
+tests/tmp
+
 examples/tests/
 examples/tests/**/*
 

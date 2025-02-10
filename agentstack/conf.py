@@ -14,12 +14,14 @@ DEBUG: bool = False
 # The path to the project directory ie. working directory.
 PATH: Path = Path()
 
+
 def assert_project() -> None:
     try:
         ConfigFile()
         return
     except FileNotFoundError:
         raise Exception("Could not find agentstack.json, are you in an AgentStack project directory?")
+
 
 def set_path(path: Union[str, Path, None]):
     """Set the path to the project directory."""
@@ -83,6 +85,8 @@ class ConfigFile(BaseModel):
         The template used to generate the project.
     template_version: Optional[str]
         The version of the template system used to generate the project.
+    use_git: Optional[bool]
+        Whether to use git for automatic commits of you project.
     """
 
     framework: str = DEFAULT_FRAMEWORK  # TODO this should probably default to None
@@ -92,6 +96,7 @@ class ConfigFile(BaseModel):
     agentstack_version: Optional[str] = get_version()
     template: Optional[str] = None
     template_version: Optional[str] = None
+    use_git: Optional[bool] = True
 
     def __init__(self):
         if os.path.exists(PATH / CONFIG_FILENAME):
