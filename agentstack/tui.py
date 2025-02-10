@@ -30,7 +30,7 @@ POS_RELATIVE = "relative"
 POS_ABSOLUTE = "absolute"
 
 
-class Node:  # TODO this needs a better name
+class Node:
     """
     A simple data node that can be updated and have callbacks. This is used to
     populate and retrieve data from an input field inside the user interface.
@@ -59,6 +59,17 @@ class Node:  # TODO this needs a better name
 
 
 class Key:
+    """
+    Conversions and convenience methods for key codes.
+
+    Provides booleans about the key pressed:
+
+    `key.BACKSPACE`
+    `key.is_numeric`
+    `key.is_alpha`
+    ...
+    """
+
     const = {
         'UP': 259,
         'DOWN': 258,
@@ -75,7 +86,7 @@ class Key:
     def __init__(self, ch: int):
         self.ch = ch
 
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> bool:
         try:
             return self.ch == self.const[name]
         except KeyError:
@@ -86,11 +97,11 @@ class Key:
         return chr(self.ch)
 
     @property
-    def is_numeric(self):
+    def is_numeric(self) -> bool:
         return self.ch >= 48 and self.ch <= 57
 
     @property
-    def is_alpha(self):
+    def is_alpha(self) -> bool:
         return self.ch >= 65 and self.ch <= 122
 
 
@@ -248,6 +259,12 @@ class Color:
 
 
 class ColorAnimation(Color):
+    """
+    Animate between two colors over a duration.
+
+    Compatible interface with `Color` to add animation to element's color.
+    """
+
     start: Color
     end: Color
     reversed: bool = False
@@ -273,13 +290,13 @@ class ColorAnimation(Color):
             self.end.reversed = True
         elif self.start.reversed:
             self.reversed = True
-        
+
         if self.bold:
             self.start.bold = True
             self.end.bold = True
         elif self.start.bold:
             self.bold = True
-        
+
         elapsed = time.time() - self._start_time
         if elapsed > self.duration:
             if self.loop:
@@ -308,6 +325,12 @@ class ColorAnimation(Color):
 
 
 class Renderable:
+    """
+    A base class for all renderable modules.
+
+    Handles sizing, positioning, and inserting the module into the grid.
+    """
+
     _grid: Optional[curses.window] = None
     y: int
     x: int
@@ -331,7 +354,6 @@ class Renderable:
 
     @property
     def grid(self):
-        # TODO cleanup
         # TODO validate that coords and size are within the parent window and give
         # an explanatory error message.
         if not self._grid:
@@ -352,6 +374,7 @@ class Renderable:
         return self._grid
 
     def move(self, y: int, x: int):
+        """Move the module's grid to a new position."""
         self.y, self.x = y, x
         if self._grid:
             if self.positioning == POS_RELATIVE:
@@ -376,6 +399,7 @@ class Renderable:
         return self.y
 
     def render(self):
+        """Render the module to the screen."""
         pass
 
     def hit(self, y, x):
@@ -420,6 +444,12 @@ class Element(Renderable):
         return f"{type(self)} at ({self.y}, {self.x}) with value '{self.value[:20]}'"
 
     def _get_lines(self, value: str) -> list[str]:
+        """
+        Get the lines to render.
+
+        Called by `render()` using the value of the element. This allows us to have
+        word wrapping and alignment in all module types.
+        """
         if self.word_wrap:
             splits = [''] * self.height
             words = value.split()
@@ -464,6 +494,10 @@ class Element(Renderable):
 
 
 class NodeElement(Element):
+    """
+    A module that is bound to a node and updates when the node changes.
+    """
+
     format: Optional[Callable] = None
 
     def __init__(
@@ -472,32 +506,30 @@ class NodeElement(Element):
         dims: tuple[int, int],
         node: Node,
         color: Optional[Color] = None,
-        format: Optional[Callable] = None,
     ):
         super().__init__(coords, dims, color=color)
-        self.node = node  # TODO can also be str?
+        self.node = node
         self.value = str(node)
-        self.format = format
-        if isinstance(node, Node):
-            self.node.add_callback(self.update)
+        self.node.add_callback(self.update)  # allow the node to listen for changes
 
     def update(self, node: Node):
         self.value = str(node)
-        if self.format:
-            self.value = self.format(self.value)
 
     def save(self):
         self.node.update(self.value)
-        self.update(self.node)
 
     def destroy(self):
-        if isinstance(self.node, Node):
-            self.node.remove_callback(self.update)
+        self.node.remove_callback(self.update)
         super().destroy()
 
 
 class Editable(NodeElement):
-    filter: Optional[Callable] = None
+    """
+    A module that can be edited by the user.
+
+    Handles mouse clicks, key input, and managing global editing state.
+    """
+
     active: bool
     _original_value: Any
 
@@ -505,13 +537,10 @@ class Editable(NodeElement):
         self,
         coords,
         dims,
-        node,
+        node: Node,
         color=None,
-        format: Optional[Callable] = None,
-        filter: Optional[Callable] = None,
     ):
-        super().__init__(coords, dims, node=node, color=color, format=format)
-        self.filter = filter
+        super().__init__(coords, dims, node=node, color=color)
         self.active = False
         self._original_value = self.value
 
@@ -519,8 +548,7 @@ class Editable(NodeElement):
         if not self.active and self.hit(y, x):
             self.activate()
         elif self.active:  # click off
-            self.deactivate()
-            self.save()
+            self.deactivate(save=False)
 
     def activate(self):
         """Make this module the active one; ie. editing or selected."""
@@ -534,11 +562,6 @@ class Editable(NodeElement):
         self.active = False
         if save:
             self.save()
-
-    def save(self):
-        if self.filter:
-            self.value = self.filter(self.value)
-        super().save()
 
     def input(self, key: Key):
         if not self.active:
@@ -559,15 +582,87 @@ class Editable(NodeElement):
         super().destroy()
 
 
+class TextInput(Editable):
+    """
+    A module that allows the user to input text.
+    """
+
+    H, V, BR = "━", "┃", "┛"
+    padding: tuple[int, int] = (2, 1)
+    border_color: Color
+    active_color: Color
+    placeholder: str = ""
+    word_wrap: bool = True
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        node: Node,
+        placeholder: str = "",
+        color: Optional[Color] = None,
+        border: Optional[Color] = None,
+        active: Optional[Color] = None,
+    ):
+        super().__init__(coords, dims, node=node, color=color)
+        self.width, self.height = (dims[1] - 1, dims[0] - 1)
+        self.border_color = border or self.color
+        self.active_color = active or self.color
+        self.placeholder = placeholder
+        if self.value == "":
+            self.value = self.placeholder
+
+    def activate(self):
+        # change the border color to a highlight
+        self._original_border_color = self.border_color
+        self.border_color = self.active_color
+        if self.value == self.placeholder:
+            self.value = ""
+        super().activate()
+
+    def deactivate(self, save: bool = True):
+        if self.active and hasattr(self, '_original_border_color'):
+            self.border_color = self._original_border_color
+        if self.value == "":
+            self.value = self.placeholder
+        super().deactivate(save)
+
+    def save(self):
+        if self.value != self.placeholder:
+            super().save()
+
+    def render(self) -> None:
+        if self.value == self.placeholder:
+            color = self.color.to_curses() | curses.A_ITALIC
+        else:
+            color = self.color.to_curses()
+
+        for i, line in enumerate(self._get_lines(str(self.value))):
+            self.grid.addstr(i, 0, line, color)
+
+        # # add border to bottom right like a drop shadow
+        for x in range(self.width):
+            self.grid.addch(self.height, x, self.H, self.border_color.to_curses())
+        for y in range(self.height):
+            self.grid.addch(y, self.width, self.V, self.border_color.to_curses())
+        self.grid.addch(self.height, self.width, self.BR, self.border_color.to_curses())
+
+
 class Text(Element):
+    """Basic text module"""
+
     pass
 
 
 class WrappedText(Text):
+    """Text module with word wrapping"""
+
     word_wrap: bool = True
 
 
 class ASCIIText(Text):
+    """Text module that renders as ASCII art"""
+
     default_font: str = "pepper"
     formatter: Figlet
     _ascii_render: Optional[str] = None  # rendered content
@@ -594,6 +689,8 @@ class ASCIIText(Text):
 
 
 class BoldText(Text):
+    """Text module with bold text"""
+
     def __init__(
         self,
         coords: tuple[int, int],
@@ -606,60 +703,15 @@ class BoldText(Text):
 
 
 class Title(BoldText):
+    """A title module; shortcut for bold, centered text"""
+
     h_align: str = ALIGN_CENTER
     v_align: str = ALIGN_MIDDLE
 
 
-class TextInput(Editable):
-    """
-    A module that allows the user to input text.
-    """
-
-    H, V, BR = "━", "┃", "┛"
-    padding: tuple[int, int] = (2, 1)
-    border_color: Color
-    active_color: Color
-    word_wrap: bool = True
-
-    def __init__(
-        self,
-        coords: tuple[int, int],
-        dims: tuple[int, int],
-        node: Node,
-        color: Optional[Color] = None,
-        border: Optional[Color] = None,
-        active: Optional[Color] = None,
-        format: Optional[Callable] = None,
-    ):
-        super().__init__(coords, dims, node=node, color=color, format=format)
-        self.width, self.height = (dims[1] - 1, dims[0] - 1)
-        self.border_color = border or self.color
-        self.active_color = active or self.color
-
-    def activate(self):
-        # change the border color to a highlight
-        self._original_border_color = self.border_color
-        self.border_color = self.active_color
-        super().activate()
-
-    def deactivate(self, save: bool = True):
-        if self.active and hasattr(self, '_original_border_color'):
-            self.border_color = self._original_border_color
-        super().deactivate(save)
-
-    def render(self) -> None:
-        for i, line in enumerate(self._get_lines(str(self.value))):
-            self.grid.addstr(i, 0, line, self.color.to_curses())
-
-        # # add border to bottom right like a drop shadow
-        for x in range(self.width):
-            self.grid.addch(self.height, x, self.H, self.border_color.to_curses())
-        for y in range(self.height):
-            self.grid.addch(y, self.width, self.V, self.border_color.to_curses())
-        self.grid.addch(self.height, self.width, self.BR, self.border_color.to_curses())
-
-
 class Button(Element):
+    """A clickable button module"""
+
     h_align: str = ALIGN_CENTER
     v_align: str = ALIGN_MIDDLE
     active: bool = False
@@ -736,6 +788,8 @@ class CheckButton(RadioButton):
 
 
 class Contains(Renderable):
+    """A container for other modules"""
+
     _grid: Optional[curses.window] = None
     y: int
     x: int
@@ -1115,6 +1169,8 @@ class View(Contains):
 
 
 class App:
+    """The main application class."""
+
     stdscr: curses.window
     height: int
     width: int
@@ -1128,7 +1184,7 @@ class App:
 
     def __init__(self, stdscr: curses.window) -> None:
         self.stdscr = stdscr
-        self.height, self.width = self.stdscr.getmaxyx()  # TODO dynamic resizing
+        self.height, self.width = self.stdscr.getmaxyx()
 
         if not self.width >= self.min_width or not self.height >= self.min_height:
             raise RenderException(
@@ -1210,7 +1266,7 @@ class App:
                 if cls == self.view.__class__:
                     break
             self.load(name)
-        
+
         # render loop
         try:
             self.view.render()
@@ -1223,7 +1279,7 @@ class App:
                 raise RenderException("Grid not large enough to render all modules.")
             if "curses function returned NULL" in str(e):
                 pass
-                #raise RenderException("Window not large enough to render.")
+                # raise RenderException("Window not large enough to render.")
             raise e
 
     def click(self, y, x):

@@ -71,10 +71,12 @@ class AgentConfig(pydantic.BaseModel):
 
     @property
     def provider(self) -> str:
+        """The LLM provider ie. 'openai' or 'openrouter'"""
         return parse_provider_model(self.llm)[0]
 
     @property
     def model(self) -> str:
+        """The model name ie. 'gpt-4o'"""
         return parse_provider_model(self.llm)[1]
 
     @property

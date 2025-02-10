@@ -1,8 +1,4 @@
 {
-    "application-specific": {
-        "title": "Application Specific",
-        "description": "Tools that are specific to a particular application or domain."
-    },
     "browsing": {
         "title": "Browsing",
         "description": "Tools that are used to browse the web."
@@ -18,6 +14,10 @@
     "database": {
         "title": "Database",
         "description": "Tools that are used to interact with databases."
+    },
+    "finance": {
+        "title": "Finance",
+        "description": "Tools that are used to interact with financial services."
     },
     "image-analysis": {
         "title": "Image Analysis",

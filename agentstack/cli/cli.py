@@ -1,3 +1,4 @@
+from typing import Optional
 import os, sys
 import inquirer
 from agentstack import conf, log
@@ -5,6 +6,7 @@ from agentstack.conf import ConfigFile
 from agentstack.exceptions import ValidationError
 from agentstack.utils import validator_not_empty, is_snake_case
 from agentstack import providers
+from agentstack.generation import InsertionPoint
 
 
 LOGO = """\
@@ -74,4 +76,18 @@ def get_validated_input(
         if snake_case and not is_snake_case(value):
             raise ValidationError("Input must be in snake_case")
         return value
+
+
+def parse_insertion_point(position: Optional[str] = None) -> Optional[InsertionPoint]:
+    """
+    Parse an insertion point CLI argument into an InsertionPoint enum.
+    """
+    if position is None:
+        return None  # defer assumptions
+
+    valid_positions = {x.value for x in InsertionPoint}
+    if position not in valid_positions:
+        raise ValueError(f"Position must be one of {','.join(valid_positions)}.")
+
+    return next(x for x in InsertionPoint if x.value == position)
 

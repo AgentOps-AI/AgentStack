@@ -25,8 +25,8 @@ PREFERRED_MODELS = {
         'host': "Anthropic",
         'description': "The Anthropic Claude 3.5 Sonnet model",
     },
-    # TODO there is no publicly available OpenRouter implementation for 
-    # LangChain, so we can't recommend this yet. 
+    # TODO there is no publicly available OpenRouter implementation for
+    # LangChain, so we can't recommend this yet.
     # 'openrouter/deepseek/deepseek-r1': {
     #     'name': "DeepSeek R1",
     #     'host': "OpenRouter",
@@ -45,19 +45,6 @@ PREFERRED_MODELS = {
 }
 
 
-def parse_provider_model(model_id: str) -> tuple[str, str]:
-    """Parse the provider and model name from the model ID"""
-    # most providers are in the format "<provider>/<model-name>"
-    # openrouter models are in the format "openrouter/<provider>/<model-name>"
-    parts = tuple(model_id.split('/'))
-    if len(parts) == 2:
-        return parts
-    elif len(parts) == 3:
-        return '/'.join(parts[:2]), parts[2]
-    else:
-        raise ValidationError(f"Model id '{model_id}' does not match expected format.")
-
-
 class ProviderConfig(pydantic.BaseModel):
     id: str
     name: Optional[str]
@@ -73,3 +60,16 @@ def get_preferred_models() -> list[ProviderConfig]:
 
 def get_preferred_model_ids() -> list[str]:
     return [model.id for model in get_preferred_models()]
+
+
+def parse_provider_model(model_id: str) -> tuple[str, str]:
+    """Parse the provider and model name from the model ID"""
+    # most providers are in the format "<provider>/<model-name>"
+    # openrouter models are in the format "openrouter/<provider>/<model-name>"
+    parts = tuple(model_id.split('/'))
+    if len(parts) == 2:
+        return parts
+    elif len(parts) == 3:
+        return '/'.join(parts[:2]), parts[2]
+    else:
+        raise ValidationError(f"Model id '{model_id}' does not match expected format.")

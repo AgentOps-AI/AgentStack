@@ -1,4 +1,4 @@
-import sys
+import os, sys
 import curses
 import time
 import math
