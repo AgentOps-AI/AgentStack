@@ -105,6 +105,11 @@ class StarBox(Box):
     def render(self) -> None:
         self.grid.clear()
         for i in range(len(self.stars)):
+            if self.star_y[i] > 0:  # undraw previous star position
+                self.grid.addch(self.star_y[i] - 1, self.star_x[i], ' ')
+            else:  # previous star was at bottom of screen
+                self.grid.addch(self.height - 1, self.star_x[i], ' ')
+
             if self.star_y[i] < self.height:
                 self.grid.addch(self.star_y[i], self.star_x[i], '*', self.star_colors[i].to_curses())
                 self.star_y[i] += 1
@@ -233,8 +238,7 @@ class FormView(WizardView, metaclass=ABCMeta):
         self.error_message.value = message
 
     @abstractmethod
-    def form(self) -> list[Renderable]:
-        ...
+    def form(self) -> list[Renderable]: ...
 
     def layout(self) -> list[Renderable]:
         return [
@@ -245,7 +249,12 @@ class FormView(WizardView, metaclass=ABCMeta):
                 modules=[
                     LogoElement((1, 1), (7, self.width - 2)),
                     Title((9, 1), (1, self.width - 2), color=COLOR_TITLE, value=self.title),
-                    Title((self.height - 5, round(self.width / 3)), (3, round(self.width / 3)), color=COLOR_ERROR, value=self.error_message),
+                    Title(
+                        (self.height - 5, round(self.width / 3)),
+                        (3, round(self.width / 3)),
+                        color=COLOR_ERROR,
+                        value=self.error_message,
+                    ),
                     *self.form(),
                     Button(
                         (self.height - 5, self.width - 17),
@@ -283,8 +292,7 @@ class AgentSelectionView(FormView, metaclass=ABCMeta):
         return list(self.app.state.agents.keys())
 
     @abstractmethod
-    def submit(self):
-        ...
+    def submit(self): ...
 
     def form(self) -> list[Renderable]:
         return [
@@ -337,6 +345,10 @@ class ProjectView(FormView):
             self.error("Name must be in snake_case.")
             return
 
+        if os.path.exists(conf.PATH / self.project_name.value):
+            self.error(f"Directory '{self.project_name.value}' already exists.")
+            return
+
         self.app.state.create_project(
             name=self.project_name.value,
             description=self.project_description.value,
@@ -346,9 +358,21 @@ class ProjectView(FormView):
     def form(self) -> list[Renderable]:
         return [
             Text((11, 2), (1, 12), color=COLOR_FORM, value="Name"),
-            TextInput((11, 14), (2, self.width - 15), self.project_name, **FIELD_COLORS),
+            TextInput(
+                (11, 14),
+                (2, self.width - 15),
+                self.project_name,
+                placeholder="This will be used to create a new directory. Must be snake_case.",
+                **FIELD_COLORS,
+            ),
             Text((13, 2), (1, 12), color=COLOR_FORM, value="Description"),
-            TextInput((13, 14), (5, self.width - 15), self.project_description, **FIELD_COLORS),
+            TextInput(
+                (13, 14),
+                (5, self.width - 15),
+                self.project_description,
+                placeholder="Describe what you project will do.",
+                **FIELD_COLORS,
+            ),
         ]
 
 
@@ -464,16 +488,37 @@ class AgentView(FormView):
         large_field_height = min(5, round((self.height - 17) / 3))
         return [
             Text((11, 2), (1, 12), color=COLOR_FORM, value="Name"),
-            TextInput((11, 14), (2, self.width - 16), self.agent_name, **FIELD_COLORS),
-
+            TextInput(
+                (11, 14),
+                (2, self.width - 16),
+                self.agent_name,
+                placeholder="A unique name for this agent. Must be snake_case.",
+                **FIELD_COLORS,
+            ),
             Text((13, 2), (1, 12), color=COLOR_FORM, value="Role"),
-            TextInput((13, 14), (large_field_height, self.width - 16), self.agent_role, **FIELD_COLORS),
-
+            TextInput(
+                (13, 14),
+                (large_field_height, self.width - 16),
+                self.agent_role,
+                placeholder="A prompt to the agent that describes the role it takes in your project.",
+                ** FIELD_COLORS,
+            ),
             Text((13 + large_field_height, 2), (1, 12), color=COLOR_FORM, value="Goal"),
-            TextInput((13 + large_field_height, 14), (large_field_height, self.width - 16), self.agent_goal, **FIELD_COLORS),
-
+            TextInput(
+                (13 + large_field_height, 14),
+                (large_field_height, self.width - 16),
+                self.agent_goal,
+                placeholder="A prompt to the agent that describes the goal it is trying to achieve.",
+                **FIELD_COLORS,
+            ),
             Text((13 + (large_field_height * 2), 2), (1, 12), color=COLOR_FORM, value="Backstory"),
-            TextInput((13 + (large_field_height * 2), 14), (large_field_height, self.width - 16), self.agent_backstory, **FIELD_COLORS),
+            TextInput(
+                (13 + (large_field_height * 2), 14),
+                (large_field_height, self.width - 16),
+                self.agent_backstory,
+                placeholder="A prompt to the agent that describes the backstory of it's purpose.",
+                **FIELD_COLORS,
+            ),
         ]
 
 
@@ -759,13 +804,29 @@ class TaskView(FormView):
         large_field_height = min(5, round((self.height - 17) / 3))
         return [
             Text((11, 2), (1, 12), color=COLOR_FORM, value="Name"),
-            TextInput((11, 14), (2, self.width - 16), self.task_name, **FIELD_COLORS),
-
+            TextInput(
+                (11, 14),
+                (2, self.width - 16),
+                self.task_name,
+                placeholder="A unique name for this task. Must be snake_case.",
+                **FIELD_COLORS,
+            ),
             Text((13, 2), (1, 12), color=COLOR_FORM, value="Description"),
-            TextInput((13, 14), (large_field_height, self.width - 16), self.task_description, **FIELD_COLORS),
-
+            TextInput(
+                (13, 14),
+                (large_field_height, self.width - 16),
+                self.task_description,
+                placeholder="A prompt for this task that describes what should be done.",
+                **FIELD_COLORS,
+            ),
             Text((13 + large_field_height, 2), (2, 12), color=COLOR_FORM, value="Expected\nOutput"),
-            TextInput((13 + large_field_height, 14), (large_field_height, self.width - 16), self.expected_output, **FIELD_COLORS),
+            TextInput(
+                (13 + large_field_height, 14),
+                (large_field_height, self.width - 16),
+                self.expected_output,
+                placeholder="A prompt for this task that describes what the output should look like.",
+                **FIELD_COLORS,
+            ),
         ]
 
 
@@ -957,12 +1018,12 @@ class WizardApp(App):
             'task_agent_selection',
             'after_task',
         ],
-        'tool': [ # add tools to an agent
+        'tool': [  # add tools to an agent
             'tool_agent_selection',
             'tool_category',
             'tool',
             'after_agent',
-        ]
+        ],
     }
 
     state: State
@@ -988,7 +1049,6 @@ class WizardApp(App):
         self.stop()
 
         if self._finish_run_once:
-
             log.set_stdout(sys.stdout)  # re-enable on-screen logging
 
             init_project(
@@ -998,7 +1058,6 @@ class WizardApp(App):
 
             template.write_to_file(conf.PATH / "wizard")
             log.info(f"Saved template to: {conf.PATH / 'wizard.json'}")
-
 
     def advance(self, steps: int = 1):
         """Load the next view in the active workflow."""

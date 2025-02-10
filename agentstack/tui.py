@@ -576,7 +576,7 @@ class Editable(NodeElement):
         self,
         coords,
         dims,
-        node: Node,
+        node: Node, 
         color=None,
     ):
         super().__init__(coords, dims, node=node, color=color)
@@ -675,7 +675,6 @@ class TextInput(Editable):
             color = self.color.to_curses() | curses.A_ITALIC
         else:
             color = self.color.to_curses()
-
         for i, line in enumerate(self._get_lines(str(self.value))):
             self.grid.addstr(i, 0, line, color)
 
