@@ -472,32 +472,24 @@ class NodeElement(Element):
         dims: tuple[int, int],
         node: Node,
         color: Optional[Color] = None,
-        format: Optional[Callable] = None,
     ):
         super().__init__(coords, dims, color=color)
-        self.node = node  # TODO can also be str?
+        self.node = node
         self.value = str(node)
-        self.format = format
-        if isinstance(node, Node):
-            self.node.add_callback(self.update)
+        self.node.add_callback(self.update)  # allow the node to listen for changes
 
     def update(self, node: Node):
         self.value = str(node)
-        if self.format:
-            self.value = self.format(self.value)
 
     def save(self):
         self.node.update(self.value)
-        self.update(self.node)
 
     def destroy(self):
-        if isinstance(self.node, Node):
-            self.node.remove_callback(self.update)
+        self.node.remove_callback(self.update)
         super().destroy()
 
 
 class Editable(NodeElement):
-    filter: Optional[Callable] = None
     active: bool
     _original_value: Any
 
@@ -505,13 +497,10 @@ class Editable(NodeElement):
         self,
         coords,
         dims,
-        node,
+        node: Node, 
         color=None,
-        format: Optional[Callable] = None,
-        filter: Optional[Callable] = None,
     ):
-        super().__init__(coords, dims, node=node, color=color, format=format)
-        self.filter = filter
+        super().__init__(coords, dims, node=node, color=color)
         self.active = False
         self._original_value = self.value
 
@@ -519,8 +508,7 @@ class Editable(NodeElement):
         if not self.active and self.hit(y, x):
             self.activate()
         elif self.active:  # click off
-            self.deactivate()
-            self.save()
+            self.deactivate(save=False)
 
     def activate(self):
         """Make this module the active one; ie. editing or selected."""
@@ -534,11 +522,6 @@ class Editable(NodeElement):
         self.active = False
         if save:
             self.save()
-
-    def save(self):
-        if self.filter:
-            self.value = self.filter(self.value)
-        super().save()
 
     def input(self, key: Key):
         if not self.active:
@@ -557,6 +540,72 @@ class Editable(NodeElement):
     def destroy(self):
         self.deactivate()
         super().destroy()
+
+
+class TextInput(Editable):
+    """
+    A module that allows the user to input text.
+    """
+
+    H, V, BR = "━", "┃", "┛"
+    padding: tuple[int, int] = (2, 1)
+    border_color: Color
+    active_color: Color
+    placeholder: str = ""
+    word_wrap: bool = True
+
+    def __init__(
+        self,
+        coords: tuple[int, int],
+        dims: tuple[int, int],
+        node: Node,
+        placeholder: str = "",
+        color: Optional[Color] = None,
+        border: Optional[Color] = None,
+        active: Optional[Color] = None,
+    ):
+        super().__init__(coords, dims, node=node, color=color)
+        self.width, self.height = (dims[1] - 1, dims[0] - 1)
+        self.border_color = border or self.color
+        self.active_color = active or self.color
+        self.placeholder = placeholder
+        if self.value == "":
+            self.value = self.placeholder
+
+    def activate(self):
+        # change the border color to a highlight
+        self._original_border_color = self.border_color
+        self.border_color = self.active_color
+        if self.value == self.placeholder:
+            self.value = ""
+        super().activate()
+
+    def deactivate(self, save: bool = True):
+        if self.active and hasattr(self, '_original_border_color'):
+            self.border_color = self._original_border_color
+        if self.value == "":
+            self.value = self.placeholder
+        super().deactivate(save)
+
+    def save(self):
+        if self.value != self.placeholder:
+            super().save()
+
+    def render(self) -> None:
+        if self.value == self.placeholder:
+            color = self.color.to_curses() | curses.A_ITALIC
+        else:
+            color = self.color.to_curses()
+        
+        for i, line in enumerate(self._get_lines(str(self.value))):
+            self.grid.addstr(i, 0, line, color)
+
+        # # add border to bottom right like a drop shadow
+        for x in range(self.width):
+            self.grid.addch(self.height, x, self.H, self.border_color.to_curses())
+        for y in range(self.height):
+            self.grid.addch(y, self.width, self.V, self.border_color.to_curses())
+        self.grid.addch(self.height, self.width, self.BR, self.border_color.to_curses())
 
 
 class Text(Element):
@@ -608,55 +657,6 @@ class BoldText(Text):
 class Title(BoldText):
     h_align: str = ALIGN_CENTER
     v_align: str = ALIGN_MIDDLE
-
-
-class TextInput(Editable):
-    """
-    A module that allows the user to input text.
-    """
-
-    H, V, BR = "━", "┃", "┛"
-    padding: tuple[int, int] = (2, 1)
-    border_color: Color
-    active_color: Color
-    word_wrap: bool = True
-
-    def __init__(
-        self,
-        coords: tuple[int, int],
-        dims: tuple[int, int],
-        node: Node,
-        color: Optional[Color] = None,
-        border: Optional[Color] = None,
-        active: Optional[Color] = None,
-        format: Optional[Callable] = None,
-    ):
-        super().__init__(coords, dims, node=node, color=color, format=format)
-        self.width, self.height = (dims[1] - 1, dims[0] - 1)
-        self.border_color = border or self.color
-        self.active_color = active or self.color
-
-    def activate(self):
-        # change the border color to a highlight
-        self._original_border_color = self.border_color
-        self.border_color = self.active_color
-        super().activate()
-
-    def deactivate(self, save: bool = True):
-        if self.active and hasattr(self, '_original_border_color'):
-            self.border_color = self._original_border_color
-        super().deactivate(save)
-
-    def render(self) -> None:
-        for i, line in enumerate(self._get_lines(str(self.value))):
-            self.grid.addstr(i, 0, line, self.color.to_curses())
-
-        # # add border to bottom right like a drop shadow
-        for x in range(self.width):
-            self.grid.addch(self.height, x, self.H, self.border_color.to_curses())
-        for y in range(self.height):
-            self.grid.addch(y, self.width, self.V, self.border_color.to_curses())
-        self.grid.addch(self.height, self.width, self.BR, self.border_color.to_curses())
 
 
 class Button(Element):

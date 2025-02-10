@@ -12,6 +12,9 @@ from agentstack.generation import asttools
 from agentstack import graph
 
 NAME: str = "LLamaIndex"
+DESCRIPTION: str = (
+    "LlamaIndex is the leading framework for building LLM-powered agents over your data."
+)
 ENTRYPOINT: Path = Path('src/stack.py')
 
 PROVIDERS = {
