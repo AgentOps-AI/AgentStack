@@ -576,7 +576,7 @@ class Editable(NodeElement):
         self,
         coords,
         dims,
-        node: Node, 
+        node: Node,
         color=None,
     ):
         super().__init__(coords, dims, node=node, color=color)
