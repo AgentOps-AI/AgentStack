@@ -103,8 +103,12 @@ class StarBox(Box):
         self.star_index = 0
 
     def render(self) -> None:
-        self.grid.clear()
         for i in range(len(self.stars)):
+            if self.star_y[i] > 0: # undraw previous star position
+                self.grid.addch(self.star_y[i] - 1, self.star_x[i], ' ')
+            else: # previous star was at bottom of screen
+                self.grid.addch(self.height - 1, self.star_x[i], ' ')
+            
             if self.star_y[i] < self.height:
                 self.grid.addch(self.star_y[i], self.star_x[i], '*', self.star_colors[i].to_curses())
                 self.star_y[i] += 1
