@@ -151,20 +151,15 @@ class BannerView(WizardView):
         buttons_conf: dict[str, Callable] = {}
 
         if not self.app.state.project:
-            # no project yet, so we need to create one
             buttons_conf["Create Project"] = lambda: self.app.load('project', workflow='project')
         else:
-            # project has been created, so we can add agents
             buttons_conf["New Agent"] = lambda: self.app.load('agent', workflow='agent')
 
         if len(self.app.state.agents):
-            # we have one or more agents, so we can add tasks
             buttons_conf["New Task"] = lambda: self.app.load('task', workflow='task')
-            # we can also add more tools to existing agents
             buttons_conf["Add Tools"] = lambda: self.app.load('tool_agent_selection', workflow='tool')
-        
+
         if self.app.state.project:
-            # we can complete the project
             buttons_conf["Finish"] = lambda: self.app.finish()
 
         buttons: list[Button] = []
@@ -425,7 +420,7 @@ class FrameworkView(FormView):
 
 class AfterProjectView(BannerView):
     title = "We've got a project!"
-    sparkle = "*ﾟ･:*:･ﾟ’★,｡･:*:･ﾟ’☆"
+    sparkle = "(づ ◕‿◕ )づ *ﾟ･:*:･ﾟ’★,｡･:*:･ﾟ’☆"
     subtitle = "Now, add an Agent to handle your tasks!"
 
 
