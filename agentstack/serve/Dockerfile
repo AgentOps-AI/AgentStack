@@ -11,24 +11,34 @@ RUN pip install --no-cache-dir uv
 
 # Copy everything since we're installing local package
 COPY . .
-# install local version of agentstack for local dev
-#COPY ../../ agentstack
-RUN #ls -a agentstack
 
-
-# Debug: Try installing packages one at a time
 RUN uv pip install --system psutil
 RUN uv pip install --system flask
-RUN uv pip install --system git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command #install on cloud #cache 5
-RUN #cd agentstack && uv pip install --system .
+RUN uv pip install --system gunicorn
+RUN uv pip install --system git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command
 RUN mkdir -p src
 RUN cp /usr/local/lib/python3.12/site-packages/agentstack/serve/serve.py ./src
-RUN #cp agentstack/serve/serve.py ./src
-RUN #uv pip uninstall -y agentstack
 RUN uv pip install --system .
+
+# Create Gunicorn config
+RUN echo 'import multiprocessing\n\
+bind = "0.0.0.0:6969"\n\
+workers = 1\n\
+threads = 1\n\
+worker_class = "sync"\n\
+max_requests = 1\n\
+max_requests_jitter = 0\n\
+timeout = 300\n\
+keepalive = 2\n\
+worker_connections = 1\n\
+errorlog = "-"\n\
+accesslog = "-"\n\
+capture_output = True\n\
+def post_worker_init(worker):\n\
+    worker.nr = 1' > gunicorn.conf.py
 
 # Expose the port
 EXPOSE 6969
 
-# Use python directly since we're installing to system
-CMD ["python", "src/serve.py"]
+# Use Gunicorn with config file
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "src.serve:app"]

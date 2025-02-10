@@ -2,23 +2,23 @@
 import importlib
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
+
 from dotenv import load_dotenv
 from agentstack import conf, frameworks, inputs, log
 from agentstack.exceptions import ValidationError
 from agentstack.utils import verify_agentstack_project
 # TODO: move this to not cli, but cant be utils due to circular import
 from agentstack.cli.run import format_friendly_error_message
-
-load_dotenv(dotenv_path="/app/.env")
-
 from flask import Flask, request, jsonify
 import requests
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 import os
 
 MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
 
+load_dotenv(dotenv_path="/app/.env")
 app = Flask(__name__)
 
 
@@ -43,9 +43,10 @@ def process_agent():
         # Extract data and webhook URL from request
         request_data = request.get_json()
 
-        # TODO: validate webhook url
         if not request_data or 'webhook_url' not in request_data:
-            return jsonify({'error': 'Missing webhook_url in request'}), 400
+            result, message = validate_url(request_data.get("webhook_url"))
+            if not result:
+                return jsonify({'error': f'Invalid webhook_url in request: {message}'}), 400
 
         if not request_data or 'inputs' not in request_data:
             return jsonify({'error': 'Missing input data in request'}), 400
@@ -139,6 +140,47 @@ def _import_project_module(path: Path):
     return project_module
 
 
+def validate_url(url: str) -> Tuple[bool, str]:
+    """
+    Validates a URL and returns a tuple of (is_valid, error_message).
+
+    Args:
+        url (str): The URL to validate
+
+    Returns:
+        Tuple[bool, str]: A tuple containing:
+            - Boolean indicating if the URL is valid
+            - Error message (empty string if valid)
+    """
+    # Check if URL is empty
+    if not url:
+        return False, "URL cannot be empty"
+
+    try:
+        # Parse the URL
+        result = urlparse(url)
+
+        # Check for required components
+        if not result.scheme:
+            return False, "Missing protocol (e.g., http:// or https://)"
+
+        if not result.netloc:
+            return False, "Missing domain name"
+
+        # Validate scheme
+        if result.scheme not in ['http', 'https']:
+            return False, f"Invalid protocol: {result.scheme}"
+
+        # Basic domain validation
+        if '.' not in result.netloc:
+            return False, "Invalid domain format"
+
+        return True, ""
+
+    except Exception as e:
+        return False, f"Invalid URL format: {str(e)}"
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 6969))
 
@@ -147,3 +189,6 @@ if __name__ == '__main__':
     print("Learn more about agent requests at https://docs.agentstack.sh/") # TODO: add docs for this
 
     app.run(host='0.0.0.0', port=port)
+else:
+    # This branch is used by Gunicorn
+    print("Starting production server with Gunicorn")
