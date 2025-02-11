@@ -7,9 +7,10 @@ from agentstack import conf, log
 from agentstack import auth
 from agentstack.cli import (
     init_project,
-    add_tool,
     list_tools,
-    configure_default_model,
+    add_tool,
+    add_agent,
+    add_task,
     run_project,
     export_template,
     # serve_project
@@ -18,6 +19,7 @@ from agentstack.cli.cli import serve_project
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
 from agentstack import generation
+from agentstack import repo
 from agentstack.update import check_for_updates
 from agentstack.deploy import deploy
 
@@ -34,6 +36,12 @@ def _main():
         "--debug",
         help="Print more information when an error occurs",
         dest="debug",
+        action="store_true",
+    )
+    global_parser.add_argument(
+        "--no-git",
+        help="Disable automatic git commits of changes to your project.",
+        dest="no_git",
         action="store_true",
     )
 
@@ -167,6 +175,10 @@ def _main():
     # Set the debug flag
     conf.set_debug(args.debug)
 
+    # --no-git flag disables automatic git commits
+    if args.no_git:
+        repo.dont_track_changes()
+
     # Handle version
     if args.version:
         log.info(f"AgentStack CLI version: {get_version()}")
@@ -190,13 +202,11 @@ def _main():
             if args.tools_command in ["list", "l"]:
                 list_tools()
             elif args.tools_command in ["add", "a"]:
-                conf.assert_project()
                 agents = [args.agent] if args.agent else None
                 agents = args.agents.split(",") if args.agents else agents
                 add_tool(args.name, agents)
             elif args.tools_command in ["remove", "r"]:
-                conf.assert_project()
-                generation.remove_tool(args.name)
+                remove_tool(args.name)
             else:
                 tools_parser.print_help()
         elif args.command in ['login']:
@@ -206,8 +216,7 @@ def _main():
 
         # inside project dir commands only
         elif args.command in ["run", "r"]:
-            conf.assert_project()
-            run_project(command=args.function, debug=args.debug, cli_args=extra_args)
+            run_project(command=args.function, cli_args=extra_args)
         elif args.command in ['deploy', 'd']:
             conf.assert_project()
             asyncio.run(deploy())
@@ -215,19 +224,26 @@ def _main():
             conf.assert_project()
             serve_project()
         elif args.command in ['generate', 'g']:
-            conf.assert_project()
             if args.generate_command in ['agent', 'a']:
-                if not args.llm:
-                    configure_default_model()
-                generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm, args.position)
+                add_agent(
+                    name=args.name,
+                    role=args.role,
+                    goal=args.goal,
+                    backstory=args.backstory,
+                    llm=args.llm,
+                    position=args.position,
+                )
             elif args.generate_command in ['task', 't']:
-                generation.add_task(
-                    args.name, args.description, args.expected_output, args.agent, args.position
+                add_task(
+                    name=args.name,
+                    description=args.description,
+                    expected_output=args.expected_output,
+                    agent=args.agent,
+                    position=args.position,
                 )
             else:
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:
-            conf.assert_project()
             export_template(args.filename)
         else:
             parser.print_help()

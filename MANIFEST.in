@@ -1,4 +1,5 @@
 recursive-include agentstack/templates *
+recursive-include agentstack/frameworks/templates *
 recursive-include agentstack/_tools *
 recursive-include agentstack/serve/serve.py
 include agentstack.json .env .env.example

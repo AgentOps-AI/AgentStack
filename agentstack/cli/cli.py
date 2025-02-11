@@ -1,3 +1,4 @@
+from typing import Optional
 import os, sys
 import importlib
 from typing import Optional
@@ -12,7 +13,7 @@ import inquirer
 from agentstack import conf, log
 from agentstack.cli.agentstack_data import CookiecutterData, ProjectStructure, ProjectMetadata, FrameworkData
 from agentstack.conf import ConfigFile
-from agentstack.generation.files import ProjectFile
+from agentstack.generation.files import ProjectFile, InsertionPoint
 from agentstack import frameworks
 from agentstack import generation
 from agentstack import inputs
@@ -394,3 +395,18 @@ def serve_project():
     with importlib.resources.path('agentstack.serve', 'Dockerfile') as path:
         os.system(f"docker build -t agent-service -f {path} . --progress=plain")
     os.system("docker run --name agentstack-local -p 6969:6969 agent-service")
+
+
+def parse_insertion_point(position: Optional[str] = None) -> Optional[InsertionPoint]:
+    """
+    Parse an insertion point CLI argument into an InsertionPoint enum.
+    """
+    if position is None:
+        return None  # defer assumptions
+
+    valid_positions = {x.value for x in InsertionPoint}
+    if position not in valid_positions:
+        raise ValueError(f"Position must be one of {','.join(valid_positions)}.")
+
+    return next(x for x in InsertionPoint if x.value == position)
+

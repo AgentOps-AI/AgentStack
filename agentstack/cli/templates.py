@@ -10,7 +10,7 @@ from agentstack import frameworks
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
 from agentstack import inputs
-from agentstack.proj_templates import CURRENT_VERSION, TemplateConfig
+from agentstack.templates import CURRENT_VERSION, TemplateConfig
 from agentstack.generation.files import ProjectFile
 from .agentstack_data import (
     FrameworkData,
@@ -52,7 +52,7 @@ def insert_template(name: str, template: TemplateConfig, framework: Optional[str
         framework=framework,
     )
 
-    template_path = get_package_path() / f'templates/{framework}'
+    template_path = get_package_path() / f'frameworks/templates/{framework}'
     with open(f"{template_path}/cookiecutter.json", "w") as json_file:
         json.dump(cookiecutter_data.to_dict(), json_file)
         # TODO this should not be written to the package directory
@@ -69,6 +69,8 @@ def export_template(output_filename: str):
     """
     Export the current project as a template.
     """
+    conf.assert_project()
+    
     try:
         metadata = ProjectFile()
     except Exception as e:
