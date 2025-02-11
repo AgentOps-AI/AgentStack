@@ -13,15 +13,14 @@ import inquirer
 from agentstack import conf, log
 from agentstack.cli.agentstack_data import CookiecutterData, ProjectStructure, ProjectMetadata, FrameworkData
 from agentstack.conf import ConfigFile
-from agentstack.generation.files import ProjectFile, InsertionPoint
+from agentstack.generation import InsertionPoint, ProjectFile
 from agentstack import frameworks
-from agentstack import generation
 from agentstack import inputs
 from agentstack.agents import get_all_agents
 from agentstack.tasks import get_all_tasks
 from agentstack.utils import get_package_path, open_json_file, term_color, is_snake_case, get_framework, \
     validator_not_empty, verify_agentstack_project
-from agentstack.proj_templates import TemplateConfig
+from agentstack.templates import TemplateConfig
 from agentstack.exceptions import ValidationError
 from agentstack.utils import validator_not_empty, is_snake_case
 
