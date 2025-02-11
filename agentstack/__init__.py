@@ -13,6 +13,7 @@ from agentstack.agents import get_agent, get_all_agents, get_all_agent_names
 from agentstack.tasks import get_task, get_all_tasks, get_all_task_names
 from agentstack.inputs import get_inputs
 from agentstack import _tools
+from agentstack._tools import get_tool
 from agentstack import frameworks
 
 ___all___ = [
@@ -22,6 +23,7 @@ ___all___ = [
     "tools", 
     "get_tags", 
     "get_framework", 
+    "get_tool", 
     "get_agent", 
     "get_all_agents",
     "get_all_agent_names",

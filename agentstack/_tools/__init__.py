@@ -218,7 +218,7 @@ class ToolConfig(pydantic.BaseModel):
             base_perms: Optional[ToolPermission] = self.tools.get(func_name)
             assert base_perms, f"Tool config.json for '{self.name}' does not include '{func_name}'."
 
-            _user_perms: Optional[ToolPermission] = user_config.tools.get(func_name)
+            _user_perms: Optional[ToolPermission] = user_config.tools[func_name]
             if _user_perms is None:  # `None` if user chooses to inherit all defaults
                 user_perms = {}
             if isinstance(_user_perms, ToolPermission):
