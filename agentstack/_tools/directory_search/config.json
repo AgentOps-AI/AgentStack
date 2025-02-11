@@ -8,5 +8,13 @@
   "dependencies": [
     "embedchain>=0.1.0"
   ],
-  "tools": ["search_directory", "search_fixed_directory"]
+  "tools": {
+    "search_directory": {
+      "actions": ["read"],
+      "allowed_dirs": ["*"]
+    },
+    "search_fixed_directory": {
+      "actions": ["read"]
+    }
+  }
 }

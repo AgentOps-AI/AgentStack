@@ -8,5 +8,9 @@
   "dependencies": [
     "requests>=2.30"
   ],
-  "tools": ["query_perplexity"]
+  "tools": {
+    "query_perplexity": {
+      "actions": ["read"]
+    }
+  }
 }

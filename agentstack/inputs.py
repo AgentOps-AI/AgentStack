@@ -1,16 +1,12 @@
 from typing import Optional
 import os
 from pathlib import Path
-from ruamel.yaml import YAML, YAMLError
-from ruamel.yaml.scalarstring import FoldedScalarString
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
+from agentstack import yaml
 
 
 INPUTS_FILENAME: Path = Path("src/config/inputs.yaml")
-
-yaml = YAML()
-yaml.preserve_quotes = True  # Preserve quotes in existing data
 
 # run_inputs are set at the beginning of the run and are not saved
 run_inputs: dict[str, str] = {}
@@ -38,8 +34,8 @@ class InputsConfig:
 
         try:
             with open(filename, 'r') as f:
-                self._attributes = yaml.load(f) or {}
-        except YAMLError as e:
+                self._attributes = yaml.parser.load(f) or {}
+        except yaml.YAMLError as e:
             # TODO format MarkedYAMLError lines/messages
             raise ValidationError(f"Error parsing inputs file: {filename}\n{e}")
 
@@ -58,13 +54,13 @@ class InputsConfig:
     def model_dump(self) -> dict:
         dump = {}
         for key, value in self._attributes.items():
-            dump[key] = FoldedScalarString(value)
+            dump[key] = yaml.FoldedScalarString(value)
         return dump
 
     def write(self):
         log.debug(f"Writing inputs to {INPUTS_FILENAME}")
         with open(conf.PATH / INPUTS_FILENAME, 'w') as f:
-            yaml.dump(self.model_dump(), f)
+            yaml.parser.dump(self.model_dump(), f)
 
     def __enter__(self) -> 'InputsConfig':
         return self

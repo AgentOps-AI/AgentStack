@@ -12,6 +12,8 @@ from agentstack.utils import get_framework
 from agentstack.agents import get_agent, get_all_agents, get_all_agent_names
 from agentstack.tasks import get_task, get_all_tasks, get_all_task_names
 from agentstack.inputs import get_inputs
+from agentstack import _tools
+from agentstack._tools import get_tool
 from agentstack import frameworks
 
 ___all___ = [
@@ -21,6 +23,7 @@ ___all___ = [
     "tools", 
     "get_tags", 
     "get_framework", 
+    "get_tool", 
     "get_agent", 
     "get_all_agents",
     "get_all_agent_names",
@@ -61,12 +64,20 @@ class ToolLoader:
     """
     Provides the public interface for accessing tools, wrapped in the
     framework-specific callable format.
-
-    Get a tool's callables by name with `agentstack.tools[tool_name]`
-    Include them in your agent's tool list with `tools = [*agentstack.tools[tool_name], ]`
     """
 
     def __getitem__(self, tool_name: str) -> list[Callable]:
+        """
+        Get a tool's callables by name with `agentstack.tools[tool_name]`
+        Include them in your agent's tool list with `tools = [*agentstack.tools[tool_name], ]`
+        """
         return frameworks.get_tool_callables(tool_name)
+
+    def get_permissions(self, func: Callable) -> _tools.ToolPermission:
+        """
+        Get the permissions for a tool function.
+        """
+        # aliased here to expose in the public API
+        return _tools.get_permissions(func)
 
 tools = ToolLoader()

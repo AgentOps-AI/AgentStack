@@ -1,5 +1,6 @@
 import os
 from agentstack.utils import get_package_path
+from agentstack import tools
 import docker
 
 CONTAINER_NAME = "code-interpreter"
@@ -60,6 +61,11 @@ def run_code(code: str, libraries_used: list[str]) -> str:
         code: The code to be executed. ALWAYS PRINT the final result and the output of the code.
         libraries_used: A list of libraries to be installed in the container before running the code.
     """
+    permissions = tools.get_permissions(run_code)
+    
+    if not permissions.EXECUTE:
+        return "User has not granted EXECUTE permissions."
+    
     _verify_docker_image()
     container = _init_docker_container()
 

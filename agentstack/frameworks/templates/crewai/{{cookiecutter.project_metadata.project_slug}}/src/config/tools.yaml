@@ -1,0 +1,37 @@
+# Project Tool Configuration
+# --------------------------
+# This file controls how tools are made available to your project. 
+# 
+# To make a tool's function available to your agents, just include an entry
+# in the tool's section. Tools will be automatically added to this list as you
+# add them to your project. Remove any tools you don't need to keep your
+# agents focused on the task at hand (you can also just comment them out).
+# 
+# ```
+# tool_name:
+#     function_name: ~
+# ```
+# 
+# All tools support an `actions` attribute, which controls the actions the tool
+# is allowed to perform. Available options are: [`read`, `write`, `execute`]
+# though not all tools support all actions.
+# 
+# ```
+# tool_name:
+#     function_name:
+#         actions: ['read', 'write']
+# ```
+# 
+# You can also override permissions defined by the tool, like paths it is able to 
+# access, or file types it is able to read/write. It is up to the tool author
+# to define what options are available, so check the documentation for the tool
+# you are using. https://docs.agentstack.sh/tools
+#
+# ```
+# tool_name:
+#     function_name:
+#         actions: ['read', 'write']
+#         allowed_dirs: ['/home/user/*']
+#         allowed_extensions: ['*.txt', '*.md']
+# ```
+_preserve_comments_:

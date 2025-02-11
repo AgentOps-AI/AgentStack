@@ -7,7 +7,7 @@ import ast
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack import frameworks
-from agentstack._tools import get_all_tools, ToolConfig
+from agentstack._tools import get_all_tools, ToolConfig, USER_TOOL_CONFIG_FILENAME
 from agentstack.generation.tool_generation import add_tool, remove_tool
 
 
@@ -22,6 +22,7 @@ class TestGenerationTool(unittest.TestCase):
 
         os.makedirs(self.project_dir)
         os.makedirs(self.project_dir / 'src')
+        os.makedirs(self.project_dir / 'src' / 'config')
         os.makedirs(self.project_dir / 'src' / 'tools')
         (self.project_dir / 'src' / '__init__.py').touch()
 
@@ -49,6 +50,8 @@ class TestGenerationTool(unittest.TestCase):
         # TODO verify tool is added to all agents (this is covered in test_frameworks.py)
         # assert 'agent_connect' in entrypoint_src
         assert 'agent_connect' in open(self.project_dir / 'agentstack.json').read()
+        # generation handles creating the user's tools config
+        assert (self.project_dir / USER_TOOL_CONFIG_FILENAME).exists()
 
     def test_remove_tool(self):
         tool_conf = ToolConfig.from_tool_name('agent_connect')

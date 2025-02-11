@@ -1,0 +1,4 @@
+tool_name:
+  tool1:
+    actions: ['execute']
+  tool2: ~

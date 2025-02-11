@@ -2,10 +2,9 @@ from typing import Optional
 import os
 from pathlib import Path
 import pydantic
-from ruamel.yaml import YAML, YAMLError
-from ruamel.yaml.scalarstring import FoldedScalarString
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
+from agentstack import yaml
 
 
 TASKS_FILENAME: Path = Path("src/config/tasks.yaml")
@@ -13,9 +12,6 @@ TASKS_PROMPT_TPL: str = ("\nThis is the expect criteria for your final answer: {
     "you MUST return the actual complete content as the final answer, not a summary. "
     "\nCurrent Task: {description}\n\nBegin! This is VERY important to you, use the "
     "tools available and give your best Final Answer, your job depends on it!\n\nThought:")
-
-yaml = YAML()
-yaml.preserve_quotes = True  # Preserve quotes in existing data
 
 
 class TaskConfig(pydantic.BaseModel):
@@ -55,10 +51,10 @@ class TaskConfig(pydantic.BaseModel):
 
         try:
             with open(filename, 'r') as f:
-                data = yaml.load(f) or {}
+                data = yaml.parser.load(f) or {}
             data = data.get(name, {}) or {}
             super().__init__(**{**{'name': name}, **data})
-        except YAMLError as e:
+        except yaml.YAMLError as e:
             # TODO format MarkedYAMLError lines/messages
             raise ValidationError(f"Error parsing tasks file: {filename}\n{e}")
         except pydantic.ValidationError as e:
@@ -80,7 +76,7 @@ class TaskConfig(pydantic.BaseModel):
         dump.pop('name')  # name is the key, so keep it out of the data
         # format these as FoldedScalarStrings
         for key in ('description', 'expected_output', 'agent'):
-            dump[key] = FoldedScalarString(dump.get(key) or "")
+            dump[key] = yaml.FoldedScalarString(dump.get(key) or "")
         return {self.name: dump}
 
     def write(self):
@@ -88,12 +84,12 @@ class TaskConfig(pydantic.BaseModel):
         filename = conf.PATH / TASKS_FILENAME
 
         with open(filename, 'r') as f:
-            data = yaml.load(f) or {}
+            data = yaml.parser.load(f) or {}
 
         data.update(self.model_dump())
 
         with open(filename, 'w') as f:
-            yaml.dump(data, f)
+            yaml.parser.dump(data, f)
 
     def __enter__(self) -> 'TaskConfig':
         return self
@@ -108,7 +104,7 @@ def get_all_task_names() -> list[str]:
         log.debug(f"Project does not have an {TASKS_FILENAME} file.")
         return []
     with open(filename, 'r') as f:
-        data = yaml.load(f) or {}
+        data = yaml.parser.load(f) or {}
     return list(data.keys())
 
 

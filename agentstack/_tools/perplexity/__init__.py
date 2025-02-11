@@ -1,5 +1,6 @@
 import os
 import requests
+from agentstack import tools
 
 
 url = "https://api.perplexity.ai/chat/completions"
@@ -10,6 +11,9 @@ def query_perplexity(query: str):
     """
     Use Perplexity to concisely search the internet and answer a query with up-to-date information.
     """
+    permissions = tools.get_permissions(query_perplexity)
+    if not permissions.READ:
+        return "User has not granted read permission."
 
     payload = {
         "model": "llama-3.1-sonar-small-128k-online",

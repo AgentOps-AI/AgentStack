@@ -514,10 +514,6 @@ which adheres to a common pattern or exporting your project to share.
 Templates are versioned, and each previous version provides a method to convert
 it's content to the current version. 
 
-> TODO: Templates are currently identified as `proj_templates` since they conflict
-with the templates used by `generation`. Move existing templates to be part of
-the generation package. 
-
 ### `TemplateConfig.from_user_input(identifier: str)`
 `<TemplateConfig>` Returns a `TemplateConfig` object for either a URL, file path,
 or builtin template name.
@@ -716,7 +712,7 @@ title: 'System Analyzer'
 description: 'Inspect a project directory and improve it'
 ---
 
-[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/proj_templates/system_analyzer.json)
+[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/system_analyzer.json)
 
 ```bash
 agentstack init --template=system_analyzer
@@ -737,7 +733,7 @@ title: 'Researcher'
 description: 'Research and report result from a query'
 ---
 
-[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/proj_templates/research.json)
+[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/research.json)
 
 ```bash
 agentstack init --template=research
@@ -828,7 +824,54 @@ title: 'Content Creator'
 description: 'Research a topic and create content on it'
 ---
 
-[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/proj_templates/content_creator.json)
+[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/content_creator.json)
+
+## frameworks/list.mdx
+
+---
+title: Frameworks
+description: 'Supported frameworks in AgentStack'
+icon: 'ship'
+---
+
+These are documentation links to the frameworks supported directly by AgentStack.
+
+To start a project with one of these frameworks, use
+```bash
+agentstack init <project_name> --framework <framework_name>
+```
+
+## Framework Docs
+<CardGroup cols={3}>
+  <Card
+    title="CrewAI"
+    icon="ship"
+    href="https://docs.crewai.com/introduction"
+  >
+    An intuitive agentic framework (recommended)
+  </Card>
+    <Card
+    title="LangGraph"
+    icon="circle-nodes"
+    href="https://langchain-ai.github.io/langgraph/"
+  >
+    A complex but capable framework with a _steep_ learning curve
+  </Card>
+    <Card
+    title="OpenAI Swarms"
+    icon="bee"
+    href="https://github.com/openai/swarm"
+  >
+    A simple framework with a cult following
+  </Card>
+    <Card
+    title="LlamaIndex"
+    icon="layer-group"
+    href="https://docs.llamaindex.ai/en/stable/"
+  >
+    An expansive framework with many ancillary features
+  </Card>
+</CardGroup>
 
 ## tools/package-structure.mdx
 
@@ -1043,7 +1086,7 @@ You can pass the `--wizard` flag to `agentstack init` to use an interactive proj
 You can also pass a `--template=<template_name>` argument to `agentstack init` which will pre-populate your project with functionality
 from a built-in template, or one found on the internet. A `template_name` can be one of three identifiers:
 
-- A built-in AgentStack template (see the `templates/proj_templates` directory in the AgentStack repo for bundled templates).
+- A built-in AgentStack template (see the `templates` directory in the AgentStack repo for bundled templates).
 - A template file from the internet; pass the full https URL of the template.
 - A local template file; pass an absolute or relative path. 
 

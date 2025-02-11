@@ -1,18 +1,31 @@
 {
   "name": "payman",
   "category": "financial-infra",
-  "tools": [
-    "send_payment",
-    "search_available_payees",
-    "add_payee",
-    "ask_for_money",
-    "get_balance"
-  ],
   "url": "https://www.paymanai.com",
   "cta": "Setup your Agents Payman account at https://app.paymanai.com",
   "env": {
     "PAYMAN_API_SECRET": null,
     "PAYMAN_ENVIRONMENT": null
   },
-  "dependencies": ["paymanai>=2.1.0"]
+  "dependencies": ["paymanai>=2.1.0"],
+  "tools": {
+    "send_payment": {
+      "actions": ["write"]
+    },
+    "search_destinations": {
+      "actions": ["read"]
+    },
+    "create_payee": {
+      "actions": ["write"]
+    },
+    "initiate_customer_deposit": {
+      "actions": ["write"]
+    },
+    "get_customer_balance": {
+      "actions": ["read"]
+    },
+    "get_spendable_balance": {
+      "actions": ["read"]
+    }
+  }
 }

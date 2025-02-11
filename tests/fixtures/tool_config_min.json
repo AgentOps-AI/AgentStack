@@ -1,5 +1,12 @@
 {
     "name": "tool_name",
     "category": "category",
-    "tools": ["tool1", "tool2"]
+    "tools": {
+        "tool1": {
+            "actions": ["read", "write"]
+        },
+        "tool2": {
+            "actions": ["read"]
+        }
+    }
 }

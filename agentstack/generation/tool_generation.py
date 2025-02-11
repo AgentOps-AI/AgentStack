@@ -6,7 +6,7 @@ from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack import packaging
 from agentstack.utils import term_color
-from agentstack._tools import ToolConfig
+from agentstack._tools import ToolConfig, UserToolConfig
 from agentstack.generation import asttools
 from agentstack.generation.files import EnvFile
 
@@ -29,6 +29,14 @@ def add_tool(name: str, agents: Optional[list[str]] = []):
             with EnvFile(".env.example") as env:
                 for var, value in tool.env.items():
                     env.append_if_new(var, value)
+
+        # create config/tools.yaml if it doesn't exist
+        # this is for migrating older projects
+        if not UserToolConfig.exists():
+            UserToolConfig.initialize()
+        # add stubs to UserToolConfig
+        with UserToolConfig(name) as user_tool_config:
+            user_tool_config.add_stubs()
 
         if tool.post_install:
             os.system(tool.post_install)

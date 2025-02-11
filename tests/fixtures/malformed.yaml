@@ -1,0 +1,4 @@
+// malformed yaml format for testing
+malformed_yaml:
+  ----- key: value
+  - key2: value2
