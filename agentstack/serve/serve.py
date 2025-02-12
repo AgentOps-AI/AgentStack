@@ -91,42 +91,14 @@ def process_agent():
 def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
                 api_inputs: Optional[Dict[str, str]] = None):
     """Validate that the project is ready to run and then run it."""
-    verify_agentstack_project()
-
-    if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
-        raise ValidationError(f"Framework {conf.get_framework()} is not supported by agentstack.")
-
-    try:
-        frameworks.validate_project()
-    except ValidationError as e:
-        raise e
+    # TODO `api_args` is unused
+    run.preflight()
 
     for key, value in api_inputs.items():
         inputs.add_input_for_run(key, value)
 
-    load_dotenv(Path.home() / '.env')  # load the user's .env file
-    load_dotenv(conf.PATH / '.env', override=True)  # load the project's .env file
+    run.run_project(command=command)
 
-    try:
-        log.notify("Running your agent...")
-        project_main = _import_project_module(conf.PATH)
-        return getattr(project_main, command)()
-    except ImportError as e:
-        raise ValidationError(f"Failed to import AgentStack project at: {conf.PATH.absolute()}\n{e}")
-    except Exception as e:
-        raise Exception(format_friendly_error_message(e))
-
-def _import_project_module(path: Path):
-    """Import `main` from the project path."""
-    spec = importlib.util.spec_from_file_location(MAIN_MODULE_NAME, str(path / MAIN_FILENAME))
-
-    assert spec is not None
-    assert spec.loader is not None
-
-    project_module = importlib.util.module_from_spec(spec)
-    sys.path.insert(0, str((path / MAIN_FILENAME).parent))
-    spec.loader.exec_module(project_module)
-    return project_module
 
 def validate_url(url: str) -> Tuple[bool, str]:
     """Validates a URL and returns a tuple of (is_valid, error_message)."""
