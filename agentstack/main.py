@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import argparse
 import webbrowser
@@ -8,17 +9,19 @@ from agentstack.cli import (
     init_project,
     list_tools,
     add_tool,
-    remove_tool,
     add_agent,
     add_task,
     run_project,
     export_template,
+    # serve_project
 )
+from agentstack.cli.cli import serve_project
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
 from agentstack import generation
 from agentstack import repo
 from agentstack.update import check_for_updates
+from agentstack.deploy import deploy
 
 
 def _main():
@@ -36,7 +39,7 @@ def _main():
         action="store_true",
     )
     global_parser.add_argument(
-        "--no-git", 
+        "--no-git",
         help="Disable automatic git commits of changes to your project.",
         dest="no_git",
         action="store_true",
@@ -149,12 +152,20 @@ def _main():
     )
     tools_remove_parser.add_argument("name", help="Name of the tool to remove")
 
+    # 'export'
     export_parser = subparsers.add_parser(
         'export', aliases=['e'], help='Export your agent as a template', parents=[global_parser]
     )
     export_parser.add_argument('filename', help='The name of the file to export to')
 
+    # 'update'
     update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
+
+    # 'deploy'
+    deploy_ = subparsers.add_parser('deploy', aliases=['d'], help='Deploy your agent to AgentStack.sh', parents=[global_parser])
+
+    # 'serve' command
+    serve_parser = subparsers.add_parser('serve', aliases=['s'], help='Serve your agent')
 
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()
@@ -206,6 +217,12 @@ def _main():
         # inside project dir commands only
         elif args.command in ["run", "r"]:
             run_project(command=args.function, cli_args=extra_args)
+        elif args.command in ['deploy', 'd']:
+            conf.assert_project()
+            asyncio.run(deploy())
+        elif args.command in ['serve', 's']:
+            conf.assert_project()
+            serve_project()
         elif args.command in ['generate', 'g']:
             if args.generate_command in ['agent', 'a']:
                 add_agent(
