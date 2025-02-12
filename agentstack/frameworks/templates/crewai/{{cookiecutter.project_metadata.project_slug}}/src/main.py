@@ -18,7 +18,7 @@ def run() -> [str, str]:
     try:
         result = instance.kickoff(inputs=agentstack.get_inputs())
         session.end_session(end_state="Success")
-        return result.raw, session.session_id
+        return result.raw, str(session.session_id)
     except:
         session.end_session(end_state="Fail")
 

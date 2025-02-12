@@ -9,7 +9,7 @@ RUN apt clean && rm -rf /var/lib/apt/lists/*
 # Install uv
 RUN pip install --no-cache-dir uv
 
-# Copy everything since we're installing local package 1
+# Copy everything since we're installing local package 3
 COPY . .
 
 RUN uv pip install --system psutil
