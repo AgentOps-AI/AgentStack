@@ -12,7 +12,8 @@ def run():
     """
     Run the agent.
     """
-    instance.kickoff(inputs=agentstack.get_inputs())
+    result = instance.kickoff(inputs=agentstack.get_inputs())
+    return result
 
 
 def train():

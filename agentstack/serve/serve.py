@@ -109,7 +109,7 @@ def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
     try:
         log.notify("Running your agent...")
         project_main = _import_project_module(conf.PATH)
-        getattr(project_main, command)()
+        return getattr(project_main, command)()
     except ImportError as e:
         raise ValidationError(f"Failed to import AgentStack project at: {conf.PATH.absolute()}\n{e}")
     except Exception as e:

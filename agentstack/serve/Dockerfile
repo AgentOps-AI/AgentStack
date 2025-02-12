@@ -15,7 +15,7 @@ COPY . .
 RUN uv pip install --system psutil
 RUN uv pip install --system flask
 RUN uv pip install --system gunicorn
-RUN uv pip install --system git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command # cache buster 2
+RUN uv pip install --system git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command # 1
 RUN mkdir -p src
 RUN cp /usr/local/lib/python3.12/site-packages/agentstack/serve/serve.py ./src
 RUN cp /usr/local/lib/python3.12/site-packages/agentstack/serve/gunicorn.config.py ./src
@@ -26,4 +26,4 @@ RUN rm -rf /root/.cache/uv/* /root/.cache/pip/* /tmp/*
 EXPOSE 6969
 
 # Use Gunicorn with config file
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "src.serve:app"]
+CMD ["gunicorn", "--config", "src/gunicorn.config.py", "src.serve:app"]
