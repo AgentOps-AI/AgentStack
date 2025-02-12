@@ -1,4 +1,3 @@
-# app.py
 import importlib
 import sys
 from pathlib import Path
@@ -21,6 +20,7 @@ MAIN_MODULE_NAME = "main"
 load_dotenv(dotenv_path="/app/.env")
 app = Flask(__name__)
 
+current_webhook_url = None
 
 def call_webhook(webhook_url: str, data: Dict[str, Any]) -> None:
     """Send results to the specified webhook URL."""
@@ -31,16 +31,16 @@ def call_webhook(webhook_url: str, data: Dict[str, Any]) -> None:
         app.logger.error(f"Webhook call failed: {str(e)}")
         raise
 
-
 @app.route("/health", methods=["GET"])
 def health():
     return "Agent Server Up"
 
-
 @app.route('/process', methods=['POST'])
 def process_agent():
+    global current_webhook_url
+
+    request_data = None
     try:
-        # Extract data and webhook URL from request
         request_data = request.get_json()
 
         if not request_data or 'webhook_url' not in request_data:
@@ -51,47 +51,41 @@ def process_agent():
         if not request_data or 'inputs' not in request_data:
             return jsonify({'error': 'Missing input data in request'}), 400
 
-        webhook_url = request_data.pop('webhook_url')
-
-        # Run the agent process with the provided data
-        # result = WebresearcherCrew().crew().kickoff(inputs=request_data)
-        # inputs = json.stringify(request_data)
-        # os.system(f"python src/main.py {inputs}")
-
-        # TODO: run in subprocess so we can return started and then webhook called with callback later
-        # TODO: only allow one process to run at a time per pod
-        result = run_project(api_inputs=request_data.get('inputs'))
-
-        # Call the webhook with the results
-        call_webhook(webhook_url, {
-            'status': 'success',
-            'result': result
-        })
+        current_webhook_url = request_data.pop('webhook_url')
 
         return jsonify({
-            'status': 'success',
-            'message': 'Agent process completed and webhook called'
-        })
+            'status': 'accepted',
+            'message': 'Agent process started'
+        }), 202
 
     except Exception as e:
         error_message = str(e)
         app.logger.error(f"Error processing request: {error_message}")
-
-        # Attempt to call webhook with error information
-        if webhook_url:
-            try:
-                call_webhook(webhook_url, {
-                    'status': 'error',
-                    'error': error_message
-                })
-            except:
-                pass  # Webhook call failed, but we still want to return the error to the caller
-
         return jsonify({
             'status': 'error',
             'error': error_message
         }), 500
 
+    finally:
+        if current_webhook_url:
+            try:
+                result = run_project(api_inputs=request_data.get('inputs'))
+                call_webhook(current_webhook_url, {
+                    'status': 'success',
+                    'result': result
+                })
+            except Exception as e:
+                error_message = str(e)
+                app.logger.error(f"Error in process: {error_message}")
+                try:
+                    call_webhook(current_webhook_url, {
+                        'status': 'error',
+                        'error': error_message
+                    })
+                except:
+                    app.logger.error("Failed to send error to webhook")
+            finally:
+                current_webhook_url = None
 
 def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
                 api_inputs: Optional[Dict[str, str]] = None):
@@ -112,7 +106,6 @@ def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
     load_dotenv(Path.home() / '.env')  # load the user's .env file
     load_dotenv(conf.PATH / '.env', override=True)  # load the project's .env file
 
-    # import src/main.py from the project path and run `command` from the project's main.py
     try:
         log.notify("Running your agent...")
         project_main = _import_project_module(conf.PATH)
@@ -123,55 +116,34 @@ def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
         raise Exception(format_friendly_error_message(e))
 
 def _import_project_module(path: Path):
-    """
-    Import `main` from the project path.
-
-    We do it this way instead of spawning a subprocess so that we can share
-    state with the user's project.
-    """
+    """Import `main` from the project path."""
     spec = importlib.util.spec_from_file_location(MAIN_MODULE_NAME, str(path / MAIN_FILENAME))
 
-    assert spec is not None  # appease type checker
-    assert spec.loader is not None  # appease type checker
+    assert spec is not None
+    assert spec.loader is not None
 
     project_module = importlib.util.module_from_spec(spec)
     sys.path.insert(0, str((path / MAIN_FILENAME).parent))
     spec.loader.exec_module(project_module)
     return project_module
 
-
 def validate_url(url: str) -> Tuple[bool, str]:
-    """
-    Validates a URL and returns a tuple of (is_valid, error_message).
-
-    Args:
-        url (str): The URL to validate
-
-    Returns:
-        Tuple[bool, str]: A tuple containing:
-            - Boolean indicating if the URL is valid
-            - Error message (empty string if valid)
-    """
-    # Check if URL is empty
+    """Validates a URL and returns a tuple of (is_valid, error_message)."""
     if not url:
         return False, "URL cannot be empty"
 
     try:
-        # Parse the URL
         result = urlparse(url)
 
-        # Check for required components
         if not result.scheme:
             return False, "Missing protocol (e.g., http:// or https://)"
 
         if not result.netloc:
             return False, "Missing domain name"
 
-        # Validate scheme
         if result.scheme not in ['http', 'https']:
             return False, f"Invalid protocol: {result.scheme}"
 
-        # Basic domain validation
         if '.' not in result.netloc:
             return False, "Invalid domain format"
 
@@ -180,15 +152,12 @@ def validate_url(url: str) -> Tuple[bool, str]:
     except Exception as e:
         return False, f"Invalid URL format: {str(e)}"
 
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 6969))
-
     print("🚧 Running your agent on a development server")
     print(f"Send agent requests to http://localhost:{port}")
-    print("Learn more about agent requests at https://docs.agentstack.sh/") # TODO: add docs for this
+    print("Learn more about agent requests at https://docs.agentstack.sh/")  # TODO: add docs for this
 
     app.run(host='0.0.0.0', port=port)
 else:
-    # This branch is used by Gunicorn
     print("Starting production server with Gunicorn")
