@@ -6,7 +6,7 @@ from importlib import import_module
 from dataclasses import dataclass
 from pathlib import Path
 import ast
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack.generation import InsertionPoint
 from agentstack.utils import get_framework
@@ -22,6 +22,7 @@ CREWAI = 'crewai'
 LANGGRAPH = 'langgraph'
 OPENAI_SWARM = 'openai_swarm'
 LLAMAINDEX = 'llamaindex'
+CUSTOM = 'custom'
 SUPPORTED_FRAMEWORKS = [
     CREWAI,
     LANGGRAPH,
@@ -313,6 +314,9 @@ def get_framework_module(framework: str) -> FrameworkModule:
     """
     Get the module for a framework.
     """
+    if framework == CUSTOM:
+        raise Exception("Custom frameworks do not support modification.")
+    
     try:
         return import_module(f".{framework}", package=__package__)
     except ImportError:
@@ -332,6 +336,11 @@ def validate_project():
     Validate that the user's project is ready to run.
     """
     framework = get_framework()
+    
+    if framework == CUSTOM:
+        log.debug("Skipping validation for custom framework.")
+        return
+    
     entrypoint_path = get_entrypoint_path(framework)
     module = get_framework_module(framework)
     entrypoint = module.get_entrypoint()
