@@ -70,6 +70,7 @@ instance: Optional[logging.Logger] = None
 
 stdout: IO = io.StringIO()
 stderr: IO = io.StringIO()
+_stream: IO = io.StringIO()
 
 
 def set_stdout(stream: IO):
@@ -91,6 +92,16 @@ def set_stderr(stream: IO):
     """
     global stderr, instance
     stderr = stream
+    instance = None  # force re-initialization
+
+
+def set_stream(stream: IO):
+    """
+    Redirect standard output and error messages to the given stream.
+    This is useful for getting a stream of log data to other interfaces.
+    """
+    global _stream, instance
+    _stream = stream
     instance = None  # force re-initialization
 
 
@@ -118,7 +129,16 @@ warning = _create_handler(WARNING)
 error = _create_handler(ERROR)
 
 
-class ConsoleFormatter(logging.Formatter):
+class BaseFormatter(logging.Formatter):
+    default_format = logging.Formatter('%(message)s\n')
+    formats: dict[int, logging.Formatter]
+    
+    def format(self, record: logging.LogRecord) -> str:
+        template = self.formats.get(record.levelno, self.default_format)
+        return template.format(record)
+
+
+class ConsoleFormatter(BaseFormatter):
     """Formats log messages for display in the console."""
 
     default_format = logging.Formatter('%(message)s\n')
@@ -131,12 +151,8 @@ class ConsoleFormatter(logging.Formatter):
         ERROR: logging.Formatter(term_color('%(message)s\n', 'red')),
     }
 
-    def format(self, record: logging.LogRecord) -> str:
-        template = self.formats.get(record.levelno, self.default_format)
-        return template.format(record)
 
-
-class FileFormatter(logging.Formatter):
+class FileFormatter(BaseFormatter):
     """Formats log messages for display in a log file."""
 
     default_format = logging.Formatter('%(levelname)s: %(message)s\n')
@@ -145,9 +161,17 @@ class FileFormatter(logging.Formatter):
         STREAM: logging.Formatter('%(message)s\n'),
     }
 
-    def format(self, record: logging.LogRecord) -> str:
-        template = self.formats.get(record.levelno, self.default_format)
-        return template.format(record)
+
+class StreamFormatter(BaseFormatter):
+    """
+    Formats log messages for display in a stream.
+    * Only prints `log.stream` messages. 
+    """
+
+    default_format = logging.Formatter('')  # don't print
+    formats = {
+        STREAM: logging.Formatter('%(message)s'),
+    }
 
 
 def _build_logger() -> logging.Logger:
@@ -157,7 +181,7 @@ def _build_logger() -> logging.Logger:
     Errors and above are written to stderr if a stream has been configured.
     Warnings and below are written to stdout if a stream has been configured.
     """
-    # global stdout, stderr
+    # global stdout, stderr, _stream
 
     log = logging.getLogger(LOG_NAME)
     log.handlers.clear()  # remove any existing handlers
@@ -198,5 +222,13 @@ def _build_logger() -> logging.Logger:
     stderr_handler.setLevel(ERROR)
     stderr_handler.terminator = ''
     log.addHandler(stderr_handler)
+    
+    # stream handler for all messages
+    # `stream` can change, so defer building the stream until we need it
+    stream_handler = logging.StreamHandler(_stream)
+    stream_handler.setFormatter(StreamFormatter())
+    stream_handler.setLevel(DEBUG)
+    stream_handler.terminator = ''
+    log.addHandler(stream_handler)
 
     return log
