@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 import sys
 import asyncio
 import traceback
@@ -16,7 +16,7 @@ MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
 
 
-def _format_friendly_error_message(exception: Exception):
+def format_friendly_error_message(exception: Exception):
     """
     Projects will throw various errors, especially on first runs, so we catch
     them here and print a more helpful message.
@@ -133,4 +133,4 @@ def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
     except ImportError as e:
         raise ValidationError(f"Failed to import AgentStack project at: {conf.PATH.absolute()}\n{e}")
     except Exception as e:
-        raise Exception(_format_friendly_error_message(e))
+        raise Exception(format_friendly_error_message(e))

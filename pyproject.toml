@@ -33,6 +33,7 @@ dependencies = [
     "uv>=0.5.6",
     "tomli>=2.2.1",
     "gitpython>=3.1.44",
+    "websockets>=14.2"
 ]
 
 [project.optional-dependencies]
