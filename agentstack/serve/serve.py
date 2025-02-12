@@ -69,10 +69,11 @@ def process_agent():
     finally:
         if current_webhook_url:
             try:
-                result = run_project(api_inputs=request_data.get('inputs'))
+                result, session_id = run_project(api_inputs=request_data.get('inputs'))
                 call_webhook(current_webhook_url, {
                     'status': 'success',
-                    'result': result
+                    'result': result,
+                    'session_id': session_id
                 })
             except Exception as e:
                 error_message = str(e)

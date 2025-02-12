@@ -9,13 +9,13 @@ RUN apt clean && rm -rf /var/lib/apt/lists/*
 # Install uv
 RUN pip install --no-cache-dir uv
 
-# Copy everything since we're installing local package
+# Copy everything since we're installing local package 1
 COPY . .
 
 RUN uv pip install --system psutil
 RUN uv pip install --system flask
 RUN uv pip install --system gunicorn
-RUN uv pip install --system git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command # 1
+RUN uv pip install --system git+https://github.com/AgentOps-AI/AgentStack.git@deploy-command
 RUN mkdir -p src
 RUN cp /usr/local/lib/python3.12/site-packages/agentstack/serve/serve.py ./src
 RUN cp /usr/local/lib/python3.12/site-packages/agentstack/serve/gunicorn.config.py ./src
