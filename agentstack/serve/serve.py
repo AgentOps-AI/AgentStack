@@ -129,25 +129,22 @@ def run_project(command: str = 'run', api_args: Optional[dict[str, str]] = None,
     run.run_project(command=command)
 
 
-class GeneratorIO:
-    """Behaves like streamIO but is iterable"""
-    def __init__(self):
-        self.buffer = io.StringIO()
+class TailIO(io.StringIO):
+    """Tail-able StringIO for streaming updated log output."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._pos = 0
-    
-    def write(self, text: str) -> int:
-        self.buffer.write(text)
-        return len(text)
-    
-    def flush(self) -> None:
-        pass
 
-    def __iter__(self) -> Generator[str, None, None]:
+    def follow_tail(self) -> Generator[str, None, None]:
+        """
+        Continuously yield new lines from the StringIO buffer that have been
+        written since the last read.
+        """
         while True:
-            self.buffer.seek(self._pos)
-            data = self.buffer.read()
+            self.seek(self._pos)
+            data = self.read()
             if data:
-                self._pos = self.buffer.tell()
+                self._pos = self.tell()
                 yield data
             else:
                 break
@@ -155,14 +152,14 @@ class GeneratorIO:
 
 def run_project_stream(inputs: dict[str, str], command: str = 'run') -> Generator[str, None, None]:
     """Validate that the project is ready to run and then run it."""
-    log_output = GeneratorIO()
+    log_output = TailIO()
     log.set_stream(log_output)
 
     thread = Thread(target=lambda: run_project(command=command, api_inputs=inputs))
     thread.start()
 
     while thread.is_alive():
-        for line in log_output:
+        for line in log_output.follow_tail():
             yield line
         time.sleep(0.1)
     
