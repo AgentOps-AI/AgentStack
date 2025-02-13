@@ -7,6 +7,7 @@ from agentstack.conf import ConfigFile
 from agentstack.exceptions import ValidationError
 from agentstack.utils import validator_not_empty, is_snake_case
 from agentstack.generation import InsertionPoint
+from agentstack import repo
 
 
 PREFERRED_MODELS = [
@@ -32,6 +33,25 @@ def welcome_message():
     log.info(border)
     log.info(tagline)
     log.info(border)
+
+
+def undo() -> None:
+    """Undo the last committed changes."""
+    conf.assert_project()
+    
+    changed_files = repo.get_uncommitted_files()
+    if changed_files:
+        log.warning("There are uncommitted changes that may be overwritten.")
+        for changed in changed_files:
+            log.info(f" - {changed}")
+        should_continue = inquirer.confirm(
+            message="Do you want to continue?",
+            default=False,
+        )
+        if not should_continue:
+            return
+
+    repo.revert_last_commit(hard=True)
 
 
 def configure_default_model():
