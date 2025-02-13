@@ -142,12 +142,11 @@ class TailIO(io.StringIO):
         """
         while True:
             self.seek(self._pos)
-            data = self.read()
-            if data:
+            if data := self.read():
                 self._pos = self.tell()
                 yield data
             else:
-                break
+                time.sleep(0.1)
 
 
 def run_project_stream(inputs: dict[str, str], command: str = 'run') -> Generator[str, None, None]:
@@ -161,10 +160,9 @@ def run_project_stream(inputs: dict[str, str], command: str = 'run') -> Generato
     while thread.is_alive():
         for line in log_output.follow_tail():
             yield line
-        time.sleep(0.1)
-    
-    for line in log_output:  # stragglers post-thread
-        yield line
+    else:
+        for line in log_output:
+            yield line  # stragglers post-thread
 
     thread.join()
 
@@ -283,7 +281,7 @@ class ProjectServer:
                 assert request_data, "request_data is None"
                 # TODO `command`
                 result, session_id = run_project(api_inputs=request_data.get('inputs'))
-                call_webhook(current_webhook_url, {
+                call_webhook(self.webhook_url, {
                     'status': 'success',
                     'result': result,
                     'session_id': session_id
@@ -293,7 +291,7 @@ class ProjectServer:
                 # TODO agentstack.log?
                 app.logger.error(f"Error in process: {error_message}")
                 try:
-                    call_webhook(current_webhook_url, {
+                    call_webhook(self.webhook_url, {
                         'status': 'error',
                         'error': error_message
                     })
