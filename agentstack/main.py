@@ -13,6 +13,7 @@ from agentstack.cli import (
     add_task,
     run_project,
     export_template,
+    undo, 
 )
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
@@ -154,7 +155,8 @@ def _main():
     )
     export_parser.add_argument('filename', help='The name of the file to export to')
 
-    update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
+    undo_parser = subparsers.add_parser('undo', help='Undo the last change to your project', parents=[global_parser])
+    update_parser = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
 
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()
@@ -228,6 +230,8 @@ def _main():
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:
             export_template(args.filename)
+        elif args.command in ['undo']:
+            undo()
         else:
             parser.print_help()
 
