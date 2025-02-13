@@ -10,7 +10,7 @@ __all__ = ["analyze_image"]
 
 PROMPT = os.getenv('VISION_PROMPT', "What's in this image?")
 MODEL = os.getenv('VISION_MODEL', "claude-3-5-sonnet-20241022")
-MAX_TOKENS = os.getenv('VISION_MAX_TOKENS', 1024)
+MAX_TOKENS: int = int(os.getenv('VISION_MAX_TOKENS', 1024))
 
 MEDIA_TYPES = {
     "jpg": "image/jpeg",
@@ -19,6 +19,7 @@ MEDIA_TYPES = {
     "gif": "image/gif",
     "webp": "image/webp",
 }
+ALLOWED_MEDIA_TYPES = list(MEDIA_TYPES.keys())
 
 # image sizes that will not be resized
 # TODO is there any value in resizing pre-upload?
@@ -42,7 +43,7 @@ def _encode_image(image_handle: IO) -> str:
     return base64.b64encode(image_handle.read()).decode("utf-8")
 
 
-def _make_anthropic_request(image_handle: IO, media_type: str) -> dict:
+def _make_anthropic_request(image_handle: IO, media_type: str) -> anthropic.types.Message:
     """Make a request to the Anthropic API using an image."""
     client = anthropic.Anthropic()
     data = _encode_image(image_handle)
@@ -53,7 +54,7 @@ def _make_anthropic_request(image_handle: IO, media_type: str) -> dict:
             {
                 "role": "user",
                 "content": [
-                    {
+                    {  # type: ignore
                         "type": "image",
                         "source": {
                             "type": "base64",
@@ -61,7 +62,7 @@ def _make_anthropic_request(image_handle: IO, media_type: str) -> dict:
                             "data": data,
                         },
                     },
-                    {
+                    {  # type: ignore
                         "type": "text",
                         "text": PROMPT,
                     },
@@ -71,21 +72,21 @@ def _make_anthropic_request(image_handle: IO, media_type: str) -> dict:
     )
 
 
-def _analyze_web_image(image_url: str) -> str:
+def _analyze_web_image(image_url: str, media_type: str) -> str:
     """Analyze an image from a URL."""
     with tempfile.NamedTemporaryFile() as temp_file:
         temp_file.write(requests.get(image_url).content)
         temp_file.flush()
         temp_file.seek(0)
-        response = _make_anthropic_request(temp_file, _get_media_type(image_url))
-        return response.content[0].text
+        response = _make_anthropic_request(temp_file, media_type)
+        return response.content[0].text  # type: ignore
 
 
-def _analyze_local_image(image_path: str) -> str:
+def _analyze_local_image(image_path: str, media_type: str) -> str:
     """Analyze an image from a local file."""
     with open(image_path, "rb") as image_file:
-        response = _make_anthropic_request(image_file, _get_media_type(image_path))
-        return response.content[0].text
+        response = _make_anthropic_request(image_file, media_type)
+        return response.content[0].text  # type: ignore
 
 
 def analyze_image(image_path_or_url: str) -> str:
@@ -101,6 +102,10 @@ def analyze_image(image_path_or_url: str) -> str:
     if not image_path_or_url:
         return "Image Path or URL is required."
 
+    media_type = _get_media_type(image_path_or_url)
+    if not media_type:
+        return f"Unsupported image type use {ALLOWED_MEDIA_TYPES}."
+
     if "http" in image_path_or_url:
-        return _analyze_web_image(image_path_or_url)
-    return _analyze_local_image(image_path_or_url)
+        return _analyze_web_image(image_path_or_url, media_type)
+    return _analyze_local_image(image_path_or_url, media_type)
