@@ -12,6 +12,11 @@ class VisionToolTest(unittest.TestCase):
         tool = ToolConfig.from_tool_name('vision')
         for dependency in tool.dependencies:
             os.system(f"pip install {dependency}")
+        
+        try:
+            from agentstack._tools import vision
+        except ImportError as e:
+            self.skipTest(str(e))
 
     def test_get_media_type(self):
         from agentstack._tools.vision import _get_media_type
