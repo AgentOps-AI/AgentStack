@@ -55,7 +55,7 @@ def call_webhook(webhook_url: str, data: dict[str, Any]) -> None:
         response = requests.post(webhook_url, json=data)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        app.logger.error(f"Webhook call failed: {str(e)}")
+        log.error(f"Webhook call failed: {str(e)}")
         raise
 
 
@@ -123,8 +123,9 @@ def run_project(command: str = 'run', api_args: Optional[dict[str, str]] = None,
     # TODO `api_args` is unused
     run.preflight()
 
-    for key, value in api_inputs.items():
-        inputs.add_input_for_run(key, value)
+    if api_inputs:
+        for key, value in api_inputs.items():
+            inputs.add_input_for_run(key, value)
 
     run.run_project(command=command)
 
@@ -218,7 +219,7 @@ class ProjectServer:
                 # WebSocket routes
                 self.sock.route(route)(handler)
     
-    def get_routes(self) -> list[tuple[str, Callable, str]]:
+    def get_routes(self) -> list[tuple[str, Callable, Optional[str]]]:
         return [
             ('/', self.index, 'GET'), 
             ('/ws', self.websocket_handler, None), 
@@ -230,12 +231,12 @@ class ProjectServer:
         """Dump a response object to JSON"""
         return jsonify(response.model_dump())
     
-    def index(self):
+    def index(self) -> tuple[BaseResponse, int]:
         """Serve a user interface"""
         # TODO delegate this to the user project. 
         return send_file(conf.PATH / 'src/index.html'), 200
     
-    def health(self) -> BaseResponse:
+    def health(self) -> tuple[BaseResponse, int]:
         """Health check endpoint"""
         response = Response(
             type=Response.Type.DATA,
@@ -243,7 +244,7 @@ class ProjectServer:
         )
         return self.format_response(response), 200
     
-    def process(self) -> BaseResponse:
+    def process(self) -> tuple[BaseResponse, int]:
         request_data = None
         try:
             request_data = request.get_json()
@@ -264,8 +265,7 @@ class ProjectServer:
         
         except Exception as e:
             error_message = str(e)
-            # TODO agentstack.log?
-            app.logger.error(f"Error processing request: {error_message}")
+            log.error(f"Error processing request: {error_message}")
             return self.format_response(Response(
                 type=Response.Type.ERROR,
                 data={'message': error_message}
@@ -273,9 +273,12 @@ class ProjectServer:
 
         finally:
             if not self.webhook_url:
-                # TODO project will not run if we don't have a webhook url
-                # can we just yolo it into the void or should we tell the user first?
-                return
+                # project will not run if we don't have a webhook url
+                log.error("No webhook URL provided")
+                return self.format_response(Response(
+                    type=Response.Type.ERROR,
+                    data={'message': 'No webhook URL provided'}
+                )), 500
 
             try:
                 assert request_data, "request_data is None"
@@ -288,16 +291,14 @@ class ProjectServer:
                 })
             except Exception as e:
                 error_message = str(e)
-                # TODO agentstack.log?
-                app.logger.error(f"Error in process: {error_message}")
+                log.error(f"Error in process: {error_message}")
                 try:
                     call_webhook(self.webhook_url, {
                         'status': 'error',
                         'error': error_message
                     })
                 except:
-                    # TODO agentstack.log?
-                    app.logger.error("Failed to send error to webhook")
+                    log.error("Failed to send error to webhook")
             finally:
                 self.webhook_url = None
     
@@ -336,7 +337,7 @@ class ProjectServer:
                 data={'error': "Unknown message type"},
             )
     
-    def websocket_handler(self, ws):
+    def websocket_handler(self, ws) -> None:
         """Handle WebSocket connections"""
         while True:
             try:
@@ -351,7 +352,7 @@ class ProjectServer:
                 ws.send(json.dumps(response.model_dump()))
                 break
     
-    def run(self, host='0.0.0.0', port=6969, **kwargs):
+    def run(self, host='0.0.0.0', port=6969, **kwargs) -> None:
         """Run the Flask application"""
         self.app.run(host=host, port=port, **kwargs)
 
