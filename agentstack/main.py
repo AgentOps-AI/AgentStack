@@ -186,7 +186,7 @@ def _main():
         elif args.command in ["quickstart"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["templates"]:
-            webbrowser.open("https://docs.agentstack.sh/quickstart")
+            webbrowser.open("https://docs.agentstack.sh/templates")
         elif args.command in ["init", "i"]:
             init_project(args.slug_name, args.template, args.framework, args.wizard)
         elif args.command in ["tools", "t"]:
