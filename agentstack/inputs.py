@@ -77,6 +77,8 @@ def get_inputs() -> dict:
     """
     Get the inputs configuration file and override with run_inputs.
     """
+    global run_inputs
+    
     config = InputsConfig().to_dict()
     # run_inputs override saved inputs
     for key, value in run_inputs.items():
@@ -89,4 +91,6 @@ def add_input_for_run(key: str, value: str):
     Add an input override for the current run.
     This is used by the CLI to allow inputs to be set at runtime.
     """
+    global run_inputs
+    
     run_inputs[key] = value

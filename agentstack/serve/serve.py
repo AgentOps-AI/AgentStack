@@ -1,134 +1,174 @@
+from typing import Optional, Any, Callable, Generator
+import os, sys
+import io
+from threading import Thread
+import time
 import importlib
-import sys
+from enum import Enum
 from pathlib import Path
+import pydantic
 from urllib.parse import urlparse
-
-from dotenv import load_dotenv
-from agentstack import conf, frameworks, inputs, log
-from agentstack.exceptions import ValidationError
-from agentstack.utils import verify_agentstack_project
-# TODO: move this to not cli, but cant be utils due to circular import
-from agentstack.cli.run import format_friendly_error_message
-from flask import Flask, request, jsonify
+import json
 import requests
-from typing import Dict, Any, Optional, Tuple
-import os
+from dotenv import load_dotenv
 
-MAIN_FILENAME: Path = Path("src/main.py")
-MAIN_MODULE_NAME = "main"
+from flask import Flask, send_file, request, jsonify
+from flask import Response as BaseResponse
+from flask_sock import Sock
+from flask_cors import CORS
+
+from agentstack import conf, log
+from agentstack.exceptions import ValidationError
+from agentstack import inputs
+from agentstack import run
+
 
 load_dotenv(dotenv_path="/app/.env")
-app = Flask(__name__)
+#app = Flask(__name__)
 
-current_webhook_url = None
+#current_webhook_url = None
 
-def call_webhook(webhook_url: str, data: Dict[str, Any]) -> None:
+ALLOWED_ORIGINS = ['*']
+
+class Message(pydantic.BaseModel):
+    class Type(str, Enum):
+        CHAT = "chat"
+    
+    type: Type
+    data: dict[str, Any]
+
+
+# TODO subclass flask.Response for response types
+class Response(pydantic.BaseModel):
+    class Type(str, Enum):
+        DATA = "data"
+        SUCCESS = "success"
+        ERROR = "error"
+    
+    type: Type
+    data: Optional[dict[str, Any]] = None
+
+
+def call_webhook(webhook_url: str, data: dict[str, Any]) -> None:
     """Send results to the specified webhook URL."""
     try:
         response = requests.post(webhook_url, json=data)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        app.logger.error(f"Webhook call failed: {str(e)}")
+        log.error(f"Webhook call failed: {str(e)}")
         raise
 
-@app.route("/health", methods=["GET"])
-def health():
-    return "Agent Server Up"
 
-@app.route('/process', methods=['POST'])
-def process_agent():
-    global current_webhook_url
+# @app.route("/health", methods=["GET"])
+# def health():
+#     return "Agent Server Up"
 
-    request_data = None
-    try:
-        request_data = request.get_json()
+# @app.route('/process', methods=['POST'])
+# def process_agent():
+#     global current_webhook_url
 
-        if not request_data or 'webhook_url' not in request_data:
-            result, message = validate_url(request_data.get("webhook_url"))
-            if not result:
-                return jsonify({'error': f'Invalid webhook_url in request: {message}'}), 400
+#     request_data = None
+#     try:
+#         request_data = request.get_json()
 
-        if not request_data or 'inputs' not in request_data:
-            return jsonify({'error': 'Missing input data in request'}), 400
+#         if not request_data or 'webhook_url' not in request_data:
+#             result, message = validate_url(request_data.get("webhook_url"))
+#             if not result:
+#                 return jsonify({'error': f'Invalid webhook_url in request: {message}'}), 400
 
-        current_webhook_url = request_data.pop('webhook_url')
+#         if not request_data or 'inputs' not in request_data:
+#             return jsonify({'error': 'Missing input data in request'}), 400
 
-        return jsonify({
-            'status': 'accepted',
-            'message': 'Agent process started'
-        }), 202
+#         current_webhook_url = request_data.pop('webhook_url')
 
-    except Exception as e:
-        error_message = str(e)
-        app.logger.error(f"Error processing request: {error_message}")
-        return jsonify({
-            'status': 'error',
-            'error': error_message
-        }), 500
+#         return jsonify({
+#             'status': 'accepted',
+#             'message': 'Agent process started'
+#         }), 202
 
-    finally:
-        if current_webhook_url:
-            try:
-                result, session_id = run_project(api_inputs=request_data.get('inputs'))
-                call_webhook(current_webhook_url, {
-                    'status': 'success',
-                    'result': result,
-                    'session_id': session_id
-                })
-            except Exception as e:
-                error_message = str(e)
-                app.logger.error(f"Error in process: {error_message}")
-                try:
-                    call_webhook(current_webhook_url, {
-                        'status': 'error',
-                        'error': error_message
-                    })
-                except:
-                    app.logger.error("Failed to send error to webhook")
-            finally:
-                current_webhook_url = None
+#     except Exception as e:
+#         error_message = str(e)
+#         app.logger.error(f"Error processing request: {error_message}")
+#         return jsonify({
+#             'status': 'error',
+#             'error': error_message
+#         }), 500
 
-def run_project(command: str = 'run', api_args: Optional[Dict[str, str]] = None,
-                api_inputs: Optional[Dict[str, str]] = None):
+#     finally:
+#         if current_webhook_url:
+#             try:
+#                 result, session_id = run_project(api_inputs=request_data.get('inputs'))
+#                 call_webhook(current_webhook_url, {
+#                     'status': 'success',
+#                     'result': result,
+#                     'session_id': session_id
+#                 })
+#             except Exception as e:
+#                 error_message = str(e)
+#                 app.logger.error(f"Error in process: {error_message}")
+#                 try:
+#                     call_webhook(current_webhook_url, {
+#                         'status': 'error',
+#                         'error': error_message
+#                     })
+#                 except:
+#                     app.logger.error("Failed to send error to webhook")
+#             finally:
+#                 current_webhook_url = None
+
+
+def run_project(command: str = 'run', api_args: Optional[dict[str, str]] = None,
+                api_inputs: Optional[dict[str, str]] = None):
     """Validate that the project is ready to run and then run it."""
-    verify_agentstack_project()
+    # TODO `api_args` is unused
+    run.preflight()
 
-    if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
-        raise ValidationError(f"Framework {conf.get_framework()} is not supported by agentstack.")
+    if api_inputs:
+        for key, value in api_inputs.items():
+            inputs.add_input_for_run(key, value)
 
-    try:
-        frameworks.validate_project()
-    except ValidationError as e:
-        raise e
+    run.run_project(command=command)
 
-    for key, value in api_inputs.items():
-        inputs.add_input_for_run(key, value)
 
-    load_dotenv(Path.home() / '.env')  # load the user's .env file
-    load_dotenv(conf.PATH / '.env', override=True)  # load the project's .env file
+class TailIO(io.StringIO):
+    """Tail-able StringIO for streaming updated log output."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._pos = 0
 
-    try:
-        log.notify("Running your agent...")
-        project_main = _import_project_module(conf.PATH)
-        return getattr(project_main, command)()
-    except ImportError as e:
-        raise ValidationError(f"Failed to import AgentStack project at: {conf.PATH.absolute()}\n{e}")
-    except Exception as e:
-        raise Exception(format_friendly_error_message(e))
+    def follow_tail(self) -> Generator[str, None, None]:
+        """
+        Continuously yield new lines from the StringIO buffer that have been
+        written since the last read.
+        """
+        while True:
+            self.seek(self._pos)
+            if data := self.read():
+                self._pos = self.tell()
+                yield data
+            else:
+                time.sleep(0.1)
 
-def _import_project_module(path: Path):
-    """Import `main` from the project path."""
-    spec = importlib.util.spec_from_file_location(MAIN_MODULE_NAME, str(path / MAIN_FILENAME))
 
-    assert spec is not None
-    assert spec.loader is not None
+def run_project_stream(inputs: dict[str, str], command: str = 'run') -> Generator[str, None, None]:
+    """Validate that the project is ready to run and then run it."""
+    log_output = TailIO()
+    log.set_stream(log_output)
 
-    project_module = importlib.util.module_from_spec(spec)
-    sys.path.insert(0, str((path / MAIN_FILENAME).parent))
-    spec.loader.exec_module(project_module)
-    return project_module
+    thread = Thread(target=lambda: run_project(command=command, api_inputs=inputs))
+    thread.start()
 
-def validate_url(url: str) -> Tuple[bool, str]:
+    while thread.is_alive():
+        for line in log_output.follow_tail():
+            yield line
+    else:
+        for line in log_output:
+            yield line  # stragglers post-thread
+
+    thread.join()
+
+
+def validate_url(url: str) -> tuple[bool, str]:
     """Validates a URL and returns a tuple of (is_valid, error_message)."""
     if not url:
         return False, "URL cannot be empty"
@@ -153,12 +193,181 @@ def validate_url(url: str) -> Tuple[bool, str]:
     except Exception as e:
         return False, f"Invalid URL format: {str(e)}"
 
+
+class ProjectServer:
+    app: Flask
+    sock: Sock
+    webhook_url: Optional[str] = None
+    
+    def __init__(self):
+        self.app = Flask(__name__)
+        self.sock = Sock(self.app)
+        
+        CORS(self.app, 
+             origins=ALLOWED_ORIGINS,
+             methods=["*"])
+        self.register_routes()
+    
+    def register_routes(self):
+        """Register all routes for the application"""
+        routes = self.get_routes()
+        for route, handler, method in routes:
+            if method in ('GET', 'POST', 'PUT', 'DELETE'):
+                # Regular HTTP routes
+                self.app.route(route, methods=[method])(handler)
+            else:
+                # WebSocket routes
+                self.sock.route(route)(handler)
+    
+    def get_routes(self) -> list[tuple[str, Callable, Optional[str]]]:
+        return [
+            ('/', self.index, 'GET'), 
+            ('/ws', self.websocket_handler, None), 
+            ('/health', self.health, 'GET'), 
+            ('/process', self.process, 'POST'),
+        ]
+    
+    def format_response(self, response: Response) -> BaseResponse:
+        """Dump a response object to JSON"""
+        return jsonify(response.model_dump())
+    
+    def index(self) -> tuple[BaseResponse, int]:
+        """Serve a user interface"""
+        # TODO delegate this to the user project. 
+        return send_file(conf.PATH / 'src/index.html'), 200
+    
+    def health(self) -> tuple[BaseResponse, int]:
+        """Health check endpoint"""
+        response = Response(
+            type=Response.Type.DATA,
+            data={'status': 'ok'},
+        )
+        return self.format_response(response), 200
+    
+    def process(self) -> tuple[BaseResponse, int]:
+        request_data = None
+        try:
+            request_data = request.get_json()
+
+            if not request_data or 'webhook_url' not in request_data:
+                result, message = validate_url(request_data.get("webhook_url"))
+                if not result:
+                    raise ValueError(f'Invalid webhook_url in request: {message}')
+            
+            if not request_data or 'inputs' not in request_data:
+                raise ValueError('Missing input data in request')
+
+            self.webhook_url = request_data.pop('webhook_url')
+            return self.format_response(Response(
+                type=Response.Type.SUCCESS,
+                data={'message': 'Agent process started'}
+            )), 202
+        
+        except Exception as e:
+            error_message = str(e)
+            log.error(f"Error processing request: {error_message}")
+            return self.format_response(Response(
+                type=Response.Type.ERROR,
+                data={'message': error_message}
+            )), 500
+
+        finally:
+            if not self.webhook_url:
+                # project will not run if we don't have a webhook url
+                log.error("No webhook URL provided")
+                return self.format_response(Response(
+                    type=Response.Type.ERROR,
+                    data={'message': 'No webhook URL provided'}
+                )), 500
+
+            try:
+                assert request_data, "request_data is None"
+                # TODO `command`
+                result, session_id = run_project(api_inputs=request_data.get('inputs'))
+                call_webhook(self.webhook_url, {
+                    'status': 'success',
+                    'result': result,
+                    'session_id': session_id
+                })
+            except Exception as e:
+                error_message = str(e)
+                log.error(f"Error in process: {error_message}")
+                try:
+                    call_webhook(self.webhook_url, {
+                        'status': 'error',
+                        'error': error_message
+                    })
+                except:
+                    log.error("Failed to send error to webhook")
+            finally:
+                self.webhook_url = None
+    
+    def handle_message(self, message: Message) -> Generator[Response, None, None]:
+        """Handle incoming messages"""
+        if message.type == Message.Type.CHAT:
+            assert 'role' in message.data
+            assert 'content' in message.data
+            
+            inputs = {
+                'prompt': message.data['content'],
+            }
+            
+            # TODO assistant is hardcoded
+            for content in run_project_stream(inputs):
+                yield Response(
+                    type=Response.Type.DATA,
+                    data={'role': 'assistant', 'content': content},
+                )
+                time.sleep(0.01)  # small delay to prevent overwhelming the socket
+    
+    def get_response(self, message: dict[str, Any]) -> Generator[Response, None, None]:
+        """Process incoming message and generate responses"""
+        try:
+            _message = Message.model_validate(message)
+            for response in self.handle_message(_message):
+                yield response
+        except ValueError as e:
+            yield Response(
+                type=Response.Type.ERROR,
+                data={'error': f"Invalid message format: {str(e)}"},
+            )
+        except Exception:
+            yield Response(
+                type=Response.Type.ERROR,
+                data={'error': "Unknown message type"},
+            )
+    
+    def websocket_handler(self, ws) -> None:
+        """Handle WebSocket connections"""
+        while True:
+            try:
+                raw_message = json.loads(ws.receive())
+                for response in self.get_response(raw_message):
+                    ws.send(json.dumps(response.model_dump()))
+            except Exception as e:
+                response = Response(
+                    type=Response.Type.ERROR,
+                    data={'error': str(e)}
+                )
+                ws.send(json.dumps(response.model_dump()))
+                break
+    
+    def run(self, host='0.0.0.0', port=6969, **kwargs) -> None:
+        """Run the Flask application"""
+        self.app.run(host=host, port=port, **kwargs)
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 6969))
     print("🚧 Running your agent on a development server")
     print(f"Send agent requests to http://localhost:{port}")
     print("Learn more about agent requests at https://docs.agentstack.sh/")  # TODO: add docs for this
 
+    log.set_stderr(sys.stderr)
+    log.set_stdout(sys.stdout)
+    conf.set_path(Path.cwd())
+    
+    app = ProjectServer()
     app.run(host='0.0.0.0', port=port)
 else:
     print("Starting production server with Gunicorn")

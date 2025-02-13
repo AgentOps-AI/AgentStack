@@ -51,6 +51,7 @@ DEBUG = logging.DEBUG  # 10
 TOOL_USE = 16
 THINKING = 18
 INFO = logging.INFO  # 20
+STREAM = 21
 NOTIFY = 22
 SUCCESS = 24
 RESPONSE = 26
@@ -59,6 +60,7 @@ ERROR = logging.ERROR  # 40
 
 logging.addLevelName(THINKING, 'THINKING')
 logging.addLevelName(TOOL_USE, 'TOOL_USE')
+logging.addLevelName(STREAM, 'STREAM')
 logging.addLevelName(NOTIFY, 'NOTIFY')
 logging.addLevelName(SUCCESS, 'SUCCESS')
 logging.addLevelName(RESPONSE, 'RESPONSE')
@@ -68,6 +70,7 @@ instance: Optional[logging.Logger] = None
 
 stdout: IO = io.StringIO()
 stderr: IO = io.StringIO()
+_stream: IO = io.StringIO()
 
 
 def set_stdout(stream: IO):
@@ -92,6 +95,16 @@ def set_stderr(stream: IO):
     instance = None  # force re-initialization
 
 
+def set_stream(stream: IO):
+    """
+    Redirect standard output and error messages to the given stream.
+    This is useful for getting a stream of log data to other interfaces.
+    """
+    global _stream, instance
+    _stream = stream
+    instance = None  # force re-initialization
+
+
 def _create_handler(levelno: int) -> Callable:
     """Get the logging handler for the given log level."""
 
@@ -107,6 +120,7 @@ def _create_handler(levelno: int) -> Callable:
 debug = _create_handler(DEBUG)
 tool_use = _create_handler(TOOL_USE)
 thinking = _create_handler(THINKING)
+stream = _create_handler(STREAM)
 info = _create_handler(INFO)
 notify = _create_handler(NOTIFY)
 success = _create_handler(SUCCESS)
@@ -115,34 +129,49 @@ warning = _create_handler(WARNING)
 error = _create_handler(ERROR)
 
 
-class ConsoleFormatter(logging.Formatter):
+class BaseFormatter(logging.Formatter):
+    default_format = logging.Formatter('%(message)s\n')
+    formats: dict[int, logging.Formatter]
+    
+    def format(self, record: logging.LogRecord) -> str:
+        template = self.formats.get(record.levelno, self.default_format)
+        return template.format(record)
+
+
+class ConsoleFormatter(BaseFormatter):
     """Formats log messages for display in the console."""
 
-    default_format = logging.Formatter('%(message)s')
+    default_format = logging.Formatter('%(message)s\n')
     formats = {
-        DEBUG: logging.Formatter('DEBUG: %(message)s'),
-        SUCCESS: logging.Formatter(term_color('%(message)s', 'green')),
-        NOTIFY: logging.Formatter(term_color('%(message)s', 'blue')),
-        WARNING: logging.Formatter(term_color('%(message)s', 'yellow')),
-        ERROR: logging.Formatter(term_color('%(message)s', 'red')),
+        DEBUG: logging.Formatter('DEBUG: %(message)s\n'),
+        STREAM: logging.Formatter('%(message)s'),
+        SUCCESS: logging.Formatter(term_color('%(message)s\n', 'green')),
+        NOTIFY: logging.Formatter(term_color('%(message)s\n', 'blue')),
+        WARNING: logging.Formatter(term_color('%(message)s\n', 'yellow')),
+        ERROR: logging.Formatter(term_color('%(message)s\n', 'red')),
     }
 
-    def format(self, record: logging.LogRecord) -> str:
-        template = self.formats.get(record.levelno, self.default_format)
-        return template.format(record)
 
-
-class FileFormatter(logging.Formatter):
+class FileFormatter(BaseFormatter):
     """Formats log messages for display in a log file."""
 
-    default_format = logging.Formatter('%(levelname)s: %(message)s')
+    default_format = logging.Formatter('%(levelname)s: %(message)s\n')
     formats = {
-        DEBUG: logging.Formatter('DEBUG (%(asctime)s):\n %(pathname)s:%(lineno)d\n %(message)s'),
+        DEBUG: logging.Formatter('DEBUG (%(asctime)s):\n %(pathname)s:%(lineno)d\n %(message)s\n'),
+        STREAM: logging.Formatter('%(message)s\n'),
     }
 
-    def format(self, record: logging.LogRecord) -> str:
-        template = self.formats.get(record.levelno, self.default_format)
-        return template.format(record)
+
+class StreamFormatter(BaseFormatter):
+    """
+    Formats log messages for display in a stream.
+    * Only prints `log.stream` messages. 
+    """
+
+    default_format = logging.Formatter('')  # don't print
+    formats = {
+        STREAM: logging.Formatter('%(message)s'),
+    }
 
 
 def _build_logger() -> logging.Logger:
@@ -152,7 +181,7 @@ def _build_logger() -> logging.Logger:
     Errors and above are written to stderr if a stream has been configured.
     Warnings and below are written to stdout if a stream has been configured.
     """
-    # global stdout, stderr
+    # global stdout, stderr, _stream
 
     log = logging.getLogger(LOG_NAME)
     log.handlers.clear()  # remove any existing handlers
@@ -172,6 +201,7 @@ def _build_logger() -> logging.Logger:
         file_handler = logging.FileHandler(log_filename)
         file_handler.setFormatter(FileFormatter())
         file_handler.setLevel(DEBUG)
+        file_handler.terminator = ''
         log.addHandler(file_handler)
     except FileNotFoundError:
         pass  # we are not in a writeable directory
@@ -182,6 +212,7 @@ def _build_logger() -> logging.Logger:
     stdout_handler.setFormatter(ConsoleFormatter())
     stdout_handler.setLevel(DEBUG)
     stdout_handler.addFilter(lambda record: record.levelno < ERROR)
+    stdout_handler.terminator = ''
     log.addHandler(stdout_handler)
 
     # stderr handler for errors and above
@@ -189,6 +220,15 @@ def _build_logger() -> logging.Logger:
     stderr_handler = logging.StreamHandler(stderr)
     stderr_handler.setFormatter(ConsoleFormatter())
     stderr_handler.setLevel(ERROR)
+    stderr_handler.terminator = ''
     log.addHandler(stderr_handler)
+    
+    # stream handler for all messages
+    # `stream` can change, so defer building the stream until we need it
+    stream_handler = logging.StreamHandler(_stream)
+    stream_handler.setFormatter(StreamFormatter())
+    stream_handler.setLevel(DEBUG)
+    stream_handler.terminator = ''
+    log.addHandler(stream_handler)
 
     return log

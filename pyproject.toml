@@ -15,7 +15,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "agentops>=0.3.18",
+    "agentops==0.3.18",
     "typer>=0.12.5",
     "inquirer>=3.4.0",
     "art>=6.3",
@@ -33,7 +33,10 @@ dependencies = [
     "uv>=0.5.6",
     "tomli>=2.2.1",
     "gitpython>=3.1.44",
-    "websockets>=14.2"
+    "websockets>=14.2",
+    "flask>=3.1.0",
+    "flask-sock>=0.7.0",
+    "flask-cors>=5.0.0",
 ]
 
 [project.optional-dependencies]

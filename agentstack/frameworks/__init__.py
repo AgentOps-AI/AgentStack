@@ -1,11 +1,12 @@
-from typing import Optional, Union, Protocol, Callable
+from typing import overload, runtime_checkable
+from typing import Optional, Union, Protocol, Callable, Generator
 from types import ModuleType
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
 from dataclasses import dataclass
 from pathlib import Path
 import ast
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack.generation import InsertionPoint
 from agentstack.utils import get_framework
@@ -21,6 +22,7 @@ CREWAI = 'crewai'
 LANGGRAPH = 'langgraph'
 OPENAI_SWARM = 'openai_swarm'
 LLAMAINDEX = 'llamaindex'
+CUSTOM = 'custom'
 SUPPORTED_FRAMEWORKS = [
     CREWAI,
     LANGGRAPH,
@@ -110,6 +112,22 @@ class FrameworkModule(Protocol):
         ...
 
 
+@runtime_checkable
+class EntrypointProtocol(Protocol):
+    """
+    Protocol defining the interface for a framework's entrypoint file.
+    """
+    @overload
+    def run(self, inputs: dict[str, str]) -> None:
+        """Run the entrypoint."""
+        ...
+
+    @overload
+    def run(self, inputs: dict[str, str]) -> Generator[tuple[str, str], None, None]:
+        """Run the entrypoint."""
+        ...
+
+
 class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
     """
     This handles interactions with a Framework's entrypoint file that are common
@@ -169,7 +187,7 @@ class BaseEntrypointFile(asttools.File, metaclass=ABCMeta):
     def get_base_class(self) -> ast.ClassDef:
         """
         A base class is the first class inside of the file that follows the
-        naming convention: `<FooBar>Graph`
+        naming convention defined by `base_class_pattern`.
         """
         pattern = self.base_class_pattern
         try:
@@ -296,6 +314,9 @@ def get_framework_module(framework: str) -> FrameworkModule:
     """
     Get the module for a framework.
     """
+    if framework == CUSTOM:
+        raise Exception("Custom frameworks do not support modification.")
+    
     try:
         return import_module(f".{framework}", package=__package__)
     except ImportError:
@@ -315,6 +336,11 @@ def validate_project():
     Validate that the user's project is ready to run.
     """
     framework = get_framework()
+    
+    if framework == CUSTOM:
+        log.debug("Skipping validation for custom framework.")
+        return
+    
     entrypoint_path = get_entrypoint_path(framework)
     module = get_framework_module(framework)
     entrypoint = module.get_entrypoint()
@@ -359,6 +385,15 @@ def validate_project():
     for task_name in get_all_task_names():
         if task_name not in task_method_names:
             raise ValidationError(f"Task `{task_name}` defined in tasks.yaml but not in {entrypoint_path}")
+    
+    # Verify that the entrypoint class follows the EntrypointProtocol definition
+    # TODO we need to actually import the user's code to reference the entrypoint class
+    # EntrypointClass = 
+    # if not isinstance(EntrypointClass, EntrypointProtocol):
+    #     raise ValidationError(
+    #         f"Entrypoint class `{EntrypointClass.__name__}` does not follow the "
+    #         "EntrypointProtocol definition."
+    #     )
 
 
 def add_tool(tool: ToolConfig, agent_name: str):
