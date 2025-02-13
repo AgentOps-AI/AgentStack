@@ -37,7 +37,7 @@ class VisionToolTest(unittest.TestCase):
         if not os.environ.get('ANTHROPIC_API_KEY'):
             self.skipTest("ANTHROPIC_API_KEY not set")
 
-        image_url = "https://upload.wikimedia.org/wikipedia/en/f/f7/RickRoll.png"
+        image_url = "https://github.com/AgentOps-AI/AgentStack/blob/7c1bf897742cfb58f4942a2547be70a0a1bb767a/tests/fixtures/test_image.jpg?raw=true"
         result = analyze_image(image_url)
         self.assertTrue(isinstance(result, str))
 
