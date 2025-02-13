@@ -14,6 +14,7 @@ from agentstack.cli import (
     run_project,
     export_template,
     undo, 
+    switch_framework, 
 )
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
@@ -155,6 +156,12 @@ def _main():
     )
     export_parser.add_argument('filename', help='The name of the file to export to')
 
+    switch_parser = subparsers.add_parser('switch', help='Switch frameworks', parents=[global_parser])
+    switch_subparsers = switch_parser.add_subparsers(dest='switch_command', help='Switch commands')
+    
+    switch_framework_parser = switch_subparsers.add_parser('framework', help='Switch frameworks')
+    switch_framework_parser.add_argument('framework', help='The framework to switch to')
+
     undo_parser = subparsers.add_parser('undo', help='Undo the last change to your project', parents=[global_parser])
     update_parser = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
 
@@ -230,6 +237,11 @@ def _main():
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:
             export_template(args.filename)
+        elif args.command in ['switch']:
+            if args.switch_command in ['framework']:
+                switch_framework(args.framework)
+            else:
+                switch_parser.print_help()
         elif args.command in ['undo']:
             undo()
         else:

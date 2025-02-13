@@ -65,7 +65,7 @@ def insert_template(name: str, template: TemplateConfig, framework: Optional[str
     cookiecutter(str(template_path), no_input=True, extra_context=None)
 
 
-def export_template(output_filename: str):
+def _export_template_data() -> TemplateConfig:
     """
     Export the current project as a template.
     """
@@ -137,7 +137,7 @@ def export_template(output_filename: str):
             ]
         )
 
-    template = TemplateConfig(
+    return TemplateConfig(
         template_version=CURRENT_VERSION,
         name=metadata.project_name,
         description=metadata.project_description,
@@ -151,8 +151,33 @@ def export_template(output_filename: str):
         graph=graph,
     )
 
+
+def export_template(output_filename: str):
+    """
+    Export the current project as a template file. 
+    """
+    template = _export_template_data()
     try:
         template.write_to_file(conf.PATH / output_filename)
         log.success(f"Template saved to: {conf.PATH / output_filename}")
     except Exception as e:
         raise Exception(f"Failed to write template to file: {e}")
+
+
+def switch_framework(framework: str) -> None:
+    """
+    Switch the current project to a different framework.
+    
+     - export the current project as a template.
+     - create a new branch & switch to it.
+     - empty the directory (hopefully partially, but cookiecutter wants an empty dir)
+     - generate a new project with `insert_template`
+    """
+    if not framework in frameworks.SUPPORTED_FRAMEWORKS:
+        raise ValueError(f"Framework {framework} is not supported.")
+    
+    raise NotImplementedError("switch_framework is not implemented")
+    template = _export_template_data()
+    # TODO we can't do this with cookiecutter
+    insert_template(template.name, template, framework=framework)
+
