@@ -162,7 +162,7 @@ def run_project_stream(inputs: dict[str, str], command: str = 'run') -> Generato
         for line in log_output.follow_tail():
             yield line
     else:
-        for line in log_output:
+        for line in log_output.follow_tail():
             yield line  # stragglers post-thread
 
     thread.join()
