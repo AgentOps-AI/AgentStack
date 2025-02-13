@@ -14,7 +14,6 @@ from agentstack import repo
 from agentstack.templates import get_all_templates, TemplateConfig
 
 from agentstack.cli import welcome_message
-from agentstack.cli.wizard import run_wizard
 from agentstack.cli.templates import insert_template
 
 
@@ -67,7 +66,7 @@ def init_project(
     slug_name: Optional[str] = None,
     template: Optional[str] = None,
     framework: Optional[str] = None,
-    use_wizard: bool = False,
+    template_data: Optional[TemplateConfig] = None,
 ):
     """
     Initialize a new project in the current directory.
@@ -78,9 +77,6 @@ def init_project(
     - insert Tasks, Agents and Tools
     """
     # TODO prevent the user from passing the --path argument to init
-    if template and use_wizard:
-        raise Exception("Template and wizard flags cannot be used together")
-
     require_uv()
     welcome_message()
 
@@ -102,16 +98,14 @@ def init_project(
     if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
         raise Exception(f"Directory already exists: {conf.PATH}")
 
-    if use_wizard:
-        log.debug("Initializing new project with wizard.")
-        template_data = run_wizard(slug_name)
-    elif template:
+    if not template_data and template:
         log.debug(f"Initializing new project with template: {template}")
         template_data = TemplateConfig.from_user_input(template)
-    else:
+    elif not template_data:
         log.debug("Initializing new project with template selection.")
         template_data = select_template(slug_name, framework)
 
+    assert template_data  # appease type checker
     log.notify("🦾 Creating a new AgentStack project...")
     log.info(f"Using project directory: {conf.PATH.absolute()}")
 

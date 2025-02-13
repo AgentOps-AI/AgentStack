@@ -54,6 +54,8 @@ class FrameworkModule(Protocol):
     Protocol spec for a framework implementation module.
     """
 
+    NAME: str  # Human readable name of the framework
+    DESCRIPTION: str  # Human readable description of the framework
     ENTRYPOINT: Path
     """
     Relative path to the entrypoint file for the framework in the user's project.
@@ -300,6 +302,17 @@ def get_framework_module(framework: str) -> FrameworkModule:
         return import_module(f".{framework}", package=__package__)
     except ImportError:
         raise Exception(f"Framework {framework} could not be imported.")
+
+
+def get_framework_info(framework: str) -> dict[str, str]:
+    """
+    Get the info for a framework.
+    """
+    _module = get_framework_module(framework)
+    return {
+        'name': _module.NAME,
+        'description': _module.DESCRIPTION,
+    }
 
 
 def get_entrypoint_path(framework: str) -> Path:

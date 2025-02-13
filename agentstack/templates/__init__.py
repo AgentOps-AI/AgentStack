@@ -178,16 +178,16 @@ class TemplateConfig(pydantic.BaseModel):
 
     class Agent(pydantic.BaseModel):
         name: str
-        role: str
-        goal: str
-        backstory: str
+        role: Optional[str]
+        goal: Optional[str]
+        backstory: Optional[str]
         allow_delegation: bool = False
         llm: str
 
     class Task(pydantic.BaseModel):
         name: str
-        description: str
-        expected_output: str
+        description: Optional[str]
+        expected_output: Optional[str]
         agent: str  # TODO this is redundant with the graph
 
     class Tool(pydantic.BaseModel):
