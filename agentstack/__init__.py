@@ -5,7 +5,7 @@ Methods that have been imported into this file are expected to be used by the
 end user inside their project.
 """
 
-from typing import Callable
+from typing import Callable, Type, TypeAlias, ClassVar
 from pathlib import Path
 from agentstack import conf
 from agentstack.utils import get_framework
@@ -60,24 +60,37 @@ def get_tags() -> list[str]:
     return ['agentstack', get_framework(), *conf.get_installed_tools()]
 
 
-class ToolLoader:
+class ToolsMetaclass(type):
     """
-    Provides the public interface for accessing tools, wrapped in the
-    framework-specific callable format.
+    Metaclass for the public tools interface.
+    
+    Define methods here to expose in the public API. Using a metaclass let's us
+    use methods traditionally only available to instances on the class itself.
     """
-
-    def __getitem__(self, tool_name: str) -> list[Callable]:
+    def __getitem__(cls, tool_name: str) -> list[Callable]:
         """
         Get a tool's callables by name with `agentstack.tools[tool_name]`
         Include them in your agent's tool list with `tools = [*agentstack.tools[tool_name], ]`
         """
         return frameworks.get_tool_callables(tool_name)
 
-    def get_permissions(self, func: Callable) -> _tools.ToolPermission:
+    def get_permissions(cls, func: Callable) -> _tools.ToolPermission:
         """
         Get the permissions for a tool function.
         """
-        # aliased here to expose in the public API
         return _tools.get_permissions(func)
 
-tools = ToolLoader()
+
+class tools(metaclass=ToolsMetaclass):
+    """
+    Provides the public interface for accessing `agentstack._tools` methods and
+    types that we explicitly expose. 
+    
+    Access wrapped tools with `agentstack.tools[tool_name]`
+    
+    Access tool permissions with `agentstack.tools.get_permissions(func)`
+    
+    Access the tool Action type with `agentstack.tools.Action`
+    """
+    Action: TypeAlias = _tools.Action
+
