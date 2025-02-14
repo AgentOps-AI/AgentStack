@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import Optional
 
-from agentstack.utils import clean_input, get_version
+from agentstack.utils import clean_input, get_version, snake_to_camel
 from agentstack import log
 
 
@@ -11,6 +11,7 @@ class ProjectMetadata:
         self,
         project_name: Optional[str] = None,
         project_slug: Optional[str] = None,
+        class_name: Optional[str] = None,
         description: str = "",
         author_name: str = "",
         version: str = "",
@@ -21,6 +22,7 @@ class ProjectMetadata:
     ):
         self.project_name = clean_input(project_name) if project_name else "myagent"
         self.project_slug = clean_input(project_slug) if project_slug else self.project_name
+        self.class_name = snake_to_camel(self.project_slug) if not class_name else class_name
         self.description = description
         self.author_name = author_name
         self.version = version
@@ -36,6 +38,7 @@ class ProjectMetadata:
         return {
             'project_name': self.project_name,
             'project_slug': self.project_slug,
+            'class_name': self.class_name,
             'description': self.description,
             'author_name': self.author_name,
             'version': self.version,
@@ -58,6 +61,7 @@ class ProjectStructure:
     ):
         self.agents = []
         self.tasks = []
+        self.graph = []
         self.inputs = {}
         self.method = method
         self.manager_agent = manager_agent
@@ -68,6 +72,9 @@ class ProjectStructure:
     def add_task(self, task):
         self.tasks.append(task)
 
+    def add_edge(self, edge):
+        self.graph.append(edge)
+
     def set_inputs(self, inputs):
         self.inputs = inputs
 
@@ -77,6 +84,7 @@ class ProjectStructure:
             'manager_agent': self.manager_agent,
             'agents': self.agents,
             'tasks': self.tasks,
+            'graph': self.graph,
             'inputs': self.inputs,
         }
 

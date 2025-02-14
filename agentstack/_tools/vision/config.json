@@ -2,14 +2,14 @@
   "name": "vision",
   "category": "image-analysis",
   "env": {
-    "OPENAI_API_KEY": null
+    "ANTHROPIC_API_KEY": null, 
+    "VISION_PROMPT": null, 
+    "VISION_MODEL": null, 
+    "VISION_MAX_TOKENS": null
   },
   "dependencies": [
-    "openai>=1.0.0",
-    "requests>=2.31.0",
-    "anthropic"
+    "anthropic>=0.45.2",
+    "requests>=2.31.0"
   ],
-  "tools": [
-    "analyze_image"
-  ]
+  "tools": ["analyze_image"]
 }

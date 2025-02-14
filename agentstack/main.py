@@ -6,15 +6,21 @@ from agentstack import conf, log
 from agentstack import auth
 from agentstack.cli import (
     init_project,
-    add_tool,
     list_tools,
-    configure_default_model,
+    add_tool,
+    remove_tool,
+    add_agent,
+    add_task,
     run_project,
     export_template,
+    undo,
+    export_template,
+    create_tool,
 )
 from agentstack.telemetry import track_cli_command, update_telemetry
 from agentstack.utils import get_version, term_color
 from agentstack import generation
+from agentstack import repo
 from agentstack.update import check_for_updates
 
 
@@ -30,6 +36,12 @@ def _main():
         "--debug",
         help="Print more information when an error occurs",
         dest="debug",
+        action="store_true",
+    )
+    global_parser.add_argument(
+        "--no-git",
+        help="Disable automatic git commits of changes to your project.",
+        dest="no_git",
         action="store_true",
     )
 
@@ -61,6 +73,7 @@ def _main():
     init_parser.add_argument("slug_name", nargs="?", help="The directory name to place the project in")
     init_parser.add_argument("--wizard", "-w", action="store_true", help="Use the setup wizard")
     init_parser.add_argument("--template", "-t", help="Agent template to use")
+    init_parser.add_argument("--framework", "-f", help="Framework to use")
 
     # 'run' command
     run_parser = subparsers.add_parser(
@@ -102,6 +115,7 @@ def _main():
     agent_parser.add_argument("--goal", "-g", help="Goal of the agent")
     agent_parser.add_argument("--backstory", "-b", help="Backstory of the agent")
     agent_parser.add_argument("--llm", "-l", help="Language model to use")
+    agent_parser.add_argument("--position", help="Position to add the agent in the stack.")
 
     # 'task' command under 'generate'
     task_parser = generate_subparsers.add_parser(
@@ -111,6 +125,7 @@ def _main():
     task_parser.add_argument("--description", "-d", help="Description of the task")
     task_parser.add_argument("--expected_output", "-e", help="Expected output of the task")
     task_parser.add_argument("--agent", "-a", help="Agent associated with the task")
+    task_parser.add_argument("--position", help="Position to add the task in the stack.")
 
     # 'tools' command
     tools_parser = subparsers.add_parser("tools", aliases=["t"], help="Manage tools")
@@ -131,6 +146,14 @@ def _main():
     )
     tools_add_parser.add_argument("--agent", help="Name of agent to add this tool to")
 
+    # 'new' command under 'tools'
+    tools_new_parser = tools_subparsers.add_parser(
+        "new", aliases=["n"], help="Create a new custom tool", parents=[global_parser]
+    )
+    tools_new_parser.add_argument("name", help="Name of the tool to create")
+    tools_new_parser.add_argument("--agents", help="Name of agents to add this tool to, comma separated")
+    tools_new_parser.add_argument("--agent", help="Name of agent to add this tool to")
+
     # 'remove' command under 'tools'
     tools_remove_parser = tools_subparsers.add_parser(
         "remove", aliases=["r"], help="Remove a tool", parents=[global_parser]
@@ -142,7 +165,8 @@ def _main():
     )
     export_parser.add_argument('filename', help='The name of the file to export to')
 
-    update = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
+    undo_parser = subparsers.add_parser('undo', help='Undo the last change to your project', parents=[global_parser])
+    update_parser = subparsers.add_parser('update', aliases=['u'], help='Check for updates', parents=[global_parser])
 
     # Parse known args and store unknown args in extras; some commands use them later on
     args, extra_args = parser.parse_known_args()
@@ -151,6 +175,10 @@ def _main():
     conf.set_path(args.project_path)
     # Set the debug flag
     conf.set_debug(args.debug)
+
+    # --no-git flag disables automatic git commits
+    if args.no_git:
+        repo.dont_track_changes()
 
     # Handle version
     if args.version:
@@ -168,20 +196,22 @@ def _main():
         elif args.command in ["quickstart"]:
             webbrowser.open("https://docs.agentstack.sh/quickstart")
         elif args.command in ["templates"]:
-            webbrowser.open("https://docs.agentstack.sh/quickstart")
+            webbrowser.open("https://docs.agentstack.sh/templates")
         elif args.command in ["init", "i"]:
-            init_project(args.slug_name, args.template, args.wizard)
+            init_project(args.slug_name, args.template, args.framework, args.wizard)
         elif args.command in ["tools", "t"]:
             if args.tools_command in ["list", "l"]:
                 list_tools()
             elif args.tools_command in ["add", "a"]:
-                conf.assert_project()
                 agents = [args.agent] if args.agent else None
                 agents = args.agents.split(",") if args.agents else agents
                 add_tool(args.name, agents)
+            elif args.tools_command in ["new", "n"]:
+                agents = [args.agent] if args.agent else None
+                agents = args.agents.split(",") if args.agents else agents
+                create_tool(args.name, agents)
             elif args.tools_command in ["remove", "r"]:
-                conf.assert_project()
-                generation.remove_tool(args.name)
+                remove_tool(args.name)
             else:
                 tools_parser.print_help()
         elif args.command in ['login']:
@@ -191,21 +221,31 @@ def _main():
 
         # inside project dir commands only
         elif args.command in ["run", "r"]:
-            conf.assert_project()
             run_project(command=args.function, cli_args=extra_args)
         elif args.command in ['generate', 'g']:
-            conf.assert_project()
             if args.generate_command in ['agent', 'a']:
-                if not args.llm:
-                    configure_default_model()
-                generation.add_agent(args.name, args.role, args.goal, args.backstory, args.llm)
+                add_agent(
+                    name=args.name,
+                    role=args.role,
+                    goal=args.goal,
+                    backstory=args.backstory,
+                    llm=args.llm,
+                    position=args.position,
+                )
             elif args.generate_command in ['task', 't']:
-                generation.add_task(args.name, args.description, args.expected_output, args.agent)
+                add_task(
+                    name=args.name,
+                    description=args.description,
+                    expected_output=args.expected_output,
+                    agent=args.agent,
+                    position=args.position,
+                )
             else:
                 generate_parser.print_help()
         elif args.command in ['export', 'e']:
-            conf.assert_project()
             export_template(args.filename)
+        elif args.command in ['undo']:
+            undo()
         else:
             parser.print_help()
 

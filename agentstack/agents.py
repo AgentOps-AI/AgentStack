@@ -6,9 +6,11 @@ from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.scalarstring import FoldedScalarString
 from agentstack import conf, log
 from agentstack.exceptions import ValidationError
+from agentstack.providers import parse_provider_model
 
 
 AGENTS_FILENAME: Path = Path("src/config/agents.yaml")
+AGENTS_PROMPT_TPL: str = "You are {role}. {backstory}\nYour personal goal is: {goal}"
 
 yaml = YAML()
 yaml.preserve_quotes = True  # Preserve quotes in existing data
@@ -67,6 +69,25 @@ class AgentConfig(pydantic.BaseModel):
                 error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(f"Error loading agent {name} from {filename}.\n{error_str}")
 
+    @property
+    def provider(self) -> str:
+        """The LLM provider ie. 'openai' or 'openrouter'"""
+        return parse_provider_model(self.llm)[0]
+
+    @property
+    def model(self) -> str:
+        """The model name ie. 'gpt-4o'"""
+        return parse_provider_model(self.llm)[1]
+
+    @property
+    def prompt(self) -> str:
+        """Concatenate the prompts for role, goal, and backstory."""
+        return AGENTS_PROMPT_TPL.format(**{
+            'role': self.role,
+            'goal': self.goal,
+            'backstory': self.backstory,
+        })
+
     def model_dump(self, *args, **kwargs) -> dict:
         dump = super().model_dump(*args, **kwargs)
         dump.pop('name')  # name is the key, so keep it out of the data
@@ -106,3 +127,9 @@ def get_all_agent_names() -> list[str]:
 
 def get_all_agents() -> list[AgentConfig]:
     return [AgentConfig(name) for name in get_all_agent_names()]
+
+
+def get_agent(name: str) -> Optional[AgentConfig]:
+    """Get an agent configuration by name."""
+    return AgentConfig(name)
+

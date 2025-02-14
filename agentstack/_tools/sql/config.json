@@ -1,0 +1,20 @@
+{
+    "name": "sql",
+    "url": "https://pypi.org/project/psycopg2/",
+    "category": "database",
+    "env": {
+        "POSTGRES_DB": null,
+        "POSTGRES_USER": null,
+        "POSTGRES_PASSWORD": null,
+        "POSTGRES_HOST": null,
+        "POSTGRES_PORT": null
+    },
+    "dependencies": [
+        "psycopg2-binary>=2.9.9"
+    ],
+    "tools": [
+        "get_schema",
+        "execute_query"
+    ],
+    "cta": "Set up your PostgreSQL connection variables in the environment file."
+}

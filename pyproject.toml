@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentstack"
-version = "0.2.5.1"
+version = "0.3.3"
 description = "The fastest way to build robust AI agents"
 authors = [
     { name="Braelyn Boynton", email="bboynton97@gmail.com" },
@@ -26,12 +26,13 @@ dependencies = [
     "astor==0.8.1",
     "asttokens",
     "pydantic>=2.10",
-    "packaging==23.2",
+    "packaging>=23.2",
     "requests>=2.32",
     "appdirs>=1.4.4",
     "python-dotenv>=1.0.1",
     "uv>=0.5.6",
-    "tomli>=2.2.1"
+    "tomli>=2.2.1",
+    "gitpython>=3.1.44",
 ]
 
 [project.optional-dependencies]
@@ -44,15 +45,23 @@ test = [
     "tox",
 ]
 crewai = [
-    "crewai==0.83.0",
-    "crewai-tools==0.14.0",
+    "crewai==0.100.0",
+    "crewai-tools==0.33.0",
+    "shapely==2.0.6"  # crewai-tools needs this, but 2.0.7 is broken
 ]
-all = [
-    "agentstack[dev,test,crewai]",
+langgraph = [
+    "langgraph>=0.2.61",
+    "langchain>=0.3.14",
+]
+openai_swarm = [
+    "agentstack-openai-swarm>=0.0.1"
+]
+llamaindex = [
+    "llama-index-core>=0.12.16"
 ]
 
 [tool.setuptools.package-data]
-agentstack = ["templates/**/*"]
+agentstack = ["frameworks/templates/**/*"]
 
 
 [project.scripts]
@@ -69,7 +78,7 @@ exclude = [
     "build",
     "dist",
     "*.egg-info",
-    "agentstack/templates/",
+    "agentstack/frameworks/templates/",
     "examples"
 ]
 line-length = 110
@@ -79,7 +88,7 @@ quote-style = "preserve"
 
 [tool.mypy]
 exclude = [
-    "templates/.*" # cookiecutter paths are not compatible
+    "frameworks/templates/.*" # cookiecutter paths are not compatible
 ]
 allow_untyped_defs = true
 disable_error_code = ["var-annotated", "import-untyped"]

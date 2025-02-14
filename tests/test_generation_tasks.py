@@ -2,28 +2,32 @@ import os, sys
 from pathlib import Path
 import shutil
 import unittest
-from parameterized import parameterized_class
 import ast
 
 from agentstack.conf import ConfigFile, set_path
 from agentstack.exceptions import ValidationError
 from agentstack import frameworks
-from agentstack.tasks import TaskConfig
+from agentstack.agents import AGENTS_FILENAME
+from agentstack.tasks import TASKS_FILENAME, TaskConfig
 from agentstack.generation.task_generation import add_task
 from agentstack.generation.agent_generation import add_agent
 
 BASE_PATH = Path(__file__).parent
 
 
-@parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
 class TestGenerationAgent(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp' / 'agent_generation'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'agent_generation'
 
         os.makedirs(self.project_dir)
         os.makedirs(self.project_dir / 'src')
         os.makedirs(self.project_dir / 'src' / 'config')
         (self.project_dir / 'src' / '__init__.py').touch()
+
+        # copy agents.yaml and tasks.yaml
+        shutil.copy(BASE_PATH / 'fixtures/agents_max.yaml', self.project_dir / AGENTS_FILENAME)
+        shutil.copy(BASE_PATH / 'fixtures/tasks_max.yaml', self.project_dir / TASKS_FILENAME)
 
         # set the framework in agentstack.json
         shutil.copy(BASE_PATH / 'fixtures' / 'agentstack.json', self.project_dir / 'agentstack.json')
@@ -57,7 +61,7 @@ class TestGenerationAgent(unittest.TestCase):
     def test_add_agent_exists(self):
         with self.assertRaises(Exception) as context:
             add_task(
-                'test_task',
+                'task_name',
                 description='description',
                 expected_output='expected_output',
                 agent='agent',
@@ -65,10 +69,10 @@ class TestGenerationAgent(unittest.TestCase):
 
     def test_add_task_selects_single_agent(self):
         add_task(
-            'task_test',
+            'task_test_two',
             description='description',
             expected_output='expected_output',
         )
 
-        task_config = TaskConfig('task_test')
-        assert task_config.agent == 'test_agent'  # defined in entrypoint_max.py
+        task_config = TaskConfig('task_test_two')
+        assert task_config.agent == 'agent_name'  # defined in entrypoint_max.py

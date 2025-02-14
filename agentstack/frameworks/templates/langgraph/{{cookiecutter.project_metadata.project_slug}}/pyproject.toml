@@ -1,0 +1,13 @@
+[project]
+name = "{{cookiecutter.project_metadata.project_name}}"
+version = "{{cookiecutter.project_metadata.version}}"
+description = "{{cookiecutter.project_metadata.description}}"
+authors = [
+    { name = "{{cookiecutter.project_metadata.author_name}}" }
+]
+license = { text = "{{cookiecutter.project_metadata.license}}" }
+requires-python = ">=3.10"
+
+dependencies = [
+    "agentstack[{{cookiecutter.framework}}]>={{cookiecutter.project_metadata.agentstack_version}}",
+]

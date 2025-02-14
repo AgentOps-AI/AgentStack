@@ -1,5 +1,6 @@
 from typing import Optional, List
 import sys
+import asyncio
 import traceback
 from pathlib import Path
 import importlib.util
@@ -9,7 +10,7 @@ from agentstack import conf, log
 from agentstack.exceptions import ValidationError
 from agentstack import inputs
 from agentstack import frameworks
-from agentstack.utils import term_color, get_framework, verify_agentstack_project
+from agentstack.utils import get_framework, verify_agentstack_project
 
 MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
@@ -95,6 +96,7 @@ def _import_project_module(path: Path):
 
 def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
     """Validate that the project is ready to run and then run it."""
+    conf.assert_project()
     verify_agentstack_project()
     
     if conf.get_framework() not in frameworks.SUPPORTED_FRAMEWORKS:
@@ -121,8 +123,14 @@ def run_project(command: str = 'run', cli_args: Optional[List[str]] = None):
     try:
         log.notify("Running your agent...")
         project_main = _import_project_module(conf.PATH)
-        getattr(project_main, command)()
+        main = getattr(project_main, command)
+        
+        # handle both async and sync entrypoints
+        if asyncio.iscoroutinefunction(main):
+            asyncio.run(main())
+        else:
+            main()
     except ImportError as e:
-        raise ValidationError(f"Failed to import project. Does '{MAIN_FILENAME}' exist?:\n{e}")
+        raise ValidationError(f"Failed to import AgentStack project at: {conf.PATH.absolute()}\n{e}")
     except Exception as e:
         raise Exception(_format_friendly_error_message(e))

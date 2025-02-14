@@ -175,9 +175,13 @@ ex/
 **/ex/
 cookiecutter.json
 
+tests/tmp
+
 examples/tests/
 examples/tests/**/*
 
 uv.lock
 .DS_Store
+
+.python-version
 

@@ -15,13 +15,36 @@ The best place to engage in conversation about your contribution is in the Issue
 
 ## Setup
 
-1. Clone the repo
-2. `poetry install`
-3. `pip install -e .`
+1. `git clone https://github.com/AgentOps-AI/AgentStack.git`
+   `cd AgentStack`
+2. `uv pip install -e ".[dev,test]`
    - This will install the CLI locally and in editable mode so you can use `agentstack <command>` to test your latest changes
+   - Note that after you initialize a project, it will install it's own version of `agentstack` in the project's
+   virtual environment. To use your local version, run `uv pip install -e "../AgentStack/.[<framework>]"` to get
+   your development version inside of the project, too. 
 
 ## Project Structure
-TODO
+
+A detailed overview of the project structure is available at [Project Structure](https://docs.agentstack.sh/contributing/project-structure).
+
+
+## Before Making a Pull Request
+
+Make sure tests pass, type checking is correct, and ensure your code is formatted correctly.
+
+1. `tox -m quick`
+   - This will run tests for Python version 3.12 only. You can run tests on all supported versions with `tox`.
+2. `mypy agentstack`
+   - Please resolve all type checking errors before marking your PR as ready for review.
+3. `ruff`
+   - We use `ruff` to ensure consistency in our codebase. 
 
 ## Tests
-HAHAHAHAHAHAHA good one (pls help 🥺)
+
+We're actively working toward increasing our test coverage. Make sure to review the `codecov` output of your
+tests to ensure your contribution is well tested. We use `tox` to run our tests, which sets up individual
+environments for each framework and Python version we support. Tests are run when a PR is pushed to, and
+contributions without passing tests will not be merged.
+
+You can test a specific Python version and framework by running: `tox -e py312-<framework>`, but keep in mind
+that the coverage report will be incomplete.

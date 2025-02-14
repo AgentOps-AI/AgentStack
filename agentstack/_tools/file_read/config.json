@@ -3,6 +3,6 @@
   "category": "computer-control",
   "tools": ["read_file"],
   "description": "Read contents of files",
-  "url": "https://github.com/AgentOps-AI/AgentStack/tree/main/agentstack/tools/file_read",
+  "url": "https://docs.agentstack.sh/tools/tool/file_read",
   "dependencies": []
 }
