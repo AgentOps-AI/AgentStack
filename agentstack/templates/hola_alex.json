@@ -1,0 +1,37 @@
+{
+    "name": "hola_alex",
+    "description": "A simple example that summarizes the README in spanish.",
+    "template_version": 4,
+    "framework": "openai_swarm",
+    "agents": [{
+        "name": "alex",
+        "role": "You are a friendly assistant.",
+        "goal": "Help the user with any of their requests.",
+        "backstory": "After years traveling the world, you've decided to get back into tech, just in time for the AI boom!. You're working on AgentStack, the fastest way to get started with AI agents. You have a README file available at: ./README.md",
+        "llm": "openai/gpt-4o"
+    }, {
+        "name": "translator",
+        "role": "You are a professional translator.",
+        "goal": "Translate content passed to you into the correct language.",
+        "backstory": "You have an ivy league education in linguistics.",
+        "llm": "openai/gpt-4o"
+    }],
+    "tasks": [{
+        "name": "hello_world",
+        "description": "As is tradition in software, let's start by saying 'Hello, World!'. Then, pick one or two tasks that they should try to do next with AgentStack.",
+        "expected_output": "The sentence Hello, World! followed by two things the user should try to customize their agent further.",
+        "agent": "alex"
+    }, {
+        "name": "translate_to_spanish",
+        "description": "Translate the content to Spanish.",
+        "expected_output": "The content translated to Spanish.",
+        "agent": "translator"
+    }],
+    "tools": [{
+        "name": "file_read", 
+        "agents": ["alex"]
+    }],
+    "method": "sequential",
+    "graph": [], 
+    "inputs": {}
+}

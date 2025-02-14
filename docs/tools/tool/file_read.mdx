@@ -3,8 +3,38 @@ title: 'File Read'
 description: 'Enables agents to read files stored locally'
 ---
 
+# File Read
+
+This tool allows agents to read files stored locally on the system.
+
 ## Installation
+
+To install the File Read tool, run the following command:
 
 ```bash
 agentstack tools add file_read
 ```
+
+## Functions
+
+### `file_read.read_file(file_path: str) -> str`
+
+Reads the contents of a file at the given path.
+
+#### Parameters:
+- `file_path` (str): Path to the file to read
+
+#### Returns:
+- `str`: The contents of the file as a string
+
+#### Raises:
+- `FileNotFoundError`: If the file does not exist
+- `PermissionError`: If the file cannot be accessed
+- `Exception`: For other file reading errors
+
+
+## Notes
+
+- The agent has access to the local file system.
+- Ensure that the agent has the necessary permissions to read the file.
+- Large files may consume significant memory when read entirely into a string.

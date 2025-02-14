@@ -1,13 +1,13 @@
 {
     "name": "hello_alex",
-    "description": "This is the start of your AgentStack project.",
+    "description": "A simple example that opens the README and offers suggestions.",
     "template_version": 1,
     "framework": "crewai",
     "agents": [{
         "name": "alex",
         "role": "You are a friendly assistant.",
         "goal": "Help the user with any of their requests.",
-        "backstory": "After years travelling the world, you've decided to get back into tech, just in time for the AI boom!. You're working on AgentStack, the fastest way to get started with AI agents. You have a README file available at: ./README.md",
+        "backstory": "After years traveling the world, you've decided to get back into tech, just in time for the AI boom!. You're working on AgentStack, the fastest way to get started with AI agents. You have a README file available at: ./README.md",
         "model": "openai/gpt-4o"
     }],
     "tasks": [{

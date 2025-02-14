@@ -1,3 +1,4 @@
+from typing import Optional
 import os, sys
 from art import text2art
 import inquirer
@@ -5,9 +6,15 @@ from agentstack import conf, log
 from agentstack.conf import ConfigFile
 from agentstack.exceptions import ValidationError
 from agentstack.utils import validator_not_empty, is_snake_case
+from agentstack.generation import InsertionPoint
+from agentstack import repo
 
 
 PREFERRED_MODELS = [
+    'groq/deepseek-r1-distill-llama-70b',
+    'deepseek/deepseek-chat',
+    'deepseek/deepseek-coder',
+    'deepseek/deepseek-reasoner',
     'openai/gpt-4o',
     'anthropic/claude-3-5-sonnet',
     'openai/o1-preview',
@@ -26,6 +33,25 @@ def welcome_message():
     log.info(border)
     log.info(tagline)
     log.info(border)
+
+
+def undo() -> None:
+    """Undo the last committed changes."""
+    conf.assert_project()
+    
+    changed_files = repo.get_uncommitted_files()
+    if changed_files:
+        log.warning("There are uncommitted changes that may be overwritten.")
+        for changed in changed_files:
+            log.info(f" - {changed}")
+        should_continue = inquirer.confirm(
+            message="Do you want to continue?",
+            default=False,
+        )
+        if not should_continue:
+            return
+
+    repo.revert_last_commit(hard=True)
 
 
 def configure_default_model():
@@ -73,4 +99,18 @@ def get_validated_input(
         if snake_case and not is_snake_case(value):
             raise ValidationError("Input must be in snake_case")
         return value
+
+
+def parse_insertion_point(position: Optional[str] = None) -> Optional[InsertionPoint]:
+    """
+    Parse an insertion point CLI argument into an InsertionPoint enum.
+    """
+    if position is None:
+        return None  # defer assumptions
+
+    valid_positions = {x.value for x in InsertionPoint}
+    if position not in valid_positions:
+        raise ValueError(f"Position must be one of {','.join(valid_positions)}.")
+
+    return next(x for x in InsertionPoint if x.value == position)
 

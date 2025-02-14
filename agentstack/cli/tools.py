@@ -1,8 +1,10 @@
 from typing import Optional
 import itertools
 import inquirer
+from agentstack import conf
 from agentstack.utils import term_color, is_snake_case
 from agentstack import generation
+from agentstack import repo
 from agentstack._tools import get_all_tools
 from agentstack.agents import get_all_agents
 from pathlib import Path
@@ -17,7 +19,7 @@ def list_tools():
     tools = [t for t in get_all_tools() if t is not None]  # Filter out None values
     categories = {}
     custom_tools = []
-    
+
     # Group tools by category
     for tool in tools:
         if tool.category == 'custom':
@@ -59,11 +61,13 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
         - add the tool to the user's project
         - add the tool to the specified agents or all agents if none are specified
     """
+    conf.assert_project()
+
     if not tool_name:
         # Get all available tools including custom ones
         available_tools = [t for t in get_all_tools() if t is not None]
         tool_names = [t.name for t in available_tools]
-        
+
         # ask the user for the tool name
         tools_list = [
             inquirer.List(
@@ -91,7 +95,23 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
             return  # user cancelled the prompt
 
     assert tool_name  # appease type checker
-    generation.add_tool(tool_name, agents=agents)
+
+    repo.commit_user_changes()
+    with repo.Transaction() as commit:
+        commit.add_message(f"Added tool {tool_name}")
+        generation.add_tool(tool_name, agents=agents)
+
+
+def remove_tool(tool_name: str):
+    """
+    Remove a tool from the user's project.
+    """
+    conf.assert_project()
+
+    repo.commit_user_changes()
+    with repo.Transaction() as commit:
+        commit.add_message(f"Removed tool {tool_name}")
+        generation.remove_tool(tool_name)
 
 
 def create_tool(tool_name: str, agents=Optional[list[str]]):
@@ -105,7 +125,7 @@ def create_tool(tool_name: str, agents=Optional[list[str]]):
 
     # Check if tool already exists
     user_tools_dir = Path('src/tools').resolve()
-    tool_path = user_tools_dir / tool_name
+    tool_path = conf.PATH / user_tools_dir / tool_name
     if tool_path.exists():
         raise Exception(f"Tool '{tool_name}' already exists.")
 

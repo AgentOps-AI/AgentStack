@@ -19,6 +19,10 @@ BASE_PATH = Path(__file__).parent
 class FrameworksLanggraphTest(unittest.TestCase):
     def setUp(self):
         self.framework = os.getenv('TEST_FRAMEWORK')
+        
+        if not self.framework == frameworks.LANGGRAPH:
+            self.skipTest("These tests are only for the LangGraph framework")
+        
         self.project_dir = BASE_PATH / 'tmp' / self.framework / 'langgraph'
         conf.set_path(self.project_dir)
         os.makedirs(self.project_dir / 'src/config')
