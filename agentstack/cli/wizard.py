@@ -172,7 +172,7 @@ class BannerView(WizardView):
                 Button(
                     (self.height - 5, left_offset),
                     (3, button_width),
-                    title, 
+                    title,
                     color=COLOR_BUTTON,
                     on_confirm=action,
                 )
@@ -465,13 +465,13 @@ class AgentView(FormView):
         return [
             Text((11, 2), (1, 12), color=COLOR_FORM, value="Name"),
             TextInput((11, 14), (2, self.width - 16), self.agent_name, **FIELD_COLORS),
-            
+
             Text((13, 2), (1, 12), color=COLOR_FORM, value="Role"),
             TextInput((13, 14), (large_field_height, self.width - 16), self.agent_role, **FIELD_COLORS),
-            
+
             Text((13 + large_field_height, 2), (1, 12), color=COLOR_FORM, value="Goal"),
             TextInput((13 + large_field_height, 14), (large_field_height, self.width - 16), self.agent_goal, **FIELD_COLORS),
-            
+
             Text((13 + (large_field_height * 2), 2), (1, 12), color=COLOR_FORM, value="Backstory"),
             TextInput((13 + (large_field_height * 2), 14), (large_field_height, self.width - 16), self.agent_backstory, **FIELD_COLORS),
         ]
@@ -760,10 +760,10 @@ class TaskView(FormView):
         return [
             Text((11, 2), (1, 12), color=COLOR_FORM, value="Name"),
             TextInput((11, 14), (2, self.width - 16), self.task_name, **FIELD_COLORS),
-            
+
             Text((13, 2), (1, 12), color=COLOR_FORM, value="Description"),
             TextInput((13, 14), (large_field_height, self.width - 16), self.task_description, **FIELD_COLORS),
-            
+
             Text((13 + large_field_height, 2), (2, 12), color=COLOR_FORM, value="Expected\nOutput"),
             TextInput((13 + large_field_height, 14), (large_field_height, self.width - 16), self.expected_output, **FIELD_COLORS),
         ]
@@ -771,7 +771,7 @@ class TaskView(FormView):
 
 class TaskAgentSelectionView(AgentSelectionView):
     title = "Select an Agent for your Task"
-    
+
     def submit(self):
         if not self.agent_key.value:
             self.error("Agent is required.")
@@ -988,7 +988,7 @@ class WizardApp(App):
         self.stop()
 
         if self._finish_run_once:
-            
+
             log.set_stdout(sys.stdout)  # re-enable on-screen logging
 
             init_project(
@@ -998,7 +998,7 @@ class WizardApp(App):
 
             template.write_to_file(conf.PATH / "wizard")
             log.info(f"Saved template to: {conf.PATH / 'wizard.json'}")
-            
+
 
     def advance(self, steps: int = 1):
         """Load the next view in the active workflow."""

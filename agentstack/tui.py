@@ -126,7 +126,18 @@ class Color:
     reversed: bool = False
     bold: bool = False
 
-    _color_map = {}  # Cache for color mappings
+    FALLBACK_COLORS = [
+        curses.COLOR_WHITE,
+        curses.COLOR_RED,
+        curses.COLOR_GREEN,
+        curses.COLOR_YELLOW,
+        curses.COLOR_BLUE,
+        curses.COLOR_MAGENTA,
+        curses.COLOR_CYAN,
+    ]
+
+    _color_map = {}  # cache for color mappings
+    COLOR_SUPPORT = "none"
 
     def __init__(
         self, h: float, s: float = 100, v: float = 100, reversed: bool = False, bold: bool = False
@@ -223,12 +234,38 @@ class Color:
             pair = pair | curses.A_BOLD
         return pair
 
+    def _get_fallback_color(self):
+        hue = self.h
+        if self.s <= 50 or self.v <= 50:
+            return curses.COLOR_WHITE
+
+        if hue < 30 or hue >= 330:
+            return curses.COLOR_RED
+        elif 30 < hue <= 90:
+            return curses.COLOR_YELLOW
+        elif 90 < hue <= 150:
+            return curses.COLOR_GREEN
+        elif 150 < hue <= 230:
+            return curses.COLOR_CYAN
+        elif 230 < hue <= 270:
+            return curses.COLOR_BLUE
+        elif 270 < hue <= 330:
+            return curses.COLOR_MAGENTA
+        else:
+            return curses.COLOR_WHITE
+
     def to_curses(self) -> int:
         """Get curses color pair for this color."""
         if self._pair_number is not None:
             return self._get_color_pair(self._pair_number)
 
-        color_number = self._get_closest_color()
+        if Color.COLOR_SUPPORT == "none":
+            return 0
+
+        if Color.COLOR_SUPPORT == "basic":
+            color_number = self._get_fallback_color()
+        else:
+            color_number = self._get_closest_color()
 
         # Create new pair if needed
         if color_number not in self._color_map:
@@ -244,18 +281,20 @@ class Color:
     @classmethod
     def initialize(cls) -> None:
         """Initialize terminal color support."""
-        if not curses.has_colors():
-            raise RuntimeError("Terminal does not support colors")
+        cls._color_map = {}
+        cls.COLOR_SUPPORT = "none"
 
-        curses.start_color()
-        curses.use_default_colors()
+        if not curses.has_colors():
+            return
 
         try:
+            curses.start_color()
+            curses.use_default_colors()
             curses.init_pair(1, 1, -1)
+            curses.color_pair(1)
+            cls.COLOR_SUPPORT = "full" if curses.COLORS >= 256 else "basic"
         except:
-            raise RuntimeError("Terminal does not support required color features")
-
-        cls._color_map = {}
+            pass
 
 
 class ColorAnimation(Color):
