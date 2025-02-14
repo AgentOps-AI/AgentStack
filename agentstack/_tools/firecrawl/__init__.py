@@ -122,7 +122,7 @@ def extract_data(urls: List[str], schema: Optional[Dict[str, Any]] = None, promp
     """
     permissions = tools.get_permissions(extract_data)
     if not permissions.READ:
-        return "User has not granted read permission."
+        return {'error': "User has not granted read permission."}
     
     params: Dict[str, Any] = {}
 
