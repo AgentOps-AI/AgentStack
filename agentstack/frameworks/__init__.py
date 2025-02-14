@@ -73,12 +73,6 @@ class FrameworkModule(Protocol):
         """
         ...
 
-    def parse_llm(self, llm: str) -> tuple[str, str]:
-        """
-        Parse a language model string into a provider and model.
-        """
-        ...
-
     def add_agent(self, agent: 'AgentConfig', position: Optional[InsertionPoint] = None) -> None:
         """
         Add an agent to the user's project.
@@ -491,55 +485,3 @@ def get_graph() -> list[graph.Edge]:
     """
     module = get_framework_module(get_framework())
     return module.get_graph()
-
-
-def create_tool(tool_name: str):
-    """
-    Create a new custom tool in the user's project.
-    The tool will be created with a basic structure and configuration.
-    """
-    module = get_framework_module(get_framework())
-    entrypoint = module.get_entrypoint()
-
-    # Check if tool already exists
-    user_tools_dir = conf.PATH / 'src/tools'
-    tool_path = user_tools_dir / tool_name
-    if tool_path.exists():
-        raise ValidationError(f"Tool '{tool_name}' already exists.")
-
-    # Create tool directory
-    tool_path.mkdir(parents=True, exist_ok=False)
-
-    # Create __init__.py with basic function template
-    init_file = tool_path / '__init__.py'
-    init_content = f'''def {tool_name}_tool(input_str: str) -> str:
-        """
-        Define your tool's functionality here.
-
-        Args:
-            input_str: Input string to process
-
-        Returns:
-            str: Result of the tool's operation
-        """ 
-        # Add your tool's logic here
-        return f"Processed: {{input_str}}"
-    '''
-    init_file.write_text(init_content)
-
-    tool_config = ToolConfig(
-        name=tool_name,
-        category="custom",
-        tools=[tool_name, ],
-    )
-    tool_config.write_to_file(tool_path / 'config.json')
-
-    # Update the project's configuration with the new tool
-    agentstack_config = conf.ConfigFile()
-    agentstack_config.tools.append(tool_config.name)
-    agentstack_config.write()
-
-    with entrypoint:
-        entrypoint.add_import(f'.tools.{tool_name}', f'{tool_name}_tool')
-
-    return module.create_tool(tool_name)

@@ -68,23 +68,31 @@ def create_tool(tool_name: str, agents: Optional[list[str]] = []):
 
     # Create __init__.py with basic function template
     init_file = tool_path / '__init__.py'
-    init_content = f'''def {tool_name}():
+    init_content = f'''
+    
+def {tool_name}_tool(value: str) -> str:
     """
     Define your tool's functionality here.
-    """
-    pass
+
+    Args:
+        value: Input to process (should be typed in function definition)
+
+    Returns:
+        str: Result of the tool's operation
+    """ 
+    # Add your tool's logic here
+    return value
 '''
     init_file.write_text(init_content)
 
     tool_config = ToolConfig(
         name=tool_name,
         category="custom",
-        tools=[tool_name, ],
+        tools=[f'{tool_name}_tool', ],
     )
     tool_config.write_to_file(tool_path / 'config.json')
 
     # Edit the framework entrypoint file to include the tool in the agent definition
-    tool = ToolConfig.from_tool_name(tool_name)
     if not agents:  # If no agents are specified, add the tool to all agents
         agents = frameworks.get_agent_method_names()
     for agent_name in agents:

@@ -105,6 +105,13 @@ def init_project(
     if use_wizard:
         log.debug("Initializing new project with wizard.")
         template_data = run_wizard(slug_name)
+    elif template == "empty":
+        log.debug("Initializing new project with empty template.")
+        template_data = TemplateConfig(
+            name=slug_name,
+            description="",
+            framework=framework or frameworks.DEFAULT_FRAMEWORK,
+        )
     elif template:
         log.debug(f"Initializing new project with template: {template}")
         template_data = TemplateConfig.from_user_input(template)

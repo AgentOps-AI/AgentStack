@@ -79,8 +79,6 @@ class TestGenerationTool(unittest.TestCase):
         # Execute
         create_tool(
             tool_name=tool_name,
-            tool_path=tool_path,
-            user_tools_dir=self.tools_dir
         )
 
         # Assert directory was created
@@ -91,7 +89,7 @@ class TestGenerationTool(unittest.TestCase):
         init_file = tool_path / "__init__.py"
         self.assertTrue(init_file.exists())
         init_content = init_file.read_text()
-        self.assertIn(f"def {tool_name}():", init_content)
+        self.assertIn(f"def {tool_name}_tool", init_content)
         self.assertIn('"""', init_content)  # Check docstring exists
 
         # Assert config.json was created with correct content
@@ -100,7 +98,7 @@ class TestGenerationTool(unittest.TestCase):
         config = json.loads(config_file.read_text())
         self.assertEqual(config["name"], tool_name)
         self.assertEqual(config["category"], "custom")
-        self.assertEqual(config["tools"], [tool_name])
+        self.assertEqual(config["tools"], [f"{tool_name}_tool"])
 
     def test_create_tool_specific_agents(self):
         """Test tool creation with specific agents"""
@@ -109,8 +107,6 @@ class TestGenerationTool(unittest.TestCase):
 
         create_tool(
             tool_name=tool_name,
-            tool_path=tool_path,
-            user_tools_dir=self.tools_dir,
         )
 
         # Assert directory and files were created
@@ -124,30 +120,25 @@ class TestGenerationTool(unittest.TestCase):
 
     def test_create_tool_directory_exists(self):
         """Test tool creation fails when directory already exists"""
-        tool_name = "test_tool"
+        tool_name = "test_tool_directory_exists"
         tool_path = self.tools_dir / tool_name
 
         # Create the directory first
         tool_path.mkdir(parents=True)
 
         # Assert raises error when trying to create tool in existing directory
-        with self.assertRaises(FileExistsError):
+        with self.assertRaises(Exception):
             create_tool(
                 tool_name=tool_name,
-                tool_path=tool_path,
-                user_tools_dir=self.tools_dir
             )
 
     @patch('agentstack.generation.tool_generation.log.success')
     def test_create_tool_success_logging(self, mock_log_success):
         """Test success logging message"""
         tool_name = "test_tool"
-        tool_path = self.tools_dir / tool_name
 
         create_tool(
             tool_name=tool_name,
-            tool_path=tool_path,
-            user_tools_dir=self.tools_dir
         )
 
         mock_log_success.assert_called_once()

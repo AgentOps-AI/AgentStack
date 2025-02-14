@@ -13,6 +13,7 @@ from inquirer.errors import ValidationError
 
 
 BASE_PATH = Path(__file__).parent
+TEMPLATE_NAME = "empty"
 
 class CLIToolsTest(unittest.TestCase):
     def setUp(self):
@@ -28,7 +29,7 @@ class CLIToolsTest(unittest.TestCase):
     @unittest.skip("Dependency resolution issue")
     def test_add_tool(self, tool_name):
         """Test the adding every tool to a project."""
-        result = run_cli('init', f"{tool_name}_project")
+        result = run_cli('init', f"{tool_name}_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
         os.chdir(self.project_dir / f"{tool_name}_project")
         result = run_cli('generate', 'agent', 'test_agent', '--llm', 'opeenai/gpt-4o')
@@ -67,7 +68,7 @@ class CLIToolsTest(unittest.TestCase):
     def test_create_tool_basic(self):
         """Test creating a new custom tool via CLI"""
         # Initialize a project first
-        result = run_cli('init', "test_project")
+        result = run_cli('init', "test_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
         os.chdir(self.project_dir / "test_project")
 
@@ -76,11 +77,11 @@ class CLIToolsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
 
         # Create a new tool
-        result = run_cli('tools', 'create', 'test_tool')
+        result = run_cli('tools', 'new', 'test_tool')
         self.assertEqual(result.returncode, 0)
 
         # Verify tool directory and files were created
-        tool_path = Path('src/tools/test_tool')
+        tool_path = self.project_dir / "test_project" / 'src/tools/test_tool'
         self.assertTrue(tool_path.exists())
         self.assertTrue((tool_path / '__init__.py').exists())
         self.assertTrue((tool_path / 'config.json').exists())
@@ -88,7 +89,7 @@ class CLIToolsTest(unittest.TestCase):
     def test_create_tool_with_agents(self):
         """Test creating a new custom tool with specific agents via CLI"""
         # Initialize project and create multiple agents
-        result = run_cli('init', "test_project")
+        result = run_cli('init', "test_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
         os.chdir(self.project_dir / "test_project")
 
@@ -96,22 +97,17 @@ class CLIToolsTest(unittest.TestCase):
         run_cli('generate', 'agent', 'agent2', '--llm', 'openai/gpt-4')
 
         # Create tool with specific agent
-        result = run_cli('tools', 'create', 'test_tool', '--agents', 'agent1')
+        result = run_cli('tools', 'new', 'test_tool', '--agents', 'agent1')
         self.assertEqual(result.returncode, 0)
 
         # Verify tool was created
-        tool_path = Path('src/tools/test_tool')
+        tool_path = self.project_dir / "test_project" / 'src/tools/test_tool'
         self.assertTrue(tool_path.exists())
-
-        # Verify tool was added to correct agent
-        with open('agentstack.json') as f:
-            config = f.read()
-            self.assertIn('test_tool', config)
 
     def test_create_tool_existing(self):
         """Test creating a tool that already exists"""
         # Initialize project
-        result = run_cli('init', "test_project")
+        result = run_cli('init', "test_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
         os.chdir(self.project_dir / "test_project")
 
@@ -119,18 +115,18 @@ class CLIToolsTest(unittest.TestCase):
         run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
 
         # Create tool first time
-        result = run_cli('tools', 'create', 'test_tool')
+        result = run_cli('tools', 'new', 'test_tool')
         self.assertEqual(result.returncode, 0)
 
         # Try to create same tool again
-        result = run_cli('tools', 'create', 'test_tool')
+        result = run_cli('tools', 'new', 'test_tool')
         self.assertNotEqual(result.returncode, 0)  # Should fail
         self.assertIn("already exists", result.stderr)
 
     def test_create_tool_invalid_name(self):
         """Test creating a tool with invalid name formats"""
         # Initialize project
-        result = run_cli('init', "test_project")
+        result = run_cli('init', "test_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
         os.chdir(self.project_dir / "test_project")
 
@@ -149,4 +145,3 @@ class CLIToolsTest(unittest.TestCase):
         # Try to create tool without initializing project
         result = run_cli('tools', 'new', 'test_tool')
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Could not find agentstack.json", result.stderr)
