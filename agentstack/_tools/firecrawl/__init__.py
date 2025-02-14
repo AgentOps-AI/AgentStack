@@ -83,24 +83,26 @@ def check_batch_status(job_id: str):
     return app.check_batch_scrape_status(job_id)
 
 
-def extract_data(urls: List[str], schema: Dict[str, Any] = None, prompt: str = None):
+def extract_data(urls: List[str], schema: Optional[Dict[str, Any]] = None, prompt: Optional[str] = None) -> Dict[
+    str, Any]:
     """
     Extract structured data from URLs using LLMs.
-    
+
     Args:
         urls: List of URLs to extract data from
         schema: Optional JSON schema defining the structure of data to extract
         prompt: Optional natural language prompt describing the data to extract
-        
+
     Returns:
         Dictionary containing the extracted structured data
     """
-    params = {
-        'prompt': prompt
-    } if prompt else {
-        'schema': schema
-    }
-    
+    params: Dict[str, Any] = {}
+
+    if prompt is not None:
+        params['prompt'] = prompt
+    elif schema is not None:
+        params['schema'] = schema
+
     data = app.extract(urls, params)
     return data
 
