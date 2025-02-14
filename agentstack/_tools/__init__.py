@@ -21,6 +21,16 @@ def _get_user_tool_config_path() -> Path:
     return conf.PATH / USER_TOOL_CONFIG_FILENAME
 
 
+def _get_custom_tool_path(name: str) -> Path:
+    """Get the path to a custom tool."""
+    return conf.PATH / 'src/tools' / name / TOOLS_CONFIG_FILENAME
+
+
+def _get_builtin_tool_path(name: str) -> Path:
+    """Get the path to a builtin tool."""
+    return TOOLS_DIR / name / TOOLS_CONFIG_FILENAME
+
+
 """
 Tool Authors
 ------------
@@ -161,20 +171,10 @@ class ToolPermission(pydantic.BaseModel):
         """Get an attribute from the attributes dict."""
         return self.attributes.get(name, None)
 
-    def model_dump(self, *args, **kwargs) -> dict:
-        """Dump the model as a dict."""
-        model_dump = super().model_dump(*args, **kwargs)
-        return {**model_dump['attributes'], 'actions': model_dump['actions']}
-
-
-def _get_custom_tool_path(name: str) -> Path:
-    """Get the path to a custom tool."""
-    return conf.PATH / 'src/tools' / name / TOOLS_CONFIG_FILENAME
-
-
-def _get_builtin_tool_path(name: str) -> Path:
-    """Get the path to a builtin tool."""
-    return TOOLS_DIR / name / TOOLS_CONFIG_FILENAME
+    @pydantic.model_serializer
+    def ser_model(self) -> dict:
+        """Merge attributes into top level"""
+        return {**self.attributes, 'actions': self.actions}
 
 
 class ToolConfig(pydantic.BaseModel):
@@ -227,7 +227,7 @@ class ToolConfig(pydantic.BaseModel):
             raise ValidationError(f"Filename must end with .json: {filename}")
 
         with open(filename, 'w') as f:
-            f.write(self.model_dump_json())
+            f.write(self.model_dump_json(indent=4))
 
     @property
     def allowed_tools(self) -> dict[str, ToolPermission]:
