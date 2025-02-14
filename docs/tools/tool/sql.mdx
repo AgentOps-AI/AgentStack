@@ -1,0 +1,26 @@
+---
+title: 'Perplexity'
+description: 'Agentic Search'
+---
+
+## Description
+Enable your agent to perform queries directly on a database
+
+<Note>
+    There is no built-in sandboxing using this tool. Agents may perform destructive queries that may be irreversible.
+</Note>
+
+## Installation
+
+```bash
+agentstack tools add sql
+```
+
+Set the API keys
+```env
+POSTGRES_DB=...
+POSTGRES_USER=...
+POSTGRES_PASSWORD=...
+POSTGRES_HOST=...
+POSTGRES_PORT=...
+```
