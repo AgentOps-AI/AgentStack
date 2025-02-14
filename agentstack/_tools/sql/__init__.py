@@ -1,10 +1,12 @@
 import os
 import psycopg2
-from typing import Dict, Any
+from typing import Optional, Any
+from agentstack import tools
+
 
 connection = None
 
-def _get_connection():
+def _get_connection() -> psycopg2.extensions.connection:
     """Get PostgreSQL database connection"""
 
     global connection
@@ -19,11 +21,37 @@ def _get_connection():
 
     return connection
 
-def get_schema() -> Dict[str, Any]:
+
+def _get_query_action(connection: psycopg2.extensions.connection, query: str) -> Optional[tools.Action]:
+    """EXPLAIN the query and classify it as READ, WRITE, DELETE, or unknown"""
+    try:
+        connection = _get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(f"EXPLAIN {query}")
+            plan = cursor.fetchone()[0]
+            operation = plan.split()[0].upper()
+            
+            if operation in ('SELECT', 'WITH'):
+                return tools.Action.READ
+            elif operation in ('INSERT', 'UPDATE', 'MERGE'):
+                return tools.Action.WRITE
+            elif operation == 'DELETE':
+                return tools.Action.DELETE
+
+        return None
+    except Exception as e:
+        return None
+
+
+def get_schema() -> dict[str, Any]:
     """
     Initialize connection and get database schema.
     Returns a dictionary containing the database schema.
     """
+    permissions = tools.get_permissions(get_schema)
+    if not permissions.READ:
+        return {'error': 'User has not granted read permission.'}
+    
     try:
         conn = _get_connection()
         cursor = conn.cursor()
@@ -58,8 +86,8 @@ def get_schema() -> Dict[str, Any]:
         return schema
         
     except Exception as e:
-        print(f"Error getting database schema: {str(e)}")
-        return {}
+        return {'error': str(e)}
+
 
 def execute_query(query: str) -> list:
     """
@@ -69,9 +97,18 @@ def execute_query(query: str) -> list:
     Returns:
         List of query results
     """
+    permissions = tools.get_permissions(execute_query)
+    
     try:
         conn = _get_connection()
         cursor = conn.cursor()
+        
+        # ensure the user has granted permission for this action
+        action = _get_query_action(conn, query)
+        if not action in permissions.actions:
+            return [
+                {'error': f'User has not granted {action} permission.'}
+            ]
         
         # Execute the query
         cursor.execute(query)
@@ -82,5 +119,6 @@ def execute_query(query: str) -> list:
         return results
         
     except Exception as e:
-        print(f"Error executing query: {str(e)}")
-        return []
+        return [
+            {'error': str(e)}
+        ]

@@ -12,9 +12,13 @@
     "dependencies": [
         "psycopg2-binary>=2.9.9"
     ],
-    "tools": [
-        "get_schema",
-        "execute_query"
-    ],
+    "tools": {
+        "get_schema": {
+            "actions": ["read"]
+        },
+        "execute_query": {
+            "actions": ["read", "write", "delete"]
+        }
+    },
     "cta": "Set up your PostgreSQL connection variables in the environment file."
 }
