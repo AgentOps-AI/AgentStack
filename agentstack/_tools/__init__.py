@@ -188,7 +188,7 @@ class ToolConfig(pydantic.BaseModel):
 
     name: str
     category: str
-    tools: dict[str, ToolPermission]
+    tools: dict[str, ToolPermission] = pydantic.Field(default_factory=dict)
     url: Optional[str] = None
     cta: Optional[str] = None
     env: Optional[dict] = None
@@ -220,6 +220,14 @@ class ToolConfig(pydantic.BaseModel):
             for error in e.errors():
                 error_str += f"{' '.join([str(loc) for loc in error['loc']])}: {error['msg']}\n"
             raise ValidationError(f"Error loading tool from {path}.\n{error_str}")
+
+    def add_tool(self, func_name: str, permissions: Optional[list[Action]] = None):
+        """Add a tool to the config. Provides default permissions if none are provided."""
+        if func_name in self.tools:
+            raise ValidationError(f"Tool '{func_name}' already exists in config.")
+        if permissions is None:
+            permissions = list(Action)  # all permissions
+        self.tools[func_name] = ToolPermission(actions=permissions)
 
     def write_to_file(self, filename: Path):
         """Write the tool config to a json file."""

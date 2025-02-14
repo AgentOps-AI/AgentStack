@@ -203,7 +203,7 @@ class ToolConfigTest(unittest.TestCase):
             ToolConfig.from_tool_name("non_existent_tool")
 
     def test_from_custom_path(self):
-        os.mkdir(self.project_dir / "src/tools/my_custom_tool")
+        os.makedirs(self.project_dir / "src/tools/my_custom_tool")
         shutil.copy(BASE_PATH / "fixtures/tool_config_custom.json", 
             self.project_dir / "src/tools/my_custom_tool/config.json")
 

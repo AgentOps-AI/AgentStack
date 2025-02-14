@@ -8,7 +8,7 @@ from agentstack.exceptions import ValidationError
 from agentstack import frameworks
 from agentstack import packaging
 from agentstack.utils import term_color
-from agentstack._tools import ToolConfig, UserToolConfig
+from agentstack._tools import Action, ToolPermission, ToolConfig, UserToolConfig
 from agentstack.generation import asttools
 from agentstack.generation.files import EnvFile
 
@@ -96,8 +96,8 @@ def {tool_name}_tool(value: str) -> str:
     tool_config = ToolConfig(
         name=tool_name,
         category="custom",
-        tools=[f'{tool_name}_tool', ],
     )
+    tool_config.add_tool(f"{tool_name}_tool")
     tool_config.write_to_file(tool_path / 'config.json')
 
     # Edit the framework entrypoint file to include the tool in the agent definition
