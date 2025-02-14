@@ -140,13 +140,13 @@ class CLIToolsTest(unittest.TestCase):
         # Test various invalid names
         invalid_names = ['TestTool', 'test-tool', 'test tool']
         for name in invalid_names:
-            result = run_cli('tools', 'create', name)
+            result = run_cli('tools', 'new', name)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("must be snake_case", result.stderr)
 
     def test_create_tool_no_project(self):
-        """Test creating a tool outside of a project directory"""
+        """Test creating a tool outside a project directory"""
         # Try to create tool without initializing project
-        result = run_cli('tools', 'create', 'test_tool')
+        result = run_cli('tools', 'new', 'test_tool')
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Could not find agentstack.json", result.stderr)
