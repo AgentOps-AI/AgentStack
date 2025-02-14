@@ -101,7 +101,11 @@ def get_agent() -> Agent:
 class Action(enum.Enum):
     READ = 'read'
     WRITE = 'write'
+    DELETE = 'delete'
     EXECUTE = 'execute'
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class ToolPermission(pydantic.BaseModel):
@@ -142,6 +146,11 @@ class ToolPermission(pydantic.BaseModel):
     def WRITE(self) -> bool:
         """Is this tool allowed to write?"""
         return Action.WRITE in self.actions
+
+    @property
+    def DELETE(self) -> bool:
+        """Is this tool allowed to delete?"""
+        return Action.DELETE in self.actions
 
     @property
     def EXECUTE(self) -> bool:

@@ -180,11 +180,12 @@ class ToolConfigTest(unittest.TestCase):
         with self.assertRaises(ValidationError):
             UserToolConfig('tool_name')
     
-    def test_tool_permission_rwe(self):
-        tool_permission = ToolPermission(actions=['read', 'write', 'execute'])
+    def test_tool_permission_rwed(self):
+        tool_permission = ToolPermission(actions=['read', 'write', 'execute', 'delete'])
         assert tool_permission.READ
         assert tool_permission.WRITE
         assert tool_permission.EXECUTE
+        assert tool_permission.DELETE
     
     def test_tool_permission_attrs(self):
         tool_permission = ToolPermission(actions=['read'], foo='bar', baz='qux')
