@@ -11,7 +11,8 @@ BASE_PATH = Path(__file__).parent
 
 class InputsConfigTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / "tmp/inputs_config"
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'inputs_config'
         os.makedirs(self.project_dir)
         os.makedirs(self.project_dir / "src/config")
 

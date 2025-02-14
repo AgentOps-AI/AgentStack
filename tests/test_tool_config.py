@@ -1,10 +1,10 @@
 import json
 import unittest
+import re
 from pathlib import Path
 from agentstack._tools import ToolConfig, get_all_tool_paths, get_all_tool_names
 
 BASE_PATH = Path(__file__).parent
-
 
 class ToolConfigTest(unittest.TestCase):
     def test_minimal_json(self):
@@ -29,6 +29,20 @@ class ToolConfigTest(unittest.TestCase):
         assert config.post_install == "install.sh"
         assert config.post_remove == "remove.sh"
 
+    def test_dependency_versions(self):
+        """Test that all dependencies specify a version constraint."""
+        for tool_name in get_all_tool_names():
+            config = ToolConfig.from_tool_name(tool_name)
+
+            if hasattr(config, 'dependencies') and config.dependencies:
+                version_pattern = r'[><=~!]=|[@><=~!]'
+                for dep in config.dependencies:
+                    if not re.search(version_pattern, dep):
+                        raise AssertionError(
+                            f"Dependency '{dep}' in {config.name} does not specify a version constraint. "
+                            "All dependencies must include version specifications."
+                        )
+
     def test_all_json_configs_from_tool_name(self):
         for tool_name in get_all_tool_names():
             config = ToolConfig.from_tool_name(tool_name)
@@ -41,8 +55,8 @@ class ToolConfigTest(unittest.TestCase):
                 config = ToolConfig.from_json(f"{path}/config.json")
             except json.decoder.JSONDecodeError:
                 raise Exception(
-                    f"Failed to decode tool json at {path}. Does your tool config fit the required formatting? https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/tools/~README.md"
+                    f"Failed to decode tool json at {path}. Does your tool config fit the required formatting? "
+                    "https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/tools/~README.md"
                 )
 
             assert config.name == path.stem
-            # We can assume that pydantic validation caught any other issues

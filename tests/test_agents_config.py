@@ -2,10 +2,18 @@ import json
 import os, sys
 import shutil
 import unittest
+from parameterized import parameterized
 import importlib.resources
 from pathlib import Path
 from agentstack import conf
-from agentstack.agents import AgentConfig, AGENTS_FILENAME, get_all_agent_names, get_all_agents
+from agentstack import frameworks
+from agentstack.agents import (
+    AGENTS_FILENAME, 
+    AgentConfig, 
+    get_all_agent_names, 
+    get_all_agents, 
+    get_agent
+)
 from agentstack.exceptions import ValidationError
 
 BASE_PATH = Path(__file__).parent
@@ -13,7 +21,10 @@ BASE_PATH = Path(__file__).parent
 
 class AgentConfigTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp/agent_config'
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'test_agents_config'
+        os.makedirs(self.project_dir)
+        
         conf.set_path(self.project_dir)
         os.makedirs(self.project_dir / 'src/config')
 
@@ -44,7 +55,7 @@ class AgentConfigTest(unittest.TestCase):
         assert config.role == "role"
         assert config.goal == "this is a goal"
         assert config.backstory == "backstory"
-        assert config.llm == "provider/model"
+        assert config.llm == "openai/gpt-4o"
 
     def test_write_yaml(self):
         with AgentConfig("agent_name") as config:
@@ -139,3 +150,29 @@ agent_name:
 
         for agent in get_all_agents():
             self.assertIsInstance(agent, AgentConfig)
+
+    def test_get_agent(self):
+        shutil.copy(BASE_PATH / "fixtures/agents_max.yaml", self.project_dir / AGENTS_FILENAME)
+
+        agent = get_agent("agent_name")
+        self.assertIsInstance(agent, AgentConfig)
+        self.assertEqual(agent.name, "agent_name")
+    
+    def test_get_agent_prompt(self):
+        shutil.copy(BASE_PATH / "fixtures/agents_max.yaml", self.project_dir / AGENTS_FILENAME)
+
+        agent = get_agent("agent_name")
+        assert agent.role in agent.prompt
+        assert agent.goal in agent.prompt
+        assert agent.backstory in agent.prompt
+
+    @parameterized.expand([(x, ) for x in frameworks.SUPPORTED_FRAMEWORKS])
+    @unittest.mock.patch("agentstack.frameworks.get_framework")
+    def test_get_agent_model_provider(self, framework, mock_get_framework):
+        mock_get_framework.return_value = framework
+        shutil.copy(BASE_PATH / "fixtures/agents_max.yaml", self.project_dir / AGENTS_FILENAME)
+
+        agent = get_agent("agent_name")
+        assert agent.llm == "openai/gpt-4o"
+        assert agent.provider == "openai"
+        assert agent.model == "gpt-4o"

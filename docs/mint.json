@@ -26,10 +26,6 @@
       "name": "Community",
       "icon": "discord",
       "url": "https://discord.gg/JdWkh9tgTQ"
-    }, {
-      "name": "CrewAI Docs",
-      "icon": "ship",
-      "url": "https://docs.crewai.com/introduction"
     }
   ],
   "navigation": [
@@ -38,7 +34,8 @@
       "pages": [
         "introduction",
         "installation",
-        "quickstart"
+        "quickstart",
+        "frameworks/list"
       ]
     },
     {
@@ -73,7 +70,8 @@
       "group": "Contributing",
       "pages": [
         "contributing/how-to-contribute",
-        "contributing/adding-tools"
+        "contributing/adding-tools",
+        "contributing/project-structure"
       ]
     }
   ],

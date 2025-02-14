@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 import shutil
 import unittest
-from parameterized import parameterized_class
 
 from agentstack import conf
 from agentstack.conf import ConfigFile
@@ -12,10 +11,10 @@ from agentstack.cli import run_project
 BASE_PATH = Path(__file__).parent
 
 
-@parameterized_class([{"framework": framework} for framework in frameworks.SUPPORTED_FRAMEWORKS])
 class ProjectRunTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = BASE_PATH / 'tmp/project_run' / self.framework
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'project_run'
 
         os.makedirs(self.project_dir)
         os.makedirs(self.project_dir / 'src')

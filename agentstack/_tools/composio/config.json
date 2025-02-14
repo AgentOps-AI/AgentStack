@@ -12,7 +12,7 @@
     "find_actions_by_tags"
   ],
   "dependencies": [
-    "composio>=1.0.0"
+    "composio-core>=0.6.0"
   ],
   "cta": "!!! Composio provides 150+ tools. Additional setup is required in agentstack/tools/composio/__init__.py"
 }

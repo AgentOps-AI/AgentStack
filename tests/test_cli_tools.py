@@ -7,7 +7,7 @@ import shutil
 from agentstack._tools import get_all_tool_names
 from cli_test_utils import run_cli
 from agentstack.utils import validator_not_empty
-from agentstack.cli.cli import get_validated_input
+from agentstack.cli import get_validated_input
 from unittest.mock import patch
 from inquirer.errors import ValidationError
 
@@ -17,7 +17,8 @@ BASE_PATH = Path(__file__).parent
 # TODO parameterized framework
 class CLIToolsTest(unittest.TestCase):
     def setUp(self):
-        self.project_dir = Path(BASE_PATH / 'tmp/cli_tools')
+        self.framework = os.getenv('TEST_FRAMEWORK')
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'cli_tools'
         os.makedirs(self.project_dir, exist_ok=True)
         os.chdir(self.project_dir)
 
