@@ -47,7 +47,7 @@ encouraged that versions are specified, which use the `package>=version` format.
 List of public functions that are exposed by the tool as keys and permissions as
 a dictionary. 
 
-#### `tools.actions` (list['read', 'write', 'execute']) [required]
+#### `tools.<tool_name>.actions` (list['read', 'write', 'execute']) [required]
 At a minimum, each tool must have a single action of `read`, `write`, or `execute`.
 
 ```json
@@ -58,7 +58,7 @@ At a minimum, each tool must have a single action of `read`, `write`, or `execut
   }
 ```
 
-#### `tools.*` (str) [optional]
+#### `tools.<tool_name>.*` (str) [optional]
 You can also pass additional parameters to be made available as permissions to 
 the tool. These can be any valid JSON value. 
 
