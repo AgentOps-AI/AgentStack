@@ -56,12 +56,6 @@ class CrewFile(BaseEntrypointFile):
             config=self.tasks_config['{task.name}'],
         )"""
 
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
-
     def get_new_agent_method(self, agent: AgentConfig) -> str:
         """Get the content of a new agent method."""
         return f"""    @agent
@@ -71,12 +65,6 @@ class CrewFile(BaseEntrypointFile):
             tools=[], # add tools here or use `agentstack tools add <tool_name>
             verbose=True,
         )"""
-
-        if not self.source[:pos].endswith('\n'):
-            code = '\n\n' + code
-        if not self.source[pos:].startswith('\n'):
-            code += '\n\n'
-        self.edit_node_range(pos, pos, code)
 
     def get_agent_tools(self, agent_name: str) -> ast.List:
         """
