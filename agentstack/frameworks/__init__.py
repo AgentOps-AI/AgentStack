@@ -77,7 +77,6 @@ class FrameworkModule(Protocol):
         """
         Add an agent to the user's project.
         """
-        ...
 
     def add_task(self, task: 'TaskConfig', position: Optional[InsertionPoint] = None) -> None:
         """
