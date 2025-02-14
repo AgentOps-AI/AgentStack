@@ -126,9 +126,9 @@ def analyze_image(image_path_or_url: str) -> str:
         return _analyze_web_image(image_path_or_url, media_type)
 
     if permissions.allowed_dirs:
-        if not _is_path_allowed(image_path_url, permissions.allowed_dirs):
+        if not _is_path_allowed(image_path_or_url, permissions.allowed_dirs):
             return (
-                f"Error: Access to file {image_path_url} is not allowed. "
+                f"Error: Access to file {image_path_or_url} is not allowed. "
                 f"Allowed directories: {permissions.allowed_dirs}"
             )
 
