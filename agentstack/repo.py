@@ -190,3 +190,24 @@ def get_uncommitted_files() -> list[str]:
     untracked = repo.untracked_files
     modified = [item.a_path for item in repo.index.diff(None) if item.a_path]
     return untracked + modified
+
+
+def revert_last_commit(hard: bool = False) -> None:
+    """
+    Revert the last commit in the current project.
+    """
+    try:
+        repo = _get_repo()
+    except EnvironmentError as e:
+        return  # git is not installed or tracking is disabled
+
+    if len(repo.head.commit.parents) == 0:
+        log.error("No commits to revert.")
+        return
+
+    def _format_commit_message(commit):
+        return commit.message.split('\n')[0]
+
+    log.info(f"Reverting: {_format_commit_message(repo.head.commit)}")
+    repo.git.reset('HEAD~1', hard=hard)
+    log.info(f"Head is now at: {_format_commit_message(repo.head.commit)}")
