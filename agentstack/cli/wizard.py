@@ -1049,6 +1049,7 @@ class WizardApp(App):
         self.stop()
 
         if self._finish_run_once:
+            self._finish_run_once = False
             log.set_stdout(sys.stdout)  # re-enable on-screen logging
 
             init_project(
