@@ -19,7 +19,7 @@ def query_data(url: str, query: Optional[str], prompt: Optional[str]) -> dict:
 
     Here is a guide on AgentQL query syntax:
 
-    Enclose all AgentQL query terms within curly braces `{}`. The following query structure isn't valid because the term "social/media/links" is wrongly enclosed within parenthesis `()`.
+    Enclose all AgentQL query terms within curly braces `{}`. The following query structure isn't valid because the term "social_media_links" is wrongly enclosed within parenthesis `()`.
 
     ```
     ( # Should be {
