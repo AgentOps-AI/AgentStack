@@ -1,13 +1,13 @@
 {
-    "name": "py_sql",
+    "name": "sql",
     "url": "https://pypi.org/project/psycopg2/",
     "category": "database",
     "env": {
-        "POSTGRES_DB": "...",
-        "POSTGRES_USER": "...",
-        "POSTGRES_PASSWORD": "...",
-        "POSTGRES_HOST": "...",
-        "POSTGRES_PORT": "..."
+        "POSTGRES_DB": null,
+        "POSTGRES_USER": null,
+        "POSTGRES_PASSWORD": null,
+        "POSTGRES_HOST": null,
+        "POSTGRES_PORT": null
     },
     "dependencies": [
         "psycopg2-binary>=2.9.9"

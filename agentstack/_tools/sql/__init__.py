@@ -2,15 +2,22 @@ import os
 import psycopg2
 from typing import Dict, Any
 
+connection = None
+
 def _get_connection():
     """Get PostgreSQL database connection"""
-    return psycopg2.connect(
-        dbname=os.getenv('POSTGRES_DB'),
-        user=os.getenv('POSTGRES_USER'),
-        password=os.getenv('POSTGRES_PASSWORD'),
-        host=os.getenv('POSTGRES_HOST', 'localhost'),
-        port=os.getenv('POSTGRES_PORT', '5432')
-    )
+
+    global connection
+    if connection is None:
+        connection = psycopg2.connect(
+            dbname=os.getenv('POSTGRES_DB'),
+            user=os.getenv('POSTGRES_USER'),
+            password=os.getenv('POSTGRES_PASSWORD'),
+            host=os.getenv('POSTGRES_HOST', 'localhost'),
+            port=os.getenv('POSTGRES_PORT', '5432')
+        )
+
+    return connection
 
 def get_schema() -> Dict[str, Any]:
     """
@@ -47,7 +54,7 @@ def get_schema() -> Dict[str, Any]:
             schema[table_name] = columns
             
         cursor.close()
-        conn.close()
+        # conn.close()
         return schema
         
     except Exception as e:
@@ -71,7 +78,7 @@ def execute_query(query: str) -> list:
         results = cursor.fetchall()
         
         cursor.close()
-        conn.close()
+        # conn.close()
         return results
         
     except Exception as e:
