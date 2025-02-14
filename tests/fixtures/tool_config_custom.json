@@ -1,0 +1,5 @@
+{
+    "name": "my_custom_tool",
+    "category": "custom",
+    "tools": ["tool1", "tool2"]
+}
