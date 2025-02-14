@@ -63,6 +63,10 @@ def batch_scrape(urls: List[str], formats: List[str] = ['markdown', 'html']):
     Returns:
         Dictionary containing the batch scrape results
     """
+    permissions = tools.get_permissions(batch_scrape)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     batch_result = app.batch_scrape_urls(urls, {'formats': formats})
     return batch_result
 
@@ -78,6 +82,10 @@ def async_batch_scrape(urls: List[str], formats: List[str] = ['markdown', 'html'
     Returns:
         Dictionary containing the job ID and status URL
     """
+    permissions = tools.get_permissions(async_batch_scrape)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     batch_job = app.async_batch_scrape_urls(urls, {'formats': formats})
     return batch_job
 
@@ -92,6 +100,10 @@ def check_batch_status(job_id: str):
     Returns:
         Dictionary containing the current status and results if completed
     """
+    permissions = tools.get_permissions(check_batch_status)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     return app.check_batch_scrape_status(job_id)
 
 
@@ -108,6 +120,10 @@ def extract_data(urls: List[str], schema: Optional[Dict[str, Any]] = None, promp
     Returns:
         Dictionary containing the extracted structured data
     """
+    permissions = tools.get_permissions(extract_data)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     params: Dict[str, Any] = {}
 
     if prompt is not None:
@@ -130,6 +146,10 @@ def map_website(url: str, search: Optional[str] = None):
     Returns:
         Dictionary containing the list of discovered URLs
     """
+    permissions = tools.get_permissions(map_website)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     params = {'search': search} if search else {}
     map_result = app.map_url(url, params)
     return map_result
@@ -146,6 +166,10 @@ def batch_extract(urls: List[str], extract_params: Dict[str, Any]):
     Returns:
         Dictionary containing the extracted data from all URLs
     """
+    permissions = tools.get_permissions(batch_extract)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     params = {
         'formats': ['extract'],
         'extract': extract_params
