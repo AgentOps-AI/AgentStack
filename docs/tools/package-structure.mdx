@@ -13,7 +13,7 @@ metadata, dependencies, configuration & functions exposed by the tool.
 `__init__.py`
 ---------
 Python package which contains the framework-agnostic tool implementation. Tools 
-are simple packages which exponse functions; when a tool is loaded into a user's 
+are simple packages which expose functions; when a tool is loaded into a user's 
 project, it will be wrapped in the framework-specific tool format by AgentStack. 
 
 
@@ -23,12 +23,12 @@ project, it will be wrapped in the framework-specific tool format by AgentStack.
 ### `name` (string) [required]
 The name of the tool in snake_case. This is used to identify the tool in the system.
 
+### `category` (string) [required]
+The category of the tool. This is used to group tools together in the CLI.
+
 ### `url` (string) [optional]
 The URL of the tool's repository. This is provided to the user to allow them to 
 learn more about the tool. 
-
-### `category` (string) [required]
-The category of the tool. This is used to group tools together in the CLI.
 
 ### `cta` (string) [optional]
 String to print in the terminal when the tool is installed that provides a call to action.
@@ -43,6 +43,49 @@ set to `null` which adds it to the project's `.env` file as a comment.
 List of dependencies that will be installed in the user's project. It is 
 encouraged that versions are specified, which use the `package>=version` format.
 
-### `tools` (list[str]) [required]
-List of public functions that are accessible in the tool implementation.
+### `tools` (list[dict[str, dict]]) [required]
+List of public functions that are exposed by the tool as keys and permissions as
+a dictionary. 
 
+#### `tools.<tool_name>.actions` (list['read', 'write', 'execute']) [required]
+At a minimum, each tool must have a single action of `read`, `write`, or `execute`.
+
+```json
+  "tools": {
+    "analyze_image": {
+      "actions": ["read"]
+    }
+  }
+```
+
+#### `tools.<tool_name>.*` (str) [optional]
+You can also pass additional parameters to be made available as permissions to 
+the tool. These can be any valid JSON value. 
+
+```json
+  "tools": {
+    "analyze_image": {
+      "actions": ["read"], 
+      "allow_http": true, 
+      "allowed_dirs": ["*"]
+    }
+  }
+```
+
+Permissions in Tool Implementation
+----------------------------------
+
+In the tool implementation, you can access the `actions` and other parameters
+using `agentstack.tools.get_permissions(<function>)`.
+
+```python
+def analyze_image(path: str) -> str:
+    ...
+    permissions = tools.get_permissions(analyze_image)
+    if not permissions.READ:
+        return "User has not granted read permission."
+
+    if not permissions.allow_http:
+        return "User has not granted permission to access the internet."
+    ...
+```

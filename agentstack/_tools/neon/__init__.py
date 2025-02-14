@@ -1,4 +1,5 @@
 import os
+from agentstack import tools
 from neon_api import NeonAPI
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -16,6 +17,10 @@ def create_database(project_name: str) -> str:
     Returns:
         the connection URI for the new project
     """
+    permissions = tools.get_permissions(create_database)
+    if not permissions.WRITE:
+        return "User has not granted write permission."
+    
     try:
         project = neon_client.project_create(project={"name": project_name}).project
         connection_uri = neon_client.connection_uri(
@@ -35,6 +40,10 @@ def execute_sql_ddl(connection_uri: str, command: str) -> str:
     Returns:
         the result of the DDL command
     """
+    permissions = tools.get_permissions(execute_sql_ddl)
+    if not permissions.EXECUTE:
+        return "User has not granted execute permission."
+    
     conn = psycopg2.connect(connection_uri)
     cur = conn.cursor(cursor_factory=RealDictCursor)
     try:
@@ -57,6 +66,14 @@ def run_sql_query(connection_uri: str, query: str) -> str:
     Returns:
         the result of the SQL query
     """
+    permissions = tools.get_permissions(run_sql_query)
+    if 'INSERT' in query or 'UPDATE' in query or 'DELETE' in query:
+        if not permissions.WRITE:
+            return "User has not granted write permission."
+
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     conn = psycopg2.connect(connection_uri)
     cur = conn.cursor(cursor_factory=RealDictCursor)
     try:

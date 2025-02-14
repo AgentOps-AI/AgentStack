@@ -2,6 +2,7 @@ import os
 import json
 import weaviate
 from typing import Optional
+from agentstack import tools
 from weaviate.classes.config import Configure
 from weaviate.classes.init import Auth
 
@@ -45,6 +46,10 @@ def search_collection(
     Returns:
         str: JSON string containing search results
     """
+    permissions = tools.get_permissions(search_collection)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     headers = {"X-OpenAI-Api-Key": openai_key}
     vectorizer = Configure.Vectorizer.text2vec_openai(model=model)
 
@@ -85,6 +90,10 @@ def create_collection(
     Returns:
         str: Success message
     """
+    permissions = tools.get_permissions(create_collection)
+    if not permissions.WRITE:
+        return "User has not granted write permission."
+    
     headers = {"X-OpenAI-Api-Key": openai_key}
     vectorizer = Configure.Vectorizer.text2vec_openai(model=model)
 

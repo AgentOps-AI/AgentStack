@@ -1,4 +1,5 @@
 import os
+from agentstack import tools
 from firecrawl import FirecrawlApp
 from typing import List, Dict, Any, Optional
 app = FirecrawlApp(api_key=os.getenv('FIRECRAWL_API_KEY'))
@@ -9,6 +10,10 @@ def web_scrape(url: str):
     Scrape a url and return markdown. Use this to read a singular page and web_crawl only if you
     need to read all other links as well.
     """
+    permissions = tools.get_permissions(web_scrape)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     scrape_result = app.scrape_url(url, params={'formats': ['markdown']})
     return scrape_result
 
@@ -23,6 +28,9 @@ def web_crawl(url: str):
     Crawl will ignore sublinks of a page if they aren’t children of the url you provide.
     So, the website.com/other-parent/blog-1 wouldn’t be returned if you crawled website.com/blogs/.
     """
+    permissions = tools.get_permissions(web_crawl)
+    if not permissions.READ:
+        return "User has not granted read permission."
 
     crawl_status = app.crawl_url(
         url, params={'limit': 100, 'scrapeOptions': {'formats': ['markdown']}}, poll_interval=30
@@ -37,6 +45,10 @@ def retrieve_web_crawl(crawl_id: str):
     so be sure to only use this tool some time after initiating a crawl. The result
     will tell you if the crawl is finished. If it is not, wait some more time then try again.
     """
+    permissions = tools.get_permissions(retrieve_web_crawl)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     return app.check_crawl_status(crawl_id)
 
 
@@ -51,6 +63,10 @@ def batch_scrape(urls: List[str], formats: List[str] = ['markdown', 'html']):
     Returns:
         Dictionary containing the batch scrape results
     """
+    permissions = tools.get_permissions(batch_scrape)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     batch_result = app.batch_scrape_urls(urls, {'formats': formats})
     return batch_result
 
@@ -66,6 +82,10 @@ def async_batch_scrape(urls: List[str], formats: List[str] = ['markdown', 'html'
     Returns:
         Dictionary containing the job ID and status URL
     """
+    permissions = tools.get_permissions(async_batch_scrape)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     batch_job = app.async_batch_scrape_urls(urls, {'formats': formats})
     return batch_job
 
@@ -80,6 +100,10 @@ def check_batch_status(job_id: str):
     Returns:
         Dictionary containing the current status and results if completed
     """
+    permissions = tools.get_permissions(check_batch_status)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     return app.check_batch_scrape_status(job_id)
 
 
@@ -96,6 +120,10 @@ def extract_data(urls: List[str], schema: Optional[Dict[str, Any]] = None, promp
     Returns:
         Dictionary containing the extracted structured data
     """
+    permissions = tools.get_permissions(extract_data)
+    if not permissions.READ:
+        return {'error': "User has not granted read permission."}
+    
     params: Dict[str, Any] = {}
 
     if prompt is not None:
@@ -118,6 +146,10 @@ def map_website(url: str, search: Optional[str] = None):
     Returns:
         Dictionary containing the list of discovered URLs
     """
+    permissions = tools.get_permissions(map_website)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     params = {'search': search} if search else {}
     map_result = app.map_url(url, params)
     return map_result
@@ -134,6 +166,10 @@ def batch_extract(urls: List[str], extract_params: Dict[str, Any]):
     Returns:
         Dictionary containing the extracted data from all URLs
     """
+    permissions = tools.get_permissions(batch_extract)
+    if not permissions.READ:
+        return "User has not granted read permission."
+    
     params = {
         'formats': ['extract'],
         'extract': extract_params

@@ -2,6 +2,7 @@
   "name": "weaviate",
   "url": "https://github.com/weaviate/weaviate-python-client",
   "category": "vector-store",
+  "cta": "🔗 Create your Weaviate cluster here: https://console.weaviate.cloud/",
   "env": {
     "WEAVIATE_URL": null,
     "WEAVIATE_API_KEY": null,
@@ -11,9 +12,12 @@
     "weaviate-client>=3.0.0",
     "openai>=1.0.0"
   ],
-  "tools": [
-    "search_collection",
-    "create_collection"
-  ],
-  "cta": "🔗 Create your Weaviate cluster here: https://console.weaviate.cloud/"
+  "tools": {
+    "search_collection": {
+      "actions": ["read"]
+    },
+    "create_collection": {
+      "actions": ["write"]
+    }
+  }
 }

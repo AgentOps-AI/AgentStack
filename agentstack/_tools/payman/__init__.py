@@ -1,5 +1,6 @@
 import os
 from typing import Dict, List, Optional, Union, Literal
+from agentstack import tools
 from paymanai import Paymanai
 
 # Initialize Payman client
@@ -33,6 +34,10 @@ def send_payment(
     Returns:
         Dictionary containing payment details
     """
+    permissions = tools.get_permissions(send_payment)
+    if not permissions.WRITE:
+        return {"error": "User has not granted write permission."}
+    
     try:
         return client.payments.send_payment(
             amount_decimal=amount_decimal,
@@ -61,6 +66,10 @@ def search_destinations(
     Returns:
         List of matching payment destinations with their IDs
     """
+    permissions = tools.get_permissions(search_destinations)
+    if not permissions.READ:
+        return [{"error": "User has not granted read permission."}]
+    
     try:
         return client.payments.search_destinations(
             name=name,
@@ -100,6 +109,10 @@ def create_payee(
     Returns:
         Dictionary containing the created payee details
     """
+    permissions = tools.get_permissions(create_payee)
+    if not permissions.WRITE:
+        return {"error": "User has not granted write permission."}
+    
     try:
         params = {
             "type": type,
@@ -149,6 +162,10 @@ def initiate_customer_deposit(
     Returns:
         Dictionary containing the checkout URL
     """
+    permissions = tools.get_permissions(initiate_customer_deposit)
+    if not permissions.WRITE:
+        return {"error": "User has not granted write permission."}
+    
     try:
         response = client.payments.initiate_customer_deposit(
             amount_decimal=amount_decimal,
@@ -177,6 +194,10 @@ def get_customer_balance(
     Returns:
         Dictionary containing balance information
     """
+    permissions = tools.get_permissions(get_customer_balance)
+    if not permissions.READ:
+        return {"error": "User has not granted read permission."}
+    
     try:
         response = client.balances.get_customer_balance(customer_id, currency)
         return {
@@ -199,6 +220,10 @@ def get_spendable_balance(
     Returns:
         Dictionary containing balance information
     """
+    permissions = tools.get_permissions(get_spendable_balance)
+    if not permissions.READ:
+        return {"error": "User has not granted read permission."}
+    
     try:
         response = client.balances.get_spendable_balance(currency)
         return {

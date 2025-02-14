@@ -2,17 +2,25 @@
   "name": "composio",
   "url": "https://composio.dev/",
   "category": "unified-apis",
+  "cta": "!!! Composio provides 150+ tools. Additional setup is required in agentstack/tools/composio/__init__.py",
   "env": {
     "COMPOSIO_API_KEY": null
   },
-  "tools": [
-    "execute_action",
-    "get_action_schema",
-    "find_actions_by_use_case",
-    "find_actions_by_tags"
-  ],
   "dependencies": [
     "composio-core>=0.6.0"
   ],
-  "cta": "!!! Composio provides 150+ tools. Additional setup is required in agentstack/tools/composio/__init__.py"
+  "tools": {
+    "execute_action": {
+      "actions": ["read", "write", "execute"]
+    },
+    "get_action_schema": {
+      "actions": ["read"]
+    },
+    "find_actions_by_use_case": {
+      "actions": ["read"]
+    },
+    "find_actions_by_tags": {
+      "actions": ["read"]
+    }
+  }
 }

@@ -8,5 +8,9 @@
   "dependencies": [
     "docker>=7.1.0"
   ],
-  "tools": ["run_code"]
+  "tools": {
+    "run_code": {
+      "actions": ["read", "write", "execute"]
+    }
+  }
 }

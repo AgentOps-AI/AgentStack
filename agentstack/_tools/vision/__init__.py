@@ -4,13 +4,17 @@ from pathlib import Path
 import base64
 import tempfile
 import requests
+from fnmatch import fnmatch
 import anthropic
+from agentstack import tools
+
 
 __all__ = ["analyze_image"]
 
 PROMPT = os.getenv('VISION_PROMPT', "What's in this image?")
 MODEL = os.getenv('VISION_MODEL', "claude-3-5-sonnet-20241022")
 MAX_TOKENS: int = int(os.getenv('VISION_MAX_TOKENS', 1024))
+
 
 MEDIA_TYPES = {
     "jpg": "image/jpeg",
@@ -28,6 +32,11 @@ ALLOWED_MEDIA_TYPES = list(MEDIA_TYPES.keys())
 # 2:3	896x1344 px
 # 9:16	819x1456 px
 # 1:2	784x1568 px
+
+
+def _is_path_allowed(path: str, allowed_patterns: list[str]) -> bool:
+    """Check if the given path matches any of the allowed patterns."""
+    return any(fnmatch(path, pattern) for pattern in allowed_patterns)
 
 
 def _get_media_type(image_filename: str) -> Optional[str]:
@@ -99,6 +108,10 @@ def analyze_image(image_path_or_url: str) -> str:
     Returns:
         str: Description of the image contents
     """
+    permissions = tools.get_permissions(analyze_image)
+    if not permissions.READ:
+        return "User has not granted read permission."
+
     if not image_path_or_url:
         return "Image Path or URL is required."
 
@@ -107,5 +120,16 @@ def analyze_image(image_path_or_url: str) -> str:
         return f"Unsupported image type use {ALLOWED_MEDIA_TYPES}."
 
     if "http" in image_path_or_url:
+        if not permissions.allow_http:
+            return "User has not granted permission to access the internet."
+
         return _analyze_web_image(image_path_or_url, media_type)
+
+    if permissions.allowed_dirs:
+        if not _is_path_allowed(image_path_or_url, permissions.allowed_dirs):
+            return (
+                f"Error: Access to file {image_path_or_url} is not allowed. "
+                f"Allowed directories: {permissions.allowed_dirs}"
+            )
+
     return _analyze_local_image(image_path_or_url, media_type)

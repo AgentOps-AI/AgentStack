@@ -1,7 +1,6 @@
 {
     "name": "tool_name",
     "category": "category",
-    "tools": ["tool1", "tool2"],
     "url": "https://example.com",
     "cta": "Click me!",
     "env": {
@@ -13,5 +12,17 @@
         "dependency2>=2.0.0"
     ],
     "post_install": "install.sh",
-    "post_remove": "remove.sh"
+    "post_remove": "remove.sh",
+    "tools": {
+        "tool1": {
+            "actions": ["read", "write"],
+            "additional_property": "value"
+        },
+        "tool2": {
+            "actions": ["read"]
+        },
+        "tool3": {
+            "actions": ["write"]
+        }
+    }
 }

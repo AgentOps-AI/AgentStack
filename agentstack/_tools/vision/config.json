@@ -11,5 +11,11 @@
     "anthropic>=0.45.2",
     "requests>=2.31.0"
   ],
-  "tools": ["analyze_image"]
+  "tools": {
+    "analyze_image": {
+      "actions": ["read"], 
+      "allow_http": true, 
+      "allowed_dirs": ["*"]
+    }
+  }
 }
