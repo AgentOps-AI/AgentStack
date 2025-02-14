@@ -18,6 +18,21 @@
     },
     "retrieve_web_crawl": {
       "actions": ["read"]
+    },
+    "batch_scrape": {
+      "actions": ["read"]
+    },
+    "check_batch_status": {
+      "actions": ["read"]
+    },
+    "extract_data": {
+      "actions": ["read"]
+    },
+    "map_website": {
+      "actions": ["read"]
+    },
+    "batch_extract": {
+      "actions": ["read"]
     }
   } 
 }
