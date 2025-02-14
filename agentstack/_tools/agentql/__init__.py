@@ -17,32 +17,32 @@ def query_data(url: str, query: Optional[str], prompt: Optional[str]) -> dict:
 
     AgentQL query to scrape the url.
 
-Here is a guide on AgentQL query syntax:
+    Here is a guide on AgentQL query syntax:
 
-Enclose all AgentQL query terms within curly braces `{}`. The following query structure isn't valid because the term "social\_media\_links" is wrongly enclosed within parenthesis `()`.
+    Enclose all AgentQL query terms within curly braces `{}`. The following query structure isn't valid because the term "social_media_links" is wrongly enclosed within parenthesis `()`.
 
-```
-( # Should be {
+    ```
+    ( # Should be {
+        social_media_links(The icons that lead to Facebook, Snapchat, etc.)[]
+    ) # Should be }
+    ```
+
+    The following query is also invalid since its missing the curly braces `{}`
+
+    ```
+    # should include {
     social_media_links(The icons that lead to Facebook, Snapchat, etc.)[]
-) # Should be }
-```
+    # should include }
+    ```
 
-The following query is also invalid since its missing the curly braces `{}`
+    You can't include new lines in your semantic context. The following query structure isn't valid because the semantic context isn't contained within one line.
 
-```
-# should include {
-social_media_links(The icons that lead to Facebook, Snapchat, etc.)[]
-# should include }
-```
-
-You can't include new lines in your semantic context. The following query structure isn't valid because the semantic context isn't contained within one line.
-
-```
-{
-    social_media_links(The icons that lead
-        to Facebook, Snapchat, etc.)[]
-}
-```
+    ```
+    {
+        social_media_links(The icons that lead
+            to Facebook, Snapchat, etc.)[]
+    }
+    ```
     """
     payload = {
         "url": url,
