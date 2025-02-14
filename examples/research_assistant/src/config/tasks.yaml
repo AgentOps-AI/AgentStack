@@ -1,0 +1,25 @@
+scrape_site:
+  description: >-
+    Access the website through the specific URL links provided by the researcher and extract all relevant data asked 
+    for in a structured format.
+  expected_output: >-
+    A json file.
+  agent: >-
+    web_scraper
+analyze:
+  description: >-
+    Using the data scraped by the web scraper, analyze the data gathered and form a conclusion
+    that reports key insights on the data gathered and accurately answering the query: {query}
+  expected_output: >-
+    A report in a structured format outlining the key insights of the research and accurately
+    answering the query.
+  agent: >-
+    analyst
+research:
+  description: >-
+    Use the tools at your disposal to thoroughly research the query: {query}
+  expected_output: >-
+    A list of URL links to the sources where information to answer the query is found with queries
+    for each URL link to find the relevant information.
+  agent: >-
+    researcher
