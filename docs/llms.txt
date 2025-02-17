@@ -1,73 +1,3 @@
-## introduction.mdx
-
----
-title: Introduction
-description: 'The easiest way to start your agent project'
-icon: 'hand-point-up'
----
-
-<img
-  className="block dark:hidden"
-  src="/logo/light.svg"
-  alt="AgentStack Logo"
-/>
-<img
-  className="hidden dark:block"
-  src="/logo/dark.svg"
-  alt="AgentStack Logo"
-/>
-
-AgentStack is a valuable developer tool for quickly scaffolding agent projects.
-
-_Think `create-next-app` for Agents._
-
-### Features of AgentStack
-- Instant project setup with `agentstack init`
-- Useful CLI commands for generating new agents and tasks in the development cycle
-- A myriad of pre-built tools for Agents
-
-## What is _the agent stack_
-The agent stack is the list of tools that are collectively the _agent stack_.
-
-This is similar to the tech stack of a web app. An agent's tech stack is comprised of the following:
-
-<img
-  src="/images/the_agent_stack.png"
-  alt="Agent Stack Example"
-/>
-
-Whether a project is built with AgentStack or not, the concept of the agent stack remains the same.
-
-## What is **AgentStack**
-Our project is called **AgentStack** because it's the easiest way to quickly scaffold your agent stack! With a couple CLI commands, you can create a near-production ready agent!
-
-## First Steps
-
-<CardGroup cols={2}>
-  <Card
-    title="Installation"
-    icon="cloud-arrow-down"
-    href="/installation"
-  >
-    Install the AgentStack CLI
-  </Card>
-  <Card
-    title="Quickstart"
-    icon="circle-play"
-    href="/quickstart"
-  >
-    A quickstart guide to using the CLI
-  </Card>
-    <Card title="Overview" icon="cloud" href="https://www.loom.com/share/b87b6a42d99c435a9ee328bf3e57a594" target="_blank">
-      High level overview of AgentStack
-      ![thumbnail](https://cdn.loom.com/sessions/thumbnails/b87b6a42d99c435a9ee328bf3e57a594-c297554684e16934-full-play.gif)
-    </Card>
-    <Card title="Tutorial" icon="person-carry-box" href="https://www.loom.com/share/68d796b13cd94647bd1d7fae12b2358e?sid=7fdf595b-de84-4d51-9a81-ef1e9c8ac71c" target="_blank">
-      Build a simple web scraper agent
-      ![thumbnail](https://cdn.loom.com/sessions/thumbnails/68d796b13cd94647bd1d7fae12b2358e-5d62273c24a53191-full-play.gif)
-    </Card>
-</CardGroup>
-
 ## installation.mdx
 
 ---
@@ -180,101 +110,236 @@ To generate a new task, run `agentstack generate task <task_name>` - [More Info]
     </Card>
 </CardGroup>
 
-## contributing/adding-tools.mdx
+## introduction.mdx
 
 ---
-title: 'Adding Tools'
-description: 'Contribute your own Agent tool to the ecosystem'
+title: Introduction
+description: 'The easiest way to start your agent project'
+icon: 'hand-point-up'
 ---
 
-If you're reading this section, you probably have a product that AI agents can use as a tool. We're glad you're here!
+<img
+  className="block dark:hidden"
+  src="/logo/light.svg"
+  alt="AgentStack Logo"
+/>
+<img
+  className="hidden dark:block"
+  src="/logo/dark.svg"
+  alt="AgentStack Logo"
+/>
 
-Adding tools is easy once you understand the project structure. A few things need to be done for a tool to be considered completely supported:
+AgentStack is a valuable developer tool for quickly scaffolding agent projects.
 
-<Steps>
-  <Step title="Create a config for your tool">
-      - Create a new tool config at `agentstack/_tools/<your_tool>/config.json`
-      - As an example, look at our [tool config fixture](https://github.com/AgentOps-AI/AgentStack/blob/main/tests/fixtures/tool_config_max.json)
-      - AgentStack uses this to know what code to insert where. Follow the structure to add your tool.
-  </Step>
-  <Step title="Create your implementation">
-      - In `agentstack/_tools`, you'll see other implementations of tools.
-      - Create a file `agentstack/_tools/<your_tool>/__init__.py`,
-      - Build your tool implementation simply as python functions in this file. The functions that are to be exposed to the agent as a *tool* should contain detailed docstrings and have typed parameters.
-      - The tools that are exported from this file should be listed in the tool's config json.
-  </Step>
-  <Step title="Test your tool">
-      Manually test your tool integration by running `agentstack tools add <your_tool>` and ensure it behaves as expected.
-      <Note>This must be done within an AgentStack project. To create your test project, run `agentstack init test_proj`, then `cd` into the project and try adding your tool.</Note>
-  </Step>
-  <Step title="Open a PR to add your tool to the next release">
-  </Step>
-</Steps>
+_Think `create-next-app` for Agents._
 
-# Tool Config
-- `name` (str) - Name of your tool
-- `category` (str) - Category your tool belongs in
-- `tools` (List[str]) - The exported functions within your tool file
-- `url` (str) - URL to where developers can learn more about your tool
-- `tools_bundled` (bool) - True if the tool file exports a list of tools
-- `cta` (str) - Call To Action printed in the terminal after install
-- `env` (dict) - Key: Environment variable name; Value: default value
-- `packages` (List[str]) - Python packages to be installed to support your tool
-- `post_install` (str) - A script to be run after install of your tool
-- `post_remove` (str) - A script to be run after removal of your tool
+### Features of AgentStack
+- Instant project setup with `agentstack init`
+- Useful CLI commands for generating new agents and tasks in the development cycle
+- A myriad of pre-built tools for Agents
 
-## contributing/how-to-contribute.mdx
+## What is _the agent stack_
+The agent stack is the list of tools that are collectively the _agent stack_.
+
+This is similar to the tech stack of a web app. An agent's tech stack is comprised of the following:
+
+<img
+  src="/images/the_agent_stack.png"
+  alt="Agent Stack Example"
+/>
+
+Whether a project is built with AgentStack or not, the concept of the agent stack remains the same.
+
+## What is **AgentStack**
+Our project is called **AgentStack** because it's the easiest way to quickly scaffold your agent stack! With a couple CLI commands, you can create a near-production ready agent!
+
+## First Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Installation"
+    icon="cloud-arrow-down"
+    href="/installation"
+  >
+    Install the AgentStack CLI
+  </Card>
+  <Card
+    title="Quickstart"
+    icon="circle-play"
+    href="/quickstart"
+  >
+    A quickstart guide to using the CLI
+  </Card>
+    <Card title="Overview" icon="cloud" href="https://www.loom.com/share/b87b6a42d99c435a9ee328bf3e57a594" target="_blank">
+      High level overview of AgentStack
+      ![thumbnail](https://cdn.loom.com/sessions/thumbnails/b87b6a42d99c435a9ee328bf3e57a594-c297554684e16934-full-play.gif)
+    </Card>
+    <Card title="Tutorial" icon="person-carry-box" href="https://www.loom.com/share/68d796b13cd94647bd1d7fae12b2358e?sid=7fdf595b-de84-4d51-9a81-ef1e9c8ac71c" target="_blank">
+      Build a simple web scraper agent
+      ![thumbnail](https://cdn.loom.com/sessions/thumbnails/68d796b13cd94647bd1d7fae12b2358e-5d62273c24a53191-full-play.gif)
+    </Card>
+</CardGroup>
+
+## cli-reference/cli.mdx
 
 ---
-title: 'How To Contribute'
-description: 'Contribute your own Agent tool to the ecosystem'
+title: 'CLI Reference'
+description: 'Everything to do with the CLI'
 ---
 
-First of all, __thank you__ for your interest in contributing to AgentStack! Even the smallest contributions help a _ton_.
+It all starts with calling
+```bash
+$ agentstack
+```
 
-Our vision is to build the de facto CLI for quickly spinning up an AI Agent project. We want to be the [create-react-app](https://create-react-app.dev/) of agents. Our inspiration also includes the oh-so-convenient [Angular CLI](https://v17.angular.io/cli).
+### Shortcut Aliases
+Many top-level AgentStack commands can be invoked using a single-letter prefix to save keystrokes. These are indicated
+in the command's documentation here after a `|` character. Run `agentstack help` for the full list. 
 
-## How to Help
+### Global Flags
+These flags work with all commands:
 
-Grab an issue from the [issues tab](https://github.com/AgentOps-AI/AgentStack/issues)! Plenty are labelled "Good First Issue". Fork the repo and create a PR when ready!
+`--debug` - Print a full traceback when an error is encountered. This also enables printing additional debug information
+from within AgentStack useful for development and debugging. 
 
-The best place to engage in conversation about your contribution is in the Issue chat or on our [Discord](https://discord.gg/JdWkh9tgTQ).
+`--path=<path>` - Set the working directory of the current AgentStack project. By default `agentstack` works inside of the
+current directory and looks for an `agentstack.json` file there. By passing a path to this flag you can work on a project
+from outside of it's directory.
 
-## Setup
-
-1. `git clone https://github.com/AgentOps-AI/AgentStack.git`
-   `cd AgentStack`
-2. `uv pip install -e ".[dev,test]`
-   - This will install the CLI locally and in editable mode so you can use `agentstack <command>` to test your latest changes
-   - Note that after you initialize a project, it will install it's own version of `agentstack` in the project's
-   virtual environment. To use your local version, run `uv pip install -e "../AgentStack/.[<framework>]"` to get
-   your development version inside of the project, too. 
-
-## Project Structure
-
-A detailed overview of the project structure is available at [Project Structure](https://docs.agentstack.sh/contributing/project-structure).
+`--version` - Prints the current version and exits.
 
 
-## Before Making a Pull Request
+## `$ agentstack init`
+This initializes a new AgentStack project.
+```bash
+agentstack init <slug_name>
+```
 
-Make sure tests pass, type checking is correct, and ensure your code is formatted correctly.
+`slug_name` is the name of your project, and will be created as a directory to initialize your project inside. When the
+default arguments are passed, a starter project template will be used, which adds a single agent, a single task and
+demonstrates the use of a tool. 
 
-1. `tox -m quick`
-   - This will run tests for Python version 3.12 only. You can run tests on all supported versions with `tox`.
-2. `mypy agentstack`
-   - Please resolve all type checking errors before marking your PR as ready for review.
-3. `ruff`
-   - We use `ruff` to ensure consistency in our codebase. 
+### Init Creates a Virtual Environment
+AgentStack creates a new directory, initializes a new virtual environment, installs dependencies, and populates the project 
+structure. After `init` completes, `cd` into the directory, activate the virtual environment with `source .venv/bin/activate`.
+Virtual environments and package management are handled by the `uv` package manager. 
 
-## Tests
+### Initializing with the Wizard
+You can pass the `--wizard` flag to `agentstack init` to use an interactive project configuration wizard. 
 
-We're actively working toward increasing our test coverage. Make sure to review the `codecov` output of your
-tests to ensure your contribution is well tested. We use `tox` to run our tests, which sets up individual
-environments for each framework and Python version we support. Tests are run when a PR is pushed to, and
-contributions without passing tests will not be merged.
+### Initializing from a Template
+You can also pass a `--template=<template_name>` argument to `agentstack init` which will pre-populate your project with functionality
+from a built-in template, or one found on the internet. A `template_name` can be one of three identifiers:
 
-You can test a specific Python version and framework by running: `tox -e py312-<framework>`, but keep in mind
-that the coverage report will be incomplete.
+- A built-in AgentStack template (see the `templates` directory in the AgentStack repo for bundled templates).
+- A template file from the internet; pass the full https URL of the template.
+- A local template file; pass an absolute or relative path. 
+
+
+## `$ agentstack run`
+This runs your AgentStack project.
+```bash
+agentstack run
+```
+
+Environment variables will be loaded from `~/.env` and from the `.env` file inside your project directory. Make sure you
+have enabled your project's `venv` before executing to include all dependencies required. 
+
+### Overriding Inputs
+Your project defines Inputs which are used to customize the Agent and Task prompts for a specific task. In cases where
+using the `inputs.yaml` file to populate data is not flexible enough, `run` can accept value overrides for all defined 
+inputs. Use `--input-<input_key>=<input_value>` to pass data which will only be used on this run. 
+
+For example, if you have a key in your `inputs.yaml` file named `topic` and want to override it for this run, you would
+use the following command:
+
+```bash
+agentstack run --input-topic=Sports
+```
+
+### Running other project commands
+By default, `run` will call the `main()` function inside your project's `main.py` file. You can pass alternate function
+names to run with `--function=<function_name>`.
+
+
+## Generate
+Code generation commands for automatically creating new agents or tasks.
+
+### `$ agentstack generate agent | agentstack g a`
+Generate a new agent
+- `agent_name` (required | str) - the name of the agent
+- `--role` (optional | str) - Prompt parameter: The role of the agent
+- `--goal` (optional | str) - Prompt parameter: The goal of the agent
+- `--backstory` (optional | str) - Prompt parameter: The backstory of the agent
+- `--llm` (optional | `<provider>/<model>`) - Which model to use for this agent
+
+#### Default LLM
+All arguments to generate a new Agent are optional. A default LLM can be configured in `agentstack.json`under the 
+`default_model` setting to populate a provider/model. If you are generating an agent in a project which does not have
+a default model set, you will be prompted to configure one. 
+
+#### Example
+```bash Generate Agent
+agentstack generate agent script_writer
+```
+
+### `$ agentstack generate task | agentstack g t`
+Generate a new task
+- `task_name` (required | str) - the name of the task
+- `--description` (optional | str) - Prompt parameter: Explain the task in detail
+- `--expected_output` (optional | str) - What is the expected output from the agent (ex: data in json format)
+- `--agent` (optional | str) - The name of the agent of which to assign the task to (when using Crew in sequential mode)
+
+#### Example
+```bash Generate Task
+agentstack g t gen_script --description "Write a short film script about secret agents"
+```
+
+## Tools
+Tools are what make AgentStack powerful. Adding and removing Tools from Agents is easy with this command. 
+
+### `$ agentstack tools list | agentstack t l`
+Lists all tools available in AgentStack.
+
+### `$ agentstack tools add | agentstack t a`
+Shows an interactive interface for selecting which Tool to add and which Agents to add it to.
+
+#### Add a Tool to all Agents
+When a tool_name is provided it will be made available to all Agents in the project. 
+```bash
+$ agentstack tools add <tool_name>
+```
+
+#### Add a Tool to a single Agent
+When an agent_name is provided, the tool will be made available to only that agent. 
+```bash
+$ agentstack tools add <tool_name> --agent=<agent_name>
+```
+
+#### Add a Tool to multiple Agents
+When a comma-separated list of Agents is passed, the tool will be made available to those agents. 
+```bash
+$ agentstack tools add <tool_name> --agents=<agent_name>,<agent_name>,<agent_name>
+```
+
+### `$ agentstack tools remove <tool_name>`
+Removes a tool from all Agents in the project. 
+
+
+## Templates
+Projects can be exported into a template to facilitate sharing configurations. Re-initialize a project from a template
+with `agentstack init --template=<filename>`.
+
+### `$ agentstack export <filename>`
+The current project will be written to a JSON template at the provided filename. 
+
+## `$ agentstack update`
+Check for updates and allow the user to install the latest release of AgentStack. 
+
+## `$ agentstack login`
+Authenticate with [agentstack.sh](https://agentstack.sh) for hosted integrations. 
+
+
 
 ## contributing/project-structure.mdx
 
@@ -705,47 +770,157 @@ to OpenAI Swarms is contained in this package.
 as a framework.
 
 
-## templates/system_analyzer.mdx
+## contributing/how-to-contribute.mdx
 
 ---
-title: 'System Analyzer'
-description: 'Inspect a project directory and improve it'
+title: 'How To Contribute'
+description: 'Contribute your own Agent tool to the ecosystem'
 ---
 
-[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/system_analyzer.json)
+First of all, __thank you__ for your interest in contributing to AgentStack! Even the smallest contributions help a _ton_.
 
+Our vision is to build the de facto CLI for quickly spinning up an AI Agent project. We want to be the [create-react-app](https://create-react-app.dev/) of agents. Our inspiration also includes the oh-so-convenient [Angular CLI](https://v17.angular.io/cli).
+
+## How to Help
+
+Grab an issue from the [issues tab](https://github.com/AgentOps-AI/AgentStack/issues)! Plenty are labelled "Good First Issue". Fork the repo and create a PR when ready!
+
+The best place to engage in conversation about your contribution is in the Issue chat or on our [Discord](https://discord.gg/JdWkh9tgTQ).
+
+## Setup
+
+1. `git clone https://github.com/AgentOps-AI/AgentStack.git`
+   `cd AgentStack`
+2. `uv pip install -e ".[dev,test]`
+   - This will install the CLI locally and in editable mode so you can use `agentstack <command>` to test your latest changes
+   - Note that after you initialize a project, it will install it's own version of `agentstack` in the project's
+   virtual environment. To use your local version, run `uv pip install -e "../AgentStack/.[<framework>]"` to get
+   your development version inside of the project, too. 
+
+## Project Structure
+
+A detailed overview of the project structure is available at [Project Structure](https://docs.agentstack.sh/contributing/project-structure).
+
+
+## Before Making a Pull Request
+
+Make sure tests pass, type checking is correct, and ensure your code is formatted correctly.
+
+1. `tox -m quick`
+   - This will run tests for Python version 3.12 only. You can run tests on all supported versions with `tox`.
+2. `mypy agentstack`
+   - Please resolve all type checking errors before marking your PR as ready for review.
+3. `ruff`
+   - We use `ruff` to ensure consistency in our codebase. 
+
+## Tests
+
+We're actively working toward increasing our test coverage. Make sure to review the `codecov` output of your
+tests to ensure your contribution is well tested. We use `tox` to run our tests, which sets up individual
+environments for each framework and Python version we support. Tests are run when a PR is pushed to, and
+contributions without passing tests will not be merged.
+
+You can test a specific Python version and framework by running: `tox -e py312-<framework>`, but keep in mind
+that the coverage report will be incomplete.
+
+## contributing/adding-tools.mdx
+
+---
+title: 'Adding Tools'
+description: 'Contribute your own Agent tool to the ecosystem'
+---
+
+If you're reading this section, you probably have a product that AI agents can use as a tool. We're glad you're here!
+
+Adding tools is easy once you understand the project structure. A few things need to be done for a tool to be considered completely supported:
+
+<Steps>
+  <Step title="Create a config for your tool">
+      - Create a new tool config at `agentstack/_tools/<your_tool>/config.json`
+      - As an example, look at our [tool config fixture](https://github.com/AgentOps-AI/AgentStack/blob/main/tests/fixtures/tool_config_max.json)
+      - AgentStack uses this to know what code to insert where. Follow the structure to add your tool.
+  </Step>
+  <Step title="Create your implementation">
+      - In `agentstack/_tools`, you'll see other implementations of tools.
+      - Create a file `agentstack/_tools/<your_tool>/__init__.py`,
+      - Build your tool implementation simply as python functions in this file. The functions that are to be exposed to the agent as a *tool* should contain detailed docstrings and have typed parameters.
+      - The tools that are exported from this file should be listed in the tool's config json.
+  </Step>
+  <Step title="Test your tool">
+      Manually test your tool integration by running `agentstack tools add <your_tool>` and ensure it behaves as expected.
+      <Note>This must be done within an AgentStack project. To create your test project, run `agentstack init test_proj`, then `cd` into the project and try adding your tool.</Note>
+  </Step>
+  <Step title="Open a PR to add your tool to the next release">
+  </Step>
+</Steps>
+
+# Tool Config
+- `name` (str) - Name of your tool
+- `category` (str) - Category your tool belongs in
+- `tools` (List[str]) - The exported functions within your tool file
+- `url` (str) - URL to where developers can learn more about your tool
+- `tools_bundled` (bool) - True if the tool file exports a list of tools
+- `cta` (str) - Call To Action printed in the terminal after install
+- `env` (dict) - Key: Environment variable name; Value: default value
+- `packages` (List[str]) - Python packages to be installed to support your tool
+- `post_install` (str) - A script to be run after install of your tool
+- `post_remove` (str) - A script to be run after removal of your tool
+
+## frameworks/list.mdx
+
+---
+title: Frameworks
+description: 'Supported frameworks in AgentStack'
+icon: 'ship'
+---
+
+These are documentation links to the frameworks supported directly by AgentStack.
+
+To start a project with one of these frameworks, use
 ```bash
-agentstack init --template=system_analyzer
+agentstack init <project_name> --framework <framework_name>
 ```
 
-# Purpose
+## Framework Docs
+<CardGroup cols={3}>
+  <Card
+    title="CrewAI"
+    icon="ship"
+    href="https://docs.crewai.com/introduction"
+  >
+    An intuitive agentic framework (recommended)
+  </Card>
+    <Card
+    title="LangGraph"
+    icon="circle-nodes"
+    href="https://langchain-ai.github.io/langgraph/"
+  >
+    A complex but capable framework with a _steep_ learning curve
+  </Card>
+    <Card
+    title="OpenAI Swarms"
+    icon="bee"
+    href="https://github.com/openai/swarm"
+  >
+    A simple framework with a cult following
+  </Card>
+    <Card
+    title="LlamaIndex"
+    icon="layer-group"
+    href="https://docs.llamaindex.ai/en/stable/"
+  >
+    An expansive framework with many ancillary features
+  </Card>
+</CardGroup>
 
-This agent will accept a query as a string, use Perplexity to research it. Another agent will take the data gathered and perform an analysis focused on answering the query.
-
-# Inputs
-
-`system_path` (str): the absolute path to
-
-## templates/researcher.mdx
+## templates/content_creator.mdx
 
 ---
-title: 'Researcher'
-description: 'Research and report result from a query'
+title: 'Content Creator'
+description: 'Research a topic and create content on it'
 ---
 
-[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/research.json)
-
-```bash
-agentstack init --template=research
-```
-
-# Purpose
-
-This agent will accept a query as a string, use Perplexity to research it. Another agent will take the data gathered and perform an analysis focused on answering the query.
-
-# Inputs
-
-`query` (str): the query for the agent to research and report on
+[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/content_creator.json)
 
 ## templates/templates.mdx
 
@@ -802,6 +977,48 @@ The following templates are built into the AgentStack project. Template contribu
   </Card>
 </CardGroup>
 
+## templates/system_analyzer.mdx
+
+---
+title: 'System Analyzer'
+description: 'Inspect a project directory and improve it'
+---
+
+[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/system_analyzer.json)
+
+```bash
+agentstack init --template=system_analyzer
+```
+
+# Purpose
+
+This agent will accept a query as a string, use Perplexity to research it. Another agent will take the data gathered and perform an analysis focused on answering the query.
+
+# Inputs
+
+`system_path` (str): the absolute path to
+
+## templates/researcher.mdx
+
+---
+title: 'Researcher'
+description: 'Research and report result from a query'
+---
+
+[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/research.json)
+
+```bash
+agentstack init --template=research
+```
+
+# Purpose
+
+This agent will accept a query as a string, use Perplexity to research it. Another agent will take the data gathered and perform an analysis focused on answering the query.
+
+# Inputs
+
+`query` (str): the query for the agent to research and report on
+
 ## templates/community.mdx
 
 ---
@@ -817,383 +1034,12 @@ agentstack init --template=<your_url>
 
 Much more community template support coming soon!
 
-## templates/content_creator.mdx
-
----
-title: 'Content Creator'
-description: 'Research a topic and create content on it'
----
-
-[View Template](https://github.com/AgentOps-AI/AgentStack/blob/main/agentstack/templates/content_creator.json)
-
-## frameworks/list.mdx
-
----
-title: Frameworks
-description: 'Supported frameworks in AgentStack'
-icon: 'ship'
----
-
-These are documentation links to the frameworks supported directly by AgentStack.
-
-To start a project with one of these frameworks, use
-```bash
-agentstack init <project_name> --framework <framework_name>
-```
-
-## Framework Docs
-<CardGroup cols={3}>
-  <Card
-    title="CrewAI"
-    icon="ship"
-    href="https://docs.crewai.com/introduction"
-  >
-    An intuitive agentic framework (recommended)
-  </Card>
-    <Card
-    title="LangGraph"
-    icon="circle-nodes"
-    href="https://langchain-ai.github.io/langgraph/"
-  >
-    A complex but capable framework with a _steep_ learning curve
-  </Card>
-    <Card
-    title="OpenAI Swarms"
-    icon="bee"
-    href="https://github.com/openai/swarm"
-  >
-    A simple framework with a cult following
-  </Card>
-    <Card
-    title="LlamaIndex"
-    icon="layer-group"
-    href="https://docs.llamaindex.ai/en/stable/"
-  >
-    An expansive framework with many ancillary features
-  </Card>
-</CardGroup>
-
-## tools/package-structure.mdx
-
-
-## Tool Configuration
-Each tool gets a directory inside `agentstack/_tools/<tool_name>` where the tool's 
-source code and configuration will be stored.
-
-The directory should contain the following files:
-
-`config.json`
--------------
-This contains the configuration for the tool for use by AgentStack, including
-metadata, dependencies, configuration & functions exposed by the tool.
-
-`__init__.py`
----------
-Python package which contains the framework-agnostic tool implementation. Tools 
-are simple packages which exponse functions; when a tool is loaded into a user's 
-project, it will be wrapped in the framework-specific tool format by AgentStack. 
-
-
-`config.json` Format
---------------------
-
-### `name` (string) [required]
-The name of the tool in snake_case. This is used to identify the tool in the system.
-
-### `url` (string) [optional]
-The URL of the tool's repository. This is provided to the user to allow them to 
-learn more about the tool. 
-
-### `category` (string) [required]
-The category of the tool. This is used to group tools together in the CLI.
-
-### `cta` (string) [optional]
-String to print in the terminal when the tool is installed that provides a call to action.
-
-### `env` (list[dict(str, Any)]) [optional]
-Definitions for environment variables that will be appended to the local `.env` file.
-This is a list of key-value pairs ie. `[{"ENV_VAR": "value"}, ...]`.
-In cases where the user is expected to provide their own information, the value is
-set to `null` which adds it to the project's `.env` file as a comment. 
-
-### `dependencies` (list[str]) [optional]
-List of dependencies that will be installed in the user's project. It is 
-encouraged that versions are specified, which use the `package>=version` format.
-
-### `tools` (list[str]) [required]
-List of public functions that are accessible in the tool implementation.
-
-
-
-## tools/core.mdx
-
----
-title: 'Core Tools'
-description: 'AgentStack tools that are not third-party integrations'
----
-
-## File System
-
-- [Directory Search](/tools/tool/dir_search)
-- [File Read](/tools/tool/file_read)
-- [FTP](/tools/tool/ftp)
-
-## Code Execution
-
-- [Code Interpreter](/tools/tool/code-interpreter)
-
-## Data Input
-- [Vision](/tools/tool/vision)
-
-<CardGroup cols={1}>
-  <Card
-    title="Community Tools"
-    icon="hammer"
-    href="/tools/community"
-  >
-    Third party tools from the Agent Community
-  </Card>
-</CardGroup>
-
-## tools/community.mdx
-
----
-title: 'Community Tools'
-description: 'AgentStack tools from community contributors'
----
-
-## Web Retrieval
-- [AgentQL](/tools/tool/agentql)
-
-## Browsing
-
-[//]: # (- [Browserbase]&#40;/tools/tool/browserbase&#41;)
-- [Firecrawl](/tools/tool/firecrawl)
-
-## Search
-- [Perplexity](/tools/tool/perplexity)
-
-## Memory / State
-
-- [Mem0](/tools/tool/mem0)
-
-## Database Tools
-- [Neon](/tools/tool/neon) 
-
-## Code Execution
-
-- [Open Interpreter](/tools/tool/open-interpreter)
-
-## Unified API
-
-- [Composio](/tools/tool/composio)
-
-## Network Protocols
-- [Agent Connect](/tools/tool/agent-connect)
-
-## Application Specific
-- [Stripe](/tools/tool/stripe)
-- [Payman](/tools/tool/payman)
-<CardGroup cols={1}>
-  <Card
-    title="Core Tools"
-    icon="hammer"
-    href="/tools/core"
-  >
-    Default tools in AgentStack
-  </Card>
-</CardGroup>
-
-## tools/tools.mdx
-
----
-title: 'Tools'
-description: 'Giving your agents tools should be easy'
----
-
-## Installation
-
-Once you find the right tool for your use-case, install it with simply
-```bash
-agentstack tools add
-```
-
-You can also specify a tool, and one or more agents to install it to:
-```bash
-agentstack tools add <tool_name> --agents=<agent_name1>,<agent_name2>
-```
-
-<Note>
-    Add your own tool to the AgentStack repo [here](/contributing/adding-tools)!
-</Note>
-
 ## snippets/snippet-intro.mdx
 
 One of the core principles of software development is DRY (Don't Repeat
 Yourself). This is a principle that apply to documentation as
 well. If you find yourself repeating the same content in multiple places, you
 should consider creating a custom snippet to keep your content in sync.
-
-
-## cli-reference/cli.mdx
-
----
-title: 'CLI Reference'
-description: 'Everything to do with the CLI'
----
-
-It all starts with calling
-```bash
-$ agentstack
-```
-
-### Shortcut Aliases
-Many top-level AgentStack commands can be invoked using a single-letter prefix to save keystrokes. These are indicated
-in the command's documentation here after a `|` character. Run `agentstack help` for the full list. 
-
-### Global Flags
-These flags work with all commands:
-
-`--debug` - Print a full traceback when an error is encountered. This also enables printing additional debug information
-from within AgentStack useful for development and debugging. 
-
-`--path=<path>` - Set the working directory of the current AgentStack project. By default `agentstack` works inside of the
-current directory and looks for an `agentstack.json` file there. By passing a path to this flag you can work on a project
-from outside of it's directory.
-
-`--version` - Prints the current version and exits.
-
-
-## `$ agentstack init`
-This initializes a new AgentStack project.
-```bash
-agentstack init <slug_name>
-```
-
-`slug_name` is the name of your project, and will be created as a directory to initialize your project inside. When the
-default arguments are passed, a starter project template will be used, which adds a single agent, a single task and
-demonstrates the use of a tool. 
-
-### Init Creates a Virtual Environment
-AgentStack creates a new directory, initializes a new virtual environment, installs dependencies, and populates the project 
-structure. After `init` completes, `cd` into the directory, activate the virtual environment with `source .venv/bin/activate`.
-Virtual environments and package management are handled by the `uv` package manager. 
-
-### Initializing with the Wizard
-You can pass the `--wizard` flag to `agentstack init` to use an interactive project configuration wizard. 
-
-### Initializing from a Template
-You can also pass a `--template=<template_name>` argument to `agentstack init` which will pre-populate your project with functionality
-from a built-in template, or one found on the internet. A `template_name` can be one of three identifiers:
-
-- A built-in AgentStack template (see the `templates` directory in the AgentStack repo for bundled templates).
-- A template file from the internet; pass the full https URL of the template.
-- A local template file; pass an absolute or relative path. 
-
-
-## `$ agentstack run`
-This runs your AgentStack project.
-```bash
-agentstack run
-```
-
-Environment variables will be loaded from `~/.env` and from the `.env` file inside your project directory. Make sure you
-have enabled your project's `venv` before executing to include all dependencies required. 
-
-### Overriding Inputs
-Your project defines Inputs which are used to customize the Agent and Task prompts for a specific task. In cases where
-using the `inputs.yaml` file to populate data is not flexible enough, `run` can accept value overrides for all defined 
-inputs. Use `--input-<input_key>=<input_value>` to pass data which will only be used on this run. 
-
-For example, if you have a key in your `inputs.yaml` file named `topic` and want to override it for this run, you would
-use the following command:
-
-```bash
-agentstack run --input-topic=Sports
-```
-
-### Running other project commands
-By default, `run` will call the `main()` function inside your project's `main.py` file. You can pass alternate function
-names to run with `--function=<function_name>`.
-
-
-## Generate
-Code generation commands for automatically creating new agents or tasks.
-
-### `$ agentstack generate agent | agentstack g a`
-Generate a new agent
-- `agent_name` (required | str) - the name of the agent
-- `--role` (optional | str) - Prompt parameter: The role of the agent
-- `--goal` (optional | str) - Prompt parameter: The goal of the agent
-- `--backstory` (optional | str) - Prompt parameter: The backstory of the agent
-- `--llm` (optional | `<provider>/<model>`) - Which model to use for this agent
-
-#### Default LLM
-All arguments to generate a new Agent are optional. A default LLM can be configured in `agentstack.json`under the 
-`default_model` setting to populate a provider/model. If you are generating an agent in a project which does not have
-a default model set, you will be prompted to configure one. 
-
-#### Example
-```bash Generate Agent
-agentstack generate agent script_writer
-```
-
-### `$ agentstack generate task | agentstack g t`
-Generate a new task
-- `task_name` (required | str) - the name of the task
-- `--description` (optional | str) - Prompt parameter: Explain the task in detail
-- `--expected_output` (optional | str) - What is the expected output from the agent (ex: data in json format)
-- `--agent` (optional | str) - The name of the agent of which to assign the task to (when using Crew in sequential mode)
-
-#### Example
-```bash Generate Task
-agentstack g t gen_script --description "Write a short film script about secret agents"
-```
-
-## Tools
-Tools are what make AgentStack powerful. Adding and removing Tools from Agents is easy with this command. 
-
-### `$ agentstack tools list | agentstack t l`
-Lists all tools available in AgentStack.
-
-### `$ agentstack tools add | agentstack t a`
-Shows an interactive interface for selecting which Tool to add and which Agents to add it to.
-
-#### Add a Tool to all Agents
-When a tool_name is provided it will be made available to all Agents in the project. 
-```bash
-$ agentstack tools add <tool_name>
-```
-
-#### Add a Tool to a single Agent
-When an agent_name is provided, the tool will be made available to only that agent. 
-```bash
-$ agentstack tools add <tool_name> --agent=<agent_name>
-```
-
-#### Add a Tool to multiple Agents
-When a comma-separated list of Agents is passed, the tool will be made available to those agents. 
-```bash
-$ agentstack tools add <tool_name> --agents=<agent_name>,<agent_name>,<agent_name>
-```
-
-### `$ agentstack tools remove <tool_name>`
-Removes a tool from all Agents in the project. 
-
-
-## Templates
-Projects can be exported into a template to facilitate sharing configurations. Re-initialize a project from a template
-with `agentstack init --template=<filename>`.
-
-### `$ agentstack export <filename>`
-The current project will be written to a JSON template at the provided filename. 
-
-## `$ agentstack update`
-Check for updates and allow the user to install the latest release of AgentStack. 
-
-## `$ agentstack login`
-Authenticate with [agentstack.sh](https://agentstack.sh) for hosted integrations. 
-
 
 
 ## essentials/agentops.mdx
@@ -1248,6 +1094,38 @@ To get started, create an [AgentOps account](https://agentops.ai/?=agentstack).
 
 For feature requests or bug reports, please reach out to the AgentOps team on the [AgentOps Repo](https://github.com/AgentOps-AI/agentops).
 
+## essentials/generating-tasks.mdx
+
+---
+title: 'Generating Tasks'
+description: 'CLI command to add a task to your project'
+---
+
+To generate a new task for your project, run:
+
+```bash
+agentstack generate task <task_name>
+```
+
+This command will modify two files, your agent file (`crew.py`/`graph.py`) and `agents.yaml`.
+
+## your agent file
+
+This is the file that declares each of your agents and tasks. It's the core of your AgentStack project and how AgentStack configures your framework.
+- Crew projects have `crew.py`
+- LangGraph projects have `graph.py`
+
+## agents.yaml
+
+This is your prompt file. Any prompt engineering is abstracted to here for non-technical ease.
+
+Each task has two prompt params:
+- Description
+- Expected Output
+
+And one configuration param:
+- Agent - If operating in Sequential mode, this tells the Crew which agent should accomplish the task
+
 ## essentials/generating-agents.mdx
 
 ---
@@ -1284,35 +1162,160 @@ And one configuration param:
 
     Ex: `openai/gpt-4o`
 
-## essentials/generating-tasks.mdx
+## tools/core.mdx
 
 ---
-title: 'Generating Tasks'
-description: 'CLI command to add a task to your project'
+title: 'Core Tools'
+description: 'AgentStack tools that are not third-party integrations'
 ---
 
-To generate a new task for your project, run:
+## File System
 
+- [Directory Search](/tools/tool/dir_search)
+- [File Read](/tools/tool/file_read)
+- [FTP](/tools/tool/ftp)
+
+## Code Execution
+
+- [Code Interpreter](/tools/tool/code-interpreter)
+
+## Input
+- [Vision](/tools/tool/vision)
+
+## Data
+- [SQL](/tools/tool/sql)
+
+<CardGroup cols={1}>
+  <Card
+    title="Community Tools"
+    icon="hammer"
+    href="/tools/community"
+  >
+    Third party tools from the Agent Community
+  </Card>
+</CardGroup>
+
+## tools/tools.mdx
+
+---
+title: 'Tools'
+description: 'Giving your agents tools should be easy'
+---
+
+## Installation
+
+Once you find the right tool for your use-case, install it with simply
 ```bash
-agentstack generate task <task_name>
+agentstack tools add
 ```
 
-This command will modify two files, your agent file (`crew.py`/`graph.py`) and `agents.yaml`.
+You can also specify a tool, and one or more agents to install it to:
+```bash
+agentstack tools add <tool_name> --agents=<agent_name1>,<agent_name2>
+```
 
-## your agent file
+<Note>
+    Add your own tool to the AgentStack repo [here](/contributing/adding-tools)!
+</Note>
 
-This is the file that declares each of your agents and tasks. It's the core of your AgentStack project and how AgentStack configures your framework.
-- Crew projects have `crew.py`
-- LangGraph projects have `graph.py`
+## tools/package-structure.mdx
 
-## agents.yaml
 
-This is your prompt file. Any prompt engineering is abstracted to here for non-technical ease.
+## Tool Configuration
+Each tool gets a directory inside `agentstack/_tools/<tool_name>` where the tool's 
+source code and configuration will be stored.
 
-Each task has two prompt params:
-- Description
-- Expected Output
+The directory should contain the following files:
 
-And one configuration param:
-- Agent - If operating in Sequential mode, this tells the Crew which agent should accomplish the task
+`config.json`
+-------------
+This contains the configuration for the tool for use by AgentStack, including
+metadata, dependencies, configuration & functions exposed by the tool.
+
+`__init__.py`
+---------
+Python package which contains the framework-agnostic tool implementation. Tools 
+are simple packages which exponse functions; when a tool is loaded into a user's 
+project, it will be wrapped in the framework-specific tool format by AgentStack. 
+
+
+`config.json` Format
+--------------------
+
+### `name` (string) [required]
+The name of the tool in snake_case. This is used to identify the tool in the system.
+
+### `url` (string) [optional]
+The URL of the tool's repository. This is provided to the user to allow them to 
+learn more about the tool. 
+
+### `category` (string) [required]
+The category of the tool. This is used to group tools together in the CLI.
+
+### `cta` (string) [optional]
+String to print in the terminal when the tool is installed that provides a call to action.
+
+### `env` (list[dict(str, Any)]) [optional]
+Definitions for environment variables that will be appended to the local `.env` file.
+This is a list of key-value pairs ie. `[{"ENV_VAR": "value"}, ...]`.
+In cases where the user is expected to provide their own information, the value is
+set to `null` which adds it to the project's `.env` file as a comment. 
+
+### `dependencies` (list[str]) [optional]
+List of dependencies that will be installed in the user's project. It is 
+encouraged that versions are specified, which use the `package>=version` format.
+
+### `tools` (list[str]) [required]
+List of public functions that are accessible in the tool implementation.
+
+
+
+## tools/community.mdx
+
+---
+title: 'Community Tools'
+description: 'AgentStack tools from community contributors'
+---
+
+## Web Retrieval
+- [AgentQL](/tools/tool/agentql)
+
+## Browsing
+
+[//]: # (- [Browserbase]&#40;/tools/tool/browserbase&#41;)
+- [Firecrawl](/tools/tool/firecrawl)
+
+## Search
+- [Perplexity](/tools/tool/perplexity)
+
+## Memory / State
+
+- [Mem0](/tools/tool/mem0)
+
+## Database Tools
+- [Neon](/tools/tool/neon) 
+
+## Code Execution
+
+- [Open Interpreter](/tools/tool/open-interpreter)
+
+## Unified API
+
+- [Composio](/tools/tool/composio)
+
+## Network Protocols
+- [Agent Connect](/tools/tool/agent-connect)
+
+## Application Specific
+- [Stripe](/tools/tool/stripe)
+- [Payman](/tools/tool/payman)
+<CardGroup cols={1}>
+  <Card
+    title="Core Tools"
+    icon="hammer"
+    href="/tools/core"
+  >
+    Default tools in AgentStack
+  </Card>
+</CardGroup>
 
