@@ -1,3 +1,5 @@
+from typing import Optional
+from pathlib import Path
 import shutil
 import git
 from agentstack import conf, log
@@ -108,6 +110,18 @@ def _require_git():
         raise EnvironmentError(message)
 
 
+def find_parent_repo(path: Path) -> Optional[Path]:
+    """
+    Traverse the directory tree upwards from `path` until a .git directory is found.
+    """
+    current = path.absolute()
+    while current != current.parent:
+        if (current / '.git').exists():
+            return current
+        current = current.parent
+    return None
+
+
 def _get_repo() -> git.Repo:
     """
     Get the git repository for the current project.
@@ -118,6 +132,7 @@ def _get_repo() -> git.Repo:
     """
     _require_git()
     try:
+        # look for a repository in the project's directory
         return git.Repo(conf.PATH.absolute())
     except git.exc.InvalidGitRepositoryError:
         message = "No git repository found in the current project."
@@ -125,15 +140,23 @@ def _get_repo() -> git.Repo:
         raise EnvironmentError(message)
 
 
-def init() -> None:
+def init(force_creation: bool = False) -> None:
     """
     Create a git repository for the current project and commit a .gitignore file
-    to initialize the repo. Assumes that a repo does not already exist.
+    to initialize the repo. 
+    
+    `force_creation` will create a new repo even if one already exists in a parent
+    directory. default: False
     """
     try:
         _require_git()
     except EnvironmentError as e:
         return  # git is not installed or tracking is disabled
+    
+    if find_parent_repo(conf.PATH.absolute()):
+        log.warning("A git repository already exists in a parent directory.")
+        if not force_creation:
+            return
 
     # creates a new repo at conf.PATH / '.git
     repo = git.Repo.init(path=conf.PATH.absolute(), initial_branch=MAIN_BRANCH_NAME)
