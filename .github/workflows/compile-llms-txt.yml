@@ -2,6 +2,8 @@ name: Compile llms.txt
 
 on:
   pull_request:
+    types:
+      - closed
     branches:
       - main
     paths:
@@ -10,6 +12,8 @@ on:
 
 jobs:
   compile:
+    # Only run if the PR was merged (not just closed)
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,10 +25,10 @@ jobs:
         run: |
           cd docs
           python compile_llms_txt.py
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          commit-message: Update llms.txt
-          title: 'Update llms.txt'
-          body: 'Auto-generated update to llms.txt based on docs changes'
-          branch: update-llms-txt
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/llms.txt
+          git commit -m "Update llms.txt" || exit 0
+          git push
