@@ -36,6 +36,41 @@ def require_uv():
         raise EnvironmentError(message)
 
 
+def prompt_slug_name() -> str:
+    """Prompt the user for a project name."""
+    
+    def _validate(slug_name: Optional[str]) -> bool:
+        if not slug_name:
+            log.error("Project name cannot be empty")
+            return False
+            
+        if not is_snake_case(slug_name):
+            log.error("Project name must be snake_case")
+            return False
+
+        if os.path.exists(conf.PATH / slug_name):
+            log.error(f"Project path already exists: {conf.PATH / slug_name}")
+            return False
+
+        return True
+    
+    def _prompt() -> str:
+        return inquirer.text(
+            message="Project name (snake_case)",
+        )
+    
+    log.info(
+        "Provide a project name. This will be used to create a new directory in the "
+        "current path and will be used as the project name. 🐍 Must be snake_case."
+    )
+    slug_name = None
+    while not _validate(slug_name):
+        slug_name = _prompt()
+    
+    assert slug_name  # appease type checker
+    return slug_name
+
+
 def select_template(slug_name: str, framework: Optional[str] = None) -> TemplateConfig:
     """Let the user select a template from the ones available."""
     templates: list[TemplateConfig] = get_all_templates()
@@ -85,22 +120,11 @@ def init_project(
     welcome_message()
 
     if not slug_name:
-        log.info(
-            "Provide a project name. This will be used to create a new directory in the "
-            "current path and will be used as the project name. 🐍 Must be snake_case."
-        )
-        slug_name = inquirer.text(
-            message="Project name (snake_case)",
-        )
-
-    if not slug_name:
-        raise Exception("Project name cannot be empty")
-    if not is_snake_case(slug_name):
-        raise Exception("Project name must be snake_case")
+        slug_name = prompt_slug_name()
 
     conf.set_path(conf.PATH / slug_name)
-    if os.path.exists(conf.PATH):  # cookiecutter requires the directory to not exist
-        raise Exception(f"Directory already exists: {conf.PATH}")
+    # cookiecutter requires the directory to not exist
+    assert not os.path.exists(conf.PATH), f"Directory already exists: {conf.PATH}"
 
     if use_wizard:
         log.debug("Initializing new project with wizard.")
