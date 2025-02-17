@@ -1,0 +1,14 @@
+[project]
+name = "research_assistant"
+version = "0.0.1"
+description = ""
+authors = [
+    { name = "Name <Email>" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+
+dependencies = [
+    "agentstack[crewai]>=0.3.4",
+    "firecrawl-py>=1.6.4",
+]

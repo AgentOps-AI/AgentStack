@@ -1,0 +1,12 @@
+{
+    "framework": "crewai",
+    "tools": [
+        "firecrawl",
+        "agentql"
+    ],
+    "default_model": "openai/gpt-4o",
+    "agentstack_version": "0.3.4",
+    "template": "research_assistant",
+    "template_version": "4",
+    "use_git": true
+}
