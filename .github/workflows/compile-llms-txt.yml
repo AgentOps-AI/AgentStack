@@ -1,11 +1,12 @@
 name: Compile llms.txt
 
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
       - 'docs/**/*.mdx'
+      - 'docs/compile_llms_txt.py'
 
 jobs:
   compile:
@@ -20,10 +21,10 @@ jobs:
         run: |
           cd docs
           python compile_llms_txt.py
-      - name: Commit and push changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add docs/llms.txt
-          git commit -m "Update llms.txt" || exit 0
-          git push
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: Update llms.txt
+          title: 'Update llms.txt'
+          body: 'Auto-generated update to llms.txt based on docs changes'
+          branch: update-llms-txt
