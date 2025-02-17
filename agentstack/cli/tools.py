@@ -1,11 +1,12 @@
 from typing import Optional
 import itertools
+from difflib import get_close_matches
 import inquirer
-from agentstack import conf
+from agentstack import conf, log
 from agentstack.utils import term_color, is_snake_case
 from agentstack import generation
 from agentstack import repo
-from agentstack._tools import get_all_tools
+from agentstack._tools import get_all_tools, get_all_tool_names
 from agentstack.agents import get_all_agents
 from pathlib import Path
 import sys
@@ -62,6 +63,16 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
         - add the tool to the specified agents or all agents if none are specified
     """
     conf.assert_project()
+
+    all_tool_names = get_all_tool_names()
+    if tool_name and not tool_name in all_tool_names:
+        # tool was provided, but not found. make a suggestion.
+        suggestions = get_close_matches(tool_name, all_tool_names, n=1)
+        message = f"Tool '{tool_name}' not found."
+        if suggestions:
+            message += f"\nDid you mean '{suggestions[0]}'?"
+        log.error(message)
+        return
 
     if not tool_name:
         # Get all available tools including custom ones
