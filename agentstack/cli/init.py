@@ -135,12 +135,21 @@ def init_project(
     packaging.create_venv()
     log.info("Installing dependencies...")
     packaging.install_project()
-    repo.init()  # initialize git repo
+    
+    if repo.find_parent_repo(conf.PATH):
+        # if a repo already exists, we don't want to initialize a new one
+        log.info("Found existing git repository; disabling tracking.")
+        with conf.ConfigFile() as config:
+            config.use_git = False
+    else:
+        # create a new git repo in the project dir
+        repo.init()
 
     # now we can interact with the project and add Agents, Tasks, and Tools
     # we allow dependencies to be installed along with these, so the project must
     # be fully initialized first.
     with repo.Transaction() as commit:
+        commit.add_message("Initialized new project")
         for task in template_data.tasks:
             commit.add_message(f"Added task {task.name}")
             generation.add_task(**task.model_dump())

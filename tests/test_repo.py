@@ -28,7 +28,7 @@ class TestRepo(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_init(self):
-        repo.init()
+        repo.init(force_creation=True)
 
         # Check if a git repository was created
         self.assertTrue((self.test_dir / '.git').is_dir())
@@ -40,19 +40,25 @@ class TestRepo(unittest.TestCase):
         self.assertEqual(len(commits), 1)
         self.assertEqual(commits[0].message, f"{repo.INITIAL_COMMIT_MESSAGE}{repo.AUTOMATION_NOTE}")
 
+    def test_init_parent_repo_exists(self):
+        os.makedirs(self.test_dir.parent / '.git')
+        
+        repo.init(force_creation=False)
+        self.assertFalse((self.test_dir / '.git').is_dir())
+
     def test_get_repo_nonexistent(self):
         with self.assertRaises(EnvironmentError):
             repo._get_repo()
 
     def test_get_repo_existent(self):
-        repo.init()
+        repo.init(force_creation=True)
 
         result = repo._get_repo()
         self.assertIsInstance(result, git.Repo)
         self.assertEqual(result.working_tree_dir, str(self.test_dir))
 
     def test_get_uncommitted_files_new_file(self):
-        repo.init()
+        repo.init(force_creation=True)
 
         new_file = self.test_dir / "new_file.txt"
         new_file.touch()
@@ -62,7 +68,7 @@ class TestRepo(unittest.TestCase):
         self.assertIn("new_file.txt", uncommitted)
 
     def test_get_uncommitted_files_modified_file(self):
-        repo.init()
+        repo.init(force_creation=True)
 
         # Create and commit an initial file
         initial_file = self.test_dir / "initial_file.txt"
@@ -154,7 +160,7 @@ class TestRepo(unittest.TestCase):
         repo._require_git()
 
     def test_transaction_context_manager(self):
-        repo.init()
+        repo.init(force_creation=True)
         mock_commit = MagicMock()
 
         with patch('agentstack.repo.commit', mock_commit):
@@ -165,7 +171,7 @@ class TestRepo(unittest.TestCase):
             mock_commit.assert_called_once_with(f"Test message", ["test_file.txt"], automated=True)
 
     def test_transaction_multiple_messages(self):
-        repo.init()
+        repo.init(force_creation=True)
         mock_commit = MagicMock()
 
         with patch('agentstack.repo.commit', mock_commit):
@@ -180,7 +186,7 @@ class TestRepo(unittest.TestCase):
             )
 
     def test_transaction_no_changes(self):
-        repo.init()
+        repo.init(force_creation=True)
         mock_commit = MagicMock()
 
         with patch('agentstack.repo.commit', mock_commit):
@@ -192,7 +198,7 @@ class TestRepo(unittest.TestCase):
             mock_commit.assert_not_called()
 
     def test_transaction_with_exception(self):
-        repo.init()
+        repo.init(force_creation=True)
         mock_commit = MagicMock()
 
         with patch('agentstack.repo.commit', mock_commit):
@@ -212,7 +218,7 @@ class TestRepo(unittest.TestCase):
 
     def test_init_when_git_disabled(self):
         repo.dont_track_changes()
-        result = repo.init()
+        result = repo.init(force_creation=True)
         self.assertIsNone(result)
         repo._USE_GIT = None  # Reset for other tests
 
@@ -235,7 +241,7 @@ class TestRepo(unittest.TestCase):
         repo._USE_GIT = None  # Reset for other tests
 
     def test_commit_user_changes(self):
-        repo.init()
+        repo.init(force_creation=True)
         
         # Create a new file
         test_file = self.test_dir / "user_file.txt"
