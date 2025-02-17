@@ -124,6 +124,10 @@ def init_project(
 
     if framework is None:
         framework = template_data.framework
+    
+    if framework in frameworks.ALIASED_FRAMEWORKS:
+        framework = frameworks.ALIASED_FRAMEWORKS[framework]
+    
     if not framework in frameworks.SUPPORTED_FRAMEWORKS:
         raise Exception(f"Framework '{framework}' is not supported.")
     log.info(f"Using framework: {framework}")
