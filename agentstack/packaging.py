@@ -24,44 +24,49 @@ RE_UV_PROGRESS = re.compile(r'^(Resolved|Prepared|Installed|Uninstalled|Audited)
 def install(package: str):
     """Install a package with `uv` and add it to pyproject.toml."""
 
+    from agentstack.cli.spinner import Spinner
+
     def on_progress(line: str):
         if RE_UV_PROGRESS.match(line):
-            log.info(line.strip())
+            spinner.clear_and_log(line.strip(), 'info')
 
     def on_error(line: str):
         log.error(f"uv: [error]\n {line.strip()}")
-
-    log.info(f"Installing {package}")
-    _wrap_command_with_callbacks(
-        [get_uv_bin(), 'add', '--python', '.venv/bin/python', package],
-        on_progress=on_progress,
-        on_error=on_error,
-    )
+    
+    with Spinner(f"Installing {package}") as spinner:
+        _wrap_command_with_callbacks(
+            [get_uv_bin(), 'add', '--python', '.venv/bin/python', package],
+            on_progress=on_progress,
+            on_error=on_error,
+        )
 
 
 def install_project():
     """Install all dependencies for the user's project."""
 
+    from agentstack.cli.spinner import Spinner
+
     def on_progress(line: str):
         if RE_UV_PROGRESS.match(line):
-            log.info(line.strip())
+            spinner.clear_and_log(line.strip(), 'info')
 
     def on_error(line: str):
         log.error(f"uv: [error]\n {line.strip()}")
 
     try:
-        result = _wrap_command_with_callbacks(
-            [get_uv_bin(), 'pip', 'install', '--python', '.venv/bin/python', '.'],
-            on_progress=on_progress,
-            on_error=on_error,
-        )
-        if result is False:
-            log.info("Retrying uv installation with --no-cache flag...")
-            _wrap_command_with_callbacks(
-                [get_uv_bin(), 'pip', 'install', '--no-cache', '--python', '.venv/bin/python', '.'],
+        with Spinner(f"Installing project dependencies.") as spinner:
+            result = _wrap_command_with_callbacks(
+                [get_uv_bin(), 'pip', 'install', '--python', '.venv/bin/python', '.'],
                 on_progress=on_progress,
                 on_error=on_error,
             )
+            if result is False:
+                spinner.clear_and_log("Retrying uv installation with --no-cache flag...", 'info')
+                _wrap_command_with_callbacks(
+                    [get_uv_bin(), 'pip', 'install', '--no-cache', '--python', '.venv/bin/python', '.'],
+                    on_progress=on_progress,
+                    on_error=on_error,
+                )
     except Exception as e:
         log.error(f"Installation failed: {str(e)}")
         raise
