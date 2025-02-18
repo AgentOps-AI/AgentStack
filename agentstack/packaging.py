@@ -20,10 +20,17 @@ RE_UV_PROGRESS = re.compile(r'^(Resolved|Prepared|Installed|Uninstalled|Audited)
 # In testing, when this was not set, packages could end up in the pyenv's
 # site-packages directory; it's possible an environment variable can control this.
 
+_python_executable = ".venv/bin/python"
+
+def set_python_executable(path: str):
+    global _python_executable
+    
+    _python_executable = path
+
 
 def install(package: str):
     """Install a package with `uv` and add it to pyproject.toml."""
-
+    global _python_executable
     from agentstack.cli.spinner import Spinner
 
     def on_progress(line: str):
@@ -35,7 +42,7 @@ def install(package: str):
     
     with Spinner(f"Installing {package}") as spinner:
         _wrap_command_with_callbacks(
-            [get_uv_bin(), 'add', '--python', '.venv/bin/python', package],
+            [get_uv_bin(), 'add', '--python', _python_executable, package],
             on_progress=on_progress,
             on_error=on_error,
         )
@@ -43,7 +50,7 @@ def install(package: str):
 
 def install_project():
     """Install all dependencies for the user's project."""
-
+    global _python_executable
     from agentstack.cli.spinner import Spinner
 
     def on_progress(line: str):
@@ -56,14 +63,14 @@ def install_project():
     try:
         with Spinner(f"Installing project dependencies.") as spinner:
             result = _wrap_command_with_callbacks(
-                [get_uv_bin(), 'pip', 'install', '--python', '.venv/bin/python', '.'],
+                [get_uv_bin(), 'pip', 'install', '--python', _python_executable, '.'],
                 on_progress=on_progress,
                 on_error=on_error,
             )
             if result is False:
                 spinner.clear_and_log("Retrying uv installation with --no-cache flag...", 'info')
                 _wrap_command_with_callbacks(
-                    [get_uv_bin(), 'pip', 'install', '--no-cache', '--python', '.venv/bin/python', '.'],
+                    [get_uv_bin(), 'pip', 'install', '--no-cache', '--python', _python_executable, '.'],
                     on_progress=on_progress,
                     on_error=on_error,
                 )
@@ -87,13 +94,13 @@ def remove(package: str):
 
     log.info(f"Uninstalling {requirement.name}")
     _wrap_command_with_callbacks(
-        [get_uv_bin(), 'remove', '--python', '.venv/bin/python', requirement.name],
+        [get_uv_bin(), 'remove', '--python', _python_executable, requirement.name],
         on_progress=on_progress,
         on_error=on_error,
     )
 
 
-def upgrade(package: str):
+def upgrade(package: str, use_venv: bool = True):
     """Upgrade a package with `uv`."""
 
     # TODO should we try to update the project's pyproject.toml as well?
@@ -106,9 +113,10 @@ def upgrade(package: str):
 
     log.info(f"Upgrading {package}")
     _wrap_command_with_callbacks(
-        [get_uv_bin(), 'pip', 'install', '-U', '--python', '.venv/bin/python', package],
+        [get_uv_bin(), 'pip', 'install', '-U', '--python', _python_executable, package],
         on_progress=on_progress,
         on_error=on_error,
+        use_venv=use_venv,
     )
 
 
@@ -156,19 +164,21 @@ def _wrap_command_with_callbacks(
     on_progress: Callable[[str], None] = lambda x: None,
     on_complete: Callable[[str], None] = lambda x: None,
     on_error: Callable[[str], None] = lambda x: None,
+    use_venv: bool = True,
 ) -> bool:
     """Run a command with progress callbacks. Returns bool for cmd success."""
     process = None
     try:
         all_lines = ''
-        process = subprocess.Popen(
-            command,
-            cwd=conf.PATH.absolute(),
-            env=_setup_env(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+        sub_args = {
+            'cwd': conf.PATH.absolute(),
+            'stdout': subprocess.PIPE,
+            'stderr': subprocess.PIPE,
+            'text': True,
+        }
+        if use_venv:
+            sub_args['env'] = _setup_env()
+        process = subprocess.Popen(command, **sub_args)
         assert process.stdout and process.stderr  # appease type checker
 
         readable = [process.stdout, process.stderr]

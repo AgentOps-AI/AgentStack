@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 from packaging.version import parse as parse_version, Version
 import inquirer
-from agentstack import log
+from agentstack import conf, log
 from agentstack.utils import term_color, get_version, get_framework, get_base_dir
 from agentstack import packaging
 
@@ -24,7 +24,7 @@ LAST_CHECK_FILE_PATH = get_base_dir() / ".cli-last-update"
 USER_GUID_FILE_PATH = get_base_dir() / ".cli-user-guid"
 INSTALL_PATH = Path(sys.executable).parent.parent
 ENDPOINT_URL = "https://pypi.org/simple"
-CHECK_EVERY = 3600  # hour
+CHECK_EVERY = 12 * 60 * 60  # 12 hours
 
 
 def _is_ci_environment():
@@ -113,8 +113,15 @@ def check_for_updates(update_requested: bool = False):
         if inquirer.confirm(
             f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"
         ):
-            # TODO handle update for system version of agentstack
-            packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
+            try:
+                # handle update inside a user project
+                conf.assert_project()
+                packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
+            except conf.NoProjectError:
+                # handle update for system version of agentstack
+                packaging.set_python_executable(sys.executable)
+                packaging.upgrade(AGENTSTACK_PACKAGE, use_venv=False)
+            
             log.success(f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.")
         else:
             log.info("Skipping update. Run `agentstack update` to install the latest version.")
