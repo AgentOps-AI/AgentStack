@@ -20,7 +20,7 @@ REQUIRED_PYTHON_VERSION=">=3.10,<3.13"
 PYTHON_BIN_PATH=""
 UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
 PRINT_VERBOSE=0
-PRINT_QUIET=0
+PRINT_QUIET=1
 
 MOTD=$(cat <<EOF
 Setup complete!
@@ -54,7 +54,7 @@ EOF
 }
 
 say() {
-    if [ "0" = "$PRINT_QUIET" ]; then
+    if [ "1" = "$PRINT_QUIET" ]; then
         echo "$1"
     fi
 }
@@ -336,7 +336,7 @@ parse_args() {
     for arg in "$@"; do
         case "$arg" in
             --version)
-                APP_VERSION="$2"
+                VERSION="$2"
                 shift 2
                 ;;
             --verbose)
