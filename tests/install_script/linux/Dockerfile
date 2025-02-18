@@ -23,4 +23,4 @@ RUN chmod +x /root/install.sh
 #CMD ["bash", "-c", "./install.sh --dev-branch=main; bash"]
 CMD ["bash", "-c", "./install.sh --dev-branch=\"pull/318/head:pr-318\"; bash"]
 
-# docker build -t debian -f install_test/linux/Dockerfile . && docker run -it debian
+# docker build -t debian -f tests/install_script/linux/Dockerfile . && docker run -it debian

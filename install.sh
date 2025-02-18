@@ -510,6 +510,12 @@ main() {
     say ""
     say "Starting installation..."
     
+    if check_cmd $APP_NAME; then
+        say "AgentStack is already installed."
+        say "Run 'agentstack update' to update to the latest version."
+        exit 0
+    fi
+
     check_dependencies
     install_uv
     setup_python
