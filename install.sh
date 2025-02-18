@@ -290,9 +290,8 @@ install_release() {
             ;;
     esac
 
+    # install & cleanup
     setup_app "$_dir"
-
-    # cleanup
     rm -rf "$_dir"
     say "$APP_NAME $VERSION installed successfully!"
 }
@@ -320,14 +319,17 @@ install_dev_branch() {
     local _tag=${DEV_BRANCH#*:} # just the tag name (pull/123/head:pr-123 -> pr-123)
     ensure git -C $_dir fetch origin $DEV_BRANCH
     ensure git -C $_dir checkout $_tag
-    setup_app "$_dir"
+    
 
-    # cleanup
+    # install & cleanup
+    setup_app "$_dir"
     rm -rf "$_dir"
     say "$APP_NAME @ $DEV_BRANCH installed successfully!"
 }
 
 setup_app() {
+    return 0 # temp
+
     local _dir="$1"
     local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
         err "Failed to find user site packages directory"

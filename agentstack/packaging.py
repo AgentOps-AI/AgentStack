@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 import subprocess
 import select
+import site
 from packaging.requirements import Requirement
 from agentstack import conf, log
 
@@ -111,9 +112,14 @@ def upgrade(package: str, use_venv: bool = True):
     def on_error(line: str):
         log.error(f"uv: [error]\n {line.strip()}")
 
+    extra_args = []
+    if not use_venv:
+        # uv won't let us install without a venv if we don't specify a target
+        extra_args = ['--target', site.getusersitepackages()]
+
     log.info(f"Upgrading {package}")
     _wrap_command_with_callbacks(
-        [get_uv_bin(), 'pip', 'install', '-U', '--python', _python_executable, package],
+        [get_uv_bin(), 'pip', 'install', '-U', '--python', _python_executable, *extra_args, package],
         on_progress=on_progress,
         on_error=on_error,
         use_venv=use_venv,
