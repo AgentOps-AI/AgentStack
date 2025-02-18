@@ -17,7 +17,6 @@ jobs:
             *.zip
             *.tar.gz
           algorithm: sha256
-          dry-run: checksum.txt
         env:
           # You must enable write permission in github.com/user/repo/settings/actions -> Workflow permissions -> Read and write permissions
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
