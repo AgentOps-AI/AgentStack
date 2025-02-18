@@ -67,14 +67,19 @@ say_verbose() {
 }
 
 err() {
-    if [ "0" = "$PRINT_QUIET" ]; then
-        local red
-        local reset
-        red=$(tput setaf 1 2>/dev/null || echo '')
-        reset=$(tput sgr0 2>/dev/null || echo '')
-        say "${red}ERROR${reset}: $1" >&2
+    if [ "1" = "$PRINT_QUIET" ]; then
+        local _red=$(tput setaf 1 2>/dev/null || echo '')
+        local _reset=$(tput sgr0 2>/dev/null || echo '')
+        say "${_red}[ERROR]${_reset}: $1" >&2
+        say "Run install with --verbose for more details."
     fi
     exit 1
+}
+
+# Check if a command exists
+check_cmd() {
+    command -v "$1" > /dev/null 2>&1
+    return $?
 }
 
 # Check if a command exists and print an error message if it doesn't
@@ -85,10 +90,19 @@ need_cmd() {
     fi
 }
 
-# Check if a command exists
-check_cmd() {
-    command -v "$1" > /dev/null 2>&1
-    return $?
+# Check if one of multiple commands exist and print an error message if none do
+need_cmds() {
+    local _found=0
+    for cmd in "$@"; do
+        if check_cmd "$cmd"; then
+            _found=1
+            break
+        fi
+    done
+
+    if [ $_found -eq 0 ]; then
+        err "need one of: $* (command not found)"
+    fi
 }
 
 # Run a command that should never fail. If the command fails execution
@@ -103,13 +117,14 @@ check_dependencies() {
     need_cmd mktemp
     need_cmd chmod
     need_cmd rm
-    need_cmd tar
     need_cmd grep
     need_cmd awk
     need_cmd cat
 
+    need_cmds curl wget
+    need_cmds tar unzip
     # need gcc to install psutil which is a sub-dependency of agentstack
-    need_cmd gcc
+    #need_cmd gcc
 }
 
 # Install uv
@@ -121,7 +136,7 @@ install_uv() {
         say "Installing uv..."
     fi
 
-    # determine which downloader to use
+    # determine which download_file to use
     local _install_cmd
     if check_cmd curl; then
         say_verbose "Running uv installer with curl"
@@ -134,6 +149,7 @@ install_uv() {
     fi
 
     # run the installer
+    say_verbose "$_install_cmd"
     local _output=$(eval "$_install_cmd" 2>&1)
     local _retval=$?
     say_verbose "$_output"
@@ -144,7 +160,7 @@ install_uv() {
     # ensure uv is in PATH
     if ! check_cmd uv; then
         say_verbose "Adding ~/.local/bin to PATH"
-        export PATH="$HOME/.local/bin:$PATH"
+        update_path "$HOME/.local/bin"
     fi
 
     # verify uv installation
@@ -205,9 +221,9 @@ install_app() {
     ensure mkdir -p "$_dir"
 
     # download tar or zip
-    if ! downloader "$_url" "$_file"; then
+    if ! download_file "$_url" "$_file"; then
         say_verbose "failed to download $_url"
-        sy "Failed to download $APP_NAME $VERSION"
+        say "Failed to download $APP_NAME $VERSION"
         say "(this may be a standard network error, but it may also indicate"
         say "that $APP_NAME's release process is not working. When in doubt"
         say "please feel free to open an issue!)"
@@ -215,7 +231,7 @@ install_app() {
     fi
 
     # download checksum
-    if ! downloader "$CHECKSUM_URL" "$_checksum_file"; then
+    if ! download_file "$CHECKSUM_URL" "$_checksum_file"; then
         say_verbose "failed to download checksum file: $CHECKSUM_URL"
         say "Skipping checksum verification"
     fi
@@ -224,11 +240,10 @@ install_app() {
     # github action generates checksums in the following format:
     # 0.3.4.tar.gz	ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb
     # 0.3.4.zip	0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f
-    if [ -e $_checksum_file ]; then
+    if [ -f $_checksum_file ]; then
         # TODO this needs to be tested. 
         say_verbose "verifying checksum"
-        local _all_checksums="$(cat "$_checksum_file")"
-        local _checksum_value="$(echo "$_all_checksums" | grep "$VERSION$_zip_ext" | awk '{print $1}')"
+        local _checksum_value="$(cat "$_checksum_file" | grep "${VERSION}${_zip_ext}" | awk '{print $2}')"
         verify_sha256_checksum "$_file" "$_checksum_value"
     fi
 
@@ -250,12 +265,16 @@ install_app() {
         err "Failed to find user site packages directory"
     }
     say_verbose "Installing to $_packages_dir"
-    local _install_out
-    _install_out="$(uv pip install --python=$PYTHON_BIN_PATH --target=$_packages_dir --directory=$_dir . 2>&1)" || {
-        err "Failed to install $APP_NAME"
-    }
+    local _install_cmd="uv pip install --python="$PYTHON_BIN_PATH" --target="$_packages_dir" --directory="$_dir" ."
+    say_verbose "$_install_cmd"
+    local _install_out="$(eval "$_install_cmd" 2>&1)"
     say_verbose "$_install_out"
+    if [ $? -ne 0 ] || echo "$_install_out" | grep -qi "error\|failed\|exception"; then
+        err "Failed to install $APP_NAME."
+    fi
+    
     make_python_bin "$HOME/.local/bin/$APP_NAME"
+    say_verbose "Added bin to ~/.local/bin/$APP_NAME"
 
     # verify installation
     ensure "$APP_NAME" --version > /dev/null
@@ -263,6 +282,34 @@ install_app() {
     # cleanup
     rm -rf "$_dir"
     say "$APP_NAME $VERSION installed successfully!"
+}
+
+update_path() {
+    local new_path="$1"
+    
+    # early exit if path is already present
+    case ":$PATH:" in
+        *":$new_path:"*) return 0 ;;
+    esac
+    
+    # update for current session
+    export PATH="$new_path:$PATH"
+    
+    local config_files=(
+        "$HOME/.bashrc"          # bash
+        "$HOME/.zshrc"           # ssh
+        "$HOME/.profile"         # POSIX fallback (sh, ksh, etc.)
+    )
+    
+    # update for each shell
+    for config_file in "${config_files[@]}"; do
+        if [ -f "$config_file" ]; then
+            if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$new_path|$new_path:|$new_path\$)" "$config_file" >/dev/null 2>&1; then
+                echo "export PATH=\"$new_path:\$PATH\"" >> "$config_file"
+                say_verbose "Added $new_path to $config_file"
+            fi
+        fi
+    done
 }
 
 # Create a bin file for the app. Assumes entrypoint is main.py:main
@@ -286,7 +333,7 @@ EOF
 }
 
 # Download a file. Try curl first, if not installed, use wget instead.
-downloader() {
+download_file() {
     local _url="$1"
     local _file="$2"
     local _cmd
