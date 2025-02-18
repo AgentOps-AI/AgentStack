@@ -1,14 +1,19 @@
 name: Compile llms.txt
 
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - main
     paths:
       - 'docs/**/*.mdx'
+      - 'docs/compile_llms_txt.py'
 
 jobs:
   compile:
+    # Only run if the PR was merged (not just closed)
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
