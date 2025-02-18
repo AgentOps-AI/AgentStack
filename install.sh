@@ -15,21 +15,18 @@ EOF
 APP_NAME="agentstack"
 VERSION="0.3.5"
 RELEASE_PATH_URL="https://github.com/AgentOps-AI/AgentStack/archive/refs/tags"
-CHECKSUM_URL=""
+CHECKSUM_URL=""  # TODO
 REQUIRED_PYTHON_VERSION=">=3.10,<3.13"
-PYTHON_BIN_PATH=""
 UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
+PYTHON_BIN_PATH=""
 PRINT_VERBOSE=0
 PRINT_QUIET=1
 
 MOTD=$(cat <<EOF
 Setup complete!
-You may need to restart your shell or run:
-    export PATH="\$HOME/.local/bin:\$PATH"
 
-To get started with $APP_NAME, try:
-    $APP_NAME init
-
+To get started with AgentStack, run:
+    agentstack init
 EOF
 )
 
@@ -52,6 +49,10 @@ OPTIONS:
     -h, --help           Show this help message
 EOF
 }
+# TODO allow user to specify install path with --target
+# TODO allow user to specify Python version with --python-version
+# TODO install `apt install build-essential` if not installed
+#   is gcc preinstalled on MacOS?
 
 say() {
     if [ "1" = "$PRINT_QUIET" ]; then
@@ -78,8 +79,9 @@ err() {
 
 # Check if a command exists and print an error message if it doesn't
 need_cmd() {
-    if ! check_cmd "$1"
-    then err "need '$1' (command not found)"
+    if ! check_cmd "$1"; then
+        err "need '$1' (command not found)"
+        # TODO more helpful error message based on platform
     fi
 }
 
@@ -253,28 +255,25 @@ install_app() {
         err "Failed to install $APP_NAME"
     }
     say_verbose "$_install_out"
-    make_python_bin "$PYTHON_BIN_PATH" "$HOME/.local/bin/$APP_NAME"
+    make_python_bin "$HOME/.local/bin/$APP_NAME"
 
     # verify installation
     ensure "$APP_NAME" --version > /dev/null
 
     # cleanup
     rm -rf "$_dir"
-    say "$APP_NAME installed successfully!"
+    say "$APP_NAME $VERSION installed successfully!"
 }
 
-# Manually create a bin file for the app
-# $1: python bin path
-# $2: program bin path
+# Create a bin file for the app. Assumes entrypoint is main.py:main
 make_python_bin() {
-    local _python_bin="$1"
-    local _program_bin="$2"
+    local _program_bin="$1"
     local _bin_content=$(cat <<EOF
-#!/${_python_bin}
+#!/${PYTHON_BIN_PATH}
 # -*- coding: utf-8 -*-
 import re
 import sys
-from agentstack.main import main
+from ${APP_NAME}.main import main
 if __name__ == "__main__":
     sys.argv[0] = re.sub(r"(-script\.pyw|\.exe)?$", "", sys.argv[0])
     sys.exit(main())
@@ -286,15 +285,17 @@ EOF
     chmod +x $_program_bin
 }
 
-# This wraps curl or wget. Try curl first, if not installed, use wget instead.
+# Download a file. Try curl first, if not installed, use wget instead.
 downloader() {
     local _url="$1"
     local _file="$2"
     local _cmd
 
     if check_cmd curl; then
+        # use curl
         _cmd="curl -sSfL "$_url" -o "$_file"" 
     elif check_cmd wget; then
+        # use wget
         _cmd="wget -q "$_url" -O "$_file""
     else
         err "need curl or wget (command not found)"
@@ -322,7 +323,7 @@ verify_sha256_checksum() {
         say "skipping sha256 checksum verification (requires 'sha256sum' command)"
         return 0
     fi
-    _calculated_checksum="$(sha256sum -b "$_file" | awk '{printf $1}')"
+    _calculated_checksum="$(sha256sum -b "$_file" | awk '{print $1}')"
 
     if [ "$_calculated_checksum" != "$_checksum_value" ]; then
         err "checksum mismatch
@@ -331,7 +332,6 @@ verify_sha256_checksum() {
     fi
 }
 
-# Parse command line arguments
 parse_args() {
     for arg in "$@"; do
         case "$arg" in
@@ -370,6 +370,7 @@ main() {
     
     say ""
     say "$MOTD"
+    say ""
 }
 
 main "$@"
