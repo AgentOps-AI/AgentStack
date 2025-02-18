@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+LOGO=$(cat <<EOF
+    ___       ___       ___       ___       ___       ___       ___       ___       ___       ___   
+   /\  \     /\  \     /\  \     /\__\     /\  \     /\  \     /\  \     /\  \     /\  \     /\__\  
+  /::\  \   /::\  \   /::\  \   /:| _|_    \:\  \   /::\  \    \:\  \   /::\  \   /::\  \   /:/ _/_ 
+ /::\:\__\ /:/\:\__\ /::\:\__\ /::|/\__\   /::\__\ /\:\:\__\   /::\__\ /::\:\__\ /:/\:\__\ /::-"\__\\
+ \/\::/  / \:\:\/__/ \:\:\/  / \/|::/  /  /:/\/__/ \:\:\/__/  /:/\/__/ \/\::/  / \:\ \/__/ \;:;-",-"
+   /:/  /   \::/  /   \:\/  /    |:/  /   \/__/     \::/  /   \/__/      /:/  /   \:\__\    |:|  |  
+   \/__/     \/__/     \/__/     \/__/               \/__/               \/__/     \/__/     \|__|  
+EOF
+)
+
 APP_NAME="agentstack"
 VERSION="0.3.5"
 RELEASE_PATH_URL="https://github.com/AgentOps-AI/AgentStack/archive/refs/tags"
@@ -11,9 +22,41 @@ UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
 PRINT_VERBOSE=0
 PRINT_QUIET=0
 
+MOTD=$(cat <<EOF
+Setup complete!
+You may need to restart your shell or run:
+    export PATH="\$HOME/.local/bin:\$PATH"
+
+To get started with $APP_NAME, try:
+    $APP_NAME init
+
+EOF
+)
+
+usage() {
+    cat <<EOF
+agentstack-install.sh
+
+The installer for AgentStack
+
+This script installs uv the Python package manager, installs a compatible Python 
+version ($REQUIRED_PYTHON_VERSION), and installs AgentStack $AGENTSTACK_VERSION.
+
+USAGE:
+    agentstack-install.sh [OPTIONS]
+
+OPTIONS:
+    --version VERSION    Specify version to install (default: latest)
+    --verbose            Enable verbose output
+    --quiet              Suppress output
+    -h, --help           Show this help message
+EOF
+}
 
 say() {
-    echo "$1"
+    if [ "0" = "$PRINT_QUIET" ]; then
+        echo "$1"
+    fi
 }
 
 say_verbose() {
@@ -52,39 +95,18 @@ ensure() {
     if ! "$@"; then err "command failed: $*"; fi
 }
 
-# Print usage information
-usage() {
-    cat <<EOF
-agentstack-install.sh
-
-The installer for AgentStack
-
-This script installs uv the Python package manager, installs a compatible Python 
-version ($REQUIRED_PYTHON_VERSION), and installs AgentStack $AGENTSTACK_VERSION.
-
-USAGE:
-    agentstack-install.sh [OPTIONS]
-
-OPTIONS:
-    --version VERSION    Specify version to install (default: latest)
-    --verbose            Enable verbose output
-    --quiet              Suppress output
-    -h, --help           Show this help message
-EOF
-}
-
 # Check for required commands
 check_dependencies() {
     need_cmd mkdir
     need_cmd mktemp
-    #need_cmd chmod
+    need_cmd chmod
     need_cmd rm
     need_cmd tar
     need_cmd grep
     need_cmd awk
     need_cmd cat
 
-    # need gcc to install psutil which is a sub-dependency
+    # need gcc to install psutil which is a sub-dependency of agentstack
     need_cmd gcc
 }
 
@@ -191,18 +213,16 @@ install_app() {
     fi
 
     # download checksum
-    local _checksum_available=1
     if ! downloader "$CHECKSUM_URL" "$_checksum_file"; then
         say_verbose "failed to download checksum file: $CHECKSUM_URL"
         say "Skipping checksum verification"
-        _checksum_available=0
     fi
 
     # verify checksum
     # github action generates checksums in the following format:
     # 0.3.4.tar.gz	ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb
     # 0.3.4.zip	0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f
-    if [ "1" = "$_checksum_available" ]; then
+    if [ -e $_checksum_file ]; then
         # TODO this needs to be tested. 
         say_verbose "verifying checksum"
         local _all_checksums="$(cat "$_checksum_file")"
@@ -215,7 +235,6 @@ install_app() {
         ".zip")
             ensure unzip -q "$_file" -d "$_dir"
             ;;
-
         ".tar."*)
             ensure tar xf "$_file" --strip-components 1 -C "$_dir"
             ;;
@@ -237,7 +256,7 @@ install_app() {
     make_python_bin "$PYTHON_BIN_PATH" "$HOME/.local/bin/$APP_NAME"
 
     # verify installation
-    ensure "$APP_NAME" --version
+    ensure "$APP_NAME" --version > /dev/null
 
     # cleanup
     rm -rf "$_dir"
@@ -248,8 +267,10 @@ install_app() {
 # $1: python bin path
 # $2: program bin path
 make_python_bin() {
+    local _python_bin="$1"
+    local _program_bin="$2"
     local _bin_content=$(cat <<EOF
-#!/$1
+#!/${_python_bin}
 # -*- coding: utf-8 -*-
 import re
 import sys
@@ -260,40 +281,32 @@ if __name__ == "__main__":
 EOF
     )
 
-    say_verbose "Creating bin file at $2"
-    echo "$_bin_content" > $2
-    chmod +x $2
+    say_verbose "Creating bin file at $_program_bin"
+    echo "$_bin_content" > $_program_bin
+    chmod +x $_program_bin
 }
 
 # This wraps curl or wget. Try curl first, if not installed, use wget instead.
-# $1: url
-# $2: output file
 downloader() {
+    local _url="$1"
+    local _file="$2"
     local _cmd
+
     if check_cmd curl; then
-        _cmd=curl
+        _cmd="curl -sSfL "$_url" -o "$_file"" 
     elif check_cmd wget; then
-        _cmd=wget
+        _cmd="wget -q "$_url" -O "$_file""
     else
         err "need curl or wget (command not found)"
         return 1
     fi
 
     local _out
-    if [ "$_cmd" = curl ]; then
-        _out="$(curl -sSfL "$1" -o "$2" 2>&1)" || {
-            say_verbose "$_out"
-            return 1
-        }
-    elif [ "$_cmd" = wget ]; then
-        _out="$(wget -q "$1" -O "$2" 2>&1)" || {
-            say_verbose "$_out"
-            return 1
-        }
-    else
-        err "Unknown downloader"
+    local _out="$($_cmd 2>&1)" || {
+        say_verbose "$_out"
         return 1
-    fi
+    }
+    return 0
 }
 
 verify_sha256_checksum() {
@@ -346,6 +359,8 @@ parse_args() {
 main() {
     parse_args "$@"
     
+    say "$LOGO"
+    say ""
     say "Starting installation..."
     
     check_dependencies
@@ -353,16 +368,8 @@ main() {
     setup_python
     install_app
     
-    say "Setup complete!"
-    say "You may need to restart your shell or run:"
-    say "    export PATH=\"\$HOME/.local/bin:\$PATH\""
     say ""
-    say "Python $REQUIRED_PYTHON_VERSION, uv, and $APP_NAME are now installed."
-    
-    # Display any additional project-specific instructions here
-    say ""
-    say "To get started with $APP_NAME, try:"
-    say "    $APP_NAME --help"
+    say "$MOTD"
 }
 
 main "$@"
