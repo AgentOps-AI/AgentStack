@@ -10,6 +10,8 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Run checksum action
         uses: thewh1teagle/checksum@v1
         with:
