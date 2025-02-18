@@ -328,8 +328,6 @@ install_dev_branch() {
 }
 
 setup_app() {
-    return 0 # temp
-
     local _dir="$1"
     local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
         err "Failed to find user site packages directory"
