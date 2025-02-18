@@ -11,18 +11,6 @@ UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
 PRINT_VERBOSE=0
 PRINT_QUIET=0
 
-# workflow:
-# do we have curl? if not, default to wget (TODO)
-# install uv
-# do we have a qualified python version? if not, install it with uv
-#   - do not modify the default `python` in the user's path
-# store the path to the python version we installed for use later (ex: /usr/local/bin/python3.10)
-# download the agentstack release
-# install agentstack system-wide
-# add agentstack to the user's path
-# add agentstack to the user's shell config
-# cleanup
-
 
 say() {
     echo "$1"
@@ -79,8 +67,9 @@ USAGE:
 
 OPTIONS:
     --version VERSION    Specify version to install (default: latest)
-    --no-modify-path    Don't modify shell PATH
-    -h, --help         Show this help message
+    --verbose            Enable verbose output
+    --quiet              Suppress output
+    -h, --help           Show this help message
 EOF
 }
 
@@ -177,7 +166,7 @@ install_app() {
     say "Installing $APP_NAME..."
     
     local _zip_ext
-    _zip_ext=".tar.gz"  # TODO detect this
+    _zip_ext=".tar.gz"  # TODO do we need to fallback to .zip?
 
     local _url="$RELEASE_PATH_URL/$VERSION$_zip_ext"
     local _dir
@@ -236,33 +225,29 @@ install_app() {
     esac
 
     # run setup
-    # TODO we should install to $HOME/.local/bin
-    # TODO if I install this system-wide with a specific python version, will
-    # setup py correctly configure it to use that python version after install?
     local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
         err "Failed to find user site packages directory"
     }
     say_verbose "Installing to $_packages_dir"
-    # TODO silence output
     local _install_out
     _install_out="$(uv pip install --python=$PYTHON_BIN_PATH --target=$_packages_dir --directory=$_dir . 2>&1)" || {
         err "Failed to install $APP_NAME"
     }
     say_verbose "$_install_out"
-    make_bin "$PYTHON_BIN_PATH" "$HOME/.local/bin/$APP_NAME"
+    make_python_bin "$PYTHON_BIN_PATH" "$HOME/.local/bin/$APP_NAME"
 
     # verify installation
     ensure "$APP_NAME" --version
 
     # cleanup
     rm -rf "$_dir"
-
     say "$APP_NAME installed successfully!"
-    # TODO retval
 }
 
-
-make_bin() {
+# Manually create a bin file for the app
+# $1: python bin path
+# $2: program bin path
+make_python_bin() {
     local _bin_content=$(cat <<EOF
 #!/$1
 # -*- coding: utf-8 -*-
@@ -281,6 +266,8 @@ EOF
 }
 
 # This wraps curl or wget. Try curl first, if not installed, use wget instead.
+# $1: url
+# $2: output file
 downloader() {
     local _cmd
     if check_cmd curl; then
