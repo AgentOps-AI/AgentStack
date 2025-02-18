@@ -113,6 +113,7 @@ def check_for_updates(update_requested: bool = False):
         if inquirer.confirm(
             f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"
         ):
+            # TODO handle update for system version of agentstack
             packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
             log.success(f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.")
         else:

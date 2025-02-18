@@ -14,11 +14,13 @@ EOF
 
 APP_NAME="agentstack"
 VERSION="0.3.5"
-RELEASE_PATH_URL="https://github.com/AgentOps-AI/AgentStack/archive/refs/tags"
+REPO_URL="https://github.com/AgentOps-AI/AgentStack"
+RELEASE_PATH_URL="$REPO_URL/archive/refs/tags"
 CHECKSUM_URL=""  # TODO
 REQUIRED_PYTHON_VERSION=">=3.10,<3.13"
 UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
 PYTHON_BIN_PATH=""
+DEV_BRANCH=""
 PRINT_VERBOSE=0
 PRINT_QUIET=1
 
@@ -43,26 +45,26 @@ USAGE:
     agentstack-install.sh [OPTIONS]
 
 OPTIONS:
-    --version VERSION    Specify version to install (default: latest)
-    --verbose            Enable verbose output
-    --quiet              Suppress output
-    -h, --help           Show this help message
+    --version=<version>   Specify version to install (default: $VERSION)
+    --dev-branch=<branch> Install from a specific git branch/commit/tag
+    --verbose             Enable verbose output
+    --quiet               Suppress output
+    -h, --help            Show this help message
 EOF
 }
 # TODO allow user to specify install path with --target
 # TODO allow user to specify Python version with --python-version
-# TODO install `apt install build-essential` if not installed
-#   is gcc preinstalled on MacOS?
+# TODO allow installing a specific branch/commit/tag with --dev-branch
 
 say() {
     if [ "1" = "$PRINT_QUIET" ]; then
-        echo "$1"
+        echo -e "$1"
     fi
 }
 
 say_verbose() {
     if [ "1" = "$PRINT_VERBOSE" ]; then
-        echo "[DEBUG] $1"
+        echo -e "[DEBUG] $1"
     fi
 }
 
@@ -70,10 +72,27 @@ err() {
     if [ "1" = "$PRINT_QUIET" ]; then
         local _red=$(tput setaf 1 2>/dev/null || echo '')
         local _reset=$(tput sgr0 2>/dev/null || echo '')
-        say "${_red}[ERROR]${_reset}: $1" >&2
-        say "Run install with --verbose for more details."
+        say "\n${_red}[ERROR]${_reset}: $1" >&2
+        say "\nRun with --verbose for more details."
     fi
     exit 1
+}
+
+err_missing_cmd() {
+    local _cmd_name=$1
+    local _help_text=""
+    local _platform=$(platform)
+
+    if [ $_platform == "linux" ]; then
+        if [ $_cmd_name == "gcc" ]; then
+            _help_text="Hint: sudo apt-get install build-essential"
+        else
+            _help_text="Hint: sudo apt-get install $_cmd_name"
+        fi
+    elif [ $_platform == "macos" ]; then
+        _help_text="Hint: brew install $_cmd_name"
+    fi
+    err "A required dependency is missing. Please install: $*\n$_help_text"
 }
 
 # Check if a command exists
@@ -85,13 +104,12 @@ check_cmd() {
 # Check if a command exists and print an error message if it doesn't
 need_cmd() {
     if ! check_cmd "$1"; then
-        err "need '$1' (command not found)"
-        # TODO more helpful error message based on platform
+        err_missing_cmd $1
     fi
 }
 
 # Check if one of multiple commands exist and print an error message if none do
-need_cmds() {
+need_cmd_option() {
     local _found=0
     for cmd in "$@"; do
         if check_cmd "$cmd"; then
@@ -101,18 +119,26 @@ need_cmds() {
     done
 
     if [ $_found -eq 0 ]; then
-        err "need one of: $* (command not found)"
+       err_missing_cmd $1
     fi
 }
 
-# Run a command that should never fail. If the command fails execution
-# will immediately terminate with an error showing the failing command.
 ensure() {
     if ! "$@"; then err "command failed: $*"; fi
 }
 
+platform() {
+    case "$(uname -s)" in
+        Linux*)     echo "linux" ;;
+        Darwin*)    echo "macos" ;;
+        CYGWIN*)    echo "cygwin" ;;
+        *)          echo "unknown" ;;
+    esac
+}
+
 # Check for required commands
 check_dependencies() {
+    say "Checking dependencies..."
     need_cmd mkdir
     need_cmd mktemp
     need_cmd chmod
@@ -121,10 +147,10 @@ check_dependencies() {
     need_cmd awk
     need_cmd cat
 
-    need_cmds curl wget
-    need_cmds tar unzip
-    # need gcc to install psutil which is a sub-dependency of agentstack
-    #need_cmd gcc
+    need_cmd_option curl wget
+    need_cmd_option tar unzip
+    need_cmd gcc  # need gcc to install psutil
+    say "Dependencies are met."
 }
 
 # Install uv
@@ -136,7 +162,7 @@ install_uv() {
         say "Installing uv..."
     fi
 
-    # determine which download_file to use
+    # download with curl or wget
     local _install_cmd
     if check_cmd curl; then
         say_verbose "Running uv installer with curl"
@@ -145,7 +171,7 @@ install_uv() {
         say_verbose "Running uv installer with wget"
         _install_cmd="wget -qO- $UV_INSTALLER_URL | sh"
     else
-        err "Neither curl nor wget is available. Please install one of them."
+        err "neither curl nor wget is available"
     fi
 
     # run the installer
@@ -169,7 +195,7 @@ install_uv() {
         _uv_version=0
     }
     if [ -z "$_uv_version" ]; then
-        err "uv installation failed. Please ensure ~/.local/bin is in your PATH"
+        err "uv installation failed."
     else
         say "$_uv_version installed successfully!"
     fi
@@ -181,7 +207,8 @@ setup_python() {
         PYTHON_BIN_PATH=""
     }
     if [ -x "$PYTHON_BIN_PATH" ]; then
-        say "Python $REQUIRED_PYTHON_VERSION is already installed."
+        local _python_version="$($PYTHON_BIN_PATH --version 2>&1)"
+        say "Python $_python_version is available."
         return 0
     else
         say "Installing Python $REQUIRED_PYTHON_VERSION..."
@@ -197,28 +224,31 @@ setup_python() {
         local _python_version="$($PYTHON_BIN_PATH --version 2>&1)"
         say "Python $_python_version installed successfully!"
     else
-        err "Failed to install Python $REQUIRED_PYTHON_VERSION"
+        err "Failed to install Python"
     fi
 }
 
-# Install the application
-install_app() {
+# Install an official release of the app
+install_release() {
     say "Installing $APP_NAME..."
     
     local _zip_ext
-    _zip_ext=".tar.gz"  # TODO do we need to fallback to .zip?
+    if check_cmd tar; then
+        _zip_ext=".tar.gz"
+    elif check_cmd unzip; then
+        _zip_ext=".zip"
+    else
+        err "could not find tar or unzip"
+    fi
 
-    local _url="$RELEASE_PATH_URL/$VERSION$_zip_ext"
-    local _dir
-    _dir="$(ensure mktemp -d)" || return 1
+    local _url="${RELEASE_PATH_URL}/${VERSION}${_zip_ext}"
+    local _dir="$(ensure mktemp -d)" || return 1
     local _file="$_dir/input$_zip_ext"
     local _checksum_file="$_dir/checksum"
 
     say_verbose "downloading $APP_NAME $VERSION" 1>&2
     say_verbose "  from $_url" 1>&2
     say_verbose "  to $_file" 1>&2
-
-    ensure mkdir -p "$_dir"
 
     # download tar or zip
     if ! download_file "$_url" "$_file"; then
@@ -256,11 +286,49 @@ install_app() {
             ensure tar xf "$_file" --strip-components 1 -C "$_dir"
             ;;
         *)
-            err "unknown archive format: $_zip_ext"
+            err "unknown archive format"
             ;;
     esac
 
-    # run setup
+    setup_app "$_dir"
+
+    # cleanup
+    rm -rf "$_dir"
+    say "$APP_NAME $VERSION installed successfully!"
+}
+
+install_dev_branch() {
+    need_cmd git
+    if [ -z "$DEV_BRANCH" ]; then
+        err "DEV_BRANCH is not set"
+    fi
+
+    say "Installing $APP_NAME..."
+    local _dir="$(ensure mktemp -d)" || return 1
+
+    # clone from git
+    local _git_url="$REPO_URL.git"
+    local _git_cmd="git clone --depth 1 $_git_url $_dir"
+    say_verbose "$_git_cmd"
+    local _git_out="$($_git_cmd 2>&1)"
+    say_verbose "$_git_out"
+    if [ $? -ne 0 ] || echo "$_git_out" | grep -qi "error\|fatal"; then
+        err "Failed to clone git repo."
+    fi
+
+    # checkout
+    local _tag=${DEV_BRANCH#*:} # just the tag name (pull/123/head:pr-123 -> pr-123)
+    ensure git -C $_dir fetch origin $DEV_BRANCH
+    ensure git -C $_dir checkout $_tag
+    setup_app "$_dir"
+
+    # cleanup
+    rm -rf "$_dir"
+    say "$APP_NAME @ $DEV_BRANCH installed successfully!"
+}
+
+setup_app() {
+    local _dir="$1"
     local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
         err "Failed to find user site packages directory"
     }
@@ -278,10 +346,6 @@ install_app() {
 
     # verify installation
     ensure "$APP_NAME" --version > /dev/null
-
-    # cleanup
-    rm -rf "$_dir"
-    say "$APP_NAME $VERSION installed successfully!"
 }
 
 update_path() {
@@ -380,24 +444,60 @@ verify_sha256_checksum() {
 }
 
 parse_args() {
-    for arg in "$@"; do
-        case "$arg" in
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --version=*)
+                VERSION="${1#*=}"
+                shift
+                ;;
             --version)
+                if [[ -z "$2" || "$2" == -* ]]; then
+                    err "Error: --version requires a value"
+                    usage
+                    exit 1
+                fi
                 VERSION="$2"
+                shift 2
+                ;;
+            --dev-branch=*)
+                DEV_BRANCH="${1#*=}"
+                shift
+                ;;
+            --dev-branch)
+                if [[ -z "$2" || "$2" == -* ]]; then
+                    err "Error: --dev-branch requires a value"
+                    usage
+                    exit 1
+                fi
+                DEV_BRANCH="$2"
                 shift 2
                 ;;
             --verbose)
                 PRINT_VERBOSE=1
+                shift
                 ;;
             --quiet)
                 PRINT_QUIET=0
+                shift
                 ;;
             -h|--help)
                 usage
                 exit 0
                 ;;
+            -*)
+                err "Unknown option: $1"
+                usage
+                exit 1
+                ;;
             *)
-                err "Unknown argument: $1"
+                if [[ -z "$COMMAND" ]]; then
+                    COMMAND="$1"
+                else
+                    err "Unexpected argument: $1"
+                    usage
+                    exit 1
+                fi
+                shift
                 ;;
         esac
     done
@@ -413,7 +513,11 @@ main() {
     check_dependencies
     install_uv
     setup_python
-    install_app
+    if [ -n "$DEV_BRANCH" ]; then
+        install_dev_branch
+    else
+        install_release
+    fi
     
     say ""
     say "$MOTD"
