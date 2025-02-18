@@ -184,7 +184,7 @@ def _wrap_command_with_callbacks(
         }
         if use_venv:
             sub_args['env'] = _setup_env()
-        process = subprocess.Popen(command, **sub_args)
+        process = subprocess.Popen(command, **sub_args)  # type: ignore
         assert process.stdout and process.stderr  # appease type checker
 
         readable = [process.stdout, process.stderr]
