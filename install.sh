@@ -1,12 +1,13 @@
 #!/bin/bash
+export LANG=en_US.UTF-8
 set -e
 
-LOGO=$(cat <<EOF
+LOGO=$(cat <<'EOF'
     ___       ___       ___       ___       ___       ___       ___       ___       ___       ___   
    /\  \     /\  \     /\  \     /\__\     /\  \     /\  \     /\  \     /\  \     /\  \     /\__\  
   /::\  \   /::\  \   /::\  \   /:| _|_    \:\  \   /::\  \    \:\  \   /::\  \   /::\  \   /:/ _/_ 
- /::\:\__\ /:/\:\__\ /::\:\__\ /::|/\__\   /::\__\ /\:\:\__\   /::\__\ /::\:\__\ /:/\:\__\ /::-"\__\\
- \/\::/  / \:\:\/__/ \:\:\/  / \/|::/  /  /:/\/__/ \:\:\/__/  /:/\/__/ \/\::/  / \:\ \/__/ \;:;-",-"
+ /::\:\__\ /:/\:\__\ /::\:\__\ /::|/\__\   /::\__\ /\:\:\__\   /::\__\ /::\:\__\ /:/\:\__\ /::- \__\\
+ \/\::/  / \:\:\/__/ \:\:\/  / \/|::/  /  /:/\/__/ \:\:\/__/  /:/\/__/ \/\::/  / \:\ \/__/ \;:;- ,- 
    /:/  /   \::/  /   \:\/  /    |:/  /   \/__/     \::/  /   \/__/      /:/  /   \:\__\    |:|  |  
    \/__/     \/__/     \/__/     \/__/               \/__/               \/__/     \/__/     \|__|  
 EOF
@@ -28,6 +29,7 @@ MSG_SUCCESS=$(cat <<EOF
 ✅ Setup complete!
 
 To get started with AgentStack, run:
+    exec \$SHELL
     agentstack init
 
 For more information, run:
@@ -64,6 +66,7 @@ EOF
 }
 # TODO allow user to specify install path with --target
 # TODO allow user to specify Python version with --python-version
+# TODO uninstall
 
 say() {
     if [ "1" = "$PRINT_QUIET" ]; then
@@ -77,14 +80,34 @@ say_verbose() {
     fi
 }
 
-show_activity() {
+ACTIVITY_PID=""
+_show_activity() {
     while true; do
         echo -n "."
         sleep 1
     done
 }
 
+show_activity() {
+    if [ "1" = "$PRINT_QUIET" ] || [ "1" = "$PRINT_VERBOSE" ]; then
+        return 0
+    fi
+    _show_activity &
+    ACTIVITY_PID=$!
+    # trap end_activity EXIT
+    # trap 'kill $ACTIVITY_PID' INT
+    # wait $ACTIVITY_PID
+}
+
+end_activity() {
+    if [ -n "$ACTIVITY_PID" ]; then
+        say ""  # newline after the dots
+        kill $ACTIVITY_PID
+    fi
+}
+
 err() {
+    end_activity
     if [ "1" = "$PRINT_QUIET" ]; then
         local _red=$(tput setaf 1 2>/dev/null || echo '')
         local _reset=$(tput sgr0 2>/dev/null || echo '')
@@ -179,8 +202,7 @@ install_uv() {
     else
         say "Installing uv..."
     fi
-    show_activity &
-    local _activity_pid=$!
+    show_activity
 
     # download with curl or wget
     local _install_cmd
@@ -203,21 +225,13 @@ install_uv() {
         err "uv installation failed: $_output"
     fi
 
-    # ensure uv is in PATH
-    if ! check_cmd uv; then
-        say_verbose "Adding ~/.local/bin to PATH"
-        update_path "$HOME/.local/bin"
-    fi
-
     # verify uv installation
     local _uv_version
     _uv_version="$(uv --version 2>/dev/null)" || {
         _uv_version=0
     }
 
-    kill $_activity_pid
-    say ""
-
+    end_activity
     if [ -z "$_uv_version" ]; then
         err "uv installation failed."
     else
@@ -235,8 +249,7 @@ setup_python() {
         say "Python $_python_version is available."
         return 0
     else
-        show_activity &
-        local _activity_pid=$!
+        show_activity
     
         say "Installing Python $PYTHON_VERSION..."
         uv python install "$PYTHON_VERSION" --preview 2>/dev/null || {
@@ -246,8 +259,7 @@ setup_python() {
             err "Failed to find Python"
         }
 
-        kill $_activity_pid
-        say ""
+        end_activity
     fi
 
     if [ -x "$PYTHON_BIN_PATH" ]; then
@@ -261,8 +273,7 @@ setup_python() {
 # Install an official release of the app
 install_release() {
     say "Installing $APP_NAME..."
-    show_activity &
-    local _activity_pid=$!
+    show_activity
 
     local _zip_ext
     if check_cmd tar; then
@@ -321,9 +332,7 @@ install_release() {
     # install & cleanup
     setup_app "$_dir"
     rm -rf "$_dir"
-
-    kill $_activity_pid
-    say ""
+    end_activity
     say "💥 $APP_NAME $VERSION installed successfully!"
 }
 
@@ -335,8 +344,7 @@ install_dev_branch() {
     fi
 
     say "Installing $APP_NAME..."
-    show_activity &
-    local _activity_pid=$!
+    show_activity
     local _dir="$(ensure mktemp -d)" || return 1
 
     # clone from git
@@ -357,9 +365,7 @@ install_dev_branch() {
     # install & cleanup
     setup_app "$_dir"
     rm -rf "$_dir"
-
-    kill $_activity_pid
-    say ""
+    end_activity
     say "🔧 $APP_NAME @ $DEV_BRANCH installed successfully!"
 }
 
@@ -379,6 +385,7 @@ setup_app() {
     fi
     
     make_python_bin "$HOME/.local/bin/$APP_NAME"
+    update_path "$HOME/.local/bin"
     say_verbose "Added bin to ~/.local/bin/$APP_NAME"
 
     # verify installation
@@ -389,26 +396,22 @@ setup_app() {
 update_path() {
     local new_path="$1"
     
-    # early exit if path is already present
-    case ":$PATH:" in
-        *":$new_path:"*) return 0 ;;
-    esac
-    
     # update for current session
     export PATH="$new_path:$PATH"
     
+    # update for each shell
     local config_files=(
         "$HOME/.bashrc"          # bash
         "$HOME/.zshrc"           # ssh
         "$HOME/.profile"         # POSIX fallback (sh, ksh, etc.)
     )
-    
-    # update for each shell
     for config_file in "${config_files[@]}"; do
         if [ -f "$config_file" ]; then
             if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$new_path|$new_path:|$new_path\$)" "$config_file" >/dev/null 2>&1; then
                 echo "export PATH=\"$new_path:\$PATH\"" >> "$config_file"
-                say_verbose "Added $new_path to $config_file"
+                say_verbose "Added PATH $new_path to $config_file"
+            else
+                say_verbose "PATH $new_path already in $config_file"
             fi
         fi
     done
@@ -558,13 +561,13 @@ main() {
     parse_args "$@"
     
     say "$LOGO\n"
-    say "Starting installation..."
     
     if check_cmd $APP_NAME; then
         say "\n$MSG_ALREADY_INSTALLED\n"
         exit 0
     fi
 
+    say "Starting installation..."
     check_dependencies
     install_uv
     setup_python
