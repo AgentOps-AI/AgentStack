@@ -17,7 +17,7 @@ VERSION="0.3.5"
 REPO_URL="https://github.com/AgentOps-AI/AgentStack"
 RELEASE_PATH_URL="$REPO_URL/archive/refs/tags"
 CHECKSUM_URL=""  # TODO
-REQUIRED_PYTHON_VERSION=">=3.10,<3.13"
+PYTHON_VERSION=">=3.10,<3.13"
 UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
 PYTHON_BIN_PATH=""  # set after a verified install is found
 DEV_BRANCH=""  # set by --dev-branch flag
@@ -48,17 +48,18 @@ agentstack-install.sh
 The installer for AgentStack
 
 This script installs uv the Python package manager, installs a compatible Python 
-version ($REQUIRED_PYTHON_VERSION), and installs AgentStack.
+version ($PYTHON_VERSION), and installs AgentStack.
 
 USAGE:
     agentstack-install.sh [OPTIONS]
 
 OPTIONS:
-    --version=<version>   Specify version to install (default: $VERSION)
-    --dev-branch=<branch> Install from a specific git branch/commit/tag
-    --verbose             Enable verbose output
-    --quiet               Suppress output
-    -h, --help            Show this help message
+    --version=<version>        Specify version to install (default: $VERSION)
+    --python-version=<version> Specify Python version to install (default: $PYTHON_VERSION)
+    --dev-branch=<branch>      Install from a specific git branch/commit/tag
+    --verbose                  Enable verbose output
+    --quiet                    Suppress output
+    -h, --help                 Show this help message
 EOF
 }
 # TODO allow user to specify install path with --target
@@ -220,13 +221,13 @@ install_uv() {
     if [ -z "$_uv_version" ]; then
         err "uv installation failed."
     else
-        say "$_uv_version installed successfully!"
+        say "📦 $_uv_version installed successfully!"
     fi
 }
 
 # Install the required Python version
 setup_python() {
-    PYTHON_BIN_PATH="$(uv python find "$REQUIRED_PYTHON_VERSION" 2>/dev/null)" || {
+    PYTHON_BIN_PATH="$(uv python find "$PYTHON_VERSION" 2>/dev/null)" || {
         PYTHON_BIN_PATH=""
     }
     if [ -x "$PYTHON_BIN_PATH" ]; then
@@ -237,11 +238,11 @@ setup_python() {
         show_activity &
         local _activity_pid=$!
     
-        say "Installing Python $REQUIRED_PYTHON_VERSION..."
-        uv python install "$REQUIRED_PYTHON_VERSION" --preview 2>/dev/null || {
+        say "Installing Python $PYTHON_VERSION..."
+        uv python install "$PYTHON_VERSION" --preview 2>/dev/null || {
             err "Failed to install Python"
         }
-        PYTHON_BIN_PATH="$(uv python find "$REQUIRED_PYTHON_VERSION")" || {
+        PYTHON_BIN_PATH="$(uv python find "$PYTHON_VERSION")" || {
             err "Failed to find Python"
         }
 
@@ -251,7 +252,7 @@ setup_python() {
 
     if [ -x "$PYTHON_BIN_PATH" ]; then
         local _python_version="$($PYTHON_BIN_PATH --version 2>&1)"
-        say "Python $_python_version installed successfully!"
+        say "🐍 Python $_python_version installed successfully!"
     else
         err "Failed to install Python"
     fi
@@ -323,7 +324,7 @@ install_release() {
 
     kill $_activity_pid
     say ""
-    say "$APP_NAME $VERSION installed successfully!"
+    say "💥 $APP_NAME $VERSION installed successfully!"
 }
 
 # Install a specific branch/commit/tag from the git repo
@@ -359,7 +360,7 @@ install_dev_branch() {
 
     kill $_activity_pid
     say ""
-    say "$APP_NAME @ $DEV_BRANCH installed successfully!"
+    say "🔧 $APP_NAME @ $DEV_BRANCH installed successfully!"
 }
 
 # Install the app in the user's site-packages directory and add a executable
@@ -494,6 +495,19 @@ parse_args() {
                     exit 1
                 fi
                 VERSION="$2"
+                shift 2
+                ;;
+            --python-version=*)
+                PYTHON_VERSION="${1#*=}"
+                shift
+                ;;
+            --python-version)
+                if [[ -z "$2" || "$2" == -* ]]; then
+                    err "Error: --python-version requires a value"
+                    usage
+                    exit 1
+                fi
+                PYTHON_VERSION="$2"
                 shift 2
                 ;;
             --dev-branch=*)
