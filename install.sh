@@ -19,16 +19,25 @@ RELEASE_PATH_URL="$REPO_URL/archive/refs/tags"
 CHECKSUM_URL=""  # TODO
 REQUIRED_PYTHON_VERSION=">=3.10,<3.13"
 UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
-PYTHON_BIN_PATH=""
-DEV_BRANCH=""
+PYTHON_BIN_PATH=""  # set after a verified install is found
+DEV_BRANCH=""  # set by --dev-branch flag
 PRINT_VERBOSE=0
 PRINT_QUIET=1
 
-MOTD=$(cat <<EOF
-Setup complete!
+MSG_SUCCESS=$(cat <<EOF
+✅ Setup complete!
 
 To get started with AgentStack, run:
     agentstack init
+
+For more information, run:
+    agentstack docs -or- agentstack quickstart
+EOF
+)
+
+MSG_ALREADY_INSTALLED=$(cat <<EOF
+✅ AgentStack is already installed.
+Run 'agentstack update' to update to the latest version.
 EOF
 )
 
@@ -39,7 +48,7 @@ agentstack-install.sh
 The installer for AgentStack
 
 This script installs uv the Python package manager, installs a compatible Python 
-version ($REQUIRED_PYTHON_VERSION), and installs AgentStack $AGENTSTACK_VERSION.
+version ($REQUIRED_PYTHON_VERSION), and installs AgentStack.
 
 USAGE:
     agentstack-install.sh [OPTIONS]
@@ -54,7 +63,6 @@ EOF
 }
 # TODO allow user to specify install path with --target
 # TODO allow user to specify Python version with --python-version
-# TODO allow installing a specific branch/commit/tag with --dev-branch
 
 say() {
     if [ "1" = "$PRINT_QUIET" ]; then
@@ -68,12 +76,21 @@ say_verbose() {
     fi
 }
 
+show_activity() {
+    while true; do
+        echo -n "."
+        sleep 1
+    done
+}
+
 err() {
     if [ "1" = "$PRINT_QUIET" ]; then
         local _red=$(tput setaf 1 2>/dev/null || echo '')
         local _reset=$(tput sgr0 2>/dev/null || echo '')
         say "\n${_red}[ERROR]${_reset}: $1" >&2
         say "\nRun with --verbose for more details."
+        say "\nIf you need help, please feel free to open an issue:"
+        say "\n  $REPO_URL/issues\n"
     fi
     exit 1
 }
@@ -161,6 +178,8 @@ install_uv() {
     else
         say "Installing uv..."
     fi
+    show_activity &
+    local _activity_pid=$!
 
     # download with curl or wget
     local _install_cmd
@@ -194,6 +213,10 @@ install_uv() {
     _uv_version="$(uv --version 2>/dev/null)" || {
         _uv_version=0
     }
+
+    kill $_activity_pid
+    say ""
+
     if [ -z "$_uv_version" ]; then
         err "uv installation failed."
     else
@@ -211,6 +234,9 @@ setup_python() {
         say "Python $_python_version is available."
         return 0
     else
+        show_activity &
+        local _activity_pid=$!
+    
         say "Installing Python $REQUIRED_PYTHON_VERSION..."
         uv python install "$REQUIRED_PYTHON_VERSION" --preview 2>/dev/null || {
             err "Failed to install Python"
@@ -218,8 +244,11 @@ setup_python() {
         PYTHON_BIN_PATH="$(uv python find "$REQUIRED_PYTHON_VERSION")" || {
             err "Failed to find Python"
         }
+
+        kill $_activity_pid
+        say ""
     fi
-    
+
     if [ -x "$PYTHON_BIN_PATH" ]; then
         local _python_version="$($PYTHON_BIN_PATH --version 2>&1)"
         say "Python $_python_version installed successfully!"
@@ -231,7 +260,9 @@ setup_python() {
 # Install an official release of the app
 install_release() {
     say "Installing $APP_NAME..."
-    
+    show_activity &
+    local _activity_pid=$!
+
     local _zip_ext
     if check_cmd tar; then
         _zip_ext=".tar.gz"
@@ -253,11 +284,7 @@ install_release() {
     # download tar or zip
     if ! download_file "$_url" "$_file"; then
         say_verbose "failed to download $_url"
-        say "Failed to download $APP_NAME $VERSION"
-        say "(this may be a standard network error, but it may also indicate"
-        say "that $APP_NAME's release process is not working. When in doubt"
-        say "please feel free to open an issue!)"
-        exit 1
+        err "Failed to download $APP_NAME $VERSION"
     fi
 
     # download checksum
@@ -293,9 +320,13 @@ install_release() {
     # install & cleanup
     setup_app "$_dir"
     rm -rf "$_dir"
+
+    kill $_activity_pid
+    say ""
     say "$APP_NAME $VERSION installed successfully!"
 }
 
+# Install a specific branch/commit/tag from the git repo
 install_dev_branch() {
     need_cmd git
     if [ -z "$DEV_BRANCH" ]; then
@@ -303,6 +334,8 @@ install_dev_branch() {
     fi
 
     say "Installing $APP_NAME..."
+    show_activity &
+    local _activity_pid=$!
     local _dir="$(ensure mktemp -d)" || return 1
 
     # clone from git
@@ -319,14 +352,17 @@ install_dev_branch() {
     local _tag=${DEV_BRANCH#*:} # just the tag name (pull/123/head:pr-123 -> pr-123)
     ensure git -C $_dir fetch origin $DEV_BRANCH
     ensure git -C $_dir checkout $_tag
-    
 
     # install & cleanup
     setup_app "$_dir"
     rm -rf "$_dir"
+
+    kill $_activity_pid
+    say ""
     say "$APP_NAME @ $DEV_BRANCH installed successfully!"
 }
 
+# Install the app in the user's site-packages directory and add a executable
 setup_app() {
     local _dir="$1"
     local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
@@ -348,6 +384,7 @@ setup_app() {
     ensure "$APP_NAME" --version > /dev/null
 }
 
+# Update PATH in shell config files
 update_path() {
     local new_path="$1"
     
@@ -506,13 +543,11 @@ parse_args() {
 main() {
     parse_args "$@"
     
-    say "$LOGO"
-    say ""
+    say "$LOGO\n"
     say "Starting installation..."
     
     if check_cmd $APP_NAME; then
-        say "AgentStack is already installed."
-        say "Run 'agentstack update' to update to the latest version."
+        say "\n$MSG_ALREADY_INSTALLED\n"
         exit 0
     fi
 
@@ -525,9 +560,8 @@ main() {
         install_release
     fi
     
-    say ""
-    say "$MOTD"
-    say ""
+    say "\n$MSG_SUCCESS\n"
+    exit 0
 }
 
 main "$@"
