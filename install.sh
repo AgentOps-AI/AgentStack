@@ -22,6 +22,7 @@ PYTHON_VERSION=">=3.10,<3.13"
 UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
 PYTHON_BIN_PATH=""  # set after a verified install is found
 DEV_BRANCH=""  # set by --dev-branch flag
+DO_UNINSTALL=0  # set by uninstall flag
 PRINT_VERBOSE=0
 PRINT_QUIET=1
 
@@ -43,6 +44,13 @@ Run 'agentstack update' to update to the latest version.
 EOF
 )
 
+MSG_UNINSTALL=$(cat <<EOF
+✅ AgentStack has been uninstalled.
+If you encountered any issues, or have feedback, please open an issue:
+    $REPO_URL/issues
+EOF
+)
+
 usage() {
     cat <<EOF
 agentstack-install.sh
@@ -56,6 +64,7 @@ USAGE:
     agentstack-install.sh [OPTIONS]
 
 OPTIONS:
+    uninstall                  Uninstall
     --version=<version>        Specify version to install (default: $VERSION)
     --python-version=<version> Specify Python version to install (default: $PYTHON_VERSION)
     --dev-branch=<branch>      Install from a specific git branch/commit/tag
@@ -114,7 +123,7 @@ err() {
         say "\n${_red}[ERROR]${_reset}: $1" >&2
         say "\nRun with --verbose for more details."
         say "\nIf you need help, please feel free to open an issue:"
-        say "\n  $REPO_URL/issues\n"
+        say "  $REPO_URL/issues\n"
     fi
     exit 1
 }
@@ -225,10 +234,12 @@ install_uv() {
         err "uv installation failed: $_output"
     fi
 
+    update_path "$HOME/.local/bin"
+
     # verify uv installation
     local _uv_version
     _uv_version="$(uv --version 2>/dev/null)" || {
-        _uv_version=0
+        err "could not find uv"
     }
 
     end_activity
@@ -396,8 +407,10 @@ setup_app() {
 update_path() {
     local new_path="$1"
     
-    # update for current session
-    export PATH="$new_path:$PATH"
+    # update for current session if not already set
+    if ! echo $PATH | grep -q "$new_path"; then
+        export PATH="$new_path:$PATH"
+    fi
     
     # update for each shell
     local config_files=(
@@ -435,6 +448,34 @@ EOF
     say_verbose "Creating bin file at $_program_bin"
     echo "$_bin_content" > $_program_bin
     chmod +x $_program_bin
+}
+
+uninstall() {
+    say "Uninstalling $APP_NAME..."
+    show_activity
+
+    update_path "$HOME/.local/bin"
+    PYTHON_BIN_PATH="$(uv python find "$PYTHON_VERSION" 2>/dev/null)" || {
+        PYTHON_BIN_PATH=""
+    }
+
+    # uninstall the app
+    local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
+        err "Failed to find user site packages directory"
+    }
+    say_verbose "Uninstalling from $_packages_dir"
+    local _uninstall_cmd="uv pip uninstall --python="$PYTHON_BIN_PATH" --target="$_packages_dir" $APP_NAME"
+    say_verbose "$_uninstall_cmd"
+    local _uninstall_out="$(eval "$_uninstall_cmd" 2>&1)"
+    say_verbose "$_uninstall_out"
+    if [ $? -ne 0 ] || echo "$_uninstall_out" | grep -qi "error\|failed\|exception"; then
+        err "Failed to uninstall $APP_NAME."
+    fi
+
+    # remove the bin file
+    rm -f "$HOME/.local/bin/$APP_NAME"
+
+    end_activity
 }
 
 # Download a file. Try curl first, if not installed, use wget instead.
@@ -487,6 +528,10 @@ verify_sha256_checksum() {
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            uninstall)
+                DO_UNINSTALL=1
+                shift
+                ;;
             --version=*)
                 VERSION="${1#*=}"
                 shift
@@ -562,6 +607,12 @@ main() {
     
     say "$LOGO\n"
     
+    if [ $DO_UNINSTALL -eq 1 ]; then
+        uninstall
+        say "\n$MSG_UNINSTALL\n"
+        exit 0
+    fi
+
     if check_cmd $APP_NAME; then
         say "\n$MSG_ALREADY_INSTALLED\n"
         exit 0
