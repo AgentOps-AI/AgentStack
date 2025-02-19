@@ -30,8 +30,8 @@ MSG_SUCCESS=$(cat <<EOF
 ✅ Setup complete!
 
 To get started with AgentStack, run:
-    exec \$SHELL
-    agentstack init
+    🛠️ exec $SHELL
+    🤖 agentstack init
 
 For more information, run:
     agentstack docs -or- agentstack quickstart
@@ -421,7 +421,7 @@ update_path() {
     for config_file in "${config_files[@]}"; do
         if [ -f "$config_file" ]; then
             if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$new_path|$new_path:|$new_path\$)" "$config_file" >/dev/null 2>&1; then
-                echo "export PATH=\"$new_path:\$PATH\"" >> "$config_file"
+                echo -e "\nexport PATH=\"$new_path:\$PATH\"" >> "$config_file"
                 say_verbose "Added PATH $new_path to $config_file"
             else
                 say_verbose "PATH $new_path already in $config_file"
