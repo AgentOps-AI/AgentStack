@@ -73,9 +73,6 @@ OPTIONS:
     -h, --help                 Show this help message
 EOF
 }
-# TODO allow user to specify install path with --target
-# TODO allow user to specify Python version with --python-version
-# TODO uninstall
 
 say() {
     if [ "1" = "$PRINT_QUIET" ]; then
