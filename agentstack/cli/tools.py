@@ -1,7 +1,6 @@
 from typing import Optional
-import itertools
 from difflib import get_close_matches
-import inquirer
+import questionary
 from agentstack import conf, log
 from agentstack.utils import term_color, is_snake_case
 from agentstack import generation
@@ -9,19 +8,16 @@ from agentstack import repo
 from agentstack._tools import get_all_tools, get_all_tool_names
 from agentstack.agents import get_all_agents
 from pathlib import Path
-import sys
-import json
 
 
 def list_tools():
     """
     List all available tools by category.
     """
-    tools = [t for t in get_all_tools() if t is not None]  # Filter out None values
+    tools = [t for t in get_all_tools() if t is not None]
     categories = {}
     custom_tools = []
 
-    # Group tools by category
     for tool in tools:
         if tool.category == 'custom':
             custom_tools.append(tool)
@@ -29,9 +25,9 @@ def list_tools():
             if tool.category not in categories:
                 categories[tool.category] = []
             categories[tool.category].append(tool)
-    
+
     print("\n\nAvailable AgentStack Tools:")
-    # Display tools by category
+
     for category in sorted(categories.keys()):
         print(f"\n{category}:")
         for tool in categories[category]:
@@ -39,7 +35,6 @@ def list_tools():
             print(term_color(f"{tool.name}", 'blue'), end='')
             print(f": {tool.url if tool.url else 'AgentStack default tool'}")
 
-    # Display custom tools if any exist
     if custom_tools:
         print("\nCustom Tools:")
         for tool in custom_tools:
@@ -65,7 +60,7 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
     conf.assert_project()
 
     all_tool_names = get_all_tool_names()
-    if tool_name and not tool_name in all_tool_names:
+    if tool_name and tool_name not in all_tool_names:
         # tool was provided, but not found. make a suggestion.
         suggestions = get_close_matches(tool_name, all_tool_names, n=1)
         message = f"Tool '{tool_name}' not found."
@@ -75,35 +70,21 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
         return
 
     if not tool_name:
-        # Get all available tools including custom ones
         available_tools = [t for t in get_all_tools() if t is not None]
-        tool_names = [t.name for t in available_tools]
 
-        # ask the user for the tool name
-        tools_list = [
-            inquirer.List(
-                "tool_name",
-                message="Select a tool to add to your project",
-                choices=tool_names,
-            )
-        ]
-        try:
-            tool_name = inquirer.prompt(tools_list)['tool_name']
-        except TypeError:
-            return  # user cancelled the prompt
+        tool_name = questionary.select(
+            "Select a tool to add to your project",
+            choices=[t.name for t in available_tools],
+            use_indicator=True,
+            use_shortcuts=True,
+            use_search_filter=True,
+        ).ask()
 
         # ask the user for the agents to add the tool to
-        agents_list = [
-            inquirer.Checkbox(
-                "agents",
-                message="Select which agents to make the tool available to",
-                choices=[agent.name for agent in get_all_agents()],
-            )
-        ]
-        try:
-            agents = inquirer.prompt(agents_list)['agents']
-        except TypeError:
-            return  # user cancelled the prompt
+        agents = questionary.checkbox(
+            "Select which agents to make the tool available to",
+            choices=[agent.name for agent in get_all_agents()],
+        ).ask()
 
     assert tool_name  # appease type checker
 
@@ -134,7 +115,6 @@ def create_tool(tool_name: str, agents=Optional[list[str]]):
     if not is_snake_case(tool_name):
         raise Exception("Invalid tool name: must be snake_case")
 
-    # Check if tool already exists
     user_tools_dir = Path('src/tools').resolve()
     tool_path = conf.PATH / user_tools_dir / tool_name
     if tool_path.exists():

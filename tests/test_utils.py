@@ -3,13 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from agentstack.utils import (
-    clean_input,
-    is_snake_case,
-    validator_not_empty,
-    get_base_dir
-)
-from inquirer import errors as inquirer_errors
+from agentstack.utils import clean_input, is_snake_case, validator_not_empty, get_base_dir
 
 
 class TestUtils(unittest.TestCase):
@@ -30,20 +24,15 @@ class TestUtils(unittest.TestCase):
 
     def test_validator_not_empty(self):
         validator = validator_not_empty(min_length=1)
-        
-        # Valid input should return True
-        self.assertTrue(validator(None, "test"))
-        self.assertTrue(validator(None, "a"))
-        
-        # Empty input should raise ValidationError        
-        with self.assertRaises(inquirer_errors.ValidationError):
-            validator(None, "")
-            
-        # Test with larger min_length
+
+        self.assertTrue(validator("test"))
+        self.assertTrue(validator("a"))
+
+        self.assertFalse(validator(""))
+
         validator = validator_not_empty(min_length=3)
-        self.assertTrue(validator(None, "test"))
-        with self.assertRaises(inquirer_errors.ValidationError):
-            validator(None, "ab")
+        self.assertTrue(validator("test"))
+        self.assertFalse(validator("ab"))
 
     @patch('agentstack.utils.user_data_dir')
     def test_get_base_dir_not_writable(self, mock_user_data_dir):

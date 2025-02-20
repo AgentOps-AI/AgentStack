@@ -1,19 +1,17 @@
-import subprocess
-import os, sys
+import os
 import unittest
 from parameterized import parameterized
 from pathlib import Path
 import shutil
 from agentstack._tools import get_all_tool_names
 from cli_test_utils import run_cli
-from agentstack.utils import validator_not_empty
 from agentstack.cli import get_validated_input
 from unittest.mock import patch
-from inquirer.errors import ValidationError
 
 
 BASE_PATH = Path(__file__).parent
 TEMPLATE_NAME = "empty"
+
 
 class CLIToolsTest(unittest.TestCase):
     def setUp(self):
@@ -46,22 +44,27 @@ class CLIToolsTest(unittest.TestCase):
         """Test the get_validated_input function with various validation scenarios"""
 
         # Test basic input
-        with patch('inquirer.text', return_value='test_input'):
+        with patch('questionary.text', return_value=lambda: 'test_input'):
             result = get_validated_input("Test message")
             self.assertEqual(result, 'test_input')
 
         # Test min length validation - valid input
-        with patch('inquirer.text', return_value='abc'):
+        with patch('questionary.text', return_value=lambda: 'abc'):
             result = get_validated_input("Test message", min_length=3)
             self.assertEqual(result, 'abc')
 
-        # Test min length validation - invalid input should raise ValidationError
-        validator = validator_not_empty(3)
-        with self.assertRaises(ValidationError):
-            validator(None, 'ab')
+        # Test min length validation - invalid input
+        def mock_text_with_validation(*args, **kwargs):
+            validate = kwargs.get('validate')
+            self.assertFalse(validate('ab'))
+            return lambda: 'abc'
+
+        with patch('questionary.text', mock_text_with_validation):
+            result = get_validated_input("Test message", min_length=3)
+            self.assertEqual(result, 'abc')
 
         # Test snake_case validation
-        with patch('inquirer.text', return_value='test_case'):
+        with patch('questionary.text', return_value=lambda: 'test_case'):
             result = get_validated_input("Test message", snake_case=True)
             self.assertEqual(result, 'test_case')
 

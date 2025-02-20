@@ -1,11 +1,12 @@
 import json
-import os, sys
+import os
+import sys
 import time
 from pathlib import Path
 from packaging.version import parse as parse_version, Version
-import inquirer
+import questionary
 from agentstack import log
-from agentstack.utils import term_color, get_version, get_framework, get_base_dir
+from agentstack.utils import get_version, get_framework, get_base_dir
 from agentstack import packaging
 
 
@@ -40,7 +41,7 @@ def get_latest_version(package: str) -> Version:
         f"{ENDPOINT_URL}/{package}/", headers={"Accept": "application/vnd.pypi.simple.v1+json"}
     )
     if response.status_code != 200:
-        raise Exception(f"Failed to fetch package data from pypi.")
+        raise Exception("Failed to fetch package data from pypi.")
     data = response.json()
     return parse_version(data['versions'][-1])
 
@@ -110,9 +111,9 @@ def check_for_updates(update_requested: bool = False):
     installed_version: Version = parse_version(get_version(AGENTSTACK_PACKAGE))
     if latest_version > installed_version:
         log.info('')  # newline
-        if inquirer.confirm(
+        if questionary.confirm(
             f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"
-        ):
+        ).ask():
             packaging.upgrade(f'{AGENTSTACK_PACKAGE}[{get_framework()}]')
             log.success(f"{AGENTSTACK_PACKAGE} updated. Re-run your command to use the latest version.")
         else:
