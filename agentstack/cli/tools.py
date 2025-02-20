@@ -76,7 +76,6 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
             "Select a tool to add to your project",
             choices=[t.name for t in available_tools],
             use_indicator=True,
-            use_shortcuts=True,
             use_search_filter=True,
         ).ask()
 
