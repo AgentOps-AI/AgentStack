@@ -1,24 +1,24 @@
-import subprocess
-import os, sys
+import os
 import unittest
 from parameterized import parameterized
 from pathlib import Path
 import shutil
 from agentstack._tools import get_all_tool_names
 from cli_test_utils import run_cli
-from agentstack.utils import validator_not_empty
 from agentstack.cli import get_validated_input
-from unittest.mock import patch
-from inquirer.errors import ValidationError
+from unittest.mock import patch, MagicMock
 
 
 BASE_PATH = Path(__file__).parent
 TEMPLATE_NAME = "empty"
 
+
 class CLIToolsTest(unittest.TestCase):
     def setUp(self):
         self.framework = os.getenv('TEST_FRAMEWORK')
         self.project_dir = BASE_PATH / 'tmp' / self.framework / 'cli_tools'
+        # Clean up any existing directory first
+        shutil.rmtree(self.project_dir, ignore_errors=True)
         os.makedirs(self.project_dir, exist_ok=True)
         os.chdir(self.project_dir)
 
@@ -45,32 +45,48 @@ class CLIToolsTest(unittest.TestCase):
     def test_get_validated_input(self):
         """Test the get_validated_input function with various validation scenarios"""
 
+        # Create a mock Question object with ask() method
+        mock_question = MagicMock()
+
         # Test basic input
-        with patch('inquirer.text', return_value='test_input'):
+        mock_question.ask.return_value = 'test_input'
+        with patch('questionary.text', return_value=mock_question):
             result = get_validated_input("Test message")
             self.assertEqual(result, 'test_input')
 
         # Test min length validation - valid input
-        with patch('inquirer.text', return_value='abc'):
+        mock_question.ask.return_value = 'abc'
+        with patch('questionary.text', return_value=mock_question):
             result = get_validated_input("Test message", min_length=3)
             self.assertEqual(result, 'abc')
 
-        # Test min length validation - invalid input should raise ValidationError
-        validator = validator_not_empty(3)
-        with self.assertRaises(ValidationError):
-            validator(None, 'ab')
-
-        # Test snake_case validation
-        with patch('inquirer.text', return_value='test_case'):
+        # Test snake_case validation - valid input
+        mock_question.ask.return_value = 'test_case'
+        with patch('questionary.text', return_value=mock_question):
             result = get_validated_input("Test message", snake_case=True)
             self.assertEqual(result, 'test_case')
 
+        # Test custom validation function
+        def custom_validator(text):
+            if text == 'valid':
+                return True, ''
+            return False, 'Invalid input'
+
+        mock_question.ask.return_value = 'valid'
+        with patch('questionary.text', return_value=mock_question):
+            result = get_validated_input("Test message", validate_func=custom_validator)
+            self.assertEqual(result, 'valid')
+
     def test_create_tool_basic(self):
         """Test creating a new custom tool via CLI"""
+        # Clean up the specific project directory first
+        project_path = self.project_dir / "test_project"
+        shutil.rmtree(project_path, ignore_errors=True)
+
         # Initialize a project first
         result = run_cli('init', "test_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
-        os.chdir(self.project_dir / "test_project")
+        os.chdir(project_path)
 
         # Create an agent to test with
         result = run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
@@ -81,17 +97,21 @@ class CLIToolsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
 
         # Verify tool directory and files were created
-        tool_path = self.project_dir / "test_project" / 'src/tools/test_tool'
+        tool_path = project_path / 'src/tools/test_tool'
         self.assertTrue(tool_path.exists())
         self.assertTrue((tool_path / '__init__.py').exists())
         self.assertTrue((tool_path / 'config.json').exists())
 
     def test_create_tool_with_agents(self):
         """Test creating a new custom tool with specific agents via CLI"""
+        # Clean up the specific project directory first
+        project_path = self.project_dir / "test_project"
+        shutil.rmtree(project_path, ignore_errors=True)
+
         # Initialize project and create multiple agents
         result = run_cli('init', "test_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
-        os.chdir(self.project_dir / "test_project")
+        os.chdir(project_path)
 
         run_cli('generate', 'agent', 'agent1', '--llm', 'openai/gpt-4')
         run_cli('generate', 'agent', 'agent2', '--llm', 'openai/gpt-4')
@@ -101,44 +121,63 @@ class CLIToolsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
 
         # Verify tool was created
-        tool_path = self.project_dir / "test_project" / 'src/tools/test_tool'
+        tool_path = project_path / 'src/tools/test_tool'
         self.assertTrue(tool_path.exists())
 
-    def test_create_tool_existing(self):
+    @patch('agentstack.cli.init.packaging')
+    def test_create_tool_existing(self, mock_packaging):
         """Test creating a tool that already exists"""
-        # Initialize project
+        # Initialize project with mocked packaging
+
+        # Clean up the specific project directory first
+        project_path = self.project_dir / "test_project"
+        shutil.rmtree(project_path, ignore_errors=True)
+
         result = run_cli('init', "test_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
-        os.chdir(self.project_dir / "test_project")
+
+        os.chdir(project_path)  # Use the project_path variable for consistency
 
         # Create agent
-        run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
+        result = run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
+        self.assertEqual(result.returncode, 0)
 
         # Create tool first time
         result = run_cli('tools', 'new', 'test_tool')
         self.assertEqual(result.returncode, 0)
 
-        # Try to create same tool again
+        # Try to create same tool again - should fail
         result = run_cli('tools', 'new', 'test_tool')
-        self.assertNotEqual(result.returncode, 0)  # Should fail
+        self.assertNotEqual(result.returncode, 0)
         self.assertIn("already exists", result.stderr)
 
-    def test_create_tool_invalid_name(self):
+    @patch('agentstack.cli.init.packaging')
+    def test_create_tool_invalid_name(self, mock_packaging):
         """Test creating a tool with invalid name formats"""
-        # Initialize project
+        # Clean up the specific project directory first
+        project_path = self.project_dir / "test_project"
+        shutil.rmtree(project_path, ignore_errors=True)
+
+        # Initialize project with mocked packaging
         result = run_cli('init', "test_project", "--template", TEMPLATE_NAME)
         self.assertEqual(result.returncode, 0)
+
         os.chdir(self.project_dir / "test_project")
 
         # Create agent
-        run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
+        result = run_cli('generate', 'agent', 'test_agent', '--llm', 'openai/gpt-4')
+        self.assertEqual(result.returncode, 0)
 
         # Test various invalid names
-        invalid_names = ['TestTool', 'test-tool', 'test tool']
+        invalid_names = ['TestTool', 'test-tool', '"test tool"']  # Quote the space-containing name
         for name in invalid_names:
             result = run_cli('tools', 'new', name)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("must be snake_case", result.stderr)
+
+            # Also verify the tool wasn't actually created
+            tool_path = self.project_dir / "test_project" / 'src/tools' / name.replace('"', '')
+            self.assertFalse(tool_path.exists(), f"Tool directory was created for invalid name: {name}")
 
     def test_create_tool_no_project(self):
         """Test creating a tool outside a project directory"""

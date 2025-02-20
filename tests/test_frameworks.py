@@ -1,5 +1,4 @@
-from typing import Callable
-import os, sys
+import os
 from pathlib import Path
 import shutil
 import unittest
@@ -20,8 +19,7 @@ class TestFrameworks(unittest.TestCase):
     def setUp(self):
         self.framework = os.getenv('TEST_FRAMEWORK')
         self.project_dir = BASE_PATH / 'tmp' / self.framework / 'test_frameworks'
-
-        os.makedirs(self.project_dir)
+        os.makedirs(self.project_dir, exist_ok=True)
         os.chdir(self.project_dir)  # importing the crewai module requires us to be in a working directory
         os.makedirs(self.project_dir / 'src')
         os.makedirs(self.project_dir / 'src' / 'config')
@@ -34,7 +32,8 @@ class TestFrameworks(unittest.TestCase):
             config.framework = self.framework
 
     def tearDown(self):
-        shutil.rmtree(self.project_dir)
+        if os.path.exists(self.project_dir):
+            shutil.rmtree(self.project_dir, ignore_errors=True)
 
     def _populate_min_entrypoint(self):
         """This entrypoint does not have any tools or agents."""
@@ -95,7 +94,7 @@ class TestFrameworks(unittest.TestCase):
     def test_validate_project_has_agent_no_task_invalid(self):
         self._populate_min_entrypoint()
         shutil.copy(BASE_PATH / 'fixtures/agents_max.yaml', self.project_dir / AGENTS_FILENAME)
-        
+
         frameworks.add_agent(self._get_test_agent())
         with self.assertRaises(ValidationError) as context:
             frameworks.validate_project()
@@ -134,7 +133,7 @@ class TestFrameworks(unittest.TestCase):
     Add your expected output here
   agent: >-
     default_agent""")
-                    
+
         with self.assertRaises(ValidationError) as context:
             frameworks.validate_project()
 
