@@ -5,6 +5,7 @@ import inquirer
 from art import text2art
 from agentstack import log
 from agentstack.frameworks import SUPPORTED_FRAMEWORKS
+from agentstack.utils import is_snake_case
 from agentstack.cli import welcome_message, get_validated_input
 from agentstack._tools import get_all_tools
 from agentstack.templates import TemplateConfig
