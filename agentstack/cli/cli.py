@@ -16,7 +16,7 @@ PREFERRED_MODELS = [
     'deepseek/deepseek-coder',
     'deepseek/deepseek-reasoner',
     'openai/gpt-4o',
-    'anthropic/claude-3-5-sonnet',
+    'anthropic/claude-3-5-sonnet-20240620',
     'openai/o1-preview',
     'openai/gpt-4-turbo',
     'anthropic/claude-3-opus',
