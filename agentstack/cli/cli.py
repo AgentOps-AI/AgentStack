@@ -47,7 +47,7 @@ def configure_default_model():
     agentstack_config = ConfigFile()
     if agentstack_config.default_model:
         log.debug("Using default model from project config.")
-        return  # Default model already set
+        return
 
     log.info("Project does not have a default model configured.")
 
@@ -58,6 +58,10 @@ def configure_default_model():
         "Which model would you like to use?",
         choices=available_models + [other_msg],
         use_indicator=True,
+        use_shortcuts=False,
+        use_jk_keys=False,
+        use_emacs_keys=False,
+        use_arrow_keys=True,
         use_search_filter=True,
     ).ask()
 

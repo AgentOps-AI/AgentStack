@@ -79,6 +79,10 @@ def select_template(slug_name: str, framework: Optional[str] = None) -> Template
         "Do you want to start with a template?",
         choices=choices,
         use_indicator=True,
+        use_shortcuts=False,
+        use_jk_keys=False,
+        use_emacs_keys=False,
+        use_arrow_keys=True,
         use_search_filter=True,
     ).ask()
 

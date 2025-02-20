@@ -106,6 +106,10 @@ def ask_agent_details():
         choices=available_models,
         default=available_models[0] if available_models else None,
         use_indicator=True,
+        use_shortcuts=False,
+        use_jk_keys=False,
+        use_emacs_keys=False,
+        use_arrow_keys=True,
         use_search_filter=True,
     ).ask()
 
@@ -137,6 +141,10 @@ def ask_task_details(agents: list[dict]) -> dict:
         "Which agent should be assigned this task?",
         choices=[a['name'] for a in agents],
         use_indicator=True,
+        use_shortcuts=False,
+        use_jk_keys=False,
+        use_emacs_keys=False,
+        use_arrow_keys=True,
         use_search_filter=True,
     ).ask()
 
@@ -221,6 +229,10 @@ def ask_tools() -> list:
             "What category tool do you want to add?",
             choices=tool_categories + ["~~ Stop adding tools ~~"],
             use_indicator=True,
+            use_shortcuts=False,
+            use_jk_keys=False,
+            use_emacs_keys=False,
+            use_arrow_keys=True,
             use_search_filter=True,
         ).ask()
 
@@ -236,6 +248,10 @@ def ask_tools() -> list:
                 for t in tools_in_cat
             ],
             use_indicator=True,
+            use_shortcuts=False,
+            use_jk_keys=False,
+            use_emacs_keys=False,
+            use_arrow_keys=True,
             use_search_filter=True,
         ).ask()
 
