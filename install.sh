@@ -23,6 +23,8 @@ UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
 PYTHON_BIN_PATH=""  # set after a verified install is found
 DEV_BRANCH=""  # set by --dev-branch flag
 DO_UNINSTALL=0  # set by uninstall flag
+INIT_TEMPLATE=""
+INIT_NAME=""
 PRINT_VERBOSE=0
 PRINT_QUIET=1
 
@@ -400,6 +402,20 @@ setup_app() {
     ensure "$APP_NAME" --version > /dev/null
 }
 
+# Initialize a new user project from a template
+init_project() {
+    if [ -z "$INIT_NAME" ]; then
+        err "INIT_NAME is not set"
+    fi
+    if [ -z "$INIT_TEMPLATE" ]; then
+        INIT_TEMPLATE='empty'
+        say_verbose "no template specified, defaulting to 'empty'"
+    fi
+
+    say "Initializing project '$INIT_NAME' from template '$INIT_TEMPLATE'..."
+    $APP_NAME init "$INIT_NAME" --template "$INIT_TEMPLATE"
+}
+
 # Update PATH in shell config files
 update_path() {
     local new_path="$1"
@@ -625,6 +641,11 @@ main() {
         install_release
     fi
     
+    if [ -n "$INIT_NAME" ]; then
+        init_project
+        exit 0
+    fi
+
     say "\n$MSG_SUCCESS\n"
     exit 0
 }
