@@ -7,7 +7,7 @@ from agentstack.exceptions import ValidationError
 from agentstack.utils import validator_not_empty, is_snake_case
 from agentstack.generation import InsertionPoint
 from agentstack import repo
-from agentstack.providers import get_available_models
+from agentstack.providers import get_available_models, get_all_available_models
 
 
 def welcome_message():
@@ -50,18 +50,39 @@ def configure_default_model():
 
     log.info("Project does not have a default model configured.")
 
-    # Get models from litellm
-    available_models = get_available_models()
+    while True:
+        # Get models from litellm
+        preferred_models = get_available_models()
+        all_models = get_all_available_models()
 
-    other_msg = "Other (enter a model name)"
-    model = inquirer.list_input(
-        message="Which model would you like to use?",
-        choices=available_models + [other_msg],
-    )
+        other_msg = "Other (enter a model name)"
+        advanced_msg = f"Select from {len(all_models)} models for advanced use cases"
 
-    if model == other_msg:  # If the user selects "Other", prompt for a model name
-        log.info('A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
-        model = inquirer.text(message="Enter the model name")
+        model = inquirer.list_input(
+            message="Which model would you like to use?",
+            choices=preferred_models + [advanced_msg, other_msg],
+        )
+
+        if model == other_msg:
+            log.info('A list of available models is available at: "https://docs.litellm.ai/docs/providers"')
+            model = inquirer.text(message="Enter the model name")
+            break
+
+        elif model == advanced_msg:
+            return_msg = "↩ Return to preferred models"
+            advanced_model = inquirer.list_input(
+                message="Select from all available models",
+                choices=[return_msg] + all_models,
+            )
+
+            if advanced_model == return_msg:
+                continue  # Go back to preferred models list
+
+            model = advanced_model
+            break
+
+        else:
+            break  # Selected from preferred models
 
     log.debug("Writing default model to project config.")
     with ConfigFile() as agentstack_config:

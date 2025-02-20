@@ -74,3 +74,26 @@ def parse_provider_model(model_id: str) -> tuple[str, str]:
         return '/'.join(parts[:2]), parts[2]
     else:
         raise ValidationError(f"Model id '{model_id}' does not match expected format.")
+
+
+def get_all_available_models() -> List[str]:
+    """Get complete list of available models without filtering to preferred ones"""
+    models = []
+
+    try:
+        for model_name in litellm.model_cost:
+            if (
+                isinstance(model_name, tuple)
+                or not isinstance(model_name, str)
+                or not any(p in model_name.lower() for p in PROVIDER_ALIASES.values())
+            ):
+                continue
+
+            provider = next((p for p in PROVIDER_ALIASES.values() if p in model_name.lower()), None)
+
+            if provider:
+                models.append(f"{provider}/{model_name}")
+    except Exception:
+        pass
+
+    return sorted(models) if models else PREFERRED_MODELS.copy()

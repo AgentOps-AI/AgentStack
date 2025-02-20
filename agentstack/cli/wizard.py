@@ -9,7 +9,7 @@ from agentstack.utils import is_snake_case
 from agentstack.cli import welcome_message, get_validated_input
 from agentstack._tools import get_all_tools
 from agentstack.templates import TemplateConfig
-from agentstack.providers import get_available_models
+from agentstack.providers import get_available_models, get_all_available_models
 
 
 class WizardData(dict):
@@ -104,13 +104,33 @@ def ask_agent_details():
 
     agent['backstory'] = get_validated_input("Give your agent a backstory", min_length=10)
 
-    # Use dynamically fetched models instead of hardcoded list
-    available_models = get_available_models()
-    agent['model'] = inquirer.list_input(
-        message="What LLM should this agent use?",
-        choices=available_models,
-        default=available_models[0] if available_models else None,
-    )
+    # Model selection with advanced option
+    while True:
+        preferred_models = get_available_models()
+        all_models = get_all_available_models()
+        advanced_msg = f"Select from {len(all_models)} models for advanced use cases"
+
+        model = inquirer.list_input(
+            message="What LLM should this agent use?",
+            choices=preferred_models + [advanced_msg],
+            default=preferred_models[0] if preferred_models else None,
+        )
+
+        if model == advanced_msg:
+            return_msg = "↩ Return to preferred models"
+            advanced_model = inquirer.list_input(
+                message="Select from all available models",
+                choices=[return_msg] + all_models,
+                default=all_models[0] if all_models else None,
+            )
+
+            if advanced_model == return_msg:
+                continue  # Go back to preferred models list
+
+            model = advanced_model
+
+        agent['model'] = model
+        break
 
     return agent
 
@@ -170,7 +190,10 @@ First we need to create the agents that will work together to accomplish tasks:
     for x in range(3):
         time.sleep(0.3)
         print('.')
+    # fmt: off
+    # most formatters wanna make changes to the ’ character.
     print('Boom! We made some agents (ﾉ>ω<)ﾉ :｡･:*:･ﾟ’★,｡･:*:･ﾟ’☆')
+    # fmt: on
     time.sleep(0.5)
     print('')
     print('Now lets make some tasks for the agents to accomplish!')
