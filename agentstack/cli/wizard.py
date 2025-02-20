@@ -2,15 +2,13 @@ from typing import Optional
 import os
 import time
 import inquirer
-import webbrowser
 from art import text2art
 from agentstack import log
 from agentstack.frameworks import SUPPORTED_FRAMEWORKS
-from agentstack.utils import open_json_file, is_snake_case
 from agentstack.cli import welcome_message, get_validated_input
-from agentstack.cli.cli import PREFERRED_MODELS
-from agentstack._tools import get_all_tools, get_all_tool_names
+from agentstack._tools import get_all_tools
 from agentstack.templates import TemplateConfig
+from agentstack.providers import get_available_models
 
 
 class WizardData(dict):
@@ -56,22 +54,6 @@ class WizardData(dict):
         )
 
 
-def run_wizard(slug_name: str) -> TemplateConfig:
-    project_details = ask_project_details(slug_name)
-    welcome_message()
-    framework = ask_framework()
-    design = ask_design()
-    tools = ask_tools()
-    
-    wizard_data = WizardData({
-        'project': project_details,
-        'framework': framework,
-        'design': design,
-        'tools': tools,
-    })
-    return wizard_data.to_template_config()
-
-
 def ask_framework() -> str:
     framework = inquirer.list_input(
         message="What agent framework do you want to use?",
@@ -109,8 +91,12 @@ def ask_agent_details():
 
     agent['backstory'] = get_validated_input("Give your agent a backstory", min_length=10)
 
+    # Use dynamically fetched models instead of hardcoded list
+    available_models = get_available_models()
     agent['model'] = inquirer.list_input(
-        message="What LLM should this agent use?", choices=PREFERRED_MODELS, default=PREFERRED_MODELS[0]
+        message="What LLM should this agent use?", 
+        choices=available_models,
+        default=available_models[0] if available_models else None
     )
 
     return agent
@@ -171,7 +157,7 @@ First we need to create the agents that will work together to accomplish tasks:
     for x in range(3):
         time.sleep(0.3)
         print('.')
-    print('Boom! We made some agents (ﾉ>ω<)ﾉ :｡･:*:･ﾟ’★,｡･:*:･ﾟ’☆')
+    print('Boom! We made some agents (ﾉ>ω<)ﾉ :｡･:*:･ﾟ'★,｡･:*:･ﾟ'☆')
     time.sleep(0.5)
     print('')
     print('Now lets make some tasks for the agents to accomplish!')
@@ -259,3 +245,17 @@ def ask_project_details(slug_name: Optional[str] = None) -> dict:
 
     return questions
 
+def run_wizard(slug_name: str) -> TemplateConfig:
+    project_details = ask_project_details(slug_name)
+    welcome_message()
+    framework = ask_framework()
+    design = ask_design()
+    tools = ask_tools()
+    
+    wizard_data = WizardData({
+        'project': project_details,
+        'framework': framework,
+        'design': design,
+        'tools': tools,
+    })
+    return wizard_data.to_template_config()

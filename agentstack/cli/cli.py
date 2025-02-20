@@ -1,5 +1,4 @@
 from typing import Optional
-import os, sys
 from art import text2art
 import inquirer
 from agentstack import conf, log
@@ -8,19 +7,7 @@ from agentstack.exceptions import ValidationError
 from agentstack.utils import validator_not_empty, is_snake_case
 from agentstack.generation import InsertionPoint
 from agentstack import repo
-
-
-PREFERRED_MODELS = [
-    'groq/deepseek-r1-distill-llama-70b',
-    'deepseek/deepseek-chat',
-    'deepseek/deepseek-coder',
-    'deepseek/deepseek-reasoner',
-    'openai/gpt-4o',
-    'anthropic/claude-3-5-sonnet',
-    'openai/o1-preview',
-    'openai/gpt-4-turbo',
-    'anthropic/claude-3-opus',
-]
+from agentstack.providers import get_available_models
 
 
 def welcome_message():
@@ -38,7 +25,7 @@ def welcome_message():
 def undo() -> None:
     """Undo the last committed changes."""
     conf.assert_project()
-    
+
     changed_files = repo.get_uncommitted_files()
     if changed_files:
         log.warning("There are uncommitted changes that may be overwritten.")
@@ -62,10 +49,14 @@ def configure_default_model():
         return  # Default model already set
 
     log.info("Project does not have a default model configured.")
+
+    # Get models from litellm
+    available_models = get_available_models()
+
     other_msg = "Other (enter a model name)"
     model = inquirer.list_input(
         message="Which model would you like to use?",
-        choices=PREFERRED_MODELS + [other_msg],
+        choices=available_models + [other_msg],
     )
 
     if model == other_msg:  # If the user selects "Other", prompt for a model name
@@ -113,4 +104,3 @@ def parse_insertion_point(position: Optional[str] = None) -> Optional[InsertionP
         raise ValueError(f"Position must be one of {','.join(valid_positions)}.")
 
     return next(x for x in InsertionPoint if x.value == position)
-
