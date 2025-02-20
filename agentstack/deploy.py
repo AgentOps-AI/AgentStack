@@ -17,8 +17,13 @@ import requests
 import websockets
 
 
+ORIGIN = "localhost:3000"
+# ORIGIN = "host-production-ab3c.up.railway.app"
+PROTOCOL = "http"
+# PROTOCOL = "https" # "http"
+
 async def connect_websocket(project_id, spinner):
-    uri = f"ws://localhost:3000/ws/build/{project_id}"
+    uri = f"ws://{ORIGIN}/ws/build/{project_id}"
     async with websockets.connect(uri) as websocket:
         try:
             while True:
@@ -68,7 +73,7 @@ async def deploy():
             spinner.update_message("Uploading to server")
 
             response = requests.post(
-                'http://localhost:3000/deploy/build',
+                f'{PROTOCOL}://{ORIGIN}/deploy/build',
                 files={'code': ('code.zip', zip_file)},
                 params={'projectId': project_id},
                 headers={'Authorization': f'Bearer {bearer_token}'}
@@ -85,7 +90,7 @@ async def deploy():
             await websocket_task
 
             log.success("\n🚀 Successfully deployed with AgentStack.sh! Opening in browser...")
-            # webbrowser.open(f"http://localhost:5173/project/{project_id}")
+            # webbrowser.open(f"http://localhost:5173/project/{project_id}") # TODO: agentops platform url
 
         except Exception as e:
             spinner.stop()
@@ -120,7 +125,7 @@ def get_project_id():
 
     try:
         response = requests.post(
-            url="http://localhost:3000/projects",
+            url=f"{PROTOCOL}://{ORIGIN}/projects",
             # url="https://api.agentstack.sh/projects",
             headers=headers,
             json=payload

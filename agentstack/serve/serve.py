@@ -13,6 +13,7 @@ from flask import Flask, request, jsonify
 import requests
 from typing import Dict, Any, Optional, Tuple
 import os
+from waitress import serve
 
 MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
@@ -153,12 +154,27 @@ def validate_url(url: str) -> Tuple[bool, str]:
     except Exception as e:
         return False, f"Invalid URL format: {str(e)}"
 
+
+def get_waitress_config():
+    return {
+        'host': '0.0.0.0',
+        'port': int(os.getenv('PORT') or '6969'),
+        'threads': 1,                      # Similar to Gunicorn threads
+        'connection_limit': 1,             # Similar to worker_connections
+        'channel_timeout': 300,            # Similar to timeout
+        'cleanup_interval': 2,             # Similar to keepalive
+        'log_socket_errors': True,
+        'max_request_body_size': 1073741824,  # 1GB
+        'clear_untrusted_proxy_headers': True
+    }
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 6969))
     print("🚧 Running your agent on a development server")
     print(f"Send agent requests to http://localhost:{port}")
     print("Learn more about agent requests at https://docs.agentstack.sh/")  # TODO: add docs for this
 
-    app.run(host='0.0.0.0', port=port)
+    # app.run(host='0.0.0.0', port=port)
+    serve(app, **get_waitress_config())
 else:
     print("Starting production server with Gunicorn")
