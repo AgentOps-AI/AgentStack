@@ -14,28 +14,12 @@ PROVIDER_ALIASES = {
     'ollama': 'ollama',
 }
 
-# Fallback models if litellm.model_cost is empty or fails
-# Perhaps useful for an offline mode for people with tons of storage and no internet
-# Think: Government "quiet" rooms etc.
-PREFERRED_MODELS = [
-    'groq/deepseek-r1-distill-llama-70b',
-    'deepseek/deepseek-chat',
-    'deepseek/deepseek-coder',
-    'deepseek/deepseek-reasoner',
-    'openai/gpt-4o',
-    'anthropic/claude-3-5-sonnet',  # this has the wrong name, fixed on my other branch.
-    'openai/o1-preview',
-    'openai/gpt-4-turbo',
-    'anthropic/claude-3-opus',
-]
-
 
 @lru_cache(maxsize=1)
 def get_available_models() -> List[str]:
     """
     Get list of available models in provider/model format.
     Results are cached to avoid processing multiple times.
-    Falls back to PREFERRED_MODELS if fetching fails.
     """
     models = []
 
@@ -46,7 +30,9 @@ def get_available_models() -> List[str]:
                     models.append(f"{provider}/{model}")
 
     except Exception:
-        models = PREFERRED_MODELS.copy()
+        # since the models exist in the package, this should only throw
+        # in the case of a breaking change or bug in litellm.
+        raise Exception("Failed to parse models from litellm.")
 
     return sorted(models)
 
