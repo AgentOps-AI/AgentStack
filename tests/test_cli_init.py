@@ -38,7 +38,7 @@ class CLIInitTest(unittest.TestCase):
         if framework != self.framework:
             self.skipTest(f"{alias} is not related to this framework")
 
+        conf.set_path(self.project_dir)  # set working dir, init adds `slug_name`
         init_project(slug_name='test_project', template='empty', framework=alias)
-        conf.set_path(self.project_dir / 'test_project')
         config = conf.ConfigFile()
         assert config.framework == framework
