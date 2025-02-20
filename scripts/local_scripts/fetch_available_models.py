@@ -1,36 +1,23 @@
-from agentstack.providers import get_available_models, parse_provider_model
+import litellm
+import json
 
 
 def main():
     print("\n=== Available LLM Models ===\n")
 
-    # First fetch - will get from litellm or fallback to preferred models
-    print("Fetching available models...")
-    models = get_available_models()
-    print(f"Found {len(models)} models")
+    print(f"Total models: {len(litellm.model_list)}")
 
-    print("\nAvailable models:")
-    for model in sorted(models):
-        print(f"  - {model}")
+    print("\n=== Models By Provider ===\n")
+    for provider, models in litellm.models_by_provider.items():
+        print(f"\n{provider.upper()}:")
+        for model in sorted(models):
+            print(f"  - {model}")
 
-    # Demonstrate caching
-    print("\nFetching models again...")
-    cached_models = get_available_models()
-    print(f"Used cached result: {models is cached_models}")
+    output = {"all_models": litellm.model_list, "models_by_provider": litellm.models_by_provider}
 
-    # Show how model strings are parsed
-    print("\nExample model string parsing:")
-    examples = [
-        "openai/gpt-4",
-        "anthropic/claude-3-opus",
-        "openrouter/anthropic/claude-3",
-    ]
-
-    for model_id in examples:
-        provider, model = parse_provider_model(model_id)
-        print(f"\n{model_id}")
-        print(f"  ├─ Provider: {provider}")
-        print(f"  └─ Model: {model}")
+    with open("available_models.json", "w") as f:
+        json.dump(output, f, indent=2)
+    print("\nSaved complete model list to available_models.json")
 
 
 if __name__ == "__main__":

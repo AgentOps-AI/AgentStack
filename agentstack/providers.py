@@ -34,28 +34,18 @@ PREFERRED_MODELS = [
 def get_available_models() -> List[str]:
     """
     Get list of available models in provider/model format.
-    Results are cached to avoid processing litellm.model_cost multiple times.
-    Falls back to PREFERRED_MODELS if no models found from litellm.
+    Results are cached to avoid processing multiple times.
+    Falls back to PREFERRED_MODELS if fetching fails.
     """
     models = []
 
     try:
-        for model_name in litellm.model_cost:
-            if (
-                isinstance(model_name, tuple)
-                or not isinstance(model_name, str)
-                or not any(p in model_name.lower() for p in PROVIDER_ALIASES.values())
-            ):
-                continue
+        for provider, provider_models in litellm.models_by_provider.items():
+            if provider in PROVIDER_ALIASES:
+                for model in provider_models:
+                    models.append(f"{provider}/{model}")
 
-            provider = next((p for p in PROVIDER_ALIASES.values() if p in model_name.lower()), None)
-
-            if provider:
-                models.append(f"{provider}/{model_name}")
     except Exception:
-        pass
-
-    if not models:
         models = PREFERRED_MODELS.copy()
 
     return sorted(models)
