@@ -1,0 +1,24 @@
+name: Create checksum.txt for releases
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run checksum action
+        uses: thewh1teagle/checksum@v1
+        with:
+          patterns: |
+            *.zip
+            *.tar.gz
+          algorithm: sha256
+        env:
+          # You must enable write permission in github.com/user/repo/settings/actions -> Workflow permissions -> Read and write permissions
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
