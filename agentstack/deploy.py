@@ -17,10 +17,10 @@ import requests
 import websockets
 
 
-ORIGIN = "localhost:3000"
-# ORIGIN = "host-production-ab3c.up.railway.app"
-PROTOCOL = "http"
-# PROTOCOL = "https" # "http"
+# ORIGIN = "localhost:3000"
+ORIGIN = "build.agentstack.sh"
+# PROTOCOL = "http"
+PROTOCOL = "https" # "http"
 
 async def connect_websocket(project_id, spinner):
     uri = f"ws://{ORIGIN}/ws/build/{project_id}"
