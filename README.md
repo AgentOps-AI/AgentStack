@@ -1,6 +1,21 @@
-# AgentStack [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![python-testing](https://github.com/agentops-ai/agentstack/actions/workflows/python-testing.yml/badge.svg) ![mypy](https://github.com/agentops-ai/agentstack/actions/workflows/mypy.yml/badge.svg) [![codecov.io](https://codecov.io/github/agentops-ai/agentstack/coverage.svg?branch=master)](https://codecov.io/github/agentops-ai/agentstack>?branch=master)
+# AgentStack
 
-<img alt="Logo" align="right" src="https://raw.githubusercontent.com/bboynton97/agentstack-docs/3491fe490ea535e7def74c83182dfa8dcfb1f562/logo/dark-sm.svg" width="20%" />
+ [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/release/python-3100/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![python-testing](https://github.com/agentops-ai/agentstack/actions/workflows/python-testing.yml/badge.svg) ![mypy](https://github.com/agentops-ai/agentstack/actions/workflows/mypy.yml/badge.svg) [![codecov.io](https://codecov.io/github/agentops-ai/agentstack/coverage.svg?branch=master)](https://codecov.io/github/agentops-ai/agentstack>?branch=master)
+
+
+AgentStack scaffolds your _agent stack_ - The tech stack that collectively is your agent
+
+<p align='center'>
+<img src='./docs/images/the_agent_stack.png' width='600' alt='AgentStack items'>
+</p>
+
+### Install AgentStack
+
+```sh
+pip install agentstack
+agentstack init <project_name>
+```
+
 
 Create AI agent projects from the command line.
 
@@ -16,19 +31,6 @@ If you have questions or need help, please ask in our [Discord community](https:
 AgentStack serves as a great tool for starting your agent project and offers many CLI utilities for easy code-gen throughout the development process.
 
 AgentStack is _not_ a low-code alternative to development. Developers will still need an understanding of how to build with their selected agent framework.
-
-## Quick Overview
-
-```sh
-pip install agentstack
-agentstack init <project_name>
-```
-
-AgentStack scaffolds your _agent stack_ - the tech stack that collectively is your agent
-
-<p align='center'>
-<img src='https://github.com/AgentOps-AI/AgentStack/blob/main/docs/images/the_agent_stack.png?raw=true' width='600' alt='agentstack init'>
-</p>
 
 ### Currently Supported Providers
 - **LLMs**: Most all notable LLMs and providers are supported via LiteLLM or LangChain
