@@ -1,10 +1,9 @@
 from typing import Optional
+from types import ModuleType
 from pathlib import Path
 import shutil
-import git
 from agentstack import conf, log
 from agentstack.exceptions import EnvironmentError
-
 
 MAIN_BRANCH_NAME = "main"
 
@@ -13,6 +12,14 @@ INITIAL_COMMIT_MESSAGE = "Initial commit."
 USER_CHANGES_COMMIT_MESSAGE = "Adding user changes before modifying project."
 
 _USE_GIT = None  # global state to disable git for this run
+
+
+# The python git module prints an excessive error message when git is not 
+# installed. We always want to allow git support to fail silently.
+try:
+    import git
+except ImportError:
+    _USE_GIT = False
 
 
 def should_track_changes() -> bool:
