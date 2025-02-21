@@ -15,12 +15,16 @@ DEBUG: bool = False
 PATH: Path = Path()
 
 
+class NoProjectError(Exception):
+    pass
+
+
 def assert_project() -> None:
     try:
         ConfigFile()
         return
     except FileNotFoundError:
-        raise Exception("Could not find agentstack.json, are you in an AgentStack project directory?")
+        raise NoProjectError("Could not find agentstack.json, are you in an AgentStack project directory?")
 
 
 def set_path(path: Union[str, Path, None]):
