@@ -12,10 +12,12 @@ AgentStack scaffolds your _agent stack_ - The tech stack that collectively is yo
 ### Install AgentStack
 
 ```sh
-pip install agentstack
-agentstack init <project_name>
+curl --proto '=https' --tlsv1.2 -LsSf https://install.agentstack.sh | sh
 ```
 
+or python [other install methods](https://docs.agentstack.sh/installation)
+
+### Start your agent!
 
 Create AI agent projects from the command line.
 
@@ -53,7 +55,7 @@ Create a project, and you're good to go.
 To create a new agent project, run:
 
 ```sh
-uv pip install agentstack
+uv pip install agentstack # or other install method
 agentstack init <project_name>
 ```
 
