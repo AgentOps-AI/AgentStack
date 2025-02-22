@@ -5,7 +5,7 @@ from pathlib import Path
 from packaging.version import parse as parse_version, Version
 import inquirer
 from agentstack import log
-from agentstack.utils import term_color, get_version, get_framework, get_base_dir
+from agentstack.utils import get_version, get_framework, get_base_dir, is_interactive_shell
 from agentstack import packaging
 
 
@@ -109,6 +109,11 @@ def check_for_updates(update_requested: bool = False):
 
     installed_version: Version = parse_version(get_version(AGENTSTACK_PACKAGE))
     if latest_version > installed_version:
+        if not is_interactive_shell():
+            log.info(f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}")
+            log.info(f"Environment is non-interactive so skipping install.")
+            return
+        
         log.info('')  # newline
         if inquirer.confirm(
             f"New version of {AGENTSTACK_PACKAGE} available: {latest_version}! Do you want to install?"

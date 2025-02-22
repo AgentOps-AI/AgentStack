@@ -1,5 +1,4 @@
-import os
-import sys
+import os, sys
 import json
 from ruamel.yaml import YAML
 import re
@@ -42,6 +41,21 @@ def get_framework() -> str:
     framework = conf.get_framework()
     assert framework  # verify_agentstack_project should catch this
     return framework
+
+
+def is_interactive_shell():
+    """Return True if the current environment is interactive, False otherwise."""
+    if os.getenv('NONINTERACTIVE') == '1':
+        return False
+    
+    if not sys.stdin.isatty():
+        return False
+
+    try:
+        os.get_terminal_size()
+        return True
+    except OSError:
+        return False
 
 
 def get_telemetry_opt_out() -> bool:
