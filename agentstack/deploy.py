@@ -39,6 +39,8 @@ async def connect_websocket(project_id, spinner):
                     spinner.clear_and_log(f"🚀 {data.get('data','')}", 'info')
                 elif data['type'] == 'error':
                     raise Exception(f"Failed to deploy: {data.get('data')}")
+                elif data['type'] == 'complete':
+                    return
         except websockets.ConnectionClosed:
             raise Exception("Websocket connection closed unexpectedly")
 
