@@ -263,8 +263,6 @@ class TemplateConfig(pydantic.BaseModel):
 
     @classmethod
     def from_url(cls, url: str) -> 'TemplateConfig':
-        if not url.startswith("https://") or not url.startswith("http://"):
-            raise ValidationError(f"Invalid URL: {url}")
         response = requests.get(url)
         if response.status_code != 200:
             raise ValidationError(f"Failed to fetch template from {url}")
