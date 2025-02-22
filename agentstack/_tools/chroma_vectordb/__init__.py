@@ -1,9 +1,11 @@
 import os
 import chromadb
 from chromadb.config import Settings
-from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
-from typing import List, Dict, Any, Optional
+from chromadb.utils.embedding_functions import EmbeddingFunction
+from chromadb.utils.embedding_functions.openai_embedding_function import OpenAIEmbeddingFunction
+from typing import List, Dict, Any, Optional, Sequence, Mapping, Union
 from dotenv import load_dotenv
+from typing import cast
 
 # Load environment variables
 load_dotenv()
@@ -30,9 +32,12 @@ def create_collection(
         persist_directory=persist_directory
     ))
     
-    embedding_function = OpenAIEmbeddingFunction(
-        model_name="text-embedding-ada-002",
-        api_key=openai_api_key
+    embedding_function = cast(
+        EmbeddingFunction,
+        OpenAIEmbeddingFunction(
+            model_name="text-embedding-ada-002",
+            api_key=openai_api_key
+        )
     )
     
     collection = client.get_or_create_collection(
@@ -66,9 +71,12 @@ def add_documents(
         persist_directory=persist_directory
     ))
     
-    embedding_function = OpenAIEmbeddingFunction(
-        model_name="text-embedding-ada-002",
-        api_key=openai_api_key
+    embedding_function = cast(
+        EmbeddingFunction,
+        OpenAIEmbeddingFunction(
+            model_name="text-embedding-ada-002",
+            api_key=openai_api_key
+        )
     )
     
     collection = client.get_collection(
@@ -76,9 +84,9 @@ def add_documents(
         embedding_function=embedding_function
     )
     
-    docs = []
-    metadatas = []
-    ids = []
+    docs: List[str] = []
+    metadatas: List[Mapping[str, Union[str, int, float, bool]]] = []
+    ids: List[str] = []
     
     for i, doc in enumerate(documents):
         docs.append(doc.get("content", ""))
@@ -119,9 +127,12 @@ def query_collection(
         persist_directory=persist_directory
     ))
     
-    embedding_function = OpenAIEmbeddingFunction(
-        model_name="text-embedding-ada-002",
-        api_key=openai_api_key
+    embedding_function = cast(
+        EmbeddingFunction,
+        OpenAIEmbeddingFunction(
+            model_name="text-embedding-ada-002",
+            api_key=openai_api_key
+        )
     )
     
     collection = client.get_collection(
@@ -134,4 +145,18 @@ def query_collection(
         n_results=n_results
     )
     
-    return str(results)
+    # Format results nicely
+    formatted_results = []
+    for i, (doc, metadata, distance) in enumerate(zip(
+        results['documents'][0],  # type: ignore
+        results['metadatas'][0],  # type: ignore
+        results['distances'][0]   # type: ignore
+    )):
+        formatted_results.append(
+            f"Result {i+1}:\n"
+            f"Content: {doc}\n"
+            f"URL: {metadata['url']}\n"
+            f"Relevance Score: {1 - float(distance):.2f}\n"
+        )
+    
+    return "\n".join(formatted_results)
