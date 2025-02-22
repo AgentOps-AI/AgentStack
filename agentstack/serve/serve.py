@@ -13,7 +13,6 @@ from flask import Flask, request, jsonify
 import requests
 from typing import Dict, Any, Optional, Tuple
 import os
-from waitress import serve
 
 MAIN_FILENAME: Path = Path("src/main.py")
 MAIN_MODULE_NAME = "main"
@@ -174,7 +173,6 @@ if __name__ == '__main__':
     print(f"Send agent requests to http://localhost:{port}")
     print("Learn more about agent requests at https://docs.agentstack.sh/")  # TODO: add docs for this
 
-    # app.run(host='0.0.0.0', port=port)
-    serve(app, **get_waitress_config())
+    app.run(host='0.0.0.0', port=port)
 else:
     print("Starting production server with Gunicorn")
