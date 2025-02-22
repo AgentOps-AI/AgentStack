@@ -119,7 +119,7 @@ def configure_default_model():
         available_models = get_available_models()
 
         model_choice = questionary.select(
-            "Select from all available models:",
+            "Select from all available models (some may not yet be supported by AgentStack):",
             choices=available_models,
             use_indicator=True,
             use_shortcuts=False,

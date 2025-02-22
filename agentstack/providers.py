@@ -3,17 +3,6 @@ import litellm
 from typing import List
 from functools import lru_cache
 
-PROVIDER_ALIASES = {
-    'openai': 'openai',
-    'anthropic': 'anthropic',
-    'groq': 'groq',
-    'deepseek': 'deepseek',
-    'mistral': 'mistral',
-    'google': 'google',
-    'huggingface': 'huggingface',
-    'ollama': 'ollama',
-}
-
 
 @lru_cache(maxsize=1)
 def get_available_models() -> List[str]:
@@ -25,9 +14,8 @@ def get_available_models() -> List[str]:
 
     try:
         for provider, provider_models in litellm.models_by_provider.items():
-            if provider in PROVIDER_ALIASES:
-                for model in provider_models:
-                    models.append(f"{provider}/{model}")
+            for model in provider_models:
+                models.append(f"{provider}/{model}")
 
     except Exception:
         # since the models exist in the package, this should only throw
