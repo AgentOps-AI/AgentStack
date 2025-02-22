@@ -421,26 +421,26 @@ init_project() {
     $APP_NAME init "$INIT_NAME" --template "$INIT_TEMPLATE"
 }
 
+update_path_for_shell() {
+    local _new_path=$1
+    local _config_file=$2
+    say_verbose "looking for PATH in $_config_file"
+    if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$_new_path|$_new_path:|$_new_path\$)" "$_config_file" >/dev/null 2>&1; then
+        echo "" >> "$_config_file"  # newline
+        echo "export PATH=\"$_new_path:\$PATH\"" >> "$_config_file"
+        say_verbose "Added PATH $_new_path to $_config_file"
+    else
+        say_verbose "PATH $_new_path already in $_config_file"
+    fi
+}
+
 # Update PATH in shell config files
 update_path() {
     local _new_path="$1"
 
-    # update for each shell
-    local _config_files=(
-        "$HOME/.bashrc"          # bash
-        "$HOME/.zshrc"           # zsh
-        "$HOME/.profile"         # POSIX fallback (sh, ksh, etc.)
-    )
-    for _config_file in "${_config_files[@]}"; do
-        say_verbose "looking for PATH in $_config_file"
-        if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$_new_path|$_new_path:|$_new_path\$)" "$_config_file" >/dev/null 2>&1; then
-            echo "" >> "$_config_file"  # newline
-            echo "export PATH=\"$_new_path:\$PATH\"" >> "$_config_file"
-            say_verbose "Added PATH $_new_path to $_config_file"
-        else
-            say_verbose "PATH $_new_path already in $_config_file"
-        fi
-    done
+    update_path_for_shell "$_new_path" "$HOME/.bashrc"
+    update_path_for_shell "$_new_path" "$HOME/.zshrc"
+    update_path_for_shell "$_new_path" "$HOME/.profile"
 }
 
 # Create a bin file for the app. Assumes entrypoint is main.py:main
