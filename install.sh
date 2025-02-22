@@ -127,6 +127,9 @@ err() {
         say "If you need help, please feel free to open an issue:"
         say "  $REPO_URL/issues"
         say ""
+        say "Or, try an alternate installation method at:"
+        say "   https://docs.agentstack.sh/installation"
+        say ""
     fi
     exit 1
 }
