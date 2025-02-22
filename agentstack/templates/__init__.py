@@ -232,7 +232,7 @@ class TemplateConfig(pydantic.BaseModel):
         Load a template from a user-provided identifier.
         Three cases will be tried: A URL, a file path, or a template name.
         """
-        if identifier.startswith('https://'):
+        if identifier.startswith('https://') or identifier.startswith('http://'):
             return cls.from_url(identifier)
 
         if identifier.endswith('.json'):
