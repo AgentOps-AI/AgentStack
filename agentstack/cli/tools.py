@@ -14,10 +14,11 @@ def list_tools():
     """
     List all available tools by category.
     """
-    tools = [t for t in get_all_tools() if t is not None]
+    tools = [t for t in get_all_tools() if t is not None]  # Filter out None values
     categories = {}
     custom_tools = []
 
+    # Group tools by category
     for tool in tools:
         if tool.category == 'custom':
             custom_tools.append(tool)
@@ -27,14 +28,15 @@ def list_tools():
             categories[tool.category].append(tool)
 
     print("\n\nAvailable AgentStack Tools:")
-
+    # Display tools by category
     for category in sorted(categories.keys()):
         print(f"\n{category}:")
         for tool in categories[category]:
             print("  - ", end='')
             print(term_color(f"{tool.name}", 'blue'), end='')
             print(f": {tool.url if tool.url else 'AgentStack default tool'}")
-
+    
+    # Display custom tools if any exist
     if custom_tools:
         print("\nCustom Tools:")
         for tool in custom_tools:
@@ -60,7 +62,7 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
     conf.assert_project()
 
     all_tool_names = get_all_tool_names()
-    if tool_name and tool_name not in all_tool_names:
+    if tool_name and not tool_name in all_tool_names:
         # tool was provided, but not found. make a suggestion.
         suggestions = get_close_matches(tool_name, all_tool_names, n=1)
         message = f"Tool '{tool_name}' not found."
@@ -70,6 +72,7 @@ def add_tool(tool_name: Optional[str], agents=Optional[list[str]]):
         return
 
     if not tool_name:
+        # Get all available tools including custom ones
         available_tools = [t for t in get_all_tools() if t is not None]
 
         tool_name = questionary.select(
@@ -118,6 +121,7 @@ def create_tool(tool_name: str, agents=Optional[list[str]]):
     if not is_snake_case(tool_name):
         raise Exception("Invalid tool name: must be snake_case")
 
+    # Check if tool already exists
     user_tools_dir = Path('src/tools').resolve()
     tool_path = conf.PATH / user_tools_dir / tool_name
     if tool_path.exists():
