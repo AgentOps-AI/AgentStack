@@ -41,8 +41,7 @@ EOF
 )
 
 MSG_ALREADY_INSTALLED=$(cat <<EOF
-✅ AgentStack is already installed.
-Run 'agentstack update' to update to the latest version.
+👉 AgentStack is already installed. Upgrading.
 EOF
 )
 
@@ -477,22 +476,29 @@ uninstall() {
     PYTHON_BIN_PATH="$(uv python find "$PYTHON_VERSION" 2>/dev/null)" || {
         PYTHON_BIN_PATH=""
     }
+    if [ -x "$PYTHON_BIN_PATH" ]; then
+        err "Failed to find Python"
+    fi
 
     # uninstall the app
     local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
-        err "Failed to find user site packages directory"
+        say "Failed to find user site packages directory"
     }
-    say_verbose "Uninstalling from $_packages_dir"
-    local _uninstall_cmd="uv pip uninstall --python="$PYTHON_BIN_PATH" --target="$_packages_dir" $APP_NAME"
-    say_verbose "$_uninstall_cmd"
-    local _uninstall_out="$(eval "$_uninstall_cmd" 2>&1)"
-    say_verbose "$_uninstall_out"
-    if [ $? -ne 0 ] || echo "$_uninstall_out" | grep -qi "error\|failed\|exception"; then
-        err "Failed to uninstall $APP_NAME."
+    if [ -d "$_packages_dir" ]; then
+        say_verbose "Uninstalling from $_packages_dir"
+        local _uninstall_cmd="uv pip uninstall --python="$PYTHON_BIN_PATH" --target="$_packages_dir" $APP_NAME"
+        say_verbose "$_uninstall_cmd"
+        local _uninstall_out="$(eval "$_uninstall_cmd" 2>&1)"
+        say_verbose "$_uninstall_out"
+        if [ $? -ne 0 ] || echo "$_uninstall_out" | grep -qi "error\|failed\|exception"; then
+            err "Failed to uninstall $APP_NAME."
+        fi
     fi
 
     # remove the bin file
-    rm -f "$HOME/.local/bin/$APP_NAME"
+    rm -f "$(which $APP_NAME 2>/dev/null)" || {
+        say "Failed to find bin file"
+    }
 
     end_activity
 }
@@ -628,18 +634,16 @@ main() {
     say ""
     
     if [ $DO_UNINSTALL -eq 1 ]; then
+        # uninstall requested, uninstall and exit
         uninstall
         say ""
         say "$MSG_UNINSTALL"
         say ""
         exit 0
-    fi
-
-    if check_cmd $APP_NAME; then
-        say ""
+    elif check_cmd $APP_NAME; then
+        # app is already installed, uninstall and proceed to install
         say "$MSG_ALREADY_INSTALLED"
-        say ""
-        exit 0
+        uninstall
     fi
 
     say "Starting installation..."
