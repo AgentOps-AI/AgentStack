@@ -16,24 +16,19 @@ BASE_PATH = Path(__file__).parent
 
 class CLIInitTest(unittest.TestCase):
     def setUp(self):
-        """Set up test fixtures."""
         self.framework = os.getenv('TEST_FRAMEWORK')
-        # Create a unique directory for init tests
-        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'cli_init'
-        # Clean up any existing directory first
-        shutil.rmtree(self.project_dir, ignore_errors=True)
+        self.project_dir = BASE_PATH / 'tmp' / self.framework / 'test_repo'
+        os.chdir(str(BASE_PATH))  # Change directory before cleanup to avoid Windows file locks
+
+        # Clean up any existing test directory
+        if self.project_dir.exists():
+            shutil.rmtree(self.project_dir, ignore_errors=True)
         os.makedirs(self.project_dir, exist_ok=True)
-        # Store original directory to restore later
-        self.original_dir = os.getcwd()
-        os.chdir(self.project_dir)
+        os.chdir(self.project_dir)  # gitpython needs a cwd
         # Force UTF-8 encoding for the test environment
         os.environ['PYTHONIOENCODING'] = 'utf-8'
 
     def tearDown(self):
-        """Clean up after tests."""
-        # Restore original directory
-        os.chdir(self.original_dir)
-        # Clean up test directory
         shutil.rmtree(self.project_dir, ignore_errors=True)
 
     @parameterized.expand([(template.name,) for template in get_all_templates()])
@@ -49,14 +44,13 @@ class CLIInitTest(unittest.TestCase):
         if framework != self.framework:
             self.skipTest(f"{alias} is not related to this framework")
 
-        # Use run_cli instead of calling init_project directly
         result = run_cli('init', 'test_project', '--template', 'empty', '--framework', alias)
         self.assertEqual(result.returncode, 0)
 
         # Then set the path and check the config
-        project_path = self.project_dir / 'test_project'
-        self.assertTrue(project_path.exists())
-        conf.set_path(project_path)
+        project_dir = self.project_dir / 'test_project'
+        self.assertTrue(project_dir.exists())
+        conf.set_path(project_dir)
         config = conf.ConfigFile()
         self.assertEqual(config.framework, framework)
 
@@ -91,8 +85,8 @@ class CLIInitTest(unittest.TestCase):
         result = run_cli('init', 'test_project', '--template', 'empty')
         self.assertEqual(result.returncode, 0)
 
-        project_path = self.project_dir / 'test_project'
-        conf.set_path(project_path)
+        project_dir = self.project_dir / 'test_project'
+        conf.set_path(project_dir)
         config = conf.ConfigFile()
         self.assertFalse(config.use_git)
 
@@ -117,11 +111,11 @@ class CLIInitTest(unittest.TestCase):
     def test_dependency_installation(self, mock_set_path, mock_packaging):
         """Test that dependencies are properly installed."""
         # Clean up specific project directory
-        project_path = self.project_dir / 'test_project'
-        shutil.rmtree(project_path, ignore_errors=True)
+        project_dir = self.project_dir / 'test_project'
+        shutil.rmtree(project_dir, ignore_errors=True)
 
         # Mock the conf.PATH to point to our test directory
-        with patch('agentstack.packaging.conf.PATH', project_path):
+        with patch('agentstack.packaging.conf.PATH', project_dir):
             init_project(slug_name='test_project', template='empty')
 
         # Verify the mocks were called correctly
@@ -134,8 +128,8 @@ class CLIInitTest(unittest.TestCase):
         result = run_cli('init', 'test_project', '--template', 'research')
         self.assertEqual(result.returncode, 0)
 
-        project_path = self.project_dir / 'test_project'
-        self.assertTrue((project_path / 'src/config/agents.yaml').exists())
-        self.assertTrue((project_path / 'src/config/tasks.yaml').exists())
-        self.assertTrue((project_path / 'src/tools').exists())
-        self.assertTrue((project_path / 'src/tools/__init__.py').exists())
+        project_dir = self.project_dir / 'test_project'
+        self.assertTrue((project_dir / 'src/config/agents.yaml').exists())
+        self.assertTrue((project_dir / 'src/config/tasks.yaml').exists())
+        self.assertTrue((project_dir / 'src/tools').exists())
+        self.assertTrue((project_dir / 'src/tools/__init__.py').exists())

@@ -18,16 +18,24 @@ class TestRepo(unittest.TestCase):
     def setUp(self):
         self.framework = os.getenv('TEST_FRAMEWORK')
         self.test_dir = BASE_PATH / 'tmp' / self.framework / 'test_repo'
+        os.chdir(str(BASE_PATH))  # Change directory before cleanup to avoid Windows file locks
         os.makedirs(self.test_dir, exist_ok=True)
         os.chdir(self.test_dir)  # gitpython needs a cwd
-
         conf.set_path(self.test_dir)
 
     def tearDown(self):
-        # Make sure we're not in the directory we're trying to delete
-        os.chdir(BASE_PATH)
+        # Close any open git repo before cleanup
+        try:
+            git_repo = git.Repo(self.test_dir)
+            git_repo.close()
+        except (git.exc.InvalidGitRepositoryError, git.exc.NoSuchPathError):
+            pass
 
-        if os.path.exists(self.test_dir):
+        # Change directory out before removing
+        os.chdir(str(BASE_PATH))
+
+        # Remove the test directory
+        if self.test_dir.exists():
             shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_init(self):
@@ -44,15 +52,7 @@ class TestRepo(unittest.TestCase):
         self.assertEqual(commits[0].message, f"{repo.INITIAL_COMMIT_MESSAGE}{repo.AUTOMATION_NOTE}")
 
     def test_init_parent_repo_exists(self):
-        """Test that init doesn't create a new repo if parent has .git"""
-        # Clean up any existing .git directory first
-        parent_git = self.test_dir.parent / '.git'
-        if parent_git.exists():
-            shutil.rmtree(parent_git)
-
-        # Now create our test .git directory
-        os.makedirs(parent_git, exist_ok=True)
-
+        os.makedirs(self.test_dir.parent / '.git', exist_ok=True)
         repo.init(force_creation=False)
         self.assertFalse((self.test_dir / '.git').is_dir())
 

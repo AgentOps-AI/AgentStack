@@ -37,6 +37,7 @@ class TestCompileLLMsTxt(unittest.TestCase):
         self.create_test_mdx_file("test1.mdx", "Test content 1")
         self.create_test_mdx_file("test2.mdx", "Test content 2")
 
+        # Run compilation
         compile_llms_txt()
 
         # Check output file exists and contains expected content
@@ -52,8 +53,8 @@ class TestCompileLLMsTxt(unittest.TestCase):
     def test_excluded_directories(self):
         """Test that files in excluded directories are skipped"""
         # Create files in both regular and excluded directories
-        self.create_test_mdx_file(f"regular{os.path.sep}file.mdx", "Regular content")
-        self.create_test_mdx_file(f"tool{os.path.sep}file.mdx", "Tool content")
+        self.create_test_mdx_file("regular/file.mdx", "Regular content")
+        self.create_test_mdx_file("tool/file.mdx", "Tool content")
 
         compile_llms_txt()
 
@@ -74,8 +75,8 @@ class TestCompileLLMsTxt(unittest.TestCase):
 
     def test_nested_directories(self):
         """Test compilation from nested directory structure"""
-        self.create_test_mdx_file(f"dir1{os.path.sep}test1.mdx", "Content 1")
-        self.create_test_mdx_file(f"dir1{os.path.sep}dir2{os.path.sep}test2.mdx", "Content 2")
+        self.create_test_mdx_file("dir1/test1.mdx", "Content 1")
+        self.create_test_mdx_file("dir1/dir2/test2.mdx", "Content 2")
 
         compile_llms_txt()
 

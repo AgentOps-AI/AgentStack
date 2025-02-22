@@ -35,9 +35,11 @@ class TestLog(unittest.TestCase):
             handler.close()
             logger.removeHandler(handler)
 
-        # Now we can safely remove the directory
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir, ignore_errors=True)
+        # reset log -> change dir -> remove dir
+        log.instance = None
+        os.chdir(str(BASE_PATH))
+        if self.test_dir.exists():
+            shutil.rmtree(self.test_dir)
 
     def test_debug_message(self):
         log.debug("Debug message")
