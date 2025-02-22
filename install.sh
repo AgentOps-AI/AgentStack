@@ -20,6 +20,7 @@ RELEASE_PATH_URL="$REPO_URL/archive/refs/tags"
 CHECKSUM_URL=""  # TODO
 PYTHON_VERSION=">=3.10,<3.13"
 UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
+CACHE_DIR="$HOME/.cache"
 PYTHON_BIN_PATH=""  # set after a verified install is found
 DEV_BRANCH=""  # set by --dev-branch flag
 DO_UNINSTALL=0  # set by uninstall flag
@@ -96,7 +97,7 @@ _show_activity() {
 }
 
 show_activity() {
-    if [ "1" = "$PRINT_QUIET" ] || [ "1" = "$PRINT_VERBOSE" ]; then
+    if [ "0" = "$PRINT_QUIET" ] || [ "1" = "$PRINT_VERBOSE" ]; then
         return 0
     fi
     _show_activity &
@@ -237,8 +238,6 @@ install_uv() {
         err "uv installation failed: $_output"
     fi
 
-    update_path "$HOME/.local/bin"
-
     # verify uv installation
     local _uv_version
     _uv_version="$(uv --version 2>/dev/null)" || {
@@ -263,9 +262,9 @@ setup_python() {
         say "Python $_python_version is available."
         return 0
     else
-        show_activity
-    
         say "Installing Python $PYTHON_VERSION..."
+        show_activity
+
         uv python install "$PYTHON_VERSION" --preview 2>/dev/null || {
             err "Failed to install Python"
         }
@@ -399,7 +398,6 @@ setup_app() {
     fi
     
     make_python_bin "$HOME/.local/bin/$APP_NAME"
-    update_path "$HOME/.local/bin"
     say_verbose "Added bin to ~/.local/bin/$APP_NAME"
 
     # verify installation
@@ -422,28 +420,22 @@ init_project() {
 
 # Update PATH in shell config files
 update_path() {
-    local new_path="$1"
-    
-    # update for current session if not already set
-    if ! echo $PATH | grep -q "$new_path"; then
-        export PATH="$new_path:$PATH"
-    fi
-    
+    local _new_path="$1"
+
     # update for each shell
-    local config_files=(
+    local _config_files=(
         "$HOME/.bashrc"          # bash
-        "$HOME/.zshrc"           # ssh
+        "$HOME/.zshrc"           # zsh
         "$HOME/.profile"         # POSIX fallback (sh, ksh, etc.)
     )
-    for config_file in "${config_files[@]}"; do
-        if [ -f "$config_file" ]; then
-            if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$new_path|$new_path:|$new_path\$)" "$config_file" >/dev/null 2>&1; then
-                echo "" >> "$config_file"  # newline
-                echo "export PATH=\"$new_path:\$PATH\"" >> "$config_file"
-                say_verbose "Added PATH $new_path to $config_file"
-            else
-                say_verbose "PATH $new_path already in $config_file"
-            fi
+    for _config_file in "${_config_files[@]}"; do
+        say_verbose "looking for PATH in $_config_file"
+        if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$_new_path|$_new_path:|$_new_path\$)" "$_config_file" >/dev/null 2>&1; then
+            echo "" >> "$_config_file"  # newline
+            echo "export PATH=\"$_new_path:\$PATH\"" >> "$_config_file"
+            say_verbose "Added PATH $_new_path to $_config_file"
+        else
+            say_verbose "PATH $_new_path already in $_config_file"
         fi
     done
 }
@@ -472,17 +464,17 @@ uninstall() {
     say "Uninstalling $APP_NAME..."
     show_activity
 
-    update_path "$HOME/.local/bin"
     PYTHON_BIN_PATH="$(uv python find "$PYTHON_VERSION" 2>/dev/null)" || {
         PYTHON_BIN_PATH=""
     }
-    if [ -x "$PYTHON_BIN_PATH" ]; then
+    say_verbose $PYTHON_BIN_PATH
+    if [ ! -x "$PYTHON_BIN_PATH" ]; then
         err "Failed to find Python"
     fi
 
     # uninstall the app
     local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
-        say "Failed to find user site packages directory"
+        say_verbose "Failed to find user site packages directory"
     }
     if [ -d "$_packages_dir" ]; then
         say_verbose "Uninstalling from $_packages_dir"
@@ -497,10 +489,43 @@ uninstall() {
 
     # remove the bin file
     rm -f "$(which $APP_NAME 2>/dev/null)" || {
-        say "Failed to find bin file"
+        say_verbose "Failed to find bin file"
     }
 
     end_activity
+}
+
+# uv cache dir can be un-writeable on some systems, perhaps from a previous install
+# being executed with `sudo`; use a fallback dir if we need to. 
+ensure_uv_cache_dir() {
+    say_verbose "ensuring UV_CACHE_DIR is writeable"
+    # if cache dir exists, check that it is writeable
+    if [ ! -e "$CACHE_DIR" ]; then
+        say_verbose "$CACHE_DIR does not exist; creating"
+        mkdir -p "$CACHE_DIR"
+    fi
+    if [ ! -d "$CACHE_DIR" ] || [ ! -w "$CACHE_DIR" ]; then
+        say_verbose "Cache directory $CACHE_DIR is not writeable"
+        say_verbose "Using $HOME/.agentstack-cache instead"
+        CACHE_DIR="$HOME/.agentstack-cache"
+        mkdir -p "$CACHE_DIR"
+    fi
+
+    # if uv cache dir exists, check that it is writeable
+    UV_CACHE_DIR="$CACHE_DIR/uv"
+    if [ ! -e "$UV_CACHE_DIR" ]; then
+    say_verbose "$UV_CACHE_DIR does not exist; creating"
+        mkdir -p "$UV_CACHE_DIR" 2>&1 || {
+            say_verbose "Failed to create $UV_CACHE_DIR"
+        }
+    fi
+    if [ ! -d "$UV_CACHE_DIR" ] || [ ! -w "$UV_CACHE_DIR" ]; then
+        say_verbose "Cache directory $UV_CACHE_DIR is not writeable"
+        say_verbose "Using $CACHE_DIR/uv-agentstack instead"
+        UV_CACHE_DIR="$CACHE_DIR/uv-agentstack"
+        mkdir -p "$UV_CACHE_DIR"
+        export UV_CACHE_DIR="$UV_CACHE_DIR"
+    fi
 }
 
 # Download a file. Try curl first, if not installed, use wget instead.
@@ -629,9 +654,16 @@ parse_args() {
 
 main() {
     parse_args "$@"
-    
+
     say "$LOGO"
     say ""
+
+    # update the path for the current session early
+    export PATH="$HOME/.local/bin:$PATH"
+    say_verbose "Session path: $PATH"
+
+    # ensure we have a writeable cache dir for uv
+    ensure_uv_cache_dir
     
     if [ $DO_UNINSTALL -eq 1 ]; then
         # uninstall requested, uninstall and exit
@@ -648,6 +680,7 @@ main() {
 
     say "Starting installation..."
     check_dependencies
+    update_path "$HOME/.local/bin"
     install_uv
     setup_python
     if [ -n "$DEV_BRANCH" ]; then
