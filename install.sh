@@ -78,13 +78,13 @@ EOF
 
 say() {
     if [ "1" = "$PRINT_QUIET" ]; then
-        echo -e "$1"
+        echo "$1"
     fi
 }
 
 say_verbose() {
     if [ "1" = "$PRINT_VERBOSE" ]; then
-        echo -e "[DEBUG] $1"
+        echo "[DEBUG] $1"
     fi
 }
 
@@ -119,10 +119,14 @@ err() {
     if [ "1" = "$PRINT_QUIET" ]; then
         local _red=$(tput setaf 1 2>/dev/null || echo '')
         local _reset=$(tput sgr0 2>/dev/null || echo '')
-        say "\n${_red}[ERROR]${_reset}: $1" >&2
-        say "\nRun with --verbose for more details."
-        say "\nIf you need help, please feel free to open an issue:"
-        say "  $REPO_URL/issues\n"
+        say ""
+        say "${_red}[ERROR]${_reset}: $1" >&2
+        say ""
+        say "Run with --verbose for more details."
+        say ""
+        say "If you need help, please feel free to open an issue:"
+        say "  $REPO_URL/issues"
+        say ""
     fi
     exit 1
 }
@@ -141,7 +145,8 @@ err_missing_cmd() {
     elif [ $_platform == "macos" ]; then
         _help_text="Hint: brew install $_cmd_name"
     fi
-    err "A required dependency is missing. Please install: $*\n$_help_text"
+    err "A required dependency is missing. Please install: $1
+$_help_text"
 }
 
 # Check if a command exists
@@ -434,7 +439,8 @@ update_path() {
     for config_file in "${config_files[@]}"; do
         if [ -f "$config_file" ]; then
             if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$new_path|$new_path:|$new_path\$)" "$config_file" >/dev/null 2>&1; then
-                echo -e "\nexport PATH=\"$new_path:\$PATH\"" >> "$config_file"
+                echo "" >> "$config_file"  # newline
+                echo "export PATH=\"$new_path:\$PATH\"" >> "$config_file"
                 say_verbose "Added PATH $new_path to $config_file"
             else
                 say_verbose "PATH $new_path already in $config_file"
@@ -618,16 +624,21 @@ parse_args() {
 main() {
     parse_args "$@"
     
-    say "$LOGO\n"
+    say "$LOGO"
+    say ""
     
     if [ $DO_UNINSTALL -eq 1 ]; then
         uninstall
-        say "\n$MSG_UNINSTALL\n"
+        say ""
+        say "$MSG_UNINSTALL"
+        say ""
         exit 0
     fi
 
     if check_cmd $APP_NAME; then
-        say "\n$MSG_ALREADY_INSTALLED\n"
+        say ""
+        say "$MSG_ALREADY_INSTALLED"
+        say ""
         exit 0
     fi
 
@@ -646,7 +657,9 @@ main() {
         exit 0
     fi
 
-    say "\n$MSG_SUCCESS\n"
+    say ""
+    say "$MSG_SUCCESS"
+    say ""
     exit 0
 }
 
