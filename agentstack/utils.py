@@ -17,16 +17,15 @@ def get_version(package: str = 'agentstack'):
         return "Unknown version"
 
 
-def verify_agentstack_project(return_config: bool = False):
+def verify_agentstack_project():
     try:
-        agentstack_config = conf.ConfigFile()
+        conf.ConfigFile()
     except FileNotFoundError:
         raise Exception(
             "This does not appear to be an AgentStack project.\n"
             "Please ensure you're at the root directory of your project and a file named agentstack.json exists.\n"
             "If you're starting a new project, run `agentstack init`."
         )
-    return agentstack_config if return_config else True
 
 
 def get_package_path() -> Path:
