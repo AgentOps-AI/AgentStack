@@ -20,6 +20,7 @@ RELEASE_PATH_URL="$REPO_URL/archive/refs/tags"
 CHECKSUM_URL=""  # TODO
 PYTHON_VERSION=">=3.10,<3.13"
 UV_INSTALLER_URL="https://astral.sh/uv/install.sh"
+CACHE_DIR="$HOME/.cache"
 PYTHON_BIN_PATH=""  # set after a verified install is found
 DEV_BRANCH=""  # set by --dev-branch flag
 DO_UNINSTALL=0  # set by uninstall flag
@@ -41,8 +42,7 @@ EOF
 )
 
 MSG_ALREADY_INSTALLED=$(cat <<EOF
-✅ AgentStack is already installed.
-Run 'agentstack update' to update to the latest version.
+👉 AgentStack is already installed. Upgrading.
 EOF
 )
 
@@ -78,13 +78,13 @@ EOF
 
 say() {
     if [ "1" = "$PRINT_QUIET" ]; then
-        echo -e "$1"
+        echo "$1"
     fi
 }
 
 say_verbose() {
     if [ "1" = "$PRINT_VERBOSE" ]; then
-        echo -e "[DEBUG] $1"
+        echo "[DEBUG] $1"
     fi
 }
 
@@ -97,7 +97,7 @@ _show_activity() {
 }
 
 show_activity() {
-    if [ "1" = "$PRINT_QUIET" ] || [ "1" = "$PRINT_VERBOSE" ]; then
+    if [ "0" = "$PRINT_QUIET" ] || [ "1" = "$PRINT_VERBOSE" ]; then
         return 0
     fi
     _show_activity &
@@ -119,10 +119,17 @@ err() {
     if [ "1" = "$PRINT_QUIET" ]; then
         local _red=$(tput setaf 1 2>/dev/null || echo '')
         local _reset=$(tput sgr0 2>/dev/null || echo '')
-        say "\n${_red}[ERROR]${_reset}: $1" >&2
-        say "\nRun with --verbose for more details."
-        say "\nIf you need help, please feel free to open an issue:"
-        say "  $REPO_URL/issues\n"
+        say ""
+        say "${_red}[ERROR]${_reset}: $1" >&2
+        say ""
+        say "Run with --verbose for more details."
+        say ""
+        say "If you need help, please feel free to open an issue:"
+        say "  $REPO_URL/issues"
+        say ""
+        say "Or, try an alternate installation method at:"
+        say "   https://docs.agentstack.sh/installation"
+        say ""
     fi
     exit 1
 }
@@ -141,7 +148,8 @@ err_missing_cmd() {
     elif [ $_platform == "macos" ]; then
         _help_text="Hint: brew install $_cmd_name"
     fi
-    err "A required dependency is missing. Please install: $*\n$_help_text"
+    err "A required dependency is missing. Please install: $1
+$_help_text"
 }
 
 # Check if a command exists
@@ -233,8 +241,6 @@ install_uv() {
         err "uv installation failed: $_output"
     fi
 
-    update_path "$HOME/.local/bin"
-
     # verify uv installation
     local _uv_version
     _uv_version="$(uv --version 2>/dev/null)" || {
@@ -259,9 +265,9 @@ setup_python() {
         say "Python $_python_version is available."
         return 0
     else
-        show_activity
-    
         say "Installing Python $PYTHON_VERSION..."
+        show_activity
+
         uv python install "$PYTHON_VERSION" --preview 2>/dev/null || {
             err "Failed to install Python"
         }
@@ -395,7 +401,6 @@ setup_app() {
     fi
     
     make_python_bin "$HOME/.local/bin/$APP_NAME"
-    update_path "$HOME/.local/bin"
     say_verbose "Added bin to ~/.local/bin/$APP_NAME"
 
     # verify installation
@@ -416,31 +421,26 @@ init_project() {
     $APP_NAME init "$INIT_NAME" --template "$INIT_TEMPLATE"
 }
 
+update_path_for_shell() {
+    local _new_path=$1
+    local _config_file=$2
+    say_verbose "looking for PATH in $_config_file"
+    if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$_new_path|$_new_path:|$_new_path\$)" "$_config_file" >/dev/null 2>&1; then
+        echo "" >> "$_config_file"  # newline
+        echo "export PATH=\"$_new_path:\$PATH\"" >> "$_config_file"
+        say_verbose "Added PATH $_new_path to $_config_file"
+    else
+        say_verbose "PATH $_new_path already in $_config_file"
+    fi
+}
+
 # Update PATH in shell config files
 update_path() {
-    local new_path="$1"
-    
-    # update for current session if not already set
-    if ! echo $PATH | grep -q "$new_path"; then
-        export PATH="$new_path:$PATH"
-    fi
-    
-    # update for each shell
-    local config_files=(
-        "$HOME/.bashrc"          # bash
-        "$HOME/.zshrc"           # ssh
-        "$HOME/.profile"         # POSIX fallback (sh, ksh, etc.)
-    )
-    for config_file in "${config_files[@]}"; do
-        if [ -f "$config_file" ]; then
-            if ! grep -E "^[^#]*export[[:space:]]+PATH=.*(:$new_path|$new_path:|$new_path\$)" "$config_file" >/dev/null 2>&1; then
-                echo -e "\nexport PATH=\"$new_path:\$PATH\"" >> "$config_file"
-                say_verbose "Added PATH $new_path to $config_file"
-            else
-                say_verbose "PATH $new_path already in $config_file"
-            fi
-        fi
-    done
+    local _new_path="$1"
+
+    update_path_for_shell "$_new_path" "$HOME/.bashrc"
+    update_path_for_shell "$_new_path" "$HOME/.zshrc"
+    update_path_for_shell "$_new_path" "$HOME/.profile"
 }
 
 # Create a bin file for the app. Assumes entrypoint is main.py:main
@@ -467,28 +467,68 @@ uninstall() {
     say "Uninstalling $APP_NAME..."
     show_activity
 
-    update_path "$HOME/.local/bin"
     PYTHON_BIN_PATH="$(uv python find "$PYTHON_VERSION" 2>/dev/null)" || {
         PYTHON_BIN_PATH=""
     }
+    say_verbose $PYTHON_BIN_PATH
+    if [ ! -x "$PYTHON_BIN_PATH" ]; then
+        err "Failed to find Python"
+    fi
 
     # uninstall the app
     local _packages_dir="$($PYTHON_BIN_PATH -m site --user-site 2>/dev/null)" || {
-        err "Failed to find user site packages directory"
+        say_verbose "Failed to find user site packages directory"
     }
-    say_verbose "Uninstalling from $_packages_dir"
-    local _uninstall_cmd="uv pip uninstall --python="$PYTHON_BIN_PATH" --target="$_packages_dir" $APP_NAME"
-    say_verbose "$_uninstall_cmd"
-    local _uninstall_out="$(eval "$_uninstall_cmd" 2>&1)"
-    say_verbose "$_uninstall_out"
-    if [ $? -ne 0 ] || echo "$_uninstall_out" | grep -qi "error\|failed\|exception"; then
-        err "Failed to uninstall $APP_NAME."
+    if [ -d "$_packages_dir" ]; then
+        say_verbose "Uninstalling from $_packages_dir"
+        local _uninstall_cmd="uv pip uninstall --python="$PYTHON_BIN_PATH" --target="$_packages_dir" $APP_NAME"
+        say_verbose "$_uninstall_cmd"
+        local _uninstall_out="$(eval "$_uninstall_cmd" 2>&1)"
+        say_verbose "$_uninstall_out"
+        if [ $? -ne 0 ] || echo "$_uninstall_out" | grep -qi "error\|failed\|exception"; then
+            err "Failed to uninstall $APP_NAME."
+        fi
     fi
 
     # remove the bin file
-    rm -f "$HOME/.local/bin/$APP_NAME"
+    rm -f "$(which $APP_NAME 2>/dev/null)" || {
+        say_verbose "Failed to find bin file"
+    }
 
     end_activity
+}
+
+# uv cache dir can be un-writeable on some systems, perhaps from a previous install
+# being executed with `sudo`; use a fallback dir if we need to. 
+ensure_uv_cache_dir() {
+    say_verbose "ensuring UV_CACHE_DIR is writeable"
+    # if cache dir exists, check that it is writeable
+    if [ ! -e "$CACHE_DIR" ]; then
+        say_verbose "$CACHE_DIR does not exist; creating"
+        mkdir -p "$CACHE_DIR"
+    fi
+    if [ ! -d "$CACHE_DIR" ] || [ ! -w "$CACHE_DIR" ]; then
+        say_verbose "Cache directory $CACHE_DIR is not writeable"
+        say_verbose "Using $HOME/.agentstack-cache instead"
+        CACHE_DIR="$HOME/.agentstack-cache"
+        mkdir -p "$CACHE_DIR"
+    fi
+
+    # if uv cache dir exists, check that it is writeable
+    UV_CACHE_DIR="$CACHE_DIR/uv"
+    if [ ! -e "$UV_CACHE_DIR" ]; then
+    say_verbose "$UV_CACHE_DIR does not exist; creating"
+        mkdir -p "$UV_CACHE_DIR" 2>&1 || {
+            say_verbose "Failed to create $UV_CACHE_DIR"
+        }
+    fi
+    if [ ! -d "$UV_CACHE_DIR" ] || [ ! -w "$UV_CACHE_DIR" ]; then
+        say_verbose "Cache directory $UV_CACHE_DIR is not writeable"
+        say_verbose "Using $CACHE_DIR/uv-agentstack instead"
+        UV_CACHE_DIR="$CACHE_DIR/uv-agentstack"
+        mkdir -p "$UV_CACHE_DIR"
+        export UV_CACHE_DIR="$UV_CACHE_DIR"
+    fi
 }
 
 # Download a file. Try curl first, if not installed, use wget instead.
@@ -617,22 +657,33 @@ parse_args() {
 
 main() {
     parse_args "$@"
-    
-    say "$LOGO\n"
+
+    say "$LOGO"
+    say ""
+
+    # update the path for the current session early
+    export PATH="$HOME/.local/bin:$PATH"
+    say_verbose "Session path: $PATH"
+
+    # ensure we have a writeable cache dir for uv
+    ensure_uv_cache_dir
     
     if [ $DO_UNINSTALL -eq 1 ]; then
+        # uninstall requested, uninstall and exit
         uninstall
-        say "\n$MSG_UNINSTALL\n"
+        say ""
+        say "$MSG_UNINSTALL"
+        say ""
         exit 0
-    fi
-
-    if check_cmd $APP_NAME; then
-        say "\n$MSG_ALREADY_INSTALLED\n"
-        exit 0
+    elif check_cmd $APP_NAME; then
+        # app is already installed, uninstall and proceed to install
+        say "$MSG_ALREADY_INSTALLED"
+        uninstall
     fi
 
     say "Starting installation..."
     check_dependencies
+    update_path "$HOME/.local/bin"
     install_uv
     setup_python
     if [ -n "$DEV_BRANCH" ]; then
@@ -646,7 +697,9 @@ main() {
         exit 0
     fi
 
-    say "\n$MSG_SUCCESS\n"
+    say ""
+    say "$MSG_SUCCESS"
+    say ""
     exit 0
 }
 
