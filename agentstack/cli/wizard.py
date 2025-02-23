@@ -7,7 +7,6 @@ from art import text2art
 from agentstack import log
 from agentstack.cli.cli import PREFERRED_MODELS, get_validated_input
 from agentstack.frameworks import SUPPORTED_FRAMEWORKS
-from agentstack.utils import is_snake_case
 from agentstack.cli import welcome_message
 from agentstack._tools import get_all_tools
 from agentstack.templates import TemplateConfig
@@ -80,15 +79,15 @@ def ask_framework() -> str:
 def ask_agent_details():
     agent = {}
 
-    agent['name'] = get_validated_input("What's the name of this agent?", min_length=3, snake_case=True)
+    agent['name'] = get_validated_input(
+        "What's the name of this agent?", min_length=3, snake_case=True, default='agent_007'
+    )
 
-    agent['role'] = get_validated_input("What role does this agent have?", min_length=3)
+    agent['role'] = get_validated_input("What role does this agent have?", min_length=3, default='')
 
-    agent['goal'] = get_validated_input("What is the goal of the agent?", min_length=10)
+    agent['goal'] = get_validated_input("What is the goal of the agent?", min_length=10, default='')
 
-    agent['backstory'] = questionary.text(
-        "Give your agent a backstory", validate=lambda text: len(text) >= 10
-    ).ask()
+    agent['backstory'] = get_validated_input("Give your agent a backstory", min_length=10, default='')
 
     # Mirrors the logic for the default model selection in the CLI
     # First question - show preferred models + "Other" option
@@ -120,30 +119,21 @@ def ask_agent_details():
             use_search_filter=True,
         ).ask()
 
+    agent['model'] = model_choice
     return agent
 
 
 def ask_task_details(agents: list[dict]) -> dict:
     task = {}
-
-    while True:
-        name = questionary.text(
-            "What's the name of this task? (snake_case)",
-            validate=lambda text: len(text) >= 3 and is_snake_case(text),
-        ).ask()
-        if name:
-            break
-    task['name'] = name
-
-    task['description'] = questionary.text(
-        "Describe the task in more detail", validate=lambda text: len(text) >= 10
-    ).ask()
-
-    task['expected_output'] = questionary.text(
+    task['name'] = get_validated_input(
+        "What's the name of this task? (snake_case)", min_length=3, snake_case=True, default=''
+    )
+    task['description'] = get_validated_input("Describe the task in more detail", min_length=10, default='')
+    task['expected_output'] = get_validated_input(
         "What do you expect the result to look like? (ex: A 5 bullet point summary of the email)",
-        validate=lambda text: len(text) >= 10,
-    ).ask()
-
+        min_length=10,
+        default='',
+    )
     task['agent'] = questionary.select(
         "Which agent should be assigned this task?",
         choices=[a['name'] for a in agents],
@@ -274,21 +264,14 @@ def ask_tools() -> list:
 
 
 def ask_project_details(slug_name: Optional[str] = None) -> dict:
-    while True:
-        name = questionary.text("What's the name of your project (snake_case)", default=slug_name or '').ask()
+    answers = {}
+    answers['name'] = get_validated_input(
+        "What's the name of your project (snake_case)", default=slug_name or '', snake_case=True
+    )
+    answers['version'] = get_validated_input("What's the initial version", default='0.1.0')
+    answers['description'] = get_validated_input("Enter a description for your project", default='')
+    answers['author'] = get_validated_input("Who's the author (your name)?", default='')
 
-        if is_snake_case(name):
-            break
-        log.error("Project name must be snake case")
-
-    questions = [
-        {'type': 'text', 'name': 'version', 'message': "What's the initial version", 'default': '0.1.0'},
-        {'type': 'text', 'name': 'description', 'message': 'Enter a description for your project'},
-        {'type': 'text', 'name': 'author', 'message': "Who's the author (your name)?"},
-    ]
-
-    answers = questionary.prompt(questions)
-    answers['name'] = name
     return answers
 
 
