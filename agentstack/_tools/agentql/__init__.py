@@ -8,7 +8,8 @@ API_TIMEOUT_SECONDS = 900
 
 API_KEY = os.getenv("AGENTQL_API_KEY")
 
-def query_data(url: str, query: Optional[str], prompt: Optional[str]) -> dict:
+
+def extract_data(url: str, query: Optional[str], prompt: Optional[str]) -> dict:
     """
     url: url of website to scrape
     query: described below
@@ -44,34 +45,33 @@ def query_data(url: str, query: Optional[str], prompt: Optional[str]) -> dict:
     }
     ```
     """
-    payload = {
-        "url": url,
-        "query": query,
-        "prompt": prompt
-    }
+    payload = {"url": url, "query": query, "prompt": prompt}
 
-    headers = {
-        "X-API-Key": f"{API_KEY}",
-        "Content-Type": "application/json"
-    }
+    headers = {"X-API-Key": f"{API_KEY}", "Content-Type": "application/json"}
 
     try:
         response = httpx.post(
             QUERY_DATA_ENDPOINT,
             headers=headers,
             json=payload,
-            timeout=API_TIMEOUT_SECONDS
+            timeout=API_TIMEOUT_SECONDS,
         )
         response.raise_for_status()
 
     except httpx.HTTPStatusError as e:
         response = e.response
         if response.status_code in [401, 403]:
-            raise ValueError("Please, provide a valid API Key. You can create one at https://dev.agentql.com.") from e
+            raise ValueError(
+                "Please, provide a valid API Key. You can create one at https://dev.agentql.com."
+            ) from e
         else:
             try:
                 error_json = response.json()
-                msg = error_json["error_info"] if "error_info" in error_json else error_json["detail"]
+                msg = (
+                    error_json["error_info"]
+                    if "error_info" in error_json
+                    else error_json["detail"]
+                )
             except (ValueError, TypeError):
                 msg = f"HTTP {e}."
             raise ValueError(msg) from e

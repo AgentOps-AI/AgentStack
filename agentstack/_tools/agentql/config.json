@@ -6,6 +6,6 @@
     "env": {
         "AGENTQL_API_KEY": "..."
     },
-    "tools": ["query_data"],
+    "tools": ["extract_data"],
     "cta": "Create your AgentQL API key at https://dev.agentql.com"
 }
