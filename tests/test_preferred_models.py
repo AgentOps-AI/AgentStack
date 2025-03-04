@@ -28,7 +28,6 @@ def find_similar_models(model: str, all_models: set, num_suggestions: int = 3) -
         matches = get_close_matches(model, provider_models, n=num_suggestions, cutoff=0.3)
         if matches:
             return matches
-    print("https://docs.litellm.ai/docs/providers contains supported models for each provider.")
     return get_close_matches(model, all_models, n=num_suggestions, cutoff=0.3)
 
 
@@ -47,7 +46,10 @@ def test_preferred_models_validity():
             invalid_models_with_suggestions[model] = suggestions
 
     if invalid_models_with_suggestions:
-        error_message = "The following models are not in LiteLLM's supported models:\n"
+        error_message = (
+            "The following models are not in LiteLLM's supported models:\n"
+            "\nFor a complete list of supported models, visit: https://docs.litellm.ai/docs/providers\n"
+        )
         for model, suggestions in invalid_models_with_suggestions.items():
             error_message += f"\n- {model}"
             if suggestions:
