@@ -1,6 +1,16 @@
-from litellm import models_by_provider
-from agentstack.cli.cli import PREFERRED_MODELS
+from importlib.util import find_spec
+import pytest
+import subprocess
+import sys
 from difflib import get_close_matches
+from agentstack.cli.cli import PREFERRED_MODELS
+
+
+@pytest.fixture(scope="session", autouse=True)
+def install_litellm():
+    """Install litellm if not already installed."""
+    if find_spec("litellm") is not None:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "litellm"])
 
 
 def clean_model_name(provider: str, model: str) -> str:
@@ -33,6 +43,8 @@ def find_similar_models(model: str, all_models: set, num_suggestions: int = 3) -
 
 def test_preferred_models_validity():
     """Test that all PREFERRED_MODELS are valid LiteLLM models."""
+    from litellm import models_by_provider
+
     all_litellm_models = set()
     for provider, models in models_by_provider.items():
         for model in models:
