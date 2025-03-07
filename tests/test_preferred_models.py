@@ -9,8 +9,12 @@ from agentstack.cli.cli import PREFERRED_MODELS
 @pytest.fixture(scope="session", autouse=True)
 def install_litellm():
     """Install litellm if not already installed."""
-    if find_spec("litellm") is not None:
+    print("\nChecking for litellm installation...")
+    spec = find_spec("litellm")
+    if spec is None:
+        print("litellm not found, installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "litellm"])
+        print("litellm installation complete")
 
 
 def clean_model_name(provider: str, model: str) -> str:
