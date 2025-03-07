@@ -1,21 +1,33 @@
 # research_assistant
 
+Answers research questions by retrieving knowledge from the web and extracting key insights.
 
-## How to build your Crew Agent
+## How to Build this Project
+
 ### With the CLI
-Add an agent using AgentStack with the CLI:  
-`agentstack generate agent <agent_name>`  
-You can also shorten this to `agentstack g a <agent_name>`  
-For wizard support use `agentstack g a <agent_name> --wizard`  
-Finally for creation in the CLI alone, use `agentstack g a <agent_name> --role/-r <role> --goal/-g <goal> --backstory/-b <backstory> --model/-m <provider/model>`
 
-This will automatically create a new agent in the `agents.yaml` config as well as in your code. Either placeholder strings will be used, or data included in the wizard.
+```bash
+agentstack init research_assistant
 
-Similarly, tasks can be created with `agentstack g t <tool_name>`
+agentstack generate agent web_scraper
+agentstack generate task scrape_site
 
-Add tools with `agentstack tools add` and view tools available with `agentstack tools list`
+agentstack generate agent researcher
+agentstack generate task research
+
+agentstack generate agent analyst
+agentstack generate task analyze
+
+agentstack tools add agentql
+agentstack tools add firecrawl
+```
+
+Add more agents with `agentstack agent <agent_name>` and more tasks with `agentstack task <task_name>`
+
+Add tools with `agentstack tools add <tool_name>` and view tools available with `agentstack tools list`
 
 ## How to use your Agent
+
 In this directory, run `uv pip install --requirements pyproject.toml`
 
 To run your project, use the following command:  
@@ -30,6 +42,7 @@ CrewAI now includes a replay feature that allows you to list the tasks from the 
 Replace <task_id> with the ID of the task you want to replay.
 
 #### Reset Crew Memory
+
 If you need to reset the memory of your crew before running it again, you can do so by calling the reset memory feature:  
 `crewai reset-memory`  
 This will clear the crew's memory, allowing for a fresh start.
