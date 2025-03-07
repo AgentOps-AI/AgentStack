@@ -1,7 +1,7 @@
 scrape_site:
   description: >-
     Extract all the data about each electronic product from the following URL links:
-    https://www.amazon.com/gp/browse.html?node=541966&ref_=nav_em__pc_ce_0_2_18_4
+    https://www.amazon.com/gp/browse.html?rw_useCurrentProtocol=1&node=565108&ref_=amb_link_BpW_pJfGS-SH8sCy2LOykw_2
     https://www.bestbuy.com/site/computers-pcs/laptop-computers/abcat0502000.c?id=abcat0502000
   expected_output: >-
     A json file.
