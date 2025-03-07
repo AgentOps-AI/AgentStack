@@ -1,0 +1,11 @@
+{
+    "framework": "crewai",
+    "tools": [
+        "agentql"
+    ],
+    "default_model": "openai/gpt-4o",
+    "agentstack_version": "0.3.5",
+    "template": "market_monitoring",
+    "template_version": "4",
+    "use_git": false
+}

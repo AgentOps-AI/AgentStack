@@ -1,22 +1,30 @@
 # sentiment_analyser
-This is the start of your AgentStack project.
 
-## How to build your Crew
+Conducts a sentimental analysis on a Reddit thread based on its comments.
+
+## How to Build this Project
+
 ### With the CLI
-Add an agent using AgentStack with the CLI:  
-`agentstack generate agent <agent_name>`  
-You can also shorten this to `agentstack g a <agent_name>`  
-For wizard support use `agentstack g a <agent_name> --wizard`  
-Finally for creation in the CLI alone, use `agentstack g a <agent_name> --role/-r <role> --goal/-g <goal> --backstory/-b <backstory> --model/-m <provider/model>`
 
-This will automatically create a new agent in the `agents.yaml` config as well as in your code. Either placeholder strings will be used, or data included in the wizard.
+```bash
+agentstack init sentiment_analyser
 
-Similarly, tasks can be created with `agentstack g t <tool_name>`
+agentstack generate agent web_scraper
+agentstack generate task scrape_data
 
-Add tools with `agentstack tools add` and view tools available with `agentstack tools list`
+agentstack generate agent analyser
+agentstack generate task sentiment_analysis
+
+agentstack tools add agentql
+```
+
+Add more agents with `agentstack agent <agent_name>` and more tasks with `agentstack task <task_name>`
+
+Add tools with `agentstack tools add <tool_name>` and view tools available with `agentstack tools list`
 
 ## How to use your Crew
-In this directory, run `poetry install`  
+
+In this directory, run `poetry install`
 
 To run your project, use the following command:  
 `agentstack run`
@@ -30,6 +38,7 @@ CrewAI now includes a replay feature that allows you to list the tasks from the 
 Replace <task_id> with the ID of the task you want to replay.
 
 #### Reset Crew Memory
+
 If you need to reset the memory of your crew before running it again, you can do so by calling the reset memory feature:  
 `crewai reset-memory`  
 This will clear the crew's memory, allowing for a fresh start.
