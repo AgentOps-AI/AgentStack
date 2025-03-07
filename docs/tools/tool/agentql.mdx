@@ -4,14 +4,15 @@ description: Precise web data extraction for agents
 icon: browser
 ---
 
-AgentQL Web Loader is a tool that Scrape a url with a given AgentQL query or a natural language description of the data you want to scrape.
+AgentQL Web Loader is a tool that scrapes a URL with a given AgentQL query or a Natural Language description of the data you want to scrape.
 Create your own AgentQL API key [here](https://dev.agentql.com).
 
 ## Description
-AgentQL Web Loader is powered by AgentQL, an AI-powered query language for scraping web sites and automating workflows. 
-If you want to extract data in a precise format, use AgentQL natural language queries under the `query` field to pinpoint data on any web page, including authenticated and dynamically generated content.
+
+AgentQL Web Loader is powered by AgentQL, an AI-powered query language for scraping web sites and automating workflows.
+If you want to extract data in a precise format, use [AgentQL query language](https://docs.agentql.com/agentql-query) under the `query` field to pinpoint data on any web page, including authenticated and dynamically generated content.
 Users can define structured data output and apply transforms within queries.
-You could also directly describe the data you want to extract under the `prompt` field to let AgentQL Web Loader automatically generate the format and data. 
+You could also directly describe the data you want to extract under the `prompt` field to let AgentQL Web Loader automatically generate the format and data.
 
 ## Installation
 
@@ -19,7 +20,7 @@ You could also directly describe the data you want to extract under the `prompt`
 agentstack tools add agentql
 ```
 
-Set the environment variable
+Set the environment variable in your project's `.env` file.
 
 ```env
 AGENTQL_API_KEY=...
@@ -29,10 +30,15 @@ AGENTQL_API_KEY=...
 
 The following parameters can be used to customize the `AgentQL Web Loader`'s behavior:
 
-| Argument       | Type     | Description                                                                                                                         |
-|:---------------|:---------|:-------------------------------------------------------------------------------------------------------------------------------------|
-| **url**    | `string` | Url of the website to scrape from.                                                |
-| **query** | `string` | _Optional_. AgentQL query to scrape the url. Please visit [AgentQL Query Language Introduction](https://docs.agentql.com/agentql-query) for more information. |
-| **prompt** | `string` | _Optional_. Natural language description of the data you want to scrape. Either `query` or `prompt` is required.                                                 |
+| Argument   | Type     | Description                                                                                                                                                   |
+| :--------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **url**    | `string` | URL of the website to scrape from.                                                                                                                            |
+| **query**  | `string` | _Optional_. AgentQL query to scrape the URL. Please visit [AgentQL Query Language Introduction](https://docs.agentql.com/agentql-query) for more information. |
+| **prompt** | `string` | _Optional_. Natural Language description of the data you want to scrape. Either `query` or `prompt` is required.                                              |
 
 If you want to hack our tool, feel free to do so by modifying `src/tools/agentql_tool.py` and reference our documentation for [AgentQL REST API](https://docs.agentql.com/rest-api/api-reference).
+
+## Examples
+
+- [Research Assistant](https://github.com/AgentOps-AI/AgentStack/tree/main/examples/research_assistant)
+- [Sentiment Analyzer](https://github.com/AgentOps-AI/AgentStack/tree/main/examples/sentiment_analyser)
