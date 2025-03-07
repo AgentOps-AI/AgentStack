@@ -1,0 +1,16 @@
+scrape_site:
+  description: >-
+    Extract all the data about each electronic product from the following URL links:
+    https://www.amazon.com/gp/browse.html?node=541966&ref_=nav_em__pc_ce_0_2_18_4
+    https://www.bestbuy.com/site/computers-pcs/laptop-computers/abcat0502000.c?id=abcat0502000
+  expected_output: >-
+    A json file.
+  agent: >-
+    web_scraper
+report:
+  description: >-
+    Compare products and their prices between the competitor websites and give a report on their performances.
+  expected_output: >-
+    A few paragraphs about the market products.
+  agent: >-
+    market_reporter
