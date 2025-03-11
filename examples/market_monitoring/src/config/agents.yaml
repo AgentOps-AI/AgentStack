@@ -1,0 +1,16 @@
+web_scraper:
+  role: >-
+    web scraper
+  goal: >-
+    Access the website and extract all relevant information about the product in a structured format.
+  backstory: >-
+    You are an expert web scraper and data extractor.
+  llm: openai/gpt-4o
+market_reporter:
+  role: >-
+    market monitoring reporter
+  goal: >-
+    Track competitor websites for pricing and product updates, delivering insights into the dashboard.
+  backstory: >-
+    You are an expert in reporting and tracking competitor's websites.
+  llm: openai/gpt-4o

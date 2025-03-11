@@ -1,25 +1,21 @@
-# research_assistant
+# market_monitoring
 
-Answers research questions by retrieving knowledge from the web and extracting key insights.
+Tracks competitor websites for pricing and product updates.
 
 ## How to Build this Project
 
 ### With the CLI
 
 ```bash
-agentstack init research_assistant
+agentstack init market_monitoring
 
 agentstack generate agent web_scraper
 agentstack generate task scrape_site
 
-agentstack generate agent researcher
-agentstack generate task research
-
-agentstack generate agent analyst
-agentstack generate task analyze
+agentstack generate agent market_reporter
+agentstack generate task report
 
 agentstack tools add agentql
-agentstack tools add firecrawl
 ```
 
 Add more agents with `agentstack agent <agent_name>` and more tasks with `agentstack task <task_name>`
