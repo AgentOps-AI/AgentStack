@@ -47,7 +47,11 @@ def extract_data(url: str, query: Optional[str], prompt: Optional[str]) -> dict:
     """
     payload = {"url": url, "query": query, "prompt": prompt}
 
-    headers = {"X-API-Key": f"{API_KEY}", "Content-Type": "application/json"}
+    headers = {
+        "X-API-Key": f"{API_KEY}",
+        "Content-Type": "application/json",
+        "X-TF-Request-Origin": "agentstack",
+    }
 
     try:
         response = httpx.post(
