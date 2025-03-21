@@ -27,11 +27,12 @@ AGENTQL_API_KEY=...
 
 The following parameters can be used to customize the `AgentQL Web Loader`'s behavior:
 
-| Argument   | Type     | Description                                                                                                                                                                                                      |
-| :--------- | :------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **url**    | `string` | The URL of the web page you want to query.                                                                                                                                                                       |
-| **query**  | `string` | _Optional_. The AgentQL query to execute. Learn more about [how to write an AgentQL query in the docs](https://docs.agentql.com/agentql-query).                                                                  |
-| **prompt** | `string` | _Optional_. A Natural Language description of the data to query the page for. AgentQL will infer the data’s structure from your prompt. **Note: You must define either a `query` or a `prompt` to use AgentQL.** |
+| Argument                    | Type      | Description                                                                                                                                                                                                       |
+| :-------------------------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **url**                     | `string`  | The URL of the web page you want to query.                                                                                                                                                                        |
+| **query**                   | `string`  | _Optional_. The AgentQL query to execute. Learn more about [how to write an AgentQL query in the docs](https://docs.agentql.com/agentql-query).                                                                   |
+| **prompt**                  | `string`  | _Optional_. A Natural Language description of the data to query the page for. AgentQL will infer the data’s structure from your prompt. **Note: You must define either a `query` or a `prompt` to use AgentQL.**  |
+| **is_stealth_mode_enabled** | `boolean` | Whether to enable experimental anti-bot evasion strategies. This feature may not work for all websites at all times. Data extraction may take longer to complete with this mode enabled. **Defaults to `False`.** |
 
 ## Examples
 
