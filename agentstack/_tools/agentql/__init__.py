@@ -9,12 +9,14 @@ API_TIMEOUT_SECONDS = 900
 API_KEY = os.getenv("AGENTQL_API_KEY")
 
 
-def extract_data(url: str, query: Optional[str], prompt: Optional[str]) -> dict:
+def extract_data(
+    url: str, query: Optional[str], prompt: Optional[str], stealth_mode: bool = False
+) -> dict:
     """
     url: url of website to scrape
     query: described below
     prompt: Natural language description of the data you want to scrape
-
+    stealth_mode: Enable stealth mode for web scraping (default: False)
 
     AgentQL query to scrape the url.
 
@@ -45,7 +47,14 @@ def extract_data(url: str, query: Optional[str], prompt: Optional[str]) -> dict:
     }
     ```
     """
-    payload = {"url": url, "query": query, "prompt": prompt}
+    payload = {
+        "url": url,
+        "query": query,
+        "prompt": prompt,
+        "metadata": {
+            "experimental_stealth_mode_enabled": stealth_mode,
+        },
+    }
 
     headers = {"X-API-Key": f"{API_KEY}", "Content-Type": "application/json"}
 
