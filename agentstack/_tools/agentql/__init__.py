@@ -59,7 +59,11 @@ def extract_data(
         },
     }
 
-    headers = {"X-API-Key": f"{API_KEY}", "Content-Type": "application/json"}
+    headers = {
+        "X-API-Key": f"{API_KEY}",
+        "Content-Type": "application/json",
+        "X-TF-Request-Origin": "agentstack",
+    }
 
     try:
         response = httpx.post(
