@@ -9,10 +9,7 @@ Create your own AgentQL API key [here](https://dev.agentql.com).
 
 ## Description
 
-AgentQL Web Loader is powered by AgentQL, an AI-powered query language for scraping web sites and automating workflows.
-If you want to extract data in a precise format, use [AgentQL query language](https://docs.agentql.com/agentql-query) under the `query` field to pinpoint data on any web page, including authenticated and dynamically generated content.
-Users can define structured data output and apply transforms within queries.
-You could also directly describe the data you want to extract under the `prompt` field to let AgentQL Web Loader automatically generate the format and data.
+[AgentQL](https://agentql.com) provides structured data extraction from any web page using an [AgentQL query](https://docs.agentql.com/concepts/query-language) or a Natural Language prompt. AgentQL can be used across multiple languages and web pages without breaking over time and change.
 
 ## Installation
 
@@ -30,15 +27,15 @@ AGENTQL_API_KEY=...
 
 The following parameters can be used to customize the `AgentQL Web Loader`'s behavior:
 
-| Argument   | Type     | Description                                                                                                                                                   |
-| :--------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **url**    | `string` | URL of the website to scrape from.                                                                                                                            |
-| **query**  | `string` | _Optional_. AgentQL query to scrape the URL. Please visit [AgentQL Query Language Introduction](https://docs.agentql.com/agentql-query) for more information. |
-| **prompt** | `string` | _Optional_. Natural Language description of the data you want to scrape. Either `query` or `prompt` is required.                                              |
-
-If you want to hack our tool, feel free to do so by modifying `src/tools/agentql_tool.py` and reference our documentation for [AgentQL REST API](https://docs.agentql.com/rest-api/api-reference).
+| Argument                    | Type      | Description                                                                                                                                                                                                       |
+| :-------------------------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **url**                     | `string`  | The URL of the web page you want to query.                                                                                                                                                                        |
+| **query**                   | `string`  | _Optional_. The AgentQL query to execute. Learn more about [how to write an AgentQL query in the docs](https://docs.agentql.com/agentql-query).                                                                   |
+| **prompt**                  | `string`  | _Optional_. A Natural Language description of the data to query the page for. AgentQL will infer the data’s structure from your prompt. **Note: You must define either a `query` or a `prompt` to use AgentQL.**  |
+| **is_stealth_mode_enabled** | `boolean` | Whether to enable experimental anti-bot evasion strategies. This feature may not work for all websites at all times. Data extraction may take longer to complete with this mode enabled. **Defaults to `False`.** |
 
 ## Examples
 
 - [Research Assistant](https://github.com/AgentOps-AI/AgentStack/tree/main/examples/research_assistant)
 - [Sentiment Analyzer](https://github.com/AgentOps-AI/AgentStack/tree/main/examples/sentiment_analyser)
+- [Market Monitoring](https://github.com/AgentOps-AI/AgentStack/tree/main/examples/market_monitoring)
