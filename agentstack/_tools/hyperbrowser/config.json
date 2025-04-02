@@ -1,0 +1,18 @@
+{
+  "name": "hyperbrowser",
+  "url": "https://hyperbrowser.ai/",
+  "category": "browsing",
+  "env": {
+    "HYPERBROWSER_API_KEY": null
+  },
+  "dependencies": ["hyperbrowser>=0.39.0"],
+  "tools": [
+    "scrape_webpage",
+    "crawl_website",
+    "extract_data_from_webpages",
+    "run_browser_use_agent",
+    "run_claude_computer_use_agent",
+    "run_openai_cua_agent"
+  ],
+  "cta": "Get your free API key at https://hyperbrowser.ai/"
+}
