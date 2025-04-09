@@ -1,0 +1,13 @@
+{
+    "name": "agentmail",
+    "category": "email",
+    "tools": ["list_inboxes", "get_inbox", "create_inbox"],
+    "url": "https://agentmail.to",
+    "cta": "Get your AgentMail API key at https://agentmail.to",
+    "env": {
+        "AGENTMAIL_API_KEY": null
+    },
+    "dependencies": [
+        "agentmail>=0.0.19"
+    ]
+}
