@@ -127,7 +127,7 @@ def get_attachment(inbox_id: str, message_id: str, attachment_id: str):
     Returns:
         An attachment.
     """
-    return client.attachments.get(
+    return client.messages.get_attachment(
         inbox_id=inbox_id, message_id=message_id, attachment_id=attachment_id
     )
 
