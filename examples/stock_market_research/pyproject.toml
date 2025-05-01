@@ -1,0 +1,15 @@
+[project]
+name = "stock_market_research"
+version = "0.0.1"
+description = ""
+authors = [
+    { name = "Name <Email>" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+
+dependencies = [
+    "agentstack>=0.3.5",
+    "crewai>=0.118.0",
+    "dappier>=0.3.5",
+]
