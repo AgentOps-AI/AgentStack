@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 from crew import StockmarketresearchCrew
 import agentstack
@@ -14,7 +14,7 @@ def run():
     Run the agent.
     """
     inputs = agentstack.get_inputs()
-    inputs["timestamp"] = datetime.utcnow().isoformat()
+    inputs["timestamp"] = datetime.now(timezone.utc).isoformat()
 
     instance.kickoff(inputs=inputs)
 
