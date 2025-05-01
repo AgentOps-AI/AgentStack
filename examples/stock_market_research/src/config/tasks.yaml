@@ -1,16 +1,17 @@
 company_overview:
   description: >-
-    As of {timestamp}, fetch the company overview for {company_name} usin real-time web search. Include
-    company profile, industry, sector, CEO, headquarters location, employee count,  market
+    As of {timestamp}, fetch the company overview for {company_name} using real-time web search with the timestamp. Include
+    company profile, industry, sector, CEO, headquarters location, employee count, market
     capitalization and stock ticker symbol.
   expected_output: >-
     A structured company profile including: Company Profile, Industry, Sector, CEO,
     HQ Location, Employees, Market Cap and the stock ticker symbol.
   agent: >-
     web_researcher
+
 financials_performance:
   description: >-
-    As of {timestamp}, use real-time web search to extract financial performance data for {company_name},
+    As of {timestamp}, use real-time web search with the timestamp to extract financial performance data for {company_name},
     including Revenue (TTM), Net Income (TTM), Year-over-Year revenue growth, gross
     margin, and recent quarterly trends. Include any earnings trends or management
     commentary available.
@@ -20,9 +21,10 @@ financials_performance:
     Commentary.
   agent: >-
     web_researcher
+
 competitive_benchmarking:
   description: >-
-    As of {timestamp}, perform real-time web search to identify 3-5 peer companies in the same sector
+    As of {timestamp}, perform real-time web search with the timestamp to identify 3-5 peer companies in the same sector
     as {company_name}. Extract and compare key metrics such as P/E ratio, revenue,
     stock price, and market cap. Highlight any standout metrics where {company_name}
     outperforms or underperforms.
@@ -31,10 +33,11 @@ competitive_benchmarking:
     and market cap. Highlight metrics where {company_name} stands out.
   agent: >-
     web_researcher
+
 real_time_stock_snapshot:
   description: >-
     As of {timestamp}, convert {company_name} to its stock ticker symbol and retrieve a real-time stock
-    snapshot using Dappier’s stock market data tool. Include current price with %
+    snapshot using Dappier’s stock market data tool with the timestamp. Include current price with %
     daily change, volume, 52-week high/low, P/E ratio, EPS, dividend yield, and chart
     data for 1D, 5D, 1M, YTD, and 1Y in the query.
   expected_output: >-
@@ -43,10 +46,11 @@ real_time_stock_snapshot:
     and chart data for 1D, 5D, 1M, YTD, 1Y.
   agent: >-
     stock_insights_analyst
+
 news_and_sentiment:
   description: >-
     As of {timestamp}, convert {company_name} to its stock ticker symbol and fetch a real-time financial
-    news stream using Dappier’s stock market data tool. Categorize the news by topic:
+    news stream using Dappier’s stock market data tool with the timestamp. Categorize the news by topic:
     Earnings, Analyst Ratings, Market Moves, Partnerships, and Legal/Regulatory in the
     query.
   expected_output: >-
@@ -55,12 +59,13 @@ news_and_sentiment:
     Ratings, Market Moves, Partnerships, Legal/Regulatory in the query.
   agent: >-
     stock_insights_analyst
+
 generate_investment_report:
   description: >-
     As of {timestamp}, compile a comprehensive, markdown-formatted investment report
     for {company_name} by synthesizing the outputs of all prior tasks: company overview,
     financial performance, competitive benchmarking, real-time stock snapshot, and
-    categorized financial news. Include a concise AI-generated company summary,
+    categorized financial news. Use the timestamp in all queries. Include a concise AI-generated company summary,
     structured data tables, sentiment-tagged news, and a narrative insight section.
   expected_output: >-
     A markdown-formatted investment report containing:
