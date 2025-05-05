@@ -1287,6 +1287,7 @@ description: 'AgentStack tools from community contributors'
 
 ## Search
 - [Perplexity](/tools/tool/perplexity)
+- [Dappier](/tools/tool/dappier)
 
 ## Memory / State
 
