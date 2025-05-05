@@ -55,7 +55,7 @@ def get_validated_input(
 
         value = questionary.text(
             message,
-            default=default,
+            default=default or "",
             validate=validate if validate_func or min_length or snake_case else None,
         ).ask()
 
