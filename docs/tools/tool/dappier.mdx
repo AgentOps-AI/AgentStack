@@ -1,0 +1,66 @@
+---
+title: Dappier
+description: Real-time web and content search for agents
+icon: search
+---
+
+Dappier is a real time search that connects any AI to proprietary, real-time data — including web search, news, sports, stock market data, and premium publisher content.
+
+## Description
+Dappier Real-Time Search provides instant access to live web search results and AI-powered recommendations with:
+
+- Real-Time Web Search offering up-to-the-minute results from Google, financial markets, and global news
+- Specialized Content Models trained on curated datasets for domains like sports, lifestyle, pet care, sustainability, and multicultural news
+- Intelligent Query Routing that automatically selects the appropriate model based on user input
+
+### Core Features:
+
+- Web Search - Perform real-time web lookups across news, stocks, travel, weather, and more
+- Stock Market Data - Retrieve live financial news, stock prices, and trades
+- Content Recommendations - Get semantically matched articles tailored to user interests
+- Domain-Specific Models - Specialized AI trained on lifestyle, pets, sports, and green living
+
+### Output Formats:
+
+- Summarized real-time search results
+- Curated lists of recommended articles
+- Live financial and stock market insights
+- Structured query-to-content responses
+
+## Available Models and Functions
+
+> Explore various AI models and data models available at [Dappier Marketplace](https://marketplace.dappier.com/marketplace).
+
+
+### AI Models
+
+| Function | Model | Description | Arguments |
+|:---|:---|:---|:---|
+| `real_time_web_search` | `am_01j06ytn18ejftedz6dyhz2b15` | Perform a real-time web search across Google, news, weather, and travel data. | `query: str` |
+| `stock_market_data_search` | `am_01j749h8pbf7ns8r1bq9s2evrh` | Perform a real-time stock market data search including stock prices and financial news. | `query: str` |
+
+### Data Models
+
+| Function | Model | Description | Arguments |
+|:---|:---|:---|:---|
+| `get_sports_news` | `dm_01j0pb465keqmatq9k83dthx34` | Get real-time sports news and updates from top sports sources. | `query: str`, `similarity_top_k: int`, `ref: Optional[str]`, `num_articles_ref: int`, `search_algorithm: Literal["most_recent", "semantic", "most_recent_semantic", "trending"]` |
+| `get_lifestyle_news` | `dm_01j0q82s4bfjmsqkhs3ywm3x6y` | Access real-time lifestyle news and insights from popular publications. | `query: str`, `similarity_top_k: int`, `ref: Optional[str]`, `num_articles_ref: int`, `search_algorithm: Literal["most_recent", "semantic", "most_recent_semantic", "trending"]` |
+| `get_iheartdogs_content` | `dm_01j1sz8t3qe6v9g8ad102kvmqn` | Fetch dog care articles on health, behavior, and grooming from iHeartDogs. | `query: str`, `similarity_top_k: int`, `ref: Optional[str]`, `num_articles_ref: int`, `search_algorithm: Literal["most_recent", "semantic", "most_recent_semantic", "trending"]` |
+| `get_iheartcats_content` | `dm_01j1sza0h7ekhaecys2p3y0vmj` | Fetch cat care content on health, lifestyle, and behavior from iHeartCats. | `query: str`, `similarity_top_k: int`, `ref: Optional[str]`, `num_articles_ref: int`, `search_algorithm: Literal["most_recent", "semantic", "most_recent_semantic", "trending"]` |
+| `get_greenmonster_guides` | `dm_01j5xy9w5sf49bm6b1prm80m27` | Access eco-conscious lifestyle articles from GreenMonster. | `query: str`, `similarity_top_k: int`, `ref: Optional[str]`, `num_articles_ref: int`, `search_algorithm: Literal["most_recent", "semantic", "most_recent_semantic", "trending"]` |
+| `get_wishtv_news` | `dm_01jagy9nqaeer9hxx8z1sk1jx6` | Get news updates on politics, entertainment, and multicultural topics from WISH-TV. | `query: str`, `similarity_top_k: int`, `ref: Optional[str]`, `num_articles_ref: int`, `search_algorithm: Literal["most_recent", "semantic", "most_recent_semantic", "trending"]` |
+
+## Installation
+
+```bash
+agentstack tools add dappier
+```
+
+Set the environment variable
+
+```env
+DAPPIER_API_KEY=...
+```
+
+## Usage
+Dappier can be configured for different behaviors by modifying `src/tools/dappier_tool.py`.

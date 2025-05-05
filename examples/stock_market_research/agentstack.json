@@ -1,0 +1,11 @@
+{
+    "framework": "crewai",
+    "tools": [
+        "dappier"
+    ],
+    "default_model": "openai/gpt-4o",
+    "agentstack_version": "0.3.5",
+    "template": "stock_market_research",
+    "template_version": "4",
+    "use_git": false
+}
