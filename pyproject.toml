@@ -15,7 +15,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "agentops>=0.3.18",
+    "agentops>=0.4.9",
     "typer>=0.12.5",
     "inquirer>=3.4.0",
     "art>=6.3",
@@ -45,7 +45,7 @@ test = [
     "tox",
 ]
 crewai = [
-    "crewai==0.100.0",
+    "crewai==0.118.0",
     "crewai-tools==0.33.0",
     "shapely==2.0.6"  # crewai-tools needs this, but 2.0.7 is broken
 ]
