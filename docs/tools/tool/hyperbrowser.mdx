@@ -1,0 +1,132 @@
+---
+title: Hyperbrowser
+description: AI-powered web browser automation and content extraction
+icon: browser
+---
+
+## Description
+
+Hyperbrowser enables your agents to interact with the web through powerful browser automation. This tool allows agents to extract content from webpages, crawl entire sites, extract structured data, and perform sophisticated browser automation tasks using multiple AI agent options.
+
+## Example
+
+Add the Hyperbrowser tool with
+
+```bash
+agentstack tools add hyperbrowser
+```
+
+Set up your environment variables:
+
+```env
+HYPERBROWSER_API_KEY=your_api_key_here
+```
+
+## Features
+
+### Web Scraping
+
+Extract content from individual webpages in various formats:
+
+```python
+from agentstack._tools.hyperbrowser import scrape_webpage
+
+result = scrape_webpage(
+    url="https://example.com",
+    use_proxy=True,
+    formats=["markdown"]  # Options: markdown, html, links, screenshot
+)
+```
+
+### Website Crawling
+
+Crawl entire websites and collect content from multiple pages:
+
+```python
+from agentstack._tools.hyperbrowser import crawl_website
+
+result = crawl_website(
+    starting_url="https://example.com",
+    max_pages=10,
+    include_pattern=["/blog/*"],
+    exclude_pattern=["/admin/*"],
+    use_proxy=True
+)
+```
+
+### Structured Data Extraction
+
+Extract data in structured format based on a schema and prompt:
+
+```python
+from agentstack._tools.hyperbrowser import extract_data_from_webpages
+
+result = extract_data_from_webpages(
+    urls=["https://example.com/product"],
+    schema="{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"price\":{\"type\":\"string\"}}}",
+    prompt="Extract the product name and price from this page",
+    system_prompt="You are an expert at extracting product information",
+    use_proxy=True
+)
+```
+
+### Browser Use Agent
+
+Run a fast, efficient browser automation agent for explicit instructions:
+
+```python
+from agentstack._tools.hyperbrowser import run_browser_use_agent
+
+result = run_browser_use_agent(
+    task="Go to example.com and click on the first link",
+    max_steps=10,
+    use_vision=False,
+    use_vision_for_planner=False,
+    use_proxy=True
+)
+```
+
+### Claude Computer Use Agent
+
+Leverage Claude's advanced reasoning capabilities for complex web tasks:
+
+```python
+from agentstack._tools.hyperbrowser import run_claude_computer_use_agent
+
+result = run_claude_computer_use_agent(
+    task="Research the top 3 AI frameworks and summarize their features",
+    max_steps=20,
+    use_vision=True,
+    use_vision_for_planner=True,
+    use_proxy=True
+)
+```
+
+### OpenAI Computer Use Agent
+
+Utilize OpenAI's balanced performance for general-purpose browser automation:
+
+```python
+from agentstack._tools.hyperbrowser import run_openai_cua_agent
+
+result = run_openai_cua_agent(
+    task="Find the latest news on AI development",
+    max_steps=15,
+    use_vision=True,
+    use_vision_for_planner=False,
+    use_proxy=True
+)
+```
+
+## Available Functions
+
+The Hyperbrowser tool provides the following core functions:
+
+- `scrape_webpage()`: Extract content from a single webpage in various formats
+- `crawl_website()`: Collect content from multiple pages across a website
+- `extract_data_from_webpages()`: Extract structured data from webpages based on a schema
+- `run_browser_use_agent()`: Fast, lightweight agent for explicit browser automation tasks
+- `run_claude_computer_use_agent()`: Claude-powered agent for complex reasoning tasks
+- `run_openai_cua_agent()`: OpenAI-powered agent for general-purpose browser automation
+
+For detailed function parameters and usage, refer to the function docstrings in your IDE or the [Hyperbrowser documentation](https://docs.hyperbrowser.ai/).
