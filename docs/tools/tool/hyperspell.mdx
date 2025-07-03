@@ -1,0 +1,125 @@
+---
+title: Hyperspell
+description: Let agents search, answer, and learn from internal data
+---
+
+
+Hyperspell lets agents search, answer, and learn from internal knowledge. It works across uploaded documents, integrations like Notion, Gmail, and Slack, and raw text input. It provides fast semantic retrieval, optional question-answering, and user-specific permissions. Let your users connect to multiple sources and use Hyperspell’s end-to-end data pipeline to get structured data with a single API call.
+
+## Description
+
+[Hyperspell](https://hyperspell.com) provides agents with the ability to build and query internal knowledge using:
+
+- Cross-source search across documents, emails, Notion, Gmail, Slack, and many other integrations
+- Upload files and documents to create your agents' memory
+- Answering questions requiring multiple documents
+
+## Installation
+
+```bash
+agentstack tools add hyperspell
+```
+
+Create your Hyperspell app and get your API key from the [Hyperspell Dashboard](https://app.hyperspell.com/dashboard).
+
+Follow the instructions to connect your data sources
+
+Set the environment variables in your project's `.env` file:
+
+```env
+HYPERSPELL_API_KEY=your_api_key_here
+```
+
+<Note>
+    Hyperspell is a multi-tenant platform, and you can separate your data by use by setting the user id of your end-user in a variable too:
+
+    ```env
+    HYPERSPELL_USER_ID=your_user_id_here
+    ```
+</Note>
+
+
+## Available Functions
+
+The Hyperspell tool provides three core functions for knowledge retrieval and ingestion:
+
+### Query documents
+
+```python
+hyperspell_search(query, sources, answer=False, user_id=None)
+```
+
+Search across your Hyperspell-connected sources for relevant information.
+
+**Parameters:**
+
+<ParamField path="query" type="string" required>
+  The search query to find relevant information  
+</ParamField>
+<ParamField path="sources" type="string" required>
+  Comma-separated list of sources to search (e.g., `collections,notion,gmail`)
+</ParamField>
+<ParamField path="answer" type="bool" default="False">
+  If True, returns a direct AI answer instead of just documents. Defaults to False  
+</ParamField>
+<ParamField path="user_id" type="string">
+  User ID to use for this request. Defaults to `HYPERSPELL_USER_ID` env var
+</ParamField>
+
+### Add documents
+
+```python
+hyperspell_add_document(text, title=None, collection=None, user_id=None)
+```
+
+Add a text document to your Hyperspell knowledge base.
+
+**Parameters:**
+
+<ParamField path="text" type="string" required>
+  The full text content to add  
+</ParamField>
+<ParamField path="title" type="string" required>
+  Optional title for the document  
+</ParamField>
+<ParamField path="collection" type="string">
+  Optional collection name to organize the document  
+</ParamField>
+<ParamField path="user_id" type="string">
+  User ID to use for this request. Defaults to `HYPERSPELL_USER_ID` env var
+</ParamField>
+
+
+### Upload files
+
+```python
+hyperspell_upload_file(file_path, collection=None, user_id=None)
+```
+
+Upload a file (PDF, Word doc, spreadsheet, etc.) to your Hyperspell knowledge base.
+
+**Parameters:**
+
+<ParamField path="file_path" type="string" required>
+  Path to the file to upload  
+</ParamField>
+<ParamField path="collection" type="string">
+  Optional collection name to organize the document  
+</ParamField>
+<ParamField path="user_id" type="string">
+  User ID to use for this request. Defaults to `HYPERSPELL_USER_ID` env var
+</ParamField>
+
+If no `user_id` is provided, the tool defaults to the `HYPERSPELL_USER_ID` environment variable.
+
+## Integration Sources
+
+Hyperspell can search across multiple integrated sources:
+
+- **Collections**: Your uploaded documents and added text  
+- **Notion**: Connected Notion workspaces  
+- **Gmail**: Connected Gmail accounts  
+- **Slack**: Connected Slack workspaces  
+- **and many more**: Additional integrations available through the Hyperspell platform
+
+For detailed integration setup, visit the [Hyperspell documentation](https://docs.hyperspell.com).
