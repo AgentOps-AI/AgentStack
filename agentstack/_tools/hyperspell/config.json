@@ -1,0 +1,14 @@
+{
+    "name": "hyperspell",
+    "url": "https://hyperspell.com",
+    "category": "knowledge",
+    "env": {
+      "HYPERSPELL_API_KEY": null,
+      "HYPERSPELL_USER_ID": null
+    },
+    "dependencies": [
+      "hyperspell>=0.1.0"
+    ],
+    "tools": ["hyperspell_search", "hyperspell_add_document", "hyperspell_upload_file"],
+    "cta": "Get your HyperSpell API key at https://app.hyperspell.com/dashboard and set your user ID"
+  }
